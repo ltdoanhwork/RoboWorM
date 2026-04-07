@@ -83,7 +83,7 @@ class wm_args:
     interact_num = 12 # number of interactions (each interaction contains pred_step steps)
 
     # wm
-    data_stat_path = 'dataset_meta_info/droid/stat.json'
+    data_stat_path = None
     val_model_path = ckpt_path
     history_idx = [0,0,-12,-9,-6,-3]
 
@@ -99,10 +99,22 @@ class wm_args:
         self.task_name = f"Rollouts_interact_pi"
         if self.task_type == "replay":
             self.task_name = "Rollouts_replay"
+            
+        if self.dataset_meta_info_path and self.dataset_names:
+            if "/" in self.dataset_names:
+                self.data_stat_path = f"{self.dataset_meta_info_path}/{self.dataset_names.split('/')[-1]}/stat.json"
+            else:
+                self.data_stat_path = f"{self.dataset_meta_info_path}/{self.dataset_names}/stat.json"
+        else:
+            self.data_stat_path = f"{self.dataset_meta_info_path}/droid_subset/stat.json"
 
         # Configure per-task eval sets
         if self.task_type == "replay":
-            self.val_dataset_dir = "dataset_example/droid_subset"
+            if self.dataset_root_path:
+                name_split = self.dataset_names.split("/")[-1] if self.dataset_names else "droid_subset"
+                self.val_dataset_dir = f"{self.dataset_root_path}/{name_split}"
+            else:
+                self.val_dataset_dir = "dataset_example/droid_subset"
             self.val_id = ["899", "18599","199",]
             self.start_idx = [8, 14, 8] * len(self.val_id)
             self.instruction = [""] * len(self.val_id)
