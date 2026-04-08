@@ -237,3 +237,24 @@ class wm_args:
         
         else:
             raise ValueError(f"Unknown task type: {self.task_type}")
+
+        # Ensure action_adapter path is absolute relative to this config file
+        if not os.path.isabs(self.action_adapter):
+            self.action_adapter = os.path.join(os.path.dirname(__file__), self.action_adapter)
+
+        # Dynamically override val_dataset_dir and val_ids if a custom dataset is provided
+        if getattr(self, "dataset_root_path", None) and getattr(self, "dataset_names", None):
+            name_split = self.dataset_names.split("/")[-1]
+            self.val_dataset_dir = f"{self.dataset_root_path}/{name_split}"
+            
+            val_dir = os.path.join(self.val_dataset_dir, "annotation", "val")
+            if os.path.exists(val_dir):
+                new_val_ids = [str(f.split(".")[0]) for f in os.listdir(val_dir) if f.endswith(".json")]
+                # Only override if the currently hardcoded val_ids are missing
+                missing = any(not os.path.exists(os.path.join(val_dir, f"{vid}.json")) for vid in getattr(self, "val_id", []))
+                if missing and new_val_ids:
+                    self.val_id = new_val_ids
+                    self.start_idx = [0] * len(self.val_id)
+                    
+                    base_inst = self.instruction[0] if getattr(self, "instruction", None) and len(self.instruction) > 0 else ""
+                    self.instruction = [base_inst] * len(self.val_id)

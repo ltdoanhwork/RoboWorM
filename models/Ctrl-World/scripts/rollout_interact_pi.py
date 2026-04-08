@@ -1,9 +1,13 @@
+import sys, os
+ctrl_world_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(ctrl_world_dir)
+sys.path.append(os.path.join(ctrl_world_dir, "openpi", "src"))
+sys.path.append(os.path.join(ctrl_world_dir, "openpi", "packages", "openpi-client", "src"))
 
 from openpi.training import config as config_pi
 from openpi.policies import policy_config
 from openpi_client import image_tools
 # from openpi.shared import download
-
 import numpy as np
 
 
@@ -29,8 +33,7 @@ import mediapy
 import sys
 from scipy.spatial.transform import Rotation as R
 
-import sys, os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from models.pipeline_ctrl_world import CtrlWorldDiffusionPipeline
 from models.ctrl_world import CrtlWorld
 from models.utils import key_board_control, get_fk_solution
@@ -301,16 +304,17 @@ if __name__ == "__main__":
     parser.add_argument('--dataset_meta_info_path', type=str, default=None)
     parser.add_argument('--dataset_names', type=str, default=None)
     parser.add_argument('--task_type', type=str, default=None)
-    parser.add_argument('--pi_ckpt', type=str, default='/cephfs/shared/llm/openpi/openpi-assets-preview/checkpoints/pi05_droid')
+    parser.add_argument('--pi_ckpt', type=str, default='gs://openpi-assets/checkpoints/pi05_droid')
     args_new = parser.parse_args()
 
     args = wm_args(task_type=args_new.task_type)
 
-    def merge_args(cfg, cli_args):
-        for k, v in vars(cli_args).items():
+    def merge_args(args, new_args):
+        for k, v in new_args.__dict__.items():
             if v is not None:
-                setattr(cfg, k, v)
-        return cfg
+                args.__dict__[k] = v
+        args.__post_init__()
+        return args
 
     args = merge_args(args, args_new)
 

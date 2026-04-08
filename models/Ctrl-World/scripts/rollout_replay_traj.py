@@ -237,6 +237,7 @@ if __name__ == "__main__":
         for k, v in new_args.__dict__.items():
             if v is not None:
                 args.__dict__[k] = v
+        args.__post_init__()
         return args
     
     args = merge_args(args, args_new)
