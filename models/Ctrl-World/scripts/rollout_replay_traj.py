@@ -1,4 +1,6 @@
 
+import importlib.util
+
 # from openpi.training import config as config_pi
 # from openpi.policies import policy_config
 # from openpi_client import image_tools
@@ -33,6 +35,12 @@ import mediapy
 import sys
 from scipy.spatial.transform import Rotation as R
 
+
+def _load_module_from_path(module_name, module_path):
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 class agent():
@@ -229,6 +237,13 @@ if __name__ == "__main__":
     parser.add_argument('--dataset_meta_info_path', type=str, default=None)
     parser.add_argument('--dataset_names', type=str, default=None)
     parser.add_argument('--task_type', type=str, default='replay')
+    # ---- PISA sparse attention (optional, training-free) ----
+    _pisa_src = os.path.normpath(
+        os.path.join(os.path.dirname(__file__), "../../../methods/sparse_attention/pisa")
+    )
+    _pisa_config = _load_module_from_path("pisa_config", os.path.join(_pisa_src, "config.py"))
+    _pisa_config.add_pisa_args(parser)
+    # ---------------------------------------------------------
     args_new = parser.parse_args()
 
     args = wm_args(task_type=args_new.task_type)
@@ -244,6 +259,17 @@ if __name__ == "__main__":
 
     # create rollout agent
     Agent = agent(args)
+
+    # ---- Enable PISA after model is loaded (non-invasive) -----------
+    if getattr(args_new, 'use_pisa', False):
+        _pisa_adapter = _load_module_from_path("pisa_adapter", os.path.join(_pisa_src, "adapter.py"))
+        _pisa_adapter.enable_pisa(
+            Agent.model.unet,
+            density=args_new.pisa_density,
+            block_size=args_new.pisa_block_size,
+            start_layer_idx=args_new.pisa_start_layer_idx,
+        )
+    # -----------------------------------------------------------------
     interact_num = args.interact_num
     pred_step = args.pred_step
     num_history = args.num_history
