@@ -13,6 +13,12 @@ class PISAConfig:
     """
     PISA sparse attention configuration.
 
+    Tuned for Ctrl-World SVD UNet (72×40 latent, 3-view stacked):
+      - L0 spatial self-attn: T=2880  ← main bottleneck, block_size=64 gives 45 blocks
+      - L1 spatial self-attn: T=720
+      - L2 spatial self-attn: T=180
+      - Temporal / cross-attn: automatically skipped by processor
+
     Fields
     ------
     use_pisa : bool
@@ -20,20 +26,19 @@ class PISAConfig:
     pisa_density : float
         Fraction of attention blocks computed with exact attention.
         Range (0, 1]. Lower = faster but less accurate.
-        Recommended starting point: 0.5
+        Default 0.4: ~2.5-3× speedup with low quality degradation.
     pisa_block_size : int
         Token block size for piecewise decomposition.
+        2880 / 64 = 45 blocks at L0 — a good trade-off for SVD.
         Must be ≤ sequence length at runtime (auto-clamped).
-        Recommended: 16 for SVD spatial attention.
     pisa_start_layer_idx : int
-        Skip the first N attention layers (keep them at full precision).
-        Early layers often have small T and contribute little to speedup.
-        Recommended: 2-4 for SVD UNet.
+        Skip the first N attention layers.
+        0 = apply PISA from L0 (the bottleneck), which is recommended.
     """
     use_pisa: bool = False
-    pisa_density: float = 0.5
-    pisa_block_size: int = 16
-    pisa_start_layer_idx: int = 2
+    pisa_density: float = 0.4       # conservative default: speed vs quality sweet spot
+    pisa_block_size: int = 64       # 2880/64=45 blocks at L0 (72×40 latent)
+    pisa_start_layer_idx: int = 0   # apply from L0 — that's where the bottleneck is
 
 
 def add_pisa_args(parser):

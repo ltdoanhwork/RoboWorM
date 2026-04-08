@@ -31,10 +31,18 @@ class SVDPISAAttnProcessor:
       - Cross-attention (T_q != T_kv): PISA is designed for self-attention
       - T_q < MIN_TOKENS_FOR_PISA: overhead not worth it
       - layer_idx < start_layer_idx: user-specified skip
+
+    Ctrl-World SVD UNet real sequence lengths (72×40 latent, 3-view stacked):
+      - Temporal self-attn: T=11 frames          → SDPA (below threshold)
+      - Mid / L0-up (9×5):  T=45                → SDPA (below threshold)
+      - L2 spatial (18×10): T=180               → PISA
+      - L1 spatial (36×20): T=720               → PISA
+      - L0 spatial (72×40): T=2880 ← BOTTLENECK → PISA
     """
 
-    # Below this token count, PISA overhead > gain; use SDPA instead.
-    MIN_TOKENS_FOR_PISA: int = 48
+    # Below this token count PISA overhead > gain; use SDPA instead.
+    # Set to 128 to skip temporal (T=11) and mid-block (T=45) layers.
+    MIN_TOKENS_FOR_PISA: int = 128
 
     def __init__(
         self,

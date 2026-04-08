@@ -41,5 +41,5 @@ CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-Wor
   --clip_model_path ./checkpoints/openai/clip-vit-base-patch32 \
   --ckpt_path ./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt \
   --task_type pickplace \
-  --use_pisa --pisa_density 0.5
+  --use_pisa --pisa_density 0.5 --pisa_block_size 32
 
