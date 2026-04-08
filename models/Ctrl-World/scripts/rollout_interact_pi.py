@@ -1,5 +1,5 @@
 import sys, os
-import importlib.util
+import importlib
 ctrl_world_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(ctrl_world_dir)
 sys.path.append(os.path.join(ctrl_world_dir, "openpi", "src"))
@@ -40,11 +40,11 @@ from models.ctrl_world import CrtlWorld
 from models.utils import key_board_control, get_fk_solution
 
 
-def _load_module_from_path(module_name, module_path):
-    spec = importlib.util.spec_from_file_location(module_name, module_path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+def _import_pisa_module(module_name):
+    project_root = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../.."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+    return importlib.import_module(f"methods.sparse_attention.pisa.{module_name}")
     
 
 class agent():
@@ -314,10 +314,7 @@ if __name__ == "__main__":
     parser.add_argument('--task_type', type=str, default=None)
     parser.add_argument('--pi_ckpt', type=str, default='gs://openpi-assets/checkpoints/pi05_droid')
     # ---- PISA sparse attention (optional, training-free) ----
-    _pisa_src = os.path.normpath(
-        os.path.join(os.path.dirname(__file__), "../../../methods/sparse_attention/pisa")
-    )
-    _pisa_config = _load_module_from_path("pisa_config", os.path.join(_pisa_src, "config.py"))
+    _pisa_config = _import_pisa_module("config")
     _pisa_config.add_pisa_args(parser)
     # ---------------------------------------------------------
     args_new = parser.parse_args()
@@ -337,7 +334,7 @@ if __name__ == "__main__":
     Agent = agent(args)
     # ---- Enable PISA after model is loaded (non-invasive) -----------
     if getattr(args_new, 'use_pisa', False):
-        _pisa_adapter = _load_module_from_path("pisa_adapter", os.path.join(_pisa_src, "adapter.py"))
+        _pisa_adapter = _import_pisa_module("adapter")
         _pisa_adapter.enable_pisa(
             Agent.model.unet,
             density=args_new.pisa_density,

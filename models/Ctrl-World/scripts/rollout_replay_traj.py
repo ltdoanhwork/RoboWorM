@@ -1,5 +1,5 @@
 
-import importlib.util
+import importlib
 
 # from openpi.training import config as config_pi
 # from openpi.policies import policy_config
@@ -36,11 +36,11 @@ import sys
 from scipy.spatial.transform import Rotation as R
 
 
-def _load_module_from_path(module_name, module_path):
-    spec = importlib.util.spec_from_file_location(module_name, module_path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+def _import_pisa_module(module_name):
+    project_root = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../.."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+    return importlib.import_module(f"methods.sparse_attention.pisa.{module_name}")
 
 
 class agent():
@@ -238,10 +238,7 @@ if __name__ == "__main__":
     parser.add_argument('--dataset_names', type=str, default=None)
     parser.add_argument('--task_type', type=str, default='replay')
     # ---- PISA sparse attention (optional, training-free) ----
-    _pisa_src = os.path.normpath(
-        os.path.join(os.path.dirname(__file__), "../../../methods/sparse_attention/pisa")
-    )
-    _pisa_config = _load_module_from_path("pisa_config", os.path.join(_pisa_src, "config.py"))
+    _pisa_config = _import_pisa_module("config")
     _pisa_config.add_pisa_args(parser)
     # ---------------------------------------------------------
     args_new = parser.parse_args()
@@ -262,7 +259,7 @@ if __name__ == "__main__":
 
     # ---- Enable PISA after model is loaded (non-invasive) -----------
     if getattr(args_new, 'use_pisa', False):
-        _pisa_adapter = _load_module_from_path("pisa_adapter", os.path.join(_pisa_src, "adapter.py"))
+        _pisa_adapter = _import_pisa_module("adapter")
         _pisa_adapter.enable_pisa(
             Agent.model.unet,
             density=args_new.pisa_density,
