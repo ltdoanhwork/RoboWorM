@@ -8,7 +8,7 @@ setup(
     author='Haopeng Li',
     packages=find_packages(),
     install_requires=[
-        "torch>=2.7.1",
-        "triton>=3.5.1"
+        "torch>=2.4.0",
+        "triton>=2.1.0"
     ],
 )

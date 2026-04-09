@@ -34,11 +34,14 @@ class PISAConfig:
     pisa_start_layer_idx : int
         Skip the first N attention layers.
         0 = apply PISA from L0 (the bottleneck), which is recommended.
+    pisa_use_bias : bool
+        Enable the auxiliary bias term used by the TMA-flavored kernel.
     """
     use_pisa: bool = False
     pisa_density: float = 0.4       # conservative default: speed vs quality sweet spot
     pisa_block_size: int = 64       # 2880/64=45 blocks at L0 (72×40 latent)
     pisa_start_layer_idx: int = 0   # apply from L0 — that's where the bottleneck is
+    pisa_use_bias: bool = False
 
 
 def add_pisa_args(parser):
@@ -75,5 +78,11 @@ def add_pisa_args(parser):
         type=int,
         default=2,
         help="Skip first N attention layers from PISA. (default: 2)",
+    )
+    group.add_argument(
+        "--pisa_use_bias",
+        action="store_true",
+        default=False,
+        help="Enable the bias-enhanced PISA kernel variant.",
     )
     return parser

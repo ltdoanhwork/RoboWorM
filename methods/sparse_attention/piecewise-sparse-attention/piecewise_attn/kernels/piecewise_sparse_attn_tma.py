@@ -9,7 +9,7 @@ import torch.nn.functional as F
 import triton
 import triton.language as tl
 
-from triton.tools.tensor_descriptor import TensorDescriptor
+# from triton.tools.tensor_descriptor import TensorDescriptor
 
 
 def is_cuda():
@@ -104,13 +104,13 @@ def fused_chunk_reduce_kernel(
 
     BLOCK_SIZE = tl.minimum(BT, T - i_t * BT)
 
-    p_q = tl.make_tensor_descriptor(q + i_bh * T * K, (T, K), (K, 1), (BT, BK))
-    p_k = tl.make_tensor_descriptor(k + i_bh * T * K, (T, K), (K, 1), (BT, BK))
-    p_v = tl.make_tensor_descriptor(v + i_bh * T * V, (T, V), (V, 1), (BT, BV))
+    p_q = tl.make_block_ptr(q + i_bh * T * K, (T, K), (K, 1), (i_t * BT, i_k * BK), (BT, BK), (1, 0))
+    p_k = tl.make_block_ptr(k + i_bh * T * K, (T, K), (K, 1), (i_t * BT, i_k * BK), (BT, BK), (1, 0))
+    p_v = tl.make_block_ptr(v + i_bh * T * V, (T, V), (V, 1), (i_t * BT, i_v * BV), (BT, BV), (1, 0))
     
-    b_q = p_q.load([i_t * BT, i_k * BK])
-    b_k = p_k.load([i_t * BT, i_k * BK])
-    b_v = p_v.load([i_t * BT, i_v * BV])
+    b_q = tl.load(p_q, boundary_check=(0, 1))
+    b_k = tl.load(p_k, boundary_check=(0, 1))
+    b_v = tl.load(p_v, boundary_check=(0, 1))
     
     b_qc = tl.sum(b_q, axis=0) / BLOCK_SIZE
     b_kc = tl.sum(b_k, axis=0) / BLOCK_SIZE
@@ -204,8 +204,8 @@ def piecewise_sparse_attention_fwd_kernel(
 ):
     i_v, i_t, i_bh = tl.program_id(0), tl.program_id(1), tl.program_id(2)
     
-    p_q = tl.make_tensor_descriptor(q + i_bh * T * K, (T, K), (K, 1), (BT, BK))
-    b_q = p_q.load([i_t * BT, 0])
+    p_q = tl.make_block_ptr(q + i_bh * T * K, (T, K), (K, 1), (i_t * BT, 0), (BT, BK), (1, 0))
+    b_q = tl.load(p_q, boundary_check=(0, 1))
     
     acc = tl.zeros([BT, BV], dtype=tl.float32)
     l_i = tl.zeros((BT,), dtype=tl.float32)
@@ -218,10 +218,10 @@ def piecewise_sparse_attention_fwd_kernel(
         i_n = tl.load(indices + i_bh * NT * NS + i_t * NS + i).to(tl.int32)
         bos = i_n * BT
         
-        p_k = tl.make_tensor_descriptor(k + i_bh * T * K, (T, K), (K, 1), (BT, BK))
-        p_v = tl.make_tensor_descriptor(v + i_bh * T * V, (T, V), (V, 1), (BT, BV))
-        b_k = p_k.load([bos, 0])
-        b_v = p_v.load([bos, i_v * BV])
+        p_k = tl.make_block_ptr(k + i_bh * T * K, (T, K), (K, 1), (bos, 0), (BT, BK), (1, 0))
+        p_v = tl.make_block_ptr(v + i_bh * T * V, (T, V), (V, 1), (bos, i_v * BV), (BT, BV), (1, 0))
+        b_k = tl.load(p_k, boundary_check=(0, 1))
+        b_v = tl.load(p_v, boundary_check=(0, 1))
         
         b_s = tl.dot(b_q, tl.trans(b_k))
         b_s *= sm_scale
@@ -244,8 +244,8 @@ def piecewise_sparse_attention_fwd_kernel(
     g_l = tl.zeros([BT], dtype=tl.float32)
 
     for start_n in range(0, NT, GROUP_SIZE):
-        p_kc = tl.make_tensor_descriptor(kc + i_bh * NT * K, (NT, K), (K, 1), (GROUP_SIZE, BK))
-        b_kc = p_kc.load([start_n, 0])
+        p_kc = tl.make_block_ptr(kc + i_bh * NT * K, (NT, K), (K, 1), (start_n, 0), (GROUP_SIZE, BK), (1, 0))
+        b_kc = tl.load(p_kc, boundary_check=(0, 1))
         
         b_s_mean = tl.dot(b_q, tl.trans(b_kc))
         b_s_mean = b_s_mean * sm_scale
@@ -268,16 +268,16 @@ def piecewise_sparse_attention_fwd_kernel(
         
         prob_chunk = tl.math.exp2(b_s_mean - m_i[:, None]) 
         
-        p_vc = tl.make_tensor_descriptor(vc + i_bh * NT * V, (NT, V), (V, 1), (GROUP_SIZE, BV))
-        b_vc = p_vc.load([start_n, i_v * BV])
+        p_vc = tl.make_block_ptr(vc + i_bh * NT * V, (NT, V), (V, 1), (start_n, i_v * BV), (GROUP_SIZE, BV), (1, 0))
+        b_vc = tl.load(p_vc, boundary_check=(0, 1))
         
         acc += tl.dot(prob_chunk.to(b_vc.dtype), b_vc)
         weighted_prob = prob_chunk * current_lens[None, :]
         g_l += tl.sum(weighted_prob, axis=1)
 
     # Phase 3: Approx Attention (First-Order)
-    p_h = tl.make_tensor_descriptor(h + i_bh * K * V , (K, V), (V, 1), (BK, BV))
-    b_h = p_h.load([0, i_v * BV])
+    p_h = tl.make_block_ptr(h + i_bh * K * V , (K, V), (V, 1), (0, i_v * BV), (BK, BV), (1, 0))
+    b_h = tl.load(p_h, boundary_check=(0, 1))
 
     b_r = tl.dot(b_q, b_h.to(b_q.dtype)) 
     correction_scale = g_l * (1.0 / T) * scale
@@ -288,8 +288,8 @@ def piecewise_sparse_attention_fwd_kernel(
     l_i += g_l
     acc /= l_i[:, None]
     
-    p_o = tl.make_tensor_descriptor(o + i_bh * T * V, (T, V), (V, 1), (BT, BV))
-    p_o.store([i_t * BT, i_v * BV], acc.to(b_q.dtype))
+    p_o = tl.make_block_ptr(o + i_bh * T * V, (T, V), (V, 1), (i_t * BT, i_v * BV), (BT, BV), (1, 0))
+    tl.store(p_o, acc.to(p_o.dtype.element_ty), boundary_check=(0, 1))
 
 
 # @torch.compile
