@@ -214,4 +214,5 @@ chosen_checkpoints/
 inference_times/
 attention_analysis/
 benchmark_results/
+.agent/
 synthetic_traj/*
