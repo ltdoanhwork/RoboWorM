@@ -53,6 +53,13 @@ def _import_svg_module(module_name):
         sys.path.insert(0, project_root)
     return importlib.import_module(f"methods.sparse_attention.svg.{module_name}")
 
+
+def _import_radial_module(module_name):
+    project_root = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../.."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+    return importlib.import_module(f"methods.sparse_attention.radial.{module_name}")
+
 class agent():
     def __init__(self,args):
           
@@ -325,6 +332,9 @@ if __name__ == "__main__":
     # ---- SVG sparse attention (optional, training-free) -----
     _svg_config = _import_svg_module("config")
     _svg_config.add_svg_args(parser)
+    # ---- Radial sparse attention (optional, training-free) --
+    _radial_config = _import_radial_module("config")
+    _radial_config.add_radial_args(parser)
     # ---------------------------------------------------------
     args_new = parser.parse_args()
 
@@ -367,6 +377,16 @@ if __name__ == "__main__":
             top_p_kmeans=args_new.svg_top_p_kmeans,
             kmeans_iter_init=args_new.svg_kmeans_iter_init,
             kmeans_iter_step=args_new.svg_kmeans_iter_step,
+        )
+    # ---- Enable Radial after model is loaded (non-invasive) --------
+    if getattr(args_new, 'use_radial', False):
+        _radial_adapter = _import_radial_module("adapter")
+        _radial_adapter.enable_radial_attention(
+            Agent.model.unet,
+            decay_factor=args_new.radial_decay_factor,
+            block_size=args_new.radial_block_size,
+            pad_small_layers=args_new.radial_pad_small_layers,
+            first_layers_fp=args_new.radial_first_layers_fp,
         )
     # -----------------------------------------------------------------
     interact_num = args.interact_num
