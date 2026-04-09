@@ -212,4 +212,6 @@ h264/
 
 chosen_checkpoints/
 inference_times/
-attention_analysis
+attention_analysis/
+benchmark_results/
+synthetic_traj/*
