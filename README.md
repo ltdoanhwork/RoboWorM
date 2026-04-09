@@ -168,9 +168,8 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
   --disable_guardrail \
   --num_gpus ${NUM_GPUS} \
   --use_pisa \
-  --pisa_density 0.3 \
+  --pisa_density 0.2 \
   --pisa_block_size 64 \
-  --pisa_use_bias \
   --pisa_start_layer_idx 2
 
 
