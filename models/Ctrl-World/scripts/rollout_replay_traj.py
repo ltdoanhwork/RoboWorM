@@ -43,6 +43,21 @@ def _import_pisa_module(module_name):
     return importlib.import_module(f"methods.sparse_attention.pisa.{module_name}")
 
 
+def _import_svg_module(module_name):
+    project_root = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../.."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+    return importlib.import_module(f"methods.sparse_attention.svg.{module_name}")
+
+
+def _import_radial_module(module_name):
+    project_root = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../.."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+    # Python modules prefer hyphens to be imported via importlib if they are folders
+    return importlib.import_module(f"methods.sparse_attention.radial.{module_name}")
+
+
 class agent():
     def __init__(self,args):
           
@@ -240,6 +255,12 @@ if __name__ == "__main__":
     # ---- PISA sparse attention (optional, training-free) ----
     _pisa_config = _import_pisa_module("config")
     _pisa_config.add_pisa_args(parser)
+    # ---- SVG sparse attention (optional, training-free) -----
+    _svg_config = _import_svg_module("config")
+    _svg_config.add_svg_args(parser)
+    # ---- Radial sparse attention (optional, training-free) --
+    _radial_config = _import_radial_module("config")
+    _radial_config.add_radial_args(parser)
     # ---------------------------------------------------------
     args_new = parser.parse_args()
 
@@ -265,6 +286,40 @@ if __name__ == "__main__":
             density=args_new.pisa_density,
             block_size=args_new.pisa_block_size,
             start_layer_idx=args_new.pisa_start_layer_idx,
+        )
+    # ---- Enable SVG after model is loaded (non-invasive) ------------
+    if getattr(args_new, 'use_svg', False):
+        _svg_adapter = _import_svg_module("adapter")
+        _svg_adapter.enable_svg(
+            Agent.model.unet,
+            pattern=args_new.svg_pattern,
+            sparsity=args_new.svg_sparsity,
+            num_sampled_rows=args_new.svg_num_sampled_rows,
+            first_layers_fp=args_new.svg_first_layers_fp,
+            # 3-view stacked latent geometry
+            num_views=3,
+            H_per_view=args.height // 8,      # 192/8 = 24
+            W=args.width // 8,                # 320/8 = 40
+            # SVG2 / SAP params
+            num_q_centroids=args_new.svg_num_q_centroids,
+            num_k_centroids=args_new.svg_num_k_centroids,
+            top_p_kmeans=args_new.svg_top_p_kmeans,
+            kmeans_iter_init=args_new.svg_kmeans_iter_init,
+            kmeans_iter_step=args_new.svg_kmeans_iter_step,
+        )
+    # ---- Enable Radial after model is loaded (non-invasive) --------
+    if getattr(args_new, 'use_radial', False):
+        _radial_adapter = _import_radial_module("adapter")
+        _radial_adapter.enable_radial_attention(
+            Agent.model.unet,
+            decay_factor=args_new.radial_decay_factor,
+            block_size=args_new.radial_block_size,
+            pad_small_layers=args_new.radial_pad_small_layers,
+            first_layers_fp=args_new.radial_first_layers_fp,
+            num_views=args_new.radial_num_views,
+            H_per_view=args_new.radial_h_per_view,
+            W=args_new.radial_w,
+            model_type=args_new.radial_model_type,
         )
     # -----------------------------------------------------------------
     interact_num = args.interact_num
