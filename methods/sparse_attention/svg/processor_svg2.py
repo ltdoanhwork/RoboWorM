@@ -11,7 +11,7 @@ Algorithm:
   2. Build a dynamic sparse map: which (q-cluster, k-cluster) pairs to compute.
   3. Permute Q, K, V by their cluster labels to make the sparse structure
      block-contiguous in memory.
-  4. Apply block-sparse attention (via flashinfer if available, else masked SDPA).
+  4. Apply block-sparse attention (via flashinfer if available).
   5. Apply inverse permutation to restore original token order.
 
 Dependencies:
@@ -21,69 +21,34 @@ Dependencies:
                                 apply_inverse_permutation_triton
   - flashinfer: for dynamic_block_sparse_fwd_flashinfer
 
-If flashinfer is not installed, SVG2 falls back to masked SDPA on a
-permuted-then-padded tensor (correct but not as fast as the block-sparse kernel).
+Fallback: Disabled per user request ("tắt hết fallback"). This script will
+CRASH if any dependency is missing or if any step fails.
 """
 
 from __future__ import annotations
 
-import warnings
-from typing import Optional
-
 import torch
 import torch.nn.functional as F
+from typing import Optional
 
 from .processor_svg1 import SVDSVGAttnProcessor, _split_heads
 
-# ── lazy imports from SVG source (injected into sys.path by adapter.py) ──────
-
-def _try_import_kmeans():
-    try:
-        from svg.kmeans_utils import (
-            batch_kmeans_Euclid,
-            identify_dynamic_map,
-            dynamic_block_sparse_fwd_flashinfer,
-            density_calculation,
-        )
-        return batch_kmeans_Euclid, identify_dynamic_map, \
-               dynamic_block_sparse_fwd_flashinfer, density_calculation
-    except ImportError as e:
-        warnings.warn(
-            f"[SVG2] svg.kmeans_utils not found: {e}. "
-            "Install the SVG package: pip install -e methods/sparse_attention/Sparse-VideoGen"
-        )
-        return None, None, None, None
-
-
-def _try_import_triton_permute():
-    try:
-        from svg.kernels.triton.permute import (
-            permute_tensor_by_labels_triton,
-            apply_inverse_permutation_triton,
-        )
-        return permute_tensor_by_labels_triton, apply_inverse_permutation_triton
-    except ImportError as e:
-        warnings.warn(
-            f"[SVG2] svg.kernels.triton.permute not found: {e}. "
-            "Build SVG kernels: cd methods/sparse_attention/Sparse-VideoGen && bash svg/kernels/setup.sh"
-        )
-        return None, None
-
+# Mandatory imports from SVG source (path added by adapter.py)
+from svg.kmeans_utils import (
+    batch_kmeans_Euclid,
+    identify_dynamic_map,
+    dynamic_block_sparse_fwd_flashinfer,
+    density_calculation,
+)
+from svg.kernels.triton.permute import (
+    permute_tensor_by_labels_triton,
+    apply_inverse_permutation_triton,
+)
 
 class SVDSAPAttnProcessor(SVDSVGAttnProcessor):
     """
     SVG2 Semantic Aware Permutation processor for SVD UNet.
-
-    Inherits fallback and head-splitting logic from SVDSVGAttnProcessor.
-    Overrides the core sparse attention with K-Means + block sparse.
-
-    Class-level attributes set by adapter.py:
-        num_q_centroids:   int  — K-Means clusters for queries.
-        num_k_centroids:   int  — K-Means clusters for keys.
-        top_p_kmeans:      float — top-p threshold for block selection.
-        min_kc_ratio:      float — minimum fraction of key blocks per query block.
-        kmeans_iter_init:  int  — K-Means iterations on first call.
-        kmeans_iter_step:  int  — K-Means iterations on subsequent calls.
+    Hard-coded to use SVG2 logic; no silent fallback to full attention.
     """
 
     # ── SVG2-specific class-level state ───────────────────────────────────
@@ -102,30 +67,17 @@ class SVDSAPAttnProcessor(SVDSVGAttnProcessor):
         self._q_centroids = None
         self._k_centroids = None
 
-        # Lazy-load SVG utilities
-        (
-            self._batch_kmeans,
-            self._identify_dynamic_map,
-            self._block_sparse_fwd,
-            self._density_calc,
-        ) = _try_import_kmeans()
-        self._permute_fn, self._inv_permute_fn = _try_import_triton_permute()
-
-        self._svg2_available = (
-            self._batch_kmeans is not None and self._permute_fn is not None
-        )
-        if not self._svg2_available:
-            warnings.warn(
-                "[SVG2] Required imports not available. "
-                "SVG2 will fall back to full SDPA until SVG package + kernels are installed."
-            )
+        # Assign mandatory functions
+        self._batch_kmeans = batch_kmeans_Euclid
+        self._identify_dynamic_map = identify_dynamic_map
+        self._block_sparse_fwd = dynamic_block_sparse_fwd_flashinfer
+        self._density_calc = density_calculation
+        self._permute_fn = permute_tensor_by_labels_triton
+        self._inv_permute_fn = apply_inverse_permutation_triton
 
     # ── override core sparse attention ────────────────────────────────────
     def _svg1_attention(self, q, k, v, T):
-        """Overrides SVG1 logic with SVG2 SAP when available."""
-        if not self._svg2_available:
-            # Pure SDPA fallback
-            return F.scaled_dot_product_attention(q, k, v, dropout_p=0.0)
+        """Overrides SVG1 logic with SVG2 SAP."""
         return self._sap_attention(q, k, v, T)
 
     def _sap_attention(
@@ -141,45 +93,34 @@ class SVDSAPAttnProcessor(SVDSVGAttnProcessor):
         """
         B, H, _, D_h = q.shape
 
-        try:
-            # 1. Run K-Means on Q and K
-            qlabels, qcentroids, qcluster_sizes = self._run_kmeans(q, k)
+        # 1. Run K-Means on Q and K
+        qlabels, qcentroids, qcluster_sizes = self._run_kmeans(q, k)
 
-            # 2. Build dynamic sparse map
-            q_szs = qcluster_sizes[0].view(B, H, self.num_q_centroids)
-            k_szs = qcluster_sizes[1].view(B, H, self.num_k_centroids)
-            dynamic_map = self._identify_dynamic_map(
-                qcentroids.view(B, H, self.num_q_centroids, D_h),
-                qcentroids[1].view(B, H, self.num_k_centroids, D_h),   # k centroids
-                q_szs, k_szs,
-                self.top_p_kmeans, self.min_kc_ratio,
-            )
+        # 2. Build dynamic sparse map
+        q_szs = qcluster_sizes[0].view(B, H, self.num_q_centroids)
+        k_szs = qcluster_sizes[1].view(B, H, self.num_k_centroids)
+        dynamic_map = self._identify_dynamic_map(
+            qcentroids[0].view(B, H, self.num_q_centroids, D_h),
+            qcentroids[1].view(B, H, self.num_k_centroids, D_h),
+            q_szs, k_szs,
+            self.top_p_kmeans, self.min_kc_ratio,
+        )
 
-            # 3. Permute Q, K, V by cluster labels
-            q_perm, q_idx = self._permute_fn(q, qlabels[0], dim=2)
-            k_perm, k_idx = self._permute_fn(k, qlabels[1], dim=2)
-            v_perm, _     = self._permute_fn(v, qlabels[1], dim=2, sorted_indices=k_idx)
+        # 3. Permute Q, K, V by cluster labels
+        q_perm, q_idx = self._permute_fn(q, qlabels[0], dim=2)
+        k_perm, k_idx = self._permute_fn(k, qlabels[1], dim=2)
+        v_perm, _     = self._permute_fn(v, qlabels[1], dim=2, sorted_indices=k_idx)
 
-            # 4. Block-sparse attention
-            if self._block_sparse_fwd is not None:
-                try:
-                    out_perm = self._block_sparse_fwd(
-                        q_perm, k_perm, v_perm, dynamic_map, q_szs, k_szs, is_cpu=False
-                    )
-                except Exception as e:
-                    warnings.warn(f"[SVG2] block_sparse_fwd failed ({e}), falling back to SDPA.")
-                    out_perm = F.scaled_dot_product_attention(q_perm, k_perm, v_perm, dropout_p=0.0)
-            else:
-                out_perm = F.scaled_dot_product_attention(q_perm, k_perm, v_perm, dropout_p=0.0)
+        # 4. Block-sparse attention
+        # No fallback here — if flashinfer is missing, it will crash.
+        out_perm = self._block_sparse_fwd(
+            q_perm, k_perm, v_perm, dynamic_map, q_szs, k_szs, is_cpu=False
+        )
 
-            # 5. Inverse permutation
-            out = self._inv_permute_fn(out_perm, q_idx.unsqueeze(0), dim=2)
-            return out.reshape(B, H, T, D_h)
-
-        except Exception as e:
-            # Any failure → safe SDPA fallback
-            warnings.warn(f"[SVG2] SAP attention failed ({e}), falling back to full SDPA.")
-            return F.scaled_dot_product_attention(q, k, v, dropout_p=0.0)
+        # 5. Inverse permutation
+        # q_idx shape is (B*H, T), which matches what the kernel expects for a flattened input.
+        out = self._inv_permute_fn(out_perm, q_idx, dim=2)
+        return out.reshape(B, H, T, D_h)
 
     # ── K-Means helpers ────────────────────────────────────────────────────
     def _run_kmeans(self, q, k):
@@ -211,6 +152,4 @@ class SVDSAPAttnProcessor(SVDSVGAttnProcessor):
         self._k_centroids = kcentroids
         self._centroids_init = True
 
-        # Package for caller: labels as (qlabels, klabels), centroids as tuple,
-        # cluster sizes as tuple
         return (qlabels, klabels), (qcentroids, kcentroids), (qcs, kcs)
