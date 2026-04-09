@@ -30,7 +30,8 @@ def enable_radial_attention(
     # Geometry
     num_views: int = 3,
     H_per_view: int = 24,          
-    W: int = 40,                   
+    W: int = 40,
+    model_type: str = "hunyuan",
 ) -> None:
     """
     Inject Radial Attention into all diffusers Attention layers of `unet`.
@@ -48,6 +49,7 @@ def enable_radial_attention(
     SVDRadialAttnProcessor.num_views = num_views
     SVDRadialAttnProcessor.H_per_view = H_per_view
     SVDRadialAttnProcessor.W = W
+    SVDRadialAttnProcessor.model_type = model_type
 
     num_layers = len(unet.attn_processors)
     processors = {
@@ -62,7 +64,7 @@ def enable_radial_attention(
     print(
         f"[Radial] Enabled on {num_layers} layers.\n"
         f"[Radial] Config: decay={decay_factor}, block_size={block_size}, pad_small={pad_small_layers}, "
-        f"first_layers_fp={first_layers_fp}/{num_layers}, L0 T={T_l0}"
+        f"first_layers_fp={first_layers_fp}/{num_layers}, L0 T={T_l0}, model_type={model_type}"
     )
 
 def disable_radial_attention(unet) -> None:

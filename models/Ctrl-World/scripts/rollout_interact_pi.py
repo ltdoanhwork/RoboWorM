@@ -387,6 +387,10 @@ if __name__ == "__main__":
             block_size=args_new.radial_block_size,
             pad_small_layers=args_new.radial_pad_small_layers,
             first_layers_fp=args_new.radial_first_layers_fp,
+            num_views=args_new.radial_num_views,
+            H_per_view=args_new.radial_h_per_view,
+            W=args_new.radial_w,
+            model_type=args_new.radial_model_type,
         )
     # -----------------------------------------------------------------
     interact_num = args.interact_num

@@ -21,8 +21,6 @@ Dependencies:
                                 apply_inverse_permutation_triton
   - flashinfer: for dynamic_block_sparse_fwd_flashinfer
 
-Fallback: Disabled per user request ("tắt hết fallback"). This script will
-CRASH if any dependency is missing or if any step fails.
 """
 
 from __future__ import annotations

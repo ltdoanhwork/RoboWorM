@@ -133,7 +133,7 @@ class SVDRadialAttnProcessor:
         v = v.transpose(1, 2).contiguous()
 
         # Extract boolean mask
-        video_mask = mask_map.queryLogMask(q, "radial", block_size=self.block_size, decay_factor=self.decay_factor, model_type="hunyuan")
+        video_mask = mask_map.queryLogMask(q, "radial", block_size=self.block_size, decay_factor=self.decay_factor, model_type=self.model_type)
         video_mask = video_mask[:padded_T // self.block_size, :padded_T // self.block_size]
         
         # Get flashinfer wrapper for this geometry

@@ -37,4 +37,29 @@ def add_radial_args(parser: argparse.ArgumentParser) -> None:
         default=2,
         help="Keep the first N layers at full precision / full attention."
     )
+    group.add_argument(
+        "--radial_num_views",
+        type=int,
+        default=3,
+        help="Number of stacked views in the UNet spatial frame (for SVD, usually 3)."
+    )
+    group.add_argument(
+        "--radial_h_per_view",
+        type=int,
+        default=24,
+        help="Latent height per view (for 192px height, 192/8 = 24)."
+    )
+    group.add_argument(
+        "--radial_w",
+        type=int,
+        default=40,
+        help="Latent width per view (for 320px width, 320/8 = 40)."
+    )
+    group.add_argument(
+        "--radial_model_type",
+        type=str,
+        default="hunyuan",
+        choices=["hunyuan", "wan"],
+        help="Underlying radial sparsity mask strategy (wan has larger sink/window). "
+    )
     
