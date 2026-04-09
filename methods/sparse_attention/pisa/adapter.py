@@ -10,27 +10,14 @@ API
     disable_pisa(unet)
 """
 
-import os
-import sys
 import torch
 
-# ---------------------------------------------------------------------------
-# Locate PISA source relative to this file and add to sys.path
-# Adjust if the piecewise-sparse-attention repo moves.
-# ---------------------------------------------------------------------------
-_PISA_SRC = os.path.normpath(
-    os.path.join(os.path.dirname(__file__), "..", "piecewise-sparse-attention")
-)
-if _PISA_SRC not in sys.path:
-    sys.path.insert(0, _PISA_SRC)
-
 try:
-    from piecewise_attn import piecewise_sparse_attention
+    from .piecewise_sparse_attn_tma import piecewise_sparse_attention
 except ImportError as e:
     raise ImportError(
-        f"[PISA] Could not import piecewise_attn from {_PISA_SRC}.\n"
-        f"Make sure 'piecewise-sparse-attention' is present and dependencies "
-        f"(torch>=2.7.1, triton>=3.5.1) are installed.\n"
+        "[PISA] Could not import vendored piecewise_sparse_attn_tma.\n"
+        "Make sure its Triton dependencies are installed.\n"
         f"Original error: {e}"
     )
 
@@ -86,12 +73,5 @@ def disable_pisa(unet) -> None:
     Restore the UNet's default PyTorch SDPA attention processors.
     Safe to call even if PISA was never enabled.
     """
-    try:
-        unet.set_default_attn_processor()
-        print("[PISA] Disabled — restored default attention processors.")
-    except Exception:
-        # If set_default_attn_processor fails (e.g. mixed types), fallback
-        from diffusers.models.attention_processor import AttnProcessor2_0
-        count = len(unet.attn_processors)
-        unet.set_attn_processor(AttnProcessor2_0())
-        print(f"[PISA] Disabled (fallback path) — {count} layers restored.")
+    unet.set_default_attn_processor()
+    print("[PISA] Disabled — restored default attention processors.")

@@ -40,6 +40,22 @@ from examples.video2world import process_single_generation as process_single_vid
 from examples.video2world import setup_pipeline as setup_video2world_pipeline
 from imaginaire.utils import log
 
+# ---- PISA Integration ----
+def _import_pisa_adapter():
+    import sys
+    import os
+    # Search for project root (where 'methods' directory resides)
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # The script is in models/dreamgen/examples/
+    # Project root should be 3 levels up
+    project_root = os.path.normpath(os.path.join(current_dir, "../../.."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+
+    from methods.sparse_attention.pisa.config import add_pisa_args
+    return add_pisa_args
+# --------------------------
+
 _DEFAULT_POSITIVE_PROMPT = "An autonomous welding robot arm operating inside a modern automotive factory, sparks flying as it welds a car frame with precision under bright overhead lights."
 
 
@@ -155,6 +171,12 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Run the sparse attention variant (with NATTEN).",
     )
+
+    # ---- PISA Integration ----
+    add_pisa_args = _import_pisa_adapter()
+    add_pisa_args(parser)
+    # --------------------------
+
     return parser.parse_args()
 
 

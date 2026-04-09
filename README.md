@@ -50,9 +50,9 @@ export PYTHONPATH="./models/dreamgen"
 export CUDA_VISIBLE_DEVICES=0 
 export NUM_GPUS=1
 python -m scripts.prepare_batch_input_json \
-  --dataset_path ./datasets/dream_gen_benchmark/gr1_behavior \
-  --save_path ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior \
-  --output_path ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json
+  --dataset_path ./datasets/dream_gen_benchmark/gr1_env \
+  --save_path ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_env \
+  --output_path ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_env/batch_input.json
 
 ### dreamgen base - one gpu
 source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
@@ -77,3 +77,40 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
   --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
   --disable_guardrail \
   --num_gpus ${NUM_GPUS}
+
+### dreamgen - pisa
+cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/methods/sparse_attention/piecewise-sparse-attention
+uv pip install -e .
+
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+export PYTHONPATH="./models/dreamgen"
+export CUDA_VISIBLE_DEVICES=0 
+export NUM_GPUS=1
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+  --model_size 14B \
+  --gr00t_variant gr1 \
+  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_env/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS} \
+  --use_pisa \
+  --pisa_density 0.3 \
+  --pisa_block_size 64 \
+  --pisa_use_bias \
+  --pisa_start_layer_idx 2
+
+
+
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+export PYTHONPATH="./models/dreamgen"
+export CUDA_VISIBLE_DEVICES=0,1
+export NUM_GPUS=2
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+  --model_size 14B \
+  --gr00t_variant gr1 \
+  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS} \
+  --use_pisa \
+  --pisa_density 0.1 \
+  --pisa_block_size 64 \
+  --pisa_use_bias

@@ -43,6 +43,21 @@ from examples.video2world import _DEFAULT_NEGATIVE_PROMPT, validate_input_file
 from imaginaire.utils import distributed, log, misc
 from imaginaire.utils.io import save_image_or_video, save_text_prompts
 
+# ---- PISA Integration ----
+def _import_pisa_adapter():
+    import sys
+    # Search for project root (where 'methods' directory resides)
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # The script is in models/dreamgen/examples/
+    # Project root should be 3 levels up
+    project_root = os.path.normpath(os.path.join(current_dir, "../../.."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+
+    from methods.sparse_attention.pisa.config import add_pisa_args
+    return add_pisa_args, None
+# --------------------------
+
 
 def _resolve_tokenizer_path(dit_path: str, default_tokenizer_path: str) -> str:
     checkpoint_dir = os.path.dirname(dit_path)
@@ -136,13 +151,27 @@ def parse_args() -> argparse.Namespace:
         "--prompt_prefix", type=str, default="The robot arm is performing a task. ", help="Prefix to add to all prompts"
     )
 
+    # ---- PISA Integration ----
+    add_pisa_args, _ = _import_pisa_adapter()
+    add_pisa_args(parser)
+    # --------------------------
+
     return parser.parse_args()
 
 
 def setup_pipeline(args: argparse.Namespace):
     resolution = "480"
     fps = 16
-    config = get_cosmos_predict2_video2world_pipeline(model_size=args.model_size, resolution=resolution, fps=fps)
+    config = get_cosmos_predict2_video2world_pipeline(
+        model_size=args.model_size,
+        resolution=resolution,
+        fps=fps,
+        pisa=getattr(args, "use_pisa", False),
+        pisa_density=getattr(args, "pisa_density", 0.5),
+        pisa_block_size=getattr(args, "pisa_block_size", 64),
+        pisa_start_layer_idx=getattr(args, "pisa_start_layer_idx", 0),
+        pisa_use_bias=getattr(args, "pisa_use_bias", False),
+    )
     config.prompt_refiner_config.enabled = False
     if args.dit_path:
         dit_path = args.dit_path

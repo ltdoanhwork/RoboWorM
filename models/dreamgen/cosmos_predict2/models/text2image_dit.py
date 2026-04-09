@@ -36,7 +36,7 @@ from torchvision import transforms
 from transformer_engine.pytorch.attention import DotProductAttention, apply_rotary_pos_emb
 
 from cosmos_predict2.conditioner import DataType
-from cosmos_predict2.module.a2a_cp import MinimalA2AAttnOp, NattenA2AAttnOp
+from cosmos_predict2.module.a2a_cp import MinimalA2AAttnOp, NattenA2AAttnOp, PISAA2AAttnOp
 from cosmos_predict2.module.neighborhood_attn import NeighborhoodAttention
 from cosmos_predict2.networks.model_weights_stats import WeightTrainingStat
 from cosmos_predict2.networks.selective_activation_checkpoint import SACConfig as _SACConfig
@@ -265,6 +265,7 @@ class Attention(nn.Module):
         qkv_format: str = "bshd",
         backend: str = "transformer_engine",
         natten_params: Mapping | None = None,
+        pisa_params: Mapping | None = None,
     ) -> None:
         super().__init__()
         log.debug(
@@ -273,7 +274,7 @@ class Attention(nn.Module):
         )
         self.is_selfattn = context_dim is None  # self attention
 
-        if backend not in ["transformer_engine", "torch", "minimal_a2a", "natten"]:
+        if backend not in ["transformer_engine", "torch", "minimal_a2a", "natten", "pisa"]:
             raise NotImplementedError(f"Unrecognized {backend=}.")
 
         self.backend = backend
@@ -314,6 +315,10 @@ class Attention(nn.Module):
             if natten_params is None:
                 raise ValueError("You must specify `natten_params` when using the NATTEN backend, got None.")
             self.attn_op = NattenA2AAttnOp(natten_parameters=natten_params)
+        elif self.backend == "pisa":
+            if pisa_params is None:
+                raise ValueError("You must specify `pisa_params` when using the PISA backend, got None.")
+            self.attn_op = PISAA2AAttnOp(**pisa_params)
 
         elif self.backend == "torch":
             self.attn_op = torch_attention_op
@@ -923,6 +928,7 @@ class Block(nn.Module):
         self_attention_backend: str = "transformer_engine",
         cross_attention_backend: str = "transformer_engine",
         natten_params: Mapping | None = None,
+        pisa_params: Mapping | None = None,
     ):
         super().__init__()
         self.x_dim = x_dim
@@ -935,6 +941,7 @@ class Block(nn.Module):
             qkv_format="bshd",
             backend=self_attention_backend,
             natten_params=natten_params,
+            pisa_params=pisa_params,
         )
 
         self.layer_norm_cross_attn = nn.LayerNorm(x_dim, elementwise_affine=False, eps=1e-6)
@@ -1221,6 +1228,7 @@ class MiniTrainDIT(WeightTrainingStat):
         rope_enable_fps_modulation: bool = True,
         sac_config: SACConfig = SACConfig(),  # noqa: B008
         natten_parameters: dict | list = None,  # noqa: RUF013
+        pisa_parameters: dict | list = None,  # noqa: RUF013
     ) -> None:
         super().__init__()
         self.max_img_h = max_img_h
@@ -1280,6 +1288,27 @@ class MiniTrainDIT(WeightTrainingStat):
                 f"that indicate at least a `window_size`, got {natten_parameters=}."
             )
 
+        if pisa_parameters is not None and not isinstance(pisa_parameters, Sequence):
+            raise ValueError(
+                "`pisa_parameters` must either be None, or a list of the same length as the number of blocks, "
+                f"got {type(pisa_parameters)=}."
+            )
+
+        if pisa_parameters is not None and len(pisa_parameters) != num_blocks:
+            raise ValueError(
+                "`pisa_parameters` must either be None, or a list of the same length as the number of blocks, "
+                f"got {len(pisa_parameters)=} != {num_blocks=}."
+            )
+
+        if pisa_parameters is not None and any(x is not None and not isinstance(x, Mapping) for x in pisa_parameters):
+            raise ValueError(
+                "`pisa_parameters` must be a list of Nones or dicts describing per-block PISA settings, "
+                f"got {pisa_parameters=}."
+            )
+
+        if natten_parameters is not None and pisa_parameters is not None:
+            raise ValueError("`natten_parameters` and `pisa_parameters` are mutually exclusive.")
+
         self.blocks = nn.ModuleList(
             [
                 Block(
@@ -1289,11 +1318,16 @@ class MiniTrainDIT(WeightTrainingStat):
                     mlp_ratio=mlp_ratio,
                     use_adaln_lora=use_adaln_lora,
                     adaln_lora_dim=adaln_lora_dim,
-                    self_attention_backend=atten_backend
-                    if natten_parameters is None or natten_parameters[i] is None
-                    else "natten",
+                    self_attention_backend=(
+                        "natten"
+                        if natten_parameters is not None and natten_parameters[i] is not None
+                        else "pisa"
+                        if pisa_parameters is not None and pisa_parameters[i] is not None
+                        else atten_backend
+                    ),
                     cross_attention_backend=atten_backend,
                     natten_params=None if natten_parameters is None else natten_parameters[i],
+                    pisa_params=None if pisa_parameters is None else pisa_parameters[i],
                 )
                 for i in range(num_blocks)
             ]

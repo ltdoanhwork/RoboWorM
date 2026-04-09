@@ -14,10 +14,12 @@
 # limitations under the License.
 
 import dataclasses
+from copy import deepcopy
 
 import attrs
 
 from cosmos_predict2.conditioner import ReMapkey, TextAttr, TextConditioner
+from cosmos_predict2.configs.base.config_pisa import build_pisa_parameters
 from cosmos_predict2.configs.base.defaults.ema import EMAConfig
 from cosmos_predict2.models.text2image_dit import MiniTrainDIT
 from cosmos_predict2.tokenizers_local.tokenizer import CosmosImageTokenizer, TokenizerInterface
@@ -368,7 +370,23 @@ _PREDICT2_TEXT2IMAGE_PIPELINES: dict[_Text2ImagePipelineConfig, Text2ImagePipeli
 
 
 def get_cosmos_predict2_text2image_pipeline(
-    *, model_size: CosmosPredict2Video2WorldModelSize, fast_tokenizer: bool = False
+    *,
+    model_size: CosmosPredict2Video2WorldModelSize,
+    fast_tokenizer: bool = False,
+    pisa: bool = False,
+    pisa_density: float = 0.5,
+    pisa_block_size: int = 64,
+    pisa_start_layer_idx: int = 0,
+    pisa_use_bias: bool = False,
 ) -> Text2ImagePipelineConfig:
     key = _Text2ImagePipelineConfig(model_size, fast_tokenizer=fast_tokenizer)
-    return _PREDICT2_TEXT2IMAGE_PIPELINES[key]
+    config = deepcopy(_PREDICT2_TEXT2IMAGE_PIPELINES[key])
+    if pisa:
+        config.net.pisa_parameters = build_pisa_parameters(
+            config.net.num_blocks,
+            density=pisa_density,
+            block_size=pisa_block_size,
+            start_layer_idx=pisa_start_layer_idx,
+            use_bias=pisa_use_bias,
+        )
+    return config

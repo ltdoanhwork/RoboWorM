@@ -41,6 +41,21 @@ from imaginaire.constants import (
 from imaginaire.utils import distributed, log, misc
 from imaginaire.utils.io import save_image_or_video, save_text_prompts
 
+# ---- PISA Integration ----
+def _import_pisa_adapter():
+    import sys
+    # Search for project root (where 'methods' directory resides)
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # The script is in models/dreamgen/examples/
+    # Project root should be 3 levels up
+    project_root = os.path.normpath(os.path.join(current_dir, "../../.."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+
+    from methods.sparse_attention.pisa.config import add_pisa_args
+    return add_pisa_args, None
+# --------------------------
+
 _DEFAULT_POSITIVE_PROMPT = "A well-worn broom sweeps across a dusty wooden floor, its bristles gathering crumbs and flecks of debris in swift, rhythmic strokes. Dust motes dance in the sunbeams filtering through the window, glowing momentarily before settling. The quiet swish of straw brushing wood is interrupted only by the occasional creak of old floorboards. With each pass, the floor grows cleaner, restoring a sense of quiet order to the humble room."
 
 
@@ -105,13 +120,27 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Use fast tokenizer for generation.",
     )
+
+    # ---- PISA Integration ----
+    add_pisa_args, _ = _import_pisa_adapter()
+    add_pisa_args(parser)
+    # --------------------------
+
     return parser.parse_args()
 
 
 def setup_pipeline(args: argparse.Namespace, text_encoder: CosmosTextEncoder | None = None) -> Text2ImagePipeline:
     print_environment_info(args)
 
-    config = get_cosmos_predict2_text2image_pipeline(model_size=args.model_size, fast_tokenizer=args.use_fast_tokenizer)
+    config = get_cosmos_predict2_text2image_pipeline(
+        model_size=args.model_size,
+        fast_tokenizer=args.use_fast_tokenizer,
+        pisa=getattr(args, "use_pisa", False),
+        pisa_density=getattr(args, "pisa_density", 0.5),
+        pisa_block_size=getattr(args, "pisa_block_size", 64),
+        pisa_start_layer_idx=getattr(args, "pisa_start_layer_idx", 0),
+        pisa_use_bias=getattr(args, "pisa_use_bias", False),
+    )
     if hasattr(args, "dit_path") and args.dit_path:
         dit_path = args.dit_path
     else:
@@ -162,6 +191,7 @@ def setup_pipeline(args: argparse.Namespace, text_encoder: CosmosTextEncoder | N
                 load_ema_to_reg=args.load_ema,
                 distill_steps=args.distill_steps,
             )
+
             return pipe
         else:
             log.info(f"Rank {rank}: Skipping Text2ImagePipeline initialization - will wait for rank 0")

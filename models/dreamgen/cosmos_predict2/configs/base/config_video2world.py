@@ -24,6 +24,7 @@ from cosmos_predict2.configs.base.config_natten import (
     PREDICT2_VIDEO2WORLD_NET_2B_NATTEN_PARAMETERS,
     PREDICT2_VIDEO2WORLD_NET_14B_NATTEN_PARAMETERS,
 )
+from cosmos_predict2.configs.base.config_pisa import build_pisa_parameters
 from cosmos_predict2.configs.base.config_text2image import CosmosGuardrailConfig, SolverTimestampConfig
 from cosmos_predict2.configs.base.defaults.ema import EMAConfig
 from cosmos_predict2.models.text2image_dit import SACConfig
@@ -478,6 +479,22 @@ def get_cosmos_predict2_video2world_pipeline(
     resolution: CosmosPredict2Video2WorldResolution = "720",
     fps: CosmosPredict2Video2WorldFPS = 16,
     natten: bool = False,
+    pisa: bool = False,
+    pisa_density: float = 0.5,
+    pisa_block_size: int = 64,
+    pisa_start_layer_idx: int = 0,
+    pisa_use_bias: bool = False,
 ) -> Video2WorldPipelineConfig:
+    if natten and pisa:
+        raise ValueError("NATTEN and PISA cannot be enabled at the same time.")
     key = _Video2WorldPipelineConfig(model_size, resolution, fps, natten=natten)
-    return _PREDICT2_VIDEO2WORLD_PIPELINES[key]
+    config = deepcopy(_PREDICT2_VIDEO2WORLD_PIPELINES[key])
+    if pisa:
+        config.net.pisa_parameters = build_pisa_parameters(
+            config.net.num_blocks,
+            density=pisa_density,
+            block_size=pisa_block_size,
+            start_layer_idx=pisa_start_layer_idx,
+            use_bias=pisa_use_bias,
+        )
+    return config

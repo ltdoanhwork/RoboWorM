@@ -13,7 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import importlib.util
 from collections.abc import Callable
+from functools import lru_cache
+from pathlib import Path
 from typing import Any
 
 import torch
@@ -25,6 +28,27 @@ from torch.nn import Module
 
 from cosmos_predict2.module.attention import attention
 from cosmos_predict2.module.neighborhood_attn import NeighborhoodAttention
+
+
+@lru_cache(maxsize=1)
+def _load_piecewise_sparse_attention():
+    kernel_path = (
+        Path(__file__).resolve().parents[4]
+        / "methods"
+        / "sparse_attention"
+        / "pisa"
+        / "piecewise_sparse_attn_tma.py"
+    )
+    if not kernel_path.exists():
+        raise ImportError(f"[PISA] Missing vendored kernel at {kernel_path}.")
+
+    spec = importlib.util.spec_from_file_location("dreamgen_pisa_kernel", kernel_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"[PISA] Could not load module spec from {kernel_path}.")
+
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.piecewise_sparse_attention
 
 
 def post_all2all(local_seq_2_local_head, seq_world_size):
@@ -222,3 +246,49 @@ class NattenA2AAttnOp(MinimalA2AAttnOp):
         super(NattenA2AAttnOp, self).__init__(None)  # noqa: UP008
         self.natten_op = NeighborhoodAttention(*args, **kwargs, base_attn_op=attention)
         self.local_attn = self.natten_op
+
+
+class PISALocalAttnOp(torch.nn.Module):
+    def __init__(self, density: float = 0.5, block_size: int = 64, use_bias: bool = False):
+        super().__init__()
+        self.density = density
+        self.block_size = block_size
+        self.use_bias = use_bias
+
+    def forward(self, query: Tensor, key: Tensor, value: Tensor, *args: Any, **kwargs) -> Tensor:
+        del args, kwargs
+        if query.shape[1] != key.shape[1] or key.shape[1] != value.shape[1]:
+            raise RuntimeError(
+                f"[PISA] Cross-attention is not supported by the config-driven backend "
+                f"(T_q={query.shape[1]}, T_k={key.shape[1]}, T_v={value.shape[1]})."
+            )
+
+        piecewise_sparse_attention = _load_piecewise_sparse_attention()
+        q = rearrange(query, "b s h d -> b h s d").contiguous()
+        k = rearrange(key, "b s h d -> b h s d").contiguous()
+        v = rearrange(value, "b s h d -> b h s d").contiguous()
+        out = piecewise_sparse_attention(
+            q,
+            k,
+            v,
+            density=self.density,
+            block_size=min(self.block_size, query.shape[1]),
+            scale=None,
+            use_bias=self.use_bias,
+        )
+        return rearrange(out, "b h s d -> b s h d").contiguous()
+
+
+class PISAA2AAttnOp(DistributedAttention):
+    def __init__(self, density: float = 0.5, block_size: int = 64, use_bias: bool = False):
+        super(PISAA2AAttnOp, self).__init__(  # noqa: UP008
+            PISALocalAttnOp(density=density, block_size=block_size, use_bias=use_bias)
+        )
+
+    def set_context_parallel_group(self, process_group, ranks, stream):
+        del ranks
+        super().set_context_parallel_group(process_group, stream)
+
+    def forward(self, query: Tensor, key: Tensor, value: Tensor, *args: Any, **kwargs) -> Tensor:
+        results = super().forward(query, key, value, *args, **kwargs)
+        return rearrange(results, "b ... h d -> b ... (h d)")
