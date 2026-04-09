@@ -45,7 +45,13 @@ def _import_pisa_module(module_name):
     if project_root not in sys.path:
         sys.path.insert(0, project_root)
     return importlib.import_module(f"methods.sparse_attention.pisa.{module_name}")
-    
+
+
+def _import_svg_module(module_name):
+    project_root = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../.."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+    return importlib.import_module(f"methods.sparse_attention.svg.{module_name}")
 
 class agent():
     def __init__(self,args):
@@ -316,6 +322,9 @@ if __name__ == "__main__":
     # ---- PISA sparse attention (optional, training-free) ----
     _pisa_config = _import_pisa_module("config")
     _pisa_config.add_pisa_args(parser)
+    # ---- SVG sparse attention (optional, training-free) -----
+    _svg_config = _import_svg_module("config")
+    _svg_config.add_svg_args(parser)
     # ---------------------------------------------------------
     args_new = parser.parse_args()
 
@@ -340,6 +349,24 @@ if __name__ == "__main__":
             density=args_new.pisa_density,
             block_size=args_new.pisa_block_size,
             start_layer_idx=args_new.pisa_start_layer_idx,
+        )
+    # ---- Enable SVG after model is loaded (non-invasive) ------------
+    if getattr(args_new, 'use_svg', False):
+        _svg_adapter = _import_svg_module("adapter")
+        _svg_adapter.enable_svg(
+            Agent.model.unet,
+            pattern=args_new.svg_pattern,
+            sparsity=args_new.svg_sparsity,
+            num_sampled_rows=args_new.svg_num_sampled_rows,
+            first_layers_fp=args_new.svg_first_layers_fp,
+            num_views=3,
+            H_per_view=args.height // 8,
+            W=args.width // 8,
+            num_q_centroids=args_new.svg_num_q_centroids,
+            num_k_centroids=args_new.svg_num_k_centroids,
+            top_p_kmeans=args_new.svg_top_p_kmeans,
+            kmeans_iter_init=args_new.svg_kmeans_iter_init,
+            kmeans_iter_step=args_new.svg_kmeans_iter_step,
         )
     # -----------------------------------------------------------------
     interact_num = args.interact_num
