@@ -1,0 +1,4 @@
+wandb
+hydra-core
+opencv-python-headless
+ffmpegcv
