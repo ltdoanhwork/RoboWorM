@@ -1,0 +1,114 @@
+job:
+  project: dreamdojo
+  group: exp1201
+  name: agibot_14b
+
+trainer:
+  grad_accum_iter: 2
+  callbacks:
+    every_n_sample_reg:
+      every_n: 1000
+      fps: 5
+    every_n_sample_ema:
+      every_n: 1000
+      fps: 5
+
+model_parallel:
+  context_parallel_size: 1
+
+model:
+  config:
+    state_t: 4  # 1 + 12 // 4
+    net:
+      action_dim: 384
+      temporal_compression_ratio: 4
+      num_action_per_chunk: 12
+      zero_init_action_embedder: false
+
+dataloader_train:
+  batch_size: 2
+  
+  dataset:
+    num_frames: 13
+    dataset_path:
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0703_2544
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0703_2565
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0703_2568
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0717_2689
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0717_2710
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0721_2718
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0722_2747
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0728_2743
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0731_2777
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0801_2845
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0801_2880
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0801_2881
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0801_2883
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0801_2885
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0804_2812
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0804_2882
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0806_2900
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0807_2953
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0807_2955
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0808_2960
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0808_2973
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0808_2975
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0811_2982
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0811_2988
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0812_2890
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0812_2908
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0812_2979
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0812_2980
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0812_2981
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0812_2993
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0813_2887
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0813_2910
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0813_2994
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0813_2998
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0813_3034
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0814_2907
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0814_3016
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0815_2889
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0815_2891
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0815_3045
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0815_3069
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0818_1449
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0818_2912
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0818_2968
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0818_2990
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0818_3028
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0826_3113
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0828_3191
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0829_3191
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0902_3238
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0902_3239
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0903_3237
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0903_3248
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0911_3228
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0911_3228_lang
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0911_3228_long
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0911_3228_long_6k
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0911_3228_test
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0911_3228_train
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0911_3228_train_lang_sep
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0911_3228_train_lang_sep_max600
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0916_3285
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0916_3285_lang_sep
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.0916_3285_lang_sep_max600
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-0829-fullres/agibot.1009_3285
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-1104-fullres/agibot.1024_3592
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-1104-fullres/agibot.1104_3692
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-1104-fullres/agibot.1105_3948
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-1104-fullres/agibot.1106_OTJ_laundry
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-1104-diverse-fullres/agibot.1030_2155
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-1104-diverse-fullres/agibot.1030_2156
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-1104-diverse-fullres/agibot.1031_3578
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-1113-diverse-fullres/agibot.1111_3578_1
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-1113-diverse-fullres/agibot.1111_3578_2
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-1113-diverse-fullres/agibot.1111_3578_3
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-1113-diverse-fullres/agibot.1111_3798
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-1113-diverse-fullres/agibot.1111_3800_new
+      - /mnt/amlfs-03/shared/datasets/agibot-custom-converted-1113-diverse-fullres/agibot.1112_4102
+    data_split: train
+    single_base_index: false
+    deterministic_uniform_sampling: false

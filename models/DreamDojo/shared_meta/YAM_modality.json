@@ -1,0 +1,133 @@
+{
+    "state": {
+        "ee_pose_obs_left": {
+            "original_key": "observation.state",
+            "start": 0,
+            "end": 16,
+            "rotation_type": null,
+            "absolute": true,
+            "dtype": "float64",
+            "range": null
+        },
+        "ee_pose_obs_right": {
+            "original_key": "observation.state",
+            "start": 16,
+            "end": 32,
+            "rotation_type": null,
+            "absolute": true,
+            "dtype": "float64",
+            "range": null
+        },
+        "gripper_pos_obs_left": {
+            "original_key": "observation.state",
+            "start": 32,
+            "end": 33,
+            "rotation_type": null,
+            "absolute": true,
+            "dtype": "float64",
+            "range": null
+        },
+        "gripper_pos_obs_right": {
+            "original_key": "observation.state",
+            "start": 33,
+            "end": 34,
+            "rotation_type": null,
+            "absolute": true,
+            "dtype": "float64",
+            "range": null
+        },
+        "joint_pos_obs_left": {
+            "original_key": "observation.state",
+            "start": 34,
+            "end": 40,
+            "rotation_type": null,
+            "absolute": true,
+            "dtype": "float64",
+            "range": null
+        },
+        "joint_pos_obs_right": {
+            "original_key": "observation.state",
+            "start": 40,
+            "end": 46,
+            "rotation_type": null,
+            "absolute": true,
+            "dtype": "float64",
+            "range": null
+        }
+    },
+    "action": {
+        "ee_pose_action_left": {
+            "original_key": "action",
+            "start": 0,
+            "end": 16,
+            "rotation_type": null,
+            "absolute": true,
+            "dtype": "float64",
+            "range": null
+        },
+        "ee_pose_action_right": {
+            "original_key": "action",
+            "start": 16,
+            "end": 32,
+            "rotation_type": null,
+            "absolute": true,
+            "dtype": "float64",
+            "range": null
+        },
+        "gripper_pos_action_left": {
+            "original_key": "action",
+            "start": 32,
+            "end": 33,
+            "rotation_type": null,
+            "absolute": true,
+            "dtype": "float64",
+            "range": null
+        },
+        "gripper_pos_action_right": {
+            "original_key": "action",
+            "start": 33,
+            "end": 34,
+            "rotation_type": null,
+            "absolute": true,
+            "dtype": "float64",
+            "range": null
+        },
+        "joint_pos_action_left": {
+            "original_key": "action",
+            "start": 34,
+            "end": 40,
+            "rotation_type": null,
+            "absolute": true,
+            "dtype": "float64",
+            "range": null
+        },
+        "joint_pos_action_right": {
+            "original_key": "action",
+            "start": 40,
+            "end": 46,
+            "rotation_type": null,
+            "absolute": true,
+            "dtype": "float64",
+            "range": null
+        }
+    },
+    "video": {
+        "top_camera-images-rgb": {
+            "original_key": "observation.images.top_camera-images-rgb"
+        },
+        "right_camera-images-rgb": {
+            "original_key": "observation.images.right_camera-images-rgb"
+        },
+        "left_camera-images-rgb": {
+            "original_key": "observation.images.left_camera-images-rgb"
+        }
+    },
+    "annotation": {
+        "sub_task": {
+            "original_key": "annotation.sub_task"
+        },
+        "task": {
+            "original_key": "annotation.task"
+        }
+    }
+}

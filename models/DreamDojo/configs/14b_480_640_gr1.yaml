@@ -1,0 +1,37 @@
+job:
+  project: dreamdojo
+  group: exp1201
+  name: gr1_14b
+
+trainer:
+  grad_accum_iter: 2
+  callbacks:
+    every_n_sample_reg:
+      every_n: 1000
+      fps: 5
+    every_n_sample_ema:
+      every_n: 1000
+      fps: 5
+
+model_parallel:
+  context_parallel_size: 1
+
+model:
+  config:
+    state_t: 4  # 1 + 12 // 4
+    net:
+      action_dim: 384
+      temporal_compression_ratio: 4
+      num_action_per_chunk: 12
+      zero_init_action_embedder: false
+
+dataloader_train:
+  batch_size: 2
+  
+  dataset:
+    num_frames: 13
+    dataset_path:
+      - datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot
+    data_split: train
+    single_base_index: false
+    deterministic_uniform_sampling: false

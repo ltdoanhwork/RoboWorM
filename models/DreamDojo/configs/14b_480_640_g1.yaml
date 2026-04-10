@@ -1,0 +1,44 @@
+job:
+  project: dreamdojo
+  group: exp1201
+  name: g1_14b
+
+trainer:
+  grad_accum_iter: 2
+  callbacks:
+    every_n_sample_reg:
+      every_n: 1000
+      fps: 5
+    every_n_sample_ema:
+      every_n: 1000
+      fps: 5
+
+model_parallel:
+  context_parallel_size: 1
+
+model:
+  config:
+    state_t: 4  # 1 + 12 // 4
+    net:
+      action_dim: 384
+      temporal_compression_ratio: 4
+      num_action_per_chunk: 12
+      zero_init_action_embedder: false
+
+dataloader_train:
+  batch_size: 2
+  
+  dataset:
+    num_frames: 13
+    dataset_path:
+      - /mnt/amlfs-02/shared/datasets/standardized_v1/g1/unitree_g1.corl-demo_locked-waist_sep5-sep11
+      - /mnt/amlfs-02/shared/datasets/standardized_v1/g1/unitree_g1.g1-cart_corrected-waist_sep19-sep30
+      - /mnt/amlfs-02/shared/datasets/standardized_v1/g1/unitree_g1.g1-corl-basket_corrected-waist_aug22-aug27
+      - /mnt/amlfs-02/shared/datasets/standardized_v1/g1/unitree_g1.g1-shelf_corrected-waist_aug18-sep3
+      - /mnt/amlfs-02/shared/datasets/standardized_v1/g1/unitree_g1.g1-shelf_locked-waist_aug7-aug18
+      - /mnt/amlfs-02/shared/datasets/standardized_v1/g1/unitree_g1.in-the-wild_corrected-waist_oct7-oct29
+      - /mnt/amlfs-02/shared/datasets/standardized_v1/g1/unitree_g1.in-the-wild_nov2-nov12
+      - /mnt/amlfs-02/shared/datasets/standardized_v1/g1/unitree_g1.in-the-wild_oct27-oct31
+    data_split: train
+    single_base_index: false
+    deterministic_uniform_sampling: false
