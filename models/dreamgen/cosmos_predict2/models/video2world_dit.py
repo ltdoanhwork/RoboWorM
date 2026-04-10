@@ -37,6 +37,7 @@ class MinimalV1LVGDiT(MiniTrainDIT):
         data_type: DataType | None = DataType.VIDEO,
         use_cuda_graphs: bool = False,
         timing_info: dict | None = None,
+        attention_runtime_context: dict | None = None,
         **kwargs,
     ) -> torch.Tensor | list[torch.Tensor] | tuple[torch.Tensor, list[torch.Tensor]]:
         del kwargs
@@ -57,4 +58,5 @@ class MinimalV1LVGDiT(MiniTrainDIT):
             data_type=data_type,
             use_cuda_graphs=use_cuda_graphs,
             timing_info=timing_info,
+            attention_runtime_context=attention_runtime_context,
         )

@@ -209,6 +209,86 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
   --radial_start_layer_idx 4 \
   --radial_model_type hunyuan
 
+### dreamgen - svg
+`SVG1` and `SVG2` have different environment requirements.
+
+`SVG1` can run in the default `DreamDojo/.venv` if that Torch build exposes `torch.nn.attention.flex_attention`.
+
+`SVG2` is not supported in the default `DreamDojo/.venv`. Use a separate env with `Sparse-VideoGen`, `flashinfer`, `cuvs`, and built SVG kernels.
+
+Do not install `cuvs-cu12` into `DreamDojo/.venv`. That env currently uses a Torch CUDA 12.8 stack, and `cuvs-cu12` upgrades parts of the CUDA userspace to 12.9, which breaks `torch` import with `libcusparse.so.12` / `libnvJitLink.so.12` symbol errors.
+
+cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
+bash ./scripts/bootstrap_svg_env.sh
+
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+export PYTHONPATH="./models/dreamgen"
+export CUDA_VISIBLE_DEVICES=0
+export NUM_GPUS=1
+
+### dreamgen - svg1
+SVG1 uses DreamGen's `flex_attention + placement kernels` path. It does not require `flashinfer` or `cuvs`, but it does require a Torch build with `flex_attention`.
+
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+  --model_size 14B \
+  --gr00t_variant gr1 \
+  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS} \
+  --use_svg \
+  --svg_variant svg1 \
+  --svg_start_layer_idx 4 \
+  --svg_dense_step_frac 0.1 \
+  --svg_sparsity 0.25 \
+  --svg_num_sampled_rows 64 \
+  --svg_sample_mse_max_row 3000
 
 
+Speed-focused (max throughput, some quality loss):
 
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+  --model_size 14B \
+  --gr00t_variant gr1 \
+  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS} \
+  --use_svg \
+  --svg_variant svg1 \
+  --svg_start_layer_idx 4 \
+  --svg_dense_step_frac 0.05 \
+  --svg_sparsity 0.15 \
+  --svg_num_sampled_rows 16 \
+  --svg_sample_mse_max_row 1500
+
+Quality-focused (only SVG on spatially-local layers):
+
+
+--svg_start_layer_idx 20 \
+--svg_dense_step_frac 0.1 \
+--svg_sparsity 0.25 \
+--svg_num_sampled_rows 64 \
+--svg_sample_mse_max_row 3000
+
+
+### dreamgen - svg2
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+export PYTHONPATH="./models/dreamgen"
+export CUDA_VISIBLE_DEVICES=0
+export NUM_GPUS=1
+
+torchrun --master_port=29601 -m models.dreamgen.examples.video2world_gr00t \
+  --model_size 14B \
+  --gr00t_variant gr1 \
+  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS} \
+  --use_svg \
+  --svg_variant svg2 \
+  --svg_start_layer_idx 1 \
+  --svg_dense_step_frac 0.3 \
+  --svg_num_q_centroids 150 \
+  --svg_num_k_centroids 400 \
+  --svg_top_p_kmeans 0.9 \
+  --svg_min_kc_ratio 0.10 \
+  --svg_kmeans_iter_init 20 \
+  --svg_kmeans_iter_step 2

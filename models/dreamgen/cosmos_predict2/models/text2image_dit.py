@@ -36,7 +36,13 @@ from torchvision import transforms
 from transformer_engine.pytorch.attention import DotProductAttention, apply_rotary_pos_emb
 
 from cosmos_predict2.conditioner import DataType
-from cosmos_predict2.module.a2a_cp import MinimalA2AAttnOp, NattenA2AAttnOp, PISAA2AAttnOp, RadialA2AAttnOp
+from cosmos_predict2.module.a2a_cp import (
+    MinimalA2AAttnOp,
+    NattenA2AAttnOp,
+    PISAA2AAttnOp,
+    RadialA2AAttnOp,
+    SVGA2AAttnOp,
+)
 from cosmos_predict2.module.neighborhood_attn import NeighborhoodAttention
 from cosmos_predict2.networks.model_weights_stats import WeightTrainingStat
 from cosmos_predict2.networks.selective_activation_checkpoint import SACConfig as _SACConfig
@@ -267,6 +273,7 @@ class Attention(nn.Module):
         natten_params: Mapping | None = None,
         pisa_params: Mapping | None = None,
         radial_params: Mapping | None = None,
+        svg_params: Mapping | None = None,
     ) -> None:
         super().__init__()
         log.debug(
@@ -275,7 +282,7 @@ class Attention(nn.Module):
         )
         self.is_selfattn = context_dim is None  # self attention
 
-        if backend not in ["transformer_engine", "torch", "minimal_a2a", "natten", "pisa", "radial"]:
+        if backend not in ["transformer_engine", "torch", "minimal_a2a", "natten", "pisa", "radial", "svg"]:
             raise NotImplementedError(f"Unrecognized {backend=}.")
 
         self.backend = backend
@@ -324,6 +331,10 @@ class Attention(nn.Module):
             if radial_params is None:
                 raise ValueError("You must specify `radial_params` when using the Radial backend, got None.")
             self.attn_op = RadialA2AAttnOp(**radial_params)
+        elif self.backend == "svg":
+            if svg_params is None:
+                raise ValueError("You must specify `svg_params` when using the SVG backend, got None.")
+            self.attn_op = SVGA2AAttnOp(**svg_params)
 
         elif self.backend == "torch":
             self.attn_op = torch_attention_op
@@ -380,11 +391,18 @@ class Attention(nn.Module):
         return q, k, v
 
     def compute_attention(
-        self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, video_size: VideoSize | None = None
+        self,
+        q: torch.Tensor,
+        k: torch.Tensor,
+        v: torch.Tensor,
+        video_size: VideoSize | None = None,
+        attention_runtime_context: Mapping[str, Any] | None = None,
     ) -> torch.Tensor:
         additional_args = {}
-        if isinstance(self.attn_op, (NattenA2AAttnOp, NeighborhoodAttention, RadialA2AAttnOp)):
+        if isinstance(self.attn_op, (NattenA2AAttnOp, NeighborhoodAttention, RadialA2AAttnOp, SVGA2AAttnOp)):
             additional_args["video_size"] = video_size
+        if isinstance(self.attn_op, SVGA2AAttnOp):
+            additional_args["attention_runtime_context"] = attention_runtime_context
 
         result = self.attn_op(q, k, v, **additional_args)  # [B, S, H, D]
         return self.output_dropout(self.output_proj(result))
@@ -395,6 +413,7 @@ class Attention(nn.Module):
         context: torch.Tensor | None = None,
         rope_emb: torch.Tensor | None = None,
         video_size: VideoSize | None = None,
+        attention_runtime_context: Mapping[str, Any] | None = None,
     ) -> torch.Tensor:
         """
         Args:
@@ -404,7 +423,13 @@ class Attention(nn.Module):
             video_size(VideoSize): Shape [T, H, W]
         """
         q, k, v = self.compute_qkv(x, context, rope_emb=rope_emb)
-        return self.compute_attention(q, k, v, video_size=video_size)
+        return self.compute_attention(
+            q,
+            k,
+            v,
+            video_size=video_size,
+            attention_runtime_context=attention_runtime_context,
+        )
 
     def set_context_parallel_group(
         self, process_group: ProcessGroup, ranks: list[int], stream: torch.cuda.Stream
@@ -935,6 +960,7 @@ class Block(nn.Module):
         natten_params: Mapping | None = None,
         pisa_params: Mapping | None = None,
         radial_params: Mapping | None = None,
+        svg_params: Mapping | None = None,
     ):
         super().__init__()
         self.x_dim = x_dim
@@ -949,6 +975,7 @@ class Block(nn.Module):
             natten_params=natten_params,
             pisa_params=pisa_params,
             radial_params=radial_params,
+            svg_params=svg_params,
         )
 
         self.layer_norm_cross_attn = nn.LayerNorm(x_dim, elementwise_affine=False, eps=1e-6)
@@ -1023,6 +1050,7 @@ class Block(nn.Module):
         rope_emb_L_1_1_D: torch.Tensor | None = None,
         adaln_lora_B_T_3D: torch.Tensor | None = None,
         extra_per_block_pos_emb: torch.Tensor | None = None,
+        attention_runtime_context: Mapping[str, Any] | None = None,
         timing_info: dict | None = None,
     ) -> torch.Tensor:
         if extra_per_block_pos_emb is not None:
@@ -1088,6 +1116,7 @@ class Block(nn.Module):
                 None,
                 rope_emb=rope_emb_L_1_1_D,
                 video_size=video_size,
+                attention_runtime_context=attention_runtime_context,
             ),
             "b (t h w) d -> b t h w d",
             t=T,
@@ -1237,6 +1266,7 @@ class MiniTrainDIT(WeightTrainingStat):
         natten_parameters: dict | list = None,  # noqa: RUF013
         pisa_parameters: dict | list = None,  # noqa: RUF013
         radial_parameters: dict | list = None,  # noqa: RUF013
+        svg_parameters: dict | list = None,  # noqa: RUF013
     ) -> None:
         super().__init__()
         self.max_img_h = max_img_h
@@ -1334,18 +1364,38 @@ class MiniTrainDIT(WeightTrainingStat):
                 f"got {radial_parameters=}."
             )
 
+        if svg_parameters is not None and not isinstance(svg_parameters, Sequence):
+            raise ValueError(
+                "`svg_parameters` must either be None, or a list of the same length as the number of blocks, "
+                f"got {type(svg_parameters)=}."
+            )
+
+        if svg_parameters is not None and len(svg_parameters) != num_blocks:
+            raise ValueError(
+                "`svg_parameters` must either be None, or a list of the same length as the number of blocks, "
+                f"got {len(svg_parameters)=} != {num_blocks=}."
+            )
+
+        if svg_parameters is not None and any(x is not None and not isinstance(x, Mapping) for x in svg_parameters):
+            raise ValueError(
+                "`svg_parameters` must be a list of Nones or dicts describing per-block SVG settings, "
+                f"got {svg_parameters=}."
+            )
+
         enabled_sparse_backends = [
             name
             for name, parameters in (
                 ("natten", natten_parameters),
                 ("pisa", pisa_parameters),
                 ("radial", radial_parameters),
+                ("svg", svg_parameters),
             )
             if parameters is not None
         ]
         if len(enabled_sparse_backends) > 1:
             enabled_str = ", ".join(enabled_sparse_backends)
             raise ValueError(f"Sparse backends are mutually exclusive in MiniTrainDIT, got {enabled_str}.")
+        self.has_svg_backend = svg_parameters is not None
 
         self.blocks = nn.ModuleList(
             [
@@ -1363,12 +1413,15 @@ class MiniTrainDIT(WeightTrainingStat):
                         if pisa_parameters is not None and pisa_parameters[i] is not None
                         else "radial"
                         if radial_parameters is not None and radial_parameters[i] is not None
+                        else "svg"
+                        if svg_parameters is not None and svg_parameters[i] is not None
                         else atten_backend
                     ),
                     cross_attention_backend=atten_backend,
                     natten_params=None if natten_parameters is None else natten_parameters[i],
                     pisa_params=None if pisa_parameters is None else pisa_parameters[i],
                     radial_params=None if radial_parameters is None else radial_parameters[i],
+                    svg_params=None if svg_parameters is None else svg_parameters[i],
                 )
                 for i in range(num_blocks)
             ]
@@ -1534,6 +1587,7 @@ class MiniTrainDIT(WeightTrainingStat):
         padding_mask: torch.Tensor | None = None,
         data_type: DataType | None = DataType.VIDEO,
         use_cuda_graphs: bool = False,
+        attention_runtime_context: Mapping[str, Any] | None = None,
         timing_info: dict | None = None,
     ) -> torch.Tensor | list[torch.Tensor] | tuple[torch.Tensor, list[torch.Tensor]]:
         """
@@ -1583,6 +1637,9 @@ class MiniTrainDIT(WeightTrainingStat):
                 f"{x_B_T_H_W_D.shape} != {extra_pos_emb_B_T_H_W_D_or_T_H_W_B_D.shape}"
             )
 
+        if use_cuda_graphs and self.has_svg_backend:
+            raise RuntimeError("[SVG] CUDA Graphs are not supported in DreamGen v1.")
+
         if use_cuda_graphs:
             shapes_key = create_cuda_graph(
                 self.cuda_graphs,
@@ -1602,6 +1659,7 @@ class MiniTrainDIT(WeightTrainingStat):
             "rope_emb_L_1_1_D": rope_emb_L_1_1_D,
             "adaln_lora_B_T_3D": adaln_lora_B_T_3D,
             "extra_per_block_pos_emb": extra_pos_emb_B_T_H_W_D_or_T_H_W_B_D,
+            "attention_runtime_context": attention_runtime_context,
         }
         torch.cuda.synchronize()
         start_blocks = time.perf_counter()

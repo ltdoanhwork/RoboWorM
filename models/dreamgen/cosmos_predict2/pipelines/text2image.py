@@ -280,7 +280,12 @@ class Text2ImagePipeline(BasePipeline):
         return raw_state, latent_state, condition
 
     def denoise(
-        self, xt_B_C_T_H_W: torch.Tensor, sigma: torch.Tensor, condition: TextCondition, use_cuda_graphs: bool = False
+        self,
+        xt_B_C_T_H_W: torch.Tensor,
+        sigma: torch.Tensor,
+        condition: TextCondition,
+        use_cuda_graphs: bool = False,
+        attention_runtime_context: dict | None = None,
     ) -> DenoisePrediction:
         """
         Performs denoising on the input noise data, noise level, and condition
@@ -315,6 +320,7 @@ class Text2ImagePipeline(BasePipeline):
             ),  # Eq. 7 of https://arxiv.org/pdf/2206.00364.pdf
             **condition.to_dict(),
             use_cuda_graphs=use_cuda_graphs,
+            attention_runtime_context=attention_runtime_context,
         ).float()
 
         x0_pred_B_C_T_H_W = c_skip_B_1_T_1_1 * xt_B_C_T_H_W + c_out_B_1_T_1_1 * net_output_B_C_T_H_W
@@ -406,9 +412,17 @@ class Text2ImagePipeline(BasePipeline):
             x = init_noise.to(torch.float64)
             ones = torch.ones(x.size(0), device=x.device, dtype=x.dtype)
             for _i, (t_cur, t_next) in enumerate(itertools.pairwise(t_steps)):
-                x = self.denoise(x.float(), t_cur.float() * ones, condition, use_cuda_graphs=use_cuda_graphs).x0.to(
-                    torch.float64
-                )
+                x = self.denoise(
+                    x.float(),
+                    t_cur.float() * ones,
+                    condition,
+                    use_cuda_graphs=use_cuda_graphs,
+                    attention_runtime_context={
+                        "diffusion_step_idx": _i,
+                        "num_sampling_steps": self.distill_steps,
+                        "sigma": float(t_cur.item()),
+                    },
+                ).x0.to(torch.float64)
                 if t_next > 0:
                     x = x + t_next * torch.randn(
                         *x.shape,
@@ -457,8 +471,25 @@ class Text2ImagePipeline(BasePipeline):
             sigma_in = sigma_t.repeat(sample.shape[0])
 
             # x0 prediction with conditional and unconditional branches
-            cond_x0 = self.denoise(sample, sigma_in, condition, use_cuda_graphs=use_cuda_graphs).x0
-            uncond_x0 = self.denoise(sample, sigma_in, uncondition, use_cuda_graphs=use_cuda_graphs).x0
+            attention_runtime_context = {
+                "diffusion_step_idx": i,
+                "num_sampling_steps": num_sampling_step,
+                "sigma": float(sigma_t.item()),
+            }
+            cond_x0 = self.denoise(
+                sample,
+                sigma_in,
+                condition,
+                use_cuda_graphs=use_cuda_graphs,
+                attention_runtime_context=attention_runtime_context,
+            ).x0
+            uncond_x0 = self.denoise(
+                sample,
+                sigma_in,
+                uncondition,
+                use_cuda_graphs=use_cuda_graphs,
+                attention_runtime_context=attention_runtime_context,
+            ).x0
             x0_pred = cond_x0 + guidance * (cond_x0 - uncond_x0)
 
             # Scheduler step (handles float64 internally, returns original dtype)
@@ -473,8 +504,25 @@ class Text2ImagePipeline(BasePipeline):
         sigma_in = sigma_min.repeat(sample.shape[0])
 
         # Final clean pass.
-        cond_x0 = self.denoise(sample, sigma_in, condition, use_cuda_graphs=use_cuda_graphs).x0
-        uncond_x0 = self.denoise(sample, sigma_in, uncondition, use_cuda_graphs=use_cuda_graphs).x0
+        attention_runtime_context = {
+            "diffusion_step_idx": num_sampling_step,
+            "num_sampling_steps": num_sampling_step,
+            "sigma": float(sigma_min.item()),
+        }
+        cond_x0 = self.denoise(
+            sample,
+            sigma_in,
+            condition,
+            use_cuda_graphs=use_cuda_graphs,
+            attention_runtime_context=attention_runtime_context,
+        ).x0
+        uncond_x0 = self.denoise(
+            sample,
+            sigma_in,
+            uncondition,
+            use_cuda_graphs=use_cuda_graphs,
+            attention_runtime_context=attention_runtime_context,
+        ).x0
         samples = cond_x0 + guidance * (cond_x0 - uncond_x0)
 
         # decode

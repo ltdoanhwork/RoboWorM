@@ -52,8 +52,9 @@ def _import_sparse_backends():
         sys.path.insert(0, project_root)
 
     from methods.sparse_attention.pisa.config import add_pisa_args
+    from methods.sparse_attention.svg.config import add_dreamgen_svg_args
     from methods.sparse_attention.radial.config import add_dreamgen_radial_args
-    return add_pisa_args, add_dreamgen_radial_args
+    return add_pisa_args, add_dreamgen_svg_args, add_dreamgen_radial_args
 # -----------------------------------
 
 _DEFAULT_NEGATIVE_PROMPT = "The video captures a series of frames showing ugly scenes, static with no motion, motion blur, over-saturation, shaky footage, low resolution, grainy texture, pixelated images, poorly lit areas, underexposed and overexposed scenes, poor color balance, washed out colors, choppy sequences, jerky movements, low frame rate, artifacting, color banding, unnatural transitions, outdated special effects, fake elements, unconvincing visuals, poorly edited content, jump cuts, visual noise, and flickering. Overall, the video is of poor quality."
@@ -172,8 +173,9 @@ def parse_args() -> argparse.Namespace:
     )
 
     # ---- Sparse Backend Integration ----
-    add_pisa_args, add_radial_args = _import_sparse_backends()
+    add_pisa_args, add_svg_args, add_radial_args = _import_sparse_backends()
     add_pisa_args(parser)
+    add_svg_args(parser)
     add_radial_args(parser)
     # -----------------------------------
 
@@ -197,6 +199,19 @@ def setup_pipeline(args: argparse.Namespace):
         radial_block_size=getattr(args, "radial_block_size", 64),
         radial_start_layer_idx=getattr(args, "radial_start_layer_idx", 4),
         radial_model_type=getattr(args, "radial_model_type", "hunyuan"),
+        svg=getattr(args, "use_svg", False),
+        svg_variant=getattr(args, "svg_variant", "svg1"),
+        svg_start_layer_idx=getattr(args, "svg_start_layer_idx", 4),
+        svg_dense_step_frac=getattr(args, "svg_dense_step_frac", 0.1),
+        svg_sparsity=getattr(args, "svg_sparsity", 0.25),
+        svg_num_sampled_rows=getattr(args, "svg_num_sampled_rows", 64),
+        svg_sample_mse_max_row=getattr(args, "svg_sample_mse_max_row", 3000),
+        svg_num_q_centroids=getattr(args, "svg_num_q_centroids", 50),
+        svg_num_k_centroids=getattr(args, "svg_num_k_centroids", 200),
+        svg_top_p_kmeans=getattr(args, "svg_top_p_kmeans", 0.9),
+        svg_min_kc_ratio=getattr(args, "svg_min_kc_ratio", 0.0),
+        svg_kmeans_iter_init=getattr(args, "svg_kmeans_iter_init", 5),
+        svg_kmeans_iter_step=getattr(args, "svg_kmeans_iter_step", 2),
     )
     if args.dit_path:
         dit_path = args.dit_path

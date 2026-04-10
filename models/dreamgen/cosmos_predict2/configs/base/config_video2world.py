@@ -26,6 +26,7 @@ from cosmos_predict2.configs.base.config_natten import (
 )
 from cosmos_predict2.configs.base.config_pisa import build_pisa_parameters
 from cosmos_predict2.configs.base.config_radial import build_radial_parameters
+from cosmos_predict2.configs.base.config_svg import build_svg_parameters
 from cosmos_predict2.configs.base.config_text2image import CosmosGuardrailConfig, SolverTimestampConfig
 from cosmos_predict2.configs.base.defaults.ema import EMAConfig
 from cosmos_predict2.models.text2image_dit import SACConfig
@@ -490,9 +491,22 @@ def get_cosmos_predict2_video2world_pipeline(
     radial_block_size: int = 64,
     radial_start_layer_idx: int = 4,
     radial_model_type: str = "hunyuan",
+    svg: bool = False,
+    svg_variant: str = "svg1",
+    svg_start_layer_idx: int = 4,
+    svg_dense_step_frac: float = 0.1,
+    svg_sparsity: float = 0.25,
+    svg_num_sampled_rows: int = 64,
+    svg_sample_mse_max_row: int = 3000,
+    svg_num_q_centroids: int = 50,
+    svg_num_k_centroids: int = 200,
+    svg_top_p_kmeans: float = 0.9,
+    svg_min_kc_ratio: float = 0.0,
+    svg_kmeans_iter_init: int = 5,
+    svg_kmeans_iter_step: int = 2,
 ) -> Video2WorldPipelineConfig:
-    if sum(bool(enabled) for enabled in (natten, pisa, radial)) > 1:
-        raise ValueError("NATTEN, PISA, and Radial cannot be enabled at the same time.")
+    if sum(bool(enabled) for enabled in (natten, pisa, radial, svg)) > 1:
+        raise ValueError("NATTEN, PISA, Radial, and SVG cannot be enabled at the same time.")
     key = _Video2WorldPipelineConfig(model_size, resolution, fps, natten=natten)
     config = deepcopy(_PREDICT2_VIDEO2WORLD_PIPELINES[key])
     if pisa:
@@ -510,5 +524,21 @@ def get_cosmos_predict2_video2world_pipeline(
             block_size=radial_block_size,
             start_layer_idx=radial_start_layer_idx,
             model_type=radial_model_type,
+        )
+    if svg:
+        config.net.svg_parameters = build_svg_parameters(
+            config.net.num_blocks,
+            variant=svg_variant,
+            start_layer_idx=svg_start_layer_idx,
+            dense_step_frac=svg_dense_step_frac,
+            sparsity=svg_sparsity,
+            num_sampled_rows=svg_num_sampled_rows,
+            sample_mse_max_row=svg_sample_mse_max_row,
+            num_q_centroids=svg_num_q_centroids,
+            num_k_centroids=svg_num_k_centroids,
+            top_p_kmeans=svg_top_p_kmeans,
+            min_kc_ratio=svg_min_kc_ratio,
+            kmeans_iter_init=svg_kmeans_iter_init,
+            kmeans_iter_step=svg_kmeans_iter_step,
         )
     return config

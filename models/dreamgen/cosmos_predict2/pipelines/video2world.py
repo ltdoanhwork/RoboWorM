@@ -628,8 +628,14 @@ class Video2WorldPipeline(BasePipeline):
         return is_image
 
     def denoise(
-        self, xt_B_C_T_H_W: torch.Tensor, sigma: torch.Tensor, condition: TextCondition, use_cuda_graphs: bool = False, timing_info: dict | None = None
-        ) -> DenoisePrediction:
+        self,
+        xt_B_C_T_H_W: torch.Tensor,
+        sigma: torch.Tensor,
+        condition: TextCondition,
+        use_cuda_graphs: bool = False,
+        timing_info: dict | None = None,
+        attention_runtime_context: dict | None = None,
+    ) -> DenoisePrediction:
         """
         Performs denoising on the input noise data, noise level, and condition
 
@@ -703,6 +709,7 @@ class Video2WorldPipeline(BasePipeline):
             timesteps_B_T=c_noise_B_1_T_1_1.squeeze(dim=[1, 3, 4]).to(**self.tensor_kwargs),
             **condition.to_dict(),
             use_cuda_graphs=use_cuda_graphs,
+            attention_runtime_context=attention_runtime_context,
             timing_info=timing_info,
         ).float()
 
@@ -781,8 +788,23 @@ class Video2WorldPipeline(BasePipeline):
             )
 
         def x0_fn(noise_x: torch.Tensor, sigma: torch.Tensor) -> torch.Tensor:
-            cond_x0 = self.denoise(noise_x, sigma, condition, use_cuda_graphs=use_cuda_graphs, timing_info=timing_info).x0
-            uncond_x0 = self.denoise(noise_x, sigma, uncondition, use_cuda_graphs=use_cuda_graphs, timing_info=timing_info).x0
+            attention_runtime_context = timing_info.get("attention_runtime_context") if timing_info is not None else None
+            cond_x0 = self.denoise(
+                noise_x,
+                sigma,
+                condition,
+                use_cuda_graphs=use_cuda_graphs,
+                timing_info=timing_info,
+                attention_runtime_context=attention_runtime_context,
+            ).x0
+            uncond_x0 = self.denoise(
+                noise_x,
+                sigma,
+                uncondition,
+                use_cuda_graphs=use_cuda_graphs,
+                timing_info=timing_info,
+                attention_runtime_context=attention_runtime_context,
+            ).x0
             raw_x0 = cond_x0 + guidance * (cond_x0 - uncond_x0)
             if "guided_image" in data_batch:
                 # replacement trick that enables inpainting with base model
@@ -953,6 +975,11 @@ class Video2WorldPipeline(BasePipeline):
             # `x0_fn` expects `sigma` as a tensor of shape [B] or [B, T]. We
             # pass a 1-D tensor broadcastable to any later shape handling.
             sigma_in = sigma_t.repeat(sample.shape[0])
+            total_dit_timing["attention_runtime_context"] = {
+                "diffusion_step_idx": i,
+                "num_sampling_steps": num_sampling_step,
+                "sigma": float(sigma_t.item()),
+            }
 
             # x0 prediction with conditional and unconditional branches
             torch.cuda.synchronize()
@@ -1036,6 +1063,11 @@ class Video2WorldPipeline(BasePipeline):
         # Final clean pass at sigma_min.
         sigma_min = scheduler.sigmas[-1].to(sample.device, dtype=torch.float32)
         sigma_in = sigma_min.repeat(sample.shape[0])
+        total_dit_timing["attention_runtime_context"] = {
+            "diffusion_step_idx": num_sampling_step,
+            "num_sampling_steps": num_sampling_step,
+            "sigma": float(sigma_min.item()),
+        }
         samples = x0_fn(sample, sigma_in)
 
         # Merge context-parallel chunks back together if needed.
