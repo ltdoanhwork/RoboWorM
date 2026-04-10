@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import importlib.util
+import sys
 from collections.abc import Callable
 from functools import lru_cache
 from pathlib import Path
@@ -49,6 +50,28 @@ def _load_piecewise_sparse_attention():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module.piecewise_sparse_attention
+
+
+@lru_cache(maxsize=1)
+def _load_radial_runtime_class():
+    runtime_path = (
+        Path(__file__).resolve().parents[4]
+        / "methods"
+        / "sparse_attention"
+        / "radial"
+        / "dreamgen_runtime.py"
+    )
+    if not runtime_path.exists():
+        raise ImportError(f"[Radial] Missing DreamGen runtime at {runtime_path}.")
+
+    spec = importlib.util.spec_from_file_location("dreamgen_radial_runtime", runtime_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"[Radial] Could not load module spec from {runtime_path}.")
+
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module.DreamGenRadialRuntime
 
 
 def post_all2all(local_seq_2_local_head, seq_world_size):
@@ -286,6 +309,40 @@ class PISAA2AAttnOp(DistributedAttention):
         )
 
     def set_context_parallel_group(self, process_group, ranks, stream):
+        del ranks
+        super().set_context_parallel_group(process_group, stream)
+
+    def forward(self, query: Tensor, key: Tensor, value: Tensor, *args: Any, **kwargs) -> Tensor:
+        results = super().forward(query, key, value, *args, **kwargs)
+        return rearrange(results, "b ... h d -> b ... (h d)")
+
+
+class RadialLocalAttnOp(torch.nn.Module):
+    def __init__(self, block_size: int = 64, decay_factor: float = 1.0, model_type: str = "hunyuan"):
+        super().__init__()
+        radial_runtime_cls = _load_radial_runtime_class()
+        self.runtime = radial_runtime_cls(block_size=block_size, decay_factor=decay_factor, model_type=model_type)
+
+    def forward(self, query: Tensor, key: Tensor, value: Tensor, *args: Any, **kwargs) -> Tensor:
+        del args
+        video_size = kwargs.pop("video_size", None)
+        if kwargs:
+            unexpected = ", ".join(sorted(kwargs))
+            raise RuntimeError(f"[Radial] Unexpected keyword arguments: {unexpected}.")
+        return self.runtime.forward(query, key, value, video_size=video_size)
+
+
+class RadialA2AAttnOp(DistributedAttention):
+    def __init__(self, block_size: int = 64, decay_factor: float = 1.0, model_type: str = "hunyuan"):
+        super(RadialA2AAttnOp, self).__init__(  # noqa: UP008
+            RadialLocalAttnOp(block_size=block_size, decay_factor=decay_factor, model_type=model_type)
+        )
+
+    def set_context_parallel_group(self, process_group, ranks, stream):
+        world_size = 1 if process_group is None else dist.get_world_size(process_group)
+        rank_count = 1 if ranks is None else len(ranks)
+        if world_size > 1 or rank_count > 1:
+            raise RuntimeError("[Radial] Context parallel / multi-GPU is not supported in DreamGen v1.")
         del ranks
         super().set_context_parallel_group(process_group, stream)
 

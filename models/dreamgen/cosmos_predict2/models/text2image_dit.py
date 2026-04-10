@@ -36,7 +36,7 @@ from torchvision import transforms
 from transformer_engine.pytorch.attention import DotProductAttention, apply_rotary_pos_emb
 
 from cosmos_predict2.conditioner import DataType
-from cosmos_predict2.module.a2a_cp import MinimalA2AAttnOp, NattenA2AAttnOp, PISAA2AAttnOp
+from cosmos_predict2.module.a2a_cp import MinimalA2AAttnOp, NattenA2AAttnOp, PISAA2AAttnOp, RadialA2AAttnOp
 from cosmos_predict2.module.neighborhood_attn import NeighborhoodAttention
 from cosmos_predict2.networks.model_weights_stats import WeightTrainingStat
 from cosmos_predict2.networks.selective_activation_checkpoint import SACConfig as _SACConfig
@@ -266,6 +266,7 @@ class Attention(nn.Module):
         backend: str = "transformer_engine",
         natten_params: Mapping | None = None,
         pisa_params: Mapping | None = None,
+        radial_params: Mapping | None = None,
     ) -> None:
         super().__init__()
         log.debug(
@@ -274,7 +275,7 @@ class Attention(nn.Module):
         )
         self.is_selfattn = context_dim is None  # self attention
 
-        if backend not in ["transformer_engine", "torch", "minimal_a2a", "natten", "pisa"]:
+        if backend not in ["transformer_engine", "torch", "minimal_a2a", "natten", "pisa", "radial"]:
             raise NotImplementedError(f"Unrecognized {backend=}.")
 
         self.backend = backend
@@ -319,6 +320,10 @@ class Attention(nn.Module):
             if pisa_params is None:
                 raise ValueError("You must specify `pisa_params` when using the PISA backend, got None.")
             self.attn_op = PISAA2AAttnOp(**pisa_params)
+        elif self.backend == "radial":
+            if radial_params is None:
+                raise ValueError("You must specify `radial_params` when using the Radial backend, got None.")
+            self.attn_op = RadialA2AAttnOp(**radial_params)
 
         elif self.backend == "torch":
             self.attn_op = torch_attention_op
@@ -378,7 +383,7 @@ class Attention(nn.Module):
         self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, video_size: VideoSize | None = None
     ) -> torch.Tensor:
         additional_args = {}
-        if isinstance(self.attn_op, (NattenA2AAttnOp, NeighborhoodAttention)):
+        if isinstance(self.attn_op, (NattenA2AAttnOp, NeighborhoodAttention, RadialA2AAttnOp)):
             additional_args["video_size"] = video_size
 
         result = self.attn_op(q, k, v, **additional_args)  # [B, S, H, D]
@@ -929,6 +934,7 @@ class Block(nn.Module):
         cross_attention_backend: str = "transformer_engine",
         natten_params: Mapping | None = None,
         pisa_params: Mapping | None = None,
+        radial_params: Mapping | None = None,
     ):
         super().__init__()
         self.x_dim = x_dim
@@ -942,6 +948,7 @@ class Block(nn.Module):
             backend=self_attention_backend,
             natten_params=natten_params,
             pisa_params=pisa_params,
+            radial_params=radial_params,
         )
 
         self.layer_norm_cross_attn = nn.LayerNorm(x_dim, elementwise_affine=False, eps=1e-6)
@@ -1229,6 +1236,7 @@ class MiniTrainDIT(WeightTrainingStat):
         sac_config: SACConfig = SACConfig(),  # noqa: B008
         natten_parameters: dict | list = None,  # noqa: RUF013
         pisa_parameters: dict | list = None,  # noqa: RUF013
+        radial_parameters: dict | list = None,  # noqa: RUF013
     ) -> None:
         super().__init__()
         self.max_img_h = max_img_h
@@ -1306,8 +1314,38 @@ class MiniTrainDIT(WeightTrainingStat):
                 f"got {pisa_parameters=}."
             )
 
-        if natten_parameters is not None and pisa_parameters is not None:
-            raise ValueError("`natten_parameters` and `pisa_parameters` are mutually exclusive.")
+        if radial_parameters is not None and not isinstance(radial_parameters, Sequence):
+            raise ValueError(
+                "`radial_parameters` must either be None, or a list of the same length as the number of blocks, "
+                f"got {type(radial_parameters)=}."
+            )
+
+        if radial_parameters is not None and len(radial_parameters) != num_blocks:
+            raise ValueError(
+                "`radial_parameters` must either be None, or a list of the same length as the number of blocks, "
+                f"got {len(radial_parameters)=} != {num_blocks=}."
+            )
+
+        if radial_parameters is not None and any(
+            x is not None and not isinstance(x, Mapping) for x in radial_parameters
+        ):
+            raise ValueError(
+                "`radial_parameters` must be a list of Nones or dicts describing per-block Radial settings, "
+                f"got {radial_parameters=}."
+            )
+
+        enabled_sparse_backends = [
+            name
+            for name, parameters in (
+                ("natten", natten_parameters),
+                ("pisa", pisa_parameters),
+                ("radial", radial_parameters),
+            )
+            if parameters is not None
+        ]
+        if len(enabled_sparse_backends) > 1:
+            enabled_str = ", ".join(enabled_sparse_backends)
+            raise ValueError(f"Sparse backends are mutually exclusive in MiniTrainDIT, got {enabled_str}.")
 
         self.blocks = nn.ModuleList(
             [
@@ -1323,11 +1361,14 @@ class MiniTrainDIT(WeightTrainingStat):
                         if natten_parameters is not None and natten_parameters[i] is not None
                         else "pisa"
                         if pisa_parameters is not None and pisa_parameters[i] is not None
+                        else "radial"
+                        if radial_parameters is not None and radial_parameters[i] is not None
                         else atten_backend
                     ),
                     cross_attention_backend=atten_backend,
                     natten_params=None if natten_parameters is None else natten_parameters[i],
                     pisa_params=None if pisa_parameters is None else pisa_parameters[i],
+                    radial_params=None if radial_parameters is None else radial_parameters[i],
                 )
                 for i in range(num_blocks)
             ]

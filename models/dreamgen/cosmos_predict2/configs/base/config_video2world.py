@@ -25,6 +25,7 @@ from cosmos_predict2.configs.base.config_natten import (
     PREDICT2_VIDEO2WORLD_NET_14B_NATTEN_PARAMETERS,
 )
 from cosmos_predict2.configs.base.config_pisa import build_pisa_parameters
+from cosmos_predict2.configs.base.config_radial import build_radial_parameters
 from cosmos_predict2.configs.base.config_text2image import CosmosGuardrailConfig, SolverTimestampConfig
 from cosmos_predict2.configs.base.defaults.ema import EMAConfig
 from cosmos_predict2.models.text2image_dit import SACConfig
@@ -484,9 +485,14 @@ def get_cosmos_predict2_video2world_pipeline(
     pisa_block_size: int = 64,
     pisa_start_layer_idx: int = 0,
     pisa_use_bias: bool = False,
+    radial: bool = False,
+    radial_decay_factor: float = 1.0,
+    radial_block_size: int = 64,
+    radial_start_layer_idx: int = 4,
+    radial_model_type: str = "hunyuan",
 ) -> Video2WorldPipelineConfig:
-    if natten and pisa:
-        raise ValueError("NATTEN and PISA cannot be enabled at the same time.")
+    if sum(bool(enabled) for enabled in (natten, pisa, radial)) > 1:
+        raise ValueError("NATTEN, PISA, and Radial cannot be enabled at the same time.")
     key = _Video2WorldPipelineConfig(model_size, resolution, fps, natten=natten)
     config = deepcopy(_PREDICT2_VIDEO2WORLD_PIPELINES[key])
     if pisa:
@@ -496,5 +502,13 @@ def get_cosmos_predict2_video2world_pipeline(
             block_size=pisa_block_size,
             start_layer_idx=pisa_start_layer_idx,
             use_bias=pisa_use_bias,
+        )
+    if radial:
+        config.net.radial_parameters = build_radial_parameters(
+            config.net.num_blocks,
+            decay_factor=radial_decay_factor,
+            block_size=radial_block_size,
+            start_layer_idx=radial_start_layer_idx,
+            model_type=radial_model_type,
         )
     return config

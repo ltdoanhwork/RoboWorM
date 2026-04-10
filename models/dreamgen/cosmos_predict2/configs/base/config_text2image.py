@@ -20,6 +20,7 @@ import attrs
 
 from cosmos_predict2.conditioner import ReMapkey, TextAttr, TextConditioner
 from cosmos_predict2.configs.base.config_pisa import build_pisa_parameters
+from cosmos_predict2.configs.base.config_radial import build_radial_parameters
 from cosmos_predict2.configs.base.defaults.ema import EMAConfig
 from cosmos_predict2.models.text2image_dit import MiniTrainDIT
 from cosmos_predict2.tokenizers_local.tokenizer import CosmosImageTokenizer, TokenizerInterface
@@ -378,7 +379,14 @@ def get_cosmos_predict2_text2image_pipeline(
     pisa_block_size: int = 64,
     pisa_start_layer_idx: int = 0,
     pisa_use_bias: bool = False,
+    radial: bool = False,
+    radial_decay_factor: float = 1.0,
+    radial_block_size: int = 64,
+    radial_start_layer_idx: int = 4,
+    radial_model_type: str = "hunyuan",
 ) -> Text2ImagePipelineConfig:
+    if sum(bool(enabled) for enabled in (pisa, radial)) > 1:
+        raise ValueError("PISA and Radial cannot be enabled at the same time.")
     key = _Text2ImagePipelineConfig(model_size, fast_tokenizer=fast_tokenizer)
     config = deepcopy(_PREDICT2_TEXT2IMAGE_PIPELINES[key])
     if pisa:
@@ -388,5 +396,13 @@ def get_cosmos_predict2_text2image_pipeline(
             block_size=pisa_block_size,
             start_layer_idx=pisa_start_layer_idx,
             use_bias=pisa_use_bias,
+        )
+    if radial:
+        config.net.radial_parameters = build_radial_parameters(
+            config.net.num_blocks,
+            decay_factor=radial_decay_factor,
+            block_size=radial_block_size,
+            start_layer_idx=radial_start_layer_idx,
+            model_type=radial_model_type,
         )
     return config

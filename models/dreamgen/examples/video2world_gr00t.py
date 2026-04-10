@@ -43,8 +43,8 @@ from examples.video2world import _DEFAULT_NEGATIVE_PROMPT, validate_input_file
 from imaginaire.utils import distributed, log, misc
 from imaginaire.utils.io import save_image_or_video, save_text_prompts
 
-# ---- PISA Integration ----
-def _import_pisa_adapter():
+# ---- Sparse Backend Integration ----
+def _import_sparse_backends():
     import sys
     # Search for project root (where 'methods' directory resides)
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -55,8 +55,9 @@ def _import_pisa_adapter():
         sys.path.insert(0, project_root)
 
     from methods.sparse_attention.pisa.config import add_pisa_args
-    return add_pisa_args, None
-# --------------------------
+    from methods.sparse_attention.radial.config import add_dreamgen_radial_args
+    return add_pisa_args, add_dreamgen_radial_args
+# -----------------------------------
 
 
 def _resolve_tokenizer_path(dit_path: str, default_tokenizer_path: str) -> str:
@@ -151,10 +152,11 @@ def parse_args() -> argparse.Namespace:
         "--prompt_prefix", type=str, default="The robot arm is performing a task. ", help="Prefix to add to all prompts"
     )
 
-    # ---- PISA Integration ----
-    add_pisa_args, _ = _import_pisa_adapter()
+    # ---- Sparse Backend Integration ----
+    add_pisa_args, add_radial_args = _import_sparse_backends()
     add_pisa_args(parser)
-    # --------------------------
+    add_radial_args(parser)
+    # -----------------------------------
 
     return parser.parse_args()
 
@@ -171,6 +173,11 @@ def setup_pipeline(args: argparse.Namespace):
         pisa_block_size=getattr(args, "pisa_block_size", 64),
         pisa_start_layer_idx=getattr(args, "pisa_start_layer_idx", 0),
         pisa_use_bias=getattr(args, "pisa_use_bias", False),
+        radial=getattr(args, "use_radial", False),
+        radial_decay_factor=getattr(args, "radial_decay_factor", 1.0),
+        radial_block_size=getattr(args, "radial_block_size", 64),
+        radial_start_layer_idx=getattr(args, "radial_start_layer_idx", 4),
+        radial_model_type=getattr(args, "radial_model_type", "hunyuan"),
     )
     config.prompt_refiner_config.enabled = False
     if args.dit_path:

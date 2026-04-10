@@ -40,8 +40,8 @@ from examples.video2world import process_single_generation as process_single_vid
 from examples.video2world import setup_pipeline as setup_video2world_pipeline
 from imaginaire.utils import log
 
-# ---- PISA Integration ----
-def _import_pisa_adapter():
+# ---- Sparse Backend Integration ----
+def _import_sparse_backends():
     import sys
     import os
     # Search for project root (where 'methods' directory resides)
@@ -53,8 +53,9 @@ def _import_pisa_adapter():
         sys.path.insert(0, project_root)
 
     from methods.sparse_attention.pisa.config import add_pisa_args
-    return add_pisa_args
-# --------------------------
+    from methods.sparse_attention.radial.config import add_dreamgen_radial_args
+    return add_pisa_args, add_dreamgen_radial_args
+# -----------------------------------
 
 _DEFAULT_POSITIVE_PROMPT = "An autonomous welding robot arm operating inside a modern automotive factory, sparks flying as it welds a car frame with precision under bright overhead lights."
 
@@ -172,10 +173,11 @@ def parse_args() -> argparse.Namespace:
         help="Run the sparse attention variant (with NATTEN).",
     )
 
-    # ---- PISA Integration ----
-    add_pisa_args = _import_pisa_adapter()
+    # ---- Sparse Backend Integration ----
+    add_pisa_args, add_radial_args = _import_sparse_backends()
     add_pisa_args(parser)
-    # --------------------------
+    add_radial_args(parser)
+    # -----------------------------------
 
     return parser.parse_args()
 

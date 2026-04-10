@@ -172,8 +172,6 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
   --pisa_block_size 64 \
   --pisa_start_layer_idx 2
 
-
-
 source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/dreamgen"
 export CUDA_VISIBLE_DEVICES=0,1
@@ -188,3 +186,29 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
   --pisa_density 0.1 \
   --pisa_block_size 64 \
   --pisa_use_bias
+
+### dreamgen - radial
+Radial is not supported in the default `DreamDojo/.venv`. It requires a separate env with `flashinfer`.
+
+cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
+bash ./scripts/bootstrap_radial_env.sh
+
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+export PYTHONPATH="./models/dreamgen"
+export CUDA_VISIBLE_DEVICES=0
+export NUM_GPUS=1
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+  --model_size 14B \
+  --gr00t_variant gr1 \
+  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS} \
+  --use_radial \
+  --radial_decay_factor 1.0 \
+  --radial_block_size 64 \
+  --radial_start_layer_idx 4 \
+  --radial_model_type hunyuan
+
+
+
+

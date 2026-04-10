@@ -1,5 +1,6 @@
 import argparse
 
+
 def add_radial_args(parser: argparse.ArgumentParser) -> None:
     """Add Radial Attention CLI arguments to an existing parser."""
     try:
@@ -62,4 +63,41 @@ def add_radial_args(parser: argparse.ArgumentParser) -> None:
         choices=["hunyuan", "wan"],
         help="Underlying radial sparsity mask strategy (wan has larger sink/window). "
     )
-    
+
+
+def add_dreamgen_radial_args(parser: argparse.ArgumentParser) -> None:
+    """Add DreamGen-focused Radial backend flags to an argparse parser."""
+    group = parser.add_argument_group("Radial sparse attention")
+    group.add_argument(
+        "--use_radial",
+        action="store_true",
+        default=False,
+        help="Enable Radial sparse self-attention in DreamGen (inference-only, single-GPU only).",
+    )
+    group.add_argument(
+        "--radial_decay_factor",
+        type=float,
+        default=1.0,
+        help="Decay factor for the Radial sparsity mask. (default: 1.0)",
+    )
+    group.add_argument(
+        "--radial_block_size",
+        type=int,
+        default=64,
+        choices=[64, 128],
+        help="Radial block size. Only 64 and 128 are supported. (default: 64)",
+    )
+    group.add_argument(
+        "--radial_start_layer_idx",
+        type=int,
+        default=4,
+        help="Skip the first N self-attention blocks before enabling Radial. (default: 4)",
+    )
+    group.add_argument(
+        "--radial_model_type",
+        type=str,
+        default="hunyuan",
+        choices=["hunyuan", "wan"],
+        help="Radial mask profile to use for DreamGen video self-attention. (default: hunyuan)",
+    )
+    return parser

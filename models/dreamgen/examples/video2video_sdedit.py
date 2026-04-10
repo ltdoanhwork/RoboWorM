@@ -49,8 +49,8 @@ from imaginaire.utils import distributed, log, misc
 from imaginaire.utils.easy_io import easy_io
 from imaginaire.utils.io import save_image_or_video, save_text_prompts
 
-# ---- PISA Integration ----
-def _import_pisa_adapter():
+# ---- Sparse Backend Integration ----
+def _import_sparse_backends():
     import sys
     # Search for project root (where 'methods' directory resides)
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -61,8 +61,9 @@ def _import_pisa_adapter():
         sys.path.insert(0, project_root)
 
     from methods.sparse_attention.pisa.config import add_pisa_args
-    return add_pisa_args, None
-# --------------------------
+    from methods.sparse_attention.radial.config import add_dreamgen_radial_args
+    return add_pisa_args, add_dreamgen_radial_args
+# -----------------------------------
 
 _DEFAULT_POSITIVE_PROMPT = "A point-of-view video shot from inside a vehicle, capturing a snowy suburban street in the winter filled with snow on the side of the road."
 
@@ -273,10 +274,11 @@ def parse_args() -> argparse.Namespace:
         "--video2world_edit_strength", type=float, default=0.8, help="Strength of the video2world edit (0.0-1.0)"
     )
 
-    # ---- PISA Integration ----
-    add_pisa_args, _ = _import_pisa_adapter()
+    # ---- Sparse Backend Integration ----
+    add_pisa_args, add_radial_args = _import_sparse_backends()
     add_pisa_args(parser)
-    # --------------------------
+    add_radial_args(parser)
+    # -----------------------------------
 
     return parser.parse_args()
 
@@ -293,6 +295,11 @@ def setup_video2world_pipeline(args: argparse.Namespace, text_encoder: CosmosTex
         pisa_block_size=getattr(args, "pisa_block_size", 64),
         pisa_start_layer_idx=getattr(args, "pisa_start_layer_idx", 0),
         pisa_use_bias=getattr(args, "pisa_use_bias", False),
+        radial=getattr(args, "use_radial", False),
+        radial_decay_factor=getattr(args, "radial_decay_factor", 1.0),
+        radial_block_size=getattr(args, "radial_block_size", 64),
+        radial_start_layer_idx=getattr(args, "radial_start_layer_idx", 4),
+        radial_model_type=getattr(args, "radial_model_type", "hunyuan"),
     )
     if hasattr(args, "dit_path") and args.dit_path:
         dit_path = args.dit_path
@@ -375,6 +382,11 @@ def setup_text2image_pipeline(
         pisa_block_size=getattr(args, "pisa_block_size", 64),
         pisa_start_layer_idx=getattr(args, "pisa_start_layer_idx", 0),
         pisa_use_bias=getattr(args, "pisa_use_bias", False),
+        radial=getattr(args, "use_radial", False),
+        radial_decay_factor=getattr(args, "radial_decay_factor", 1.0),
+        radial_block_size=getattr(args, "radial_block_size", 64),
+        radial_start_layer_idx=getattr(args, "radial_start_layer_idx", 4),
+        radial_model_type=getattr(args, "radial_model_type", "hunyuan"),
     )
     if hasattr(args, "dit_path") and args.dit_path:
         dit_path = args.dit_path
