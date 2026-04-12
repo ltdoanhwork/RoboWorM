@@ -8,8 +8,10 @@ backend integration used by PISA and Radial.
 
 from __future__ import annotations
 
+import math
 from argparse import ArgumentParser
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -176,3 +178,128 @@ def add_dreamgen_svg_args(parser: ArgumentParser) -> ArgumentParser:
         help="SVG2 K-Means iterations for subsequent sparse denoise steps.",
     )
     return parser
+
+
+def _dreamdojo_svg_defaults(num_blocks: int, variant: str) -> dict[str, Any]:
+    if num_blocks <= 0:
+        raise ValueError(f"`num_blocks` must be positive, got {num_blocks}.")
+    if variant not in {"svg1", "svg2"}:
+        raise ValueError(f"`variant` must be 'svg1' or 'svg2', got {variant!r}.")
+
+    if variant == "svg1":
+        return {
+            "start_layer_idx": math.ceil(0.30 * num_blocks),
+            "dense_step_frac": 0.20,
+            "sparsity": 0.40,
+            "num_sampled_rows": 32,
+            "sample_mse_max_row": 1200,
+        }
+
+    return {
+        "start_layer_idx": math.ceil(0.35 * num_blocks),
+        "dense_step_frac": 0.25,
+        "num_q_centroids": 24,
+        "num_k_centroids": 96,
+        "top_p_kmeans": 0.90,
+        "min_kc_ratio": 0.10,
+        "kmeans_iter_init": 8,
+        "kmeans_iter_step": 2,
+    }
+
+
+def build_dreamdojo_svg_parameters(
+    num_blocks: int,
+    *,
+    variant: str,
+    start_layer_idx: int | None = None,
+    dense_step_frac: float | None = None,
+    sparsity: float | None = None,
+    num_sampled_rows: int | None = None,
+    sample_mse_max_row: int | None = None,
+    num_q_centroids: int | None = None,
+    num_k_centroids: int | None = None,
+    top_p_kmeans: float | None = None,
+    min_kc_ratio: float | None = None,
+    kmeans_iter_init: int | None = None,
+    kmeans_iter_step: int | None = None,
+) -> list[dict[str, Any] | None]:
+    defaults = _dreamdojo_svg_defaults(num_blocks=num_blocks, variant=variant)
+
+    start_layer_idx = defaults["start_layer_idx"] if start_layer_idx is None else start_layer_idx
+    dense_step_frac = defaults["dense_step_frac"] if dense_step_frac is None else dense_step_frac
+
+    if start_layer_idx < 0:
+        raise ValueError(f"`start_layer_idx` must be non-negative, got {start_layer_idx}.")
+    if not 0 <= dense_step_frac < 1:
+        raise ValueError(f"`dense_step_frac` must be in [0, 1), got {dense_step_frac}.")
+
+    parameters: list[dict[str, Any] | None] = []
+    for layer_idx in range(num_blocks):
+        if layer_idx < start_layer_idx:
+            parameters.append(None)
+            continue
+
+        params: dict[str, Any] = {
+            "variant": variant,
+            "layer_idx": layer_idx,
+            "dense_step_frac": dense_step_frac,
+        }
+        if variant == "svg1":
+            resolved_sparsity = defaults["sparsity"] if sparsity is None else sparsity
+            resolved_num_sampled_rows = defaults["num_sampled_rows"] if num_sampled_rows is None else num_sampled_rows
+            resolved_sample_mse_max_row = (
+                defaults["sample_mse_max_row"] if sample_mse_max_row is None else sample_mse_max_row
+            )
+            if not 0 < resolved_sparsity <= 1:
+                raise ValueError(f"`sparsity` must be in (0, 1], got {resolved_sparsity}.")
+            if resolved_num_sampled_rows <= 0:
+                raise ValueError(
+                    f"`num_sampled_rows` must be positive, got {resolved_num_sampled_rows}."
+                )
+            if resolved_sample_mse_max_row <= 0:
+                raise ValueError(
+                    f"`sample_mse_max_row` must be positive, got {resolved_sample_mse_max_row}."
+                )
+            params.update(
+                {
+                    "sparsity": resolved_sparsity,
+                    "num_sampled_rows": resolved_num_sampled_rows,
+                    "sample_mse_max_row": resolved_sample_mse_max_row,
+                }
+            )
+        else:
+            resolved_num_q_centroids = defaults["num_q_centroids"] if num_q_centroids is None else num_q_centroids
+            resolved_num_k_centroids = defaults["num_k_centroids"] if num_k_centroids is None else num_k_centroids
+            resolved_top_p_kmeans = defaults["top_p_kmeans"] if top_p_kmeans is None else top_p_kmeans
+            resolved_min_kc_ratio = defaults["min_kc_ratio"] if min_kc_ratio is None else min_kc_ratio
+            resolved_kmeans_iter_init = (
+                defaults["kmeans_iter_init"] if kmeans_iter_init is None else kmeans_iter_init
+            )
+            resolved_kmeans_iter_step = (
+                defaults["kmeans_iter_step"] if kmeans_iter_step is None else kmeans_iter_step
+            )
+            if resolved_num_q_centroids <= 0 or resolved_num_k_centroids <= 0:
+                raise ValueError("Centroid counts must be positive for DreamDojo SVG2.")
+            if not 0 < resolved_top_p_kmeans <= 1:
+                raise ValueError(
+                    f"`top_p_kmeans` must be in (0, 1], got {resolved_top_p_kmeans}."
+                )
+            if not 0 <= resolved_min_kc_ratio <= 1:
+                raise ValueError(
+                    f"`min_kc_ratio` must be in [0, 1], got {resolved_min_kc_ratio}."
+                )
+            if resolved_kmeans_iter_init < 0 or resolved_kmeans_iter_step < 0:
+                raise ValueError("K-Means iteration counts must be non-negative for DreamDojo SVG2.")
+            params.update(
+                {
+                    "num_q_centroids": resolved_num_q_centroids,
+                    "num_k_centroids": resolved_num_k_centroids,
+                    "top_p_kmeans": resolved_top_p_kmeans,
+                    "min_kc_ratio": resolved_min_kc_ratio,
+                    "kmeans_iter_init": resolved_kmeans_iter_init,
+                    "kmeans_iter_step": resolved_kmeans_iter_step,
+                }
+            )
+        parameters.append(params)
+
+    return parameters

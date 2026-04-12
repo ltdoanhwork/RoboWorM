@@ -92,6 +92,7 @@ class ActionConditionedMinimalV1LVGDiT(MiniTrainDIT):
         img_context_emb: Optional[torch.Tensor] = None,
         action: Optional[torch.Tensor] = None,
         intermediate_feature_ids: Optional[List[int]] = None,
+        attention_runtime_context: Optional[dict] = None,
         **kwargs,
     ) -> torch.Tensor | List[torch.Tensor] | Tuple[torch.Tensor, List[torch.Tensor]]:
         del kwargs
@@ -167,6 +168,7 @@ class ActionConditionedMinimalV1LVGDiT(MiniTrainDIT):
                 rope_emb_L_1_1_D=rope_emb_L_1_1_D,
                 adaln_lora_B_T_3D=adaln_lora_B_T_3D,
                 extra_per_block_pos_emb=extra_pos_emb_B_T_H_W_D_or_T_H_W_B_D,
+                attention_runtime_context=attention_runtime_context,
             )
             if intermediate_feature_ids and i in intermediate_feature_ids:
                 x_reshaped_for_disc = rearrange(x_B_T_H_W_D, "b tp hp wp d -> b (tp hp wp) d")
@@ -244,6 +246,7 @@ class ActionChunkConditionedMinimalV1LVGDiT(MiniTrainDIT):
         img_context_emb: Optional[torch.Tensor] = None,
         action: Optional[torch.Tensor] = None,
         intermediate_feature_ids: Optional[List[int]] = None,
+        attention_runtime_context: Optional[dict] = None,
         **kwargs,
     ) -> torch.Tensor | List[torch.Tensor] | Tuple[torch.Tensor, List[torch.Tensor]]:
         del kwargs
@@ -333,6 +336,7 @@ class ActionChunkConditionedMinimalV1LVGDiT(MiniTrainDIT):
                 rope_emb_L_1_1_D=rope_emb_L_1_1_D,
                 adaln_lora_B_T_3D=adaln_lora_B_T_3D,
                 extra_per_block_pos_emb=extra_pos_emb_B_T_H_W_D_or_T_H_W_B_D,
+                attention_runtime_context=attention_runtime_context,
             )
             if intermediate_feature_ids and i in intermediate_feature_ids:
                 x_reshaped_for_disc = rearrange(x_B_T_H_W_D, "b tp hp wp d -> b (tp hp wp) d")

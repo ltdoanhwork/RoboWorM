@@ -112,7 +112,8 @@ def main(args: Args) -> None:
                     checkpoint_path = resolve_checkpoint_path(checkpoint_iter_dir)
                     inference(args.setup, inference_args, checkpoint_path)
             except Exception as e:
-                pass
+                import traceback
+                traceback.print_exc()
             time.sleep(60)
     else:
         checkpoint_iter_dir = checkpoints_dir / last_checkpoint

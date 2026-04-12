@@ -16,10 +16,10 @@
 import collections
 import math
 from collections import namedtuple
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from cosmos_predict2._src.predict2.utils.kv_cache import AttentionOpWithKVCache, KVCacheConfig, KVCacheLayerState
 
@@ -60,9 +60,10 @@ from cosmos_predict2._src.imaginaire.utils import log
 from cosmos_predict2._src.imaginaire.utils.context_parallel import split_inputs_cp
 from cosmos_predict2._src.predict2.conditioner import DataType
 from cosmos_predict2._src.predict2.modules.neighborhood_attn import NeighborhoodAttention
-from cosmos_predict2._src.predict2.networks.a2a_cp import MinimalA2AAttnOp, NattenA2AAttnOp
+from cosmos_predict2._src.predict2.networks.a2a_cp import MinimalA2AAttnOp, NattenA2AAttnOp, SVGA2AAttnOp
 from cosmos_predict2._src.predict2.networks.model_weights_stats import WeightTrainingStat
 from cosmos_predict2._src.predict2.networks.selective_activation_checkpoint import SACConfig as _SACConfig
+from methods.sparse_attention.svg.config import build_dreamdojo_svg_parameters
 
 
 # selective activation checkpoint; only apply to the minimal v4 model. if there are change in the networks, some policy will not work as we expect.
@@ -386,6 +387,63 @@ def i4_attention_op(
         return out_B_S_H_D
 
 
+def _validate_sparse_parameter_list(
+    parameters: Sequence[Mapping[str, Any] | None] | None,
+    *,
+    name: str,
+    num_blocks: int,
+) -> None:
+    if parameters is None:
+        return
+    if not isinstance(parameters, Sequence):
+        raise ValueError(
+            f"`{name}` must either be None, or a list of the same length as the number of blocks, "
+            f"got {type(parameters)=}."
+        )
+    if len(parameters) != num_blocks:
+        raise ValueError(
+            f"`{name}` must either be None, or a list of the same length as the number of blocks, "
+            f"got {len(parameters)=} != {num_blocks=}."
+        )
+    if any(x is not None and not isinstance(x, Mapping) for x in parameters):
+        raise ValueError(f"`{name}` must be a list of Nones or dicts, got {parameters=}.")
+
+
+def _build_natten_parameter_list(
+    *,
+    num_blocks: int,
+    n_dense_blocks: int,
+    natten_parameters: Mapping[str, Any] | Sequence[Mapping[str, Any] | None] | None,
+) -> Sequence[Mapping[str, Any] | None] | None:
+    if n_dense_blocks == -1:
+        return natten_parameters
+    if natten_parameters is None:
+        raise ValueError("Please specify natten_parameters when n_dense_blocks > -1.")
+
+    if isinstance(natten_parameters, Sequence):
+        if len(natten_parameters) != num_blocks:
+            raise ValueError(
+                "`natten_parameters` must either be None, or a list of the same length as the number of blocks, "
+                f"got {len(natten_parameters)=} != {num_blocks=}."
+            )
+        if n_dense_blocks > 0:
+            log.warning(f"NATTEN parameters was a list; ignoring {n_dense_blocks=}.")
+        return natten_parameters
+
+    if n_dense_blocks >= num_blocks:
+        raise ValueError(f"n_dense_blocks ({n_dense_blocks}) must be less than the number of blocks ({num_blocks})")
+
+    dense_indices: set[int] = set()
+    if n_dense_blocks > 0:
+        if n_dense_blocks == 1:
+            dense_indices.add(num_blocks // 2)
+        else:
+            indices = np.linspace(0, num_blocks - 1, n_dense_blocks, dtype=int)
+            dense_indices.update(indices.tolist())
+
+    return [None if i in dense_indices else natten_parameters for i in range(num_blocks)]
+
+
 class Attention(nn.Module):
     """
     A flexible attention module supporting both self-attention and cross-attention mechanisms.
@@ -427,6 +485,8 @@ class Attention(nn.Module):
         dropout=0.0,
         qkv_format: str = "bshd",
         backend: str = "transformer_engine",
+        natten_params: Mapping[str, Any] | None = None,
+        svg_params: Mapping[str, Any] | None = None,
         use_wan_fp32_strategy: bool = False,
     ) -> None:
         super().__init__()
@@ -436,10 +496,12 @@ class Attention(nn.Module):
         )
         self.is_selfattn = context_dim is None  # self attention
 
-        assert backend in ["transformer_engine", "torch", "torch-flex", "minimal_a2a", "i4"], (
+        assert backend in ["transformer_engine", "torch", "torch-flex", "minimal_a2a", "natten", "i4", "svg"], (
             f"Invalid backend: {backend}"
         )
         self.backend = backend
+        if backend == "svg" and not self.is_selfattn:
+            raise ValueError("[SVG] Cross-attention is not supported in DreamDojo.")
 
         context_dim = query_dim if context_dim is None else context_dim
         inner_dim = head_dim * n_heads
@@ -476,6 +538,10 @@ class Attention(nn.Module):
             )
         elif self.backend == "minimal_a2a":
             self.attn_op = MinimalA2AAttnOp()
+        elif self.backend == "natten":
+            if natten_params is None:
+                raise ValueError("You must specify `natten_params` when using the NATTEN backend, got None.")
+            self.attn_op = NattenA2AAttnOp(natten_parameters=natten_params)
         elif self.backend == "torch":
             self.attn_op = torch_attention_op
         elif self.backend == "torch-flex":
@@ -484,6 +550,10 @@ class Attention(nn.Module):
         elif self.backend == "i4":
             # I4 spatio-temporal attention; returns [B, S, H*D]
             self.attn_op = i4_attention_op
+        elif self.backend == "svg":
+            if svg_params is None:
+                raise ValueError("You must specify `svg_params` when using the SVG backend, got None.")
+            self.attn_op = SVGA2AAttnOp(**svg_params)
 
         if not hasattr(self.attn_op, "set_context_parallel_group"):
 
@@ -546,12 +616,15 @@ class Attention(nn.Module):
         k,
         v,
         video_size: Optional[VideoSize] = None,
+        attention_runtime_context: Optional[dict[str, Any]] = None,
         kv_cache_cfg: Optional[KVCacheConfig] = None,
         kv_state: Optional[KVCacheLayerState] = None,
     ):
         additional_args = {}
-        if isinstance(self.attn_op, (NattenA2AAttnOp, NeighborhoodAttention)) or self.backend == "i4":
+        if isinstance(self.attn_op, (NattenA2AAttnOp, NeighborhoodAttention, SVGA2AAttnOp)) or self.backend == "i4":
             additional_args["video_size"] = video_size
+        if isinstance(self.attn_op, SVGA2AAttnOp):
+            additional_args["attention_runtime_context"] = attention_runtime_context
         if isinstance(self.attn_op, AttentionOpWithKVCache):
             additional_args["kv_cache_cfg"] = kv_cache_cfg
             if self.attn_op.stateless:
@@ -572,6 +645,7 @@ class Attention(nn.Module):
         context: Optional[torch.Tensor] = None,
         rope_emb: Optional[torch.Tensor] = None,
         video_size: Optional[VideoSize] = None,
+        attention_runtime_context: Optional[dict[str, Any]] = None,
         kv_cache_cfg: Optional[KVCacheConfig] = None,
         kv_state: Optional[KVCacheLayerState] = None,
     ):
@@ -586,7 +660,15 @@ class Attention(nn.Module):
                 this returns (output, new_kv_state).  Otherwise returns output only.
         """
         q, k, v = self.compute_qkv(x, context, rope_emb=rope_emb)
-        return self.compute_attention(q, k, v, video_size=video_size, kv_cache_cfg=kv_cache_cfg, kv_state=kv_state)
+        return self.compute_attention(
+            q,
+            k,
+            v,
+            video_size=video_size,
+            attention_runtime_context=attention_runtime_context,
+            kv_cache_cfg=kv_cache_cfg,
+            kv_state=kv_state,
+        )
 
     def set_context_parallel_group(self, process_group, ranks, stream, cp_comm_type: str = "p2p"):
         # self.attn_op.set_context_parallel_group(process_group, ranks, stream, cp_comm_type="a2a")
@@ -1173,7 +1255,10 @@ class Block(nn.Module):
         mlp_ratio: float = 4.0,
         use_adaln_lora: bool = False,
         adaln_lora_dim: int = 256,
-        backend: str = "transformer_engine",
+        self_attention_backend: str = "transformer_engine",
+        cross_attention_backend: str = "transformer_engine",
+        natten_params: Mapping[str, Any] | None = None,
+        svg_params: Mapping[str, Any] | None = None,
         image_context_dim: Optional[int] = None,
         use_wan_fp32_strategy: bool = False,
     ):
@@ -1186,7 +1271,9 @@ class Block(nn.Module):
             num_heads,
             x_dim // num_heads,
             qkv_format="bshd",
-            backend=backend,
+            backend=self_attention_backend,
+            natten_params=natten_params,
+            svg_params=svg_params,
             use_wan_fp32_strategy=use_wan_fp32_strategy,
         )
 
@@ -1194,7 +1281,12 @@ class Block(nn.Module):
 
         if image_context_dim is None:
             self.cross_attn = Attention(
-                x_dim, context_dim, num_heads, x_dim // num_heads, qkv_format="bshd", backend=backend
+                x_dim,
+                context_dim,
+                num_heads,
+                x_dim // num_heads,
+                qkv_format="bshd",
+                backend=cross_attention_backend,
             )
         else:
             self.cross_attn = I2VCrossAttention(
@@ -1204,7 +1296,7 @@ class Block(nn.Module):
                 x_dim // num_heads,
                 img_latent_dim=image_context_dim,
                 qkv_format="bshd",
-                backend=backend,
+                backend=cross_attention_backend,
             )
 
         self.layer_norm_mlp = nn.LayerNorm(x_dim, elementwise_affine=False, eps=1e-6)
@@ -1276,6 +1368,7 @@ class Block(nn.Module):
         rope_emb_L_1_1_D: Optional[torch.Tensor] = None,
         adaln_lora_B_T_3D: Optional[torch.Tensor] = None,
         extra_per_block_pos_emb: Optional[torch.Tensor] = None,
+        attention_runtime_context: Optional[dict[str, Any]] = None,
         kv_cache_cfg: Optional[KVCacheConfig] = None,
         kv_state: Optional[KVCacheLayerState] = None,
     ) -> torch.Tensor | tuple[torch.Tensor, KVCacheLayerState]:
@@ -1349,6 +1442,7 @@ class Block(nn.Module):
             None,
             rope_emb=rope_emb_L_1_1_D,
             video_size=video_size,
+            attention_runtime_context=attention_runtime_context,
             kv_cache_cfg=kv_cache_cfg,
             kv_state=kv_state,
         )
@@ -1492,6 +1586,8 @@ class MiniTrainDIT(WeightTrainingStat):
         num_heads: int = 16,
         mlp_ratio: float = 4.0,
         atten_backend: str = "transformer_engine",
+        self_attention_backend: Optional[str] = None,
+        cross_attention_backend: Optional[str] = None,
         # cross attention settings
         crossattn_emb_channels: int = 1024,
         use_crossattn_projection: bool = False,
@@ -1516,6 +1612,19 @@ class MiniTrainDIT(WeightTrainingStat):
         sac_config: SACConfig = SACConfig(),
         n_dense_blocks: int = -1,
         natten_parameters: Union[dict, list] = None,
+        svg_parameters: Union[dict, list] = None,
+        svg_variant: Optional[str] = None,
+        svg_start_layer_idx: Optional[int] = None,
+        svg_dense_step_frac: Optional[float] = None,
+        svg_sparsity: Optional[float] = None,
+        svg_num_sampled_rows: Optional[int] = None,
+        svg_sample_mse_max_row: Optional[int] = None,
+        svg_num_q_centroids: Optional[int] = None,
+        svg_num_k_centroids: Optional[int] = None,
+        svg_top_p_kmeans: Optional[float] = None,
+        svg_min_kc_ratio: Optional[float] = None,
+        svg_kmeans_iter_init: Optional[int] = None,
+        svg_kmeans_iter_step: Optional[int] = None,
         # if True, will closely match wan's strategy to use fp32 in certain layers/operations
         use_wan_fp32_strategy: bool = False,
         zero_init_action_embedder: bool = False,
@@ -1533,6 +1642,8 @@ class MiniTrainDIT(WeightTrainingStat):
         self.model_channels = model_channels
         self.concat_padding_mask = concat_padding_mask
         self.atten_backend = atten_backend
+        self.self_attention_backend = atten_backend if self_attention_backend is None else self_attention_backend
+        self.cross_attention_backend = atten_backend if cross_attention_backend is None else cross_attention_backend
         # positional embedding settings
         self.pos_emb_cls = pos_emb_cls
         self.pos_emb_learnable = pos_emb_learnable
@@ -1560,6 +1671,61 @@ class MiniTrainDIT(WeightTrainingStat):
         self.crossattn_proj_in_channels = crossattn_proj_in_channels
         self.use_wan_fp32_strategy = use_wan_fp32_strategy
         self.zero_init_action_embedder = zero_init_action_embedder
+        if self.cross_attention_backend == "svg":
+            raise ValueError("[SVG] Cross-attention is not supported in DreamDojo.")
+        if n_dense_blocks == -1 and isinstance(natten_parameters, Mapping):
+            if self.self_attention_backend == "natten":
+                natten_parameters = [natten_parameters for _ in range(num_blocks)]
+            else:
+                natten_parameters = None
+        if isinstance(svg_parameters, Mapping):
+            svg_parameters = [svg_parameters for _ in range(num_blocks)]
+
+        natten_parameters = _build_natten_parameter_list(
+            num_blocks=num_blocks,
+            n_dense_blocks=n_dense_blocks,
+            natten_parameters=natten_parameters,
+        )
+        _validate_sparse_parameter_list(natten_parameters, name="natten_parameters", num_blocks=num_blocks)
+        if self.self_attention_backend == "natten" and natten_parameters is None:
+            raise ValueError(
+                "`self_attention_backend='natten'` requires `natten_parameters` (or `n_dense_blocks`) to be set."
+            )
+
+        if self.self_attention_backend == "svg" and svg_parameters is None:
+            svg_parameters = build_dreamdojo_svg_parameters(
+                num_blocks=num_blocks,
+                variant="svg1" if svg_variant is None else svg_variant,
+                start_layer_idx=svg_start_layer_idx,
+                dense_step_frac=svg_dense_step_frac,
+                sparsity=svg_sparsity,
+                num_sampled_rows=svg_num_sampled_rows,
+                sample_mse_max_row=svg_sample_mse_max_row,
+                num_q_centroids=svg_num_q_centroids,
+                num_k_centroids=svg_num_k_centroids,
+                top_p_kmeans=svg_top_p_kmeans,
+                min_kc_ratio=svg_min_kc_ratio,
+                kmeans_iter_init=svg_kmeans_iter_init,
+                kmeans_iter_step=svg_kmeans_iter_step,
+            )
+        _validate_sparse_parameter_list(svg_parameters, name="svg_parameters", num_blocks=num_blocks)
+
+        enabled_sparse_backends = [
+            name
+            for name, parameters in (
+                ("natten", natten_parameters),
+                ("svg", svg_parameters),
+            )
+            if parameters is not None
+        ]
+        if len(enabled_sparse_backends) > 1:
+            enabled_str = ", ".join(enabled_sparse_backends)
+            raise ValueError(f"Sparse backends are mutually exclusive in MiniTrainDIT, got {enabled_str}.")
+
+        self.has_svg_backend = svg_parameters is not None
+        dense_self_attention_backend = (
+            atten_backend if enabled_sparse_backends else self.self_attention_backend
+        )
 
         self.blocks = nn.ModuleList(
             [
@@ -1570,11 +1736,20 @@ class MiniTrainDIT(WeightTrainingStat):
                     mlp_ratio=mlp_ratio,
                     use_adaln_lora=use_adaln_lora,
                     adaln_lora_dim=adaln_lora_dim,
-                    backend=atten_backend,
+                    self_attention_backend=(
+                        "natten"
+                        if natten_parameters is not None and natten_parameters[i] is not None
+                        else "svg"
+                        if svg_parameters is not None and svg_parameters[i] is not None
+                        else dense_self_attention_backend
+                    ),
+                    cross_attention_backend=self.cross_attention_backend,
+                    natten_params=None if natten_parameters is None else natten_parameters[i],
+                    svg_params=None if svg_parameters is None else svg_parameters[i],
                     image_context_dim=None if extra_image_context_dim is None else model_channels,
                     use_wan_fp32_strategy=use_wan_fp32_strategy,
                 )
-                for _ in range(num_blocks)
+                for i in range(num_blocks)
             ]
         )
 
@@ -1605,10 +1780,6 @@ class MiniTrainDIT(WeightTrainingStat):
 
         self.init_weights()
         self.enable_selective_checkpoint(sac_config, self.blocks)
-
-        # Replace self-attention with sparse attention if specified
-        if n_dense_blocks != -1:
-            self = replace_selfattn_op_with_sparse_attn_op(self, n_dense_blocks, natten_parameters=natten_parameters)
 
         self._is_context_parallel_enabled = False
 
@@ -1760,6 +1931,7 @@ class MiniTrainDIT(WeightTrainingStat):
         data_type: Optional[DataType] = DataType.VIDEO,
         intermediate_feature_ids: Optional[List[int]] = None,
         img_context_emb: Optional[torch.Tensor] = None,
+        attention_runtime_context: Optional[dict[str, Any]] = None,
     ) -> torch.Tensor | List[torch.Tensor] | Tuple[torch.Tensor, List[torch.Tensor]]:
         """
         Args:
@@ -1818,6 +1990,7 @@ class MiniTrainDIT(WeightTrainingStat):
                 rope_emb_L_1_1_D=rope_emb_L_1_1_D,
                 adaln_lora_B_T_3D=adaln_lora_B_T_3D,
                 extra_per_block_pos_emb=extra_pos_emb_B_T_H_W_D_or_T_H_W_B_D,
+                attention_runtime_context=attention_runtime_context,
             )
             if intermediate_feature_ids and i in intermediate_feature_ids:
                 x_reshaped_for_disc = rearrange(x_B_T_H_W_D, "b tp hp wp d -> b (tp hp wp) d")

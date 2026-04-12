@@ -44,6 +44,40 @@ from cosmos_predict2.config import MODEL_CHECKPOINTS, VIDEO_EXTENSIONS
 from groot_dreams.dataloader import MultiVideoActionDataset
 
 
+def _build_svg_experiment_opts(setup_args: ActionConditionedSetupArguments) -> list[str]:
+    if not setup_args.use_svg:
+        return []
+
+    opts = [
+        "model.config.net.self_attention_backend=svg",
+        "model.config.net.cross_attention_backend=minimal_a2a",
+        f"model.config.net.svg_variant={setup_args.svg_variant}",
+    ]
+    if setup_args.svg_start_layer_idx is not None:
+        opts.append(f"model.config.net.svg_start_layer_idx={setup_args.svg_start_layer_idx}")
+    if setup_args.svg_dense_step_frac is not None:
+        opts.append(f"model.config.net.svg_dense_step_frac={setup_args.svg_dense_step_frac}")
+    if setup_args.svg_sparsity is not None:
+        opts.append(f"model.config.net.svg_sparsity={setup_args.svg_sparsity}")
+    if setup_args.svg_num_sampled_rows is not None:
+        opts.append(f"model.config.net.svg_num_sampled_rows={setup_args.svg_num_sampled_rows}")
+    if setup_args.svg_sample_mse_max_row is not None:
+        opts.append(f"model.config.net.svg_sample_mse_max_row={setup_args.svg_sample_mse_max_row}")
+    if setup_args.svg_num_q_centroids is not None:
+        opts.append(f"model.config.net.svg_num_q_centroids={setup_args.svg_num_q_centroids}")
+    if setup_args.svg_num_k_centroids is not None:
+        opts.append(f"model.config.net.svg_num_k_centroids={setup_args.svg_num_k_centroids}")
+    if setup_args.svg_top_p_kmeans is not None:
+        opts.append(f"model.config.net.svg_top_p_kmeans={setup_args.svg_top_p_kmeans}")
+    if setup_args.svg_min_kc_ratio is not None:
+        opts.append(f"model.config.net.svg_min_kc_ratio={setup_args.svg_min_kc_ratio}")
+    if setup_args.svg_kmeans_iter_init is not None:
+        opts.append(f"model.config.net.svg_kmeans_iter_init={setup_args.svg_kmeans_iter_init}")
+    if setup_args.svg_kmeans_iter_step is not None:
+        opts.append(f"model.config.net.svg_kmeans_iter_step={setup_args.svg_kmeans_iter_step}")
+    return opts
+
+
 def _get_robot_states(label, state_key="state", gripper_key="continuous_gripper_state"):
     """
     Extracts the robot arm and gripper states from the label dictionary for the specified frame indices.
@@ -220,6 +254,8 @@ def inference(
         raise ValueError(
             f"num_latent_conditional_frames must be 0, 1 or 2, but got {inference_args.num_latent_conditional_frames}"
         )
+    if setup_args.use_svg and setup_args.context_parallel_size > 1:
+        raise ValueError("[SVG] DreamDojo SVG v1 is single-GPU only; set context_parallel_size=1.")
 
     # Determine supported extensions based on num_latent_conditional_frames
     if inference_args.num_latent_conditional_frames > 1:
@@ -260,6 +296,7 @@ def inference(
         # pyrefly: ignore  # bad-argument-type
         context_parallel_size=setup_args.context_parallel_size,
         config_file=setup_args.config_file,
+        experiment_opts=_build_svg_experiment_opts(setup_args),
     )
 
     mem_bytes = torch.cuda.memory_allocated(device=torch.device("cuda" if torch.cuda.is_available() else "cpu"))

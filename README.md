@@ -326,11 +326,12 @@ python -m models.DreamDojo.examples.action_conditioned \
   -o ./output/dreamdojo_hv_eval_2b_g1_gr1 \
   --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000 \
   --experiment dreamdojo_2b_480_640_gr1 \
-  --save-dir ./output/dreamdojo_results/dreamdojo_EgoDex_Eval_2b_g1_gr1 \
+  --save-dir ./output/dreamdojo_results/dreamdojo_GR1_robot_2b_g1_gr1 \
   --num-frames 49 \
   --num-samples 65 \
-  --dataset-path "EgoDex_Eval" \
+  --dataset-path "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
   --data-split test \
   --deterministic-uniform-sampling \
   --checkpoint-interval 5000 \
   --infinite
+

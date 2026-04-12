@@ -157,8 +157,18 @@ class ActionVideo2WorldModelRectifiedFlow(Text2WorldModelRectifiedFlow):
             timestep = [t]
 
             timestep = torch.stack(timestep)
+            attention_runtime_context = {
+                "diffusion_step_idx": num_step,
+                "num_sampling_steps": len(timesteps),
+                "timestep": float(t.item()) if hasattr(t, "item") else float(t),
+            }
 
-            velocity_pred = velocity_fn(noise, latent_model_input, timestep.unsqueeze(0))
+            velocity_pred = velocity_fn(
+                noise,
+                latent_model_input,
+                timestep.unsqueeze(0),
+                attention_runtime_context=attention_runtime_context,
+            )
             temp_x0 = self.sample_scheduler.step(
                 velocity_pred.unsqueeze(0), t, latents[0].unsqueeze(0), return_dict=False, generator=seed_g
             )[0]
@@ -177,6 +187,7 @@ class ActionVideo2WorldModelRectifiedFlow(Text2WorldModelRectifiedFlow):
         xt_B_C_T_H_W: torch.Tensor,
         timesteps_B_T: torch.Tensor,
         condition: Text2WorldCondition,
+        attention_runtime_context: Optional[Dict] = None,
     ) -> DenoisePrediction:
         """
         Args:
@@ -207,6 +218,7 @@ class ActionVideo2WorldModelRectifiedFlow(Text2WorldModelRectifiedFlow):
         net_output_B_C_T_H_W = self.net(
             x_B_C_T_H_W=xt_B_C_T_H_W.to(**self.tensor_kwargs),  # Eq. 7 of https://arxiv.org/pdf/2206.00364.pdf
             timesteps_B_T=timesteps_B_T,  # Eq. 7 of https://arxiv.org/pdf/2206.00364.pdf
+            attention_runtime_context=attention_runtime_context,
             **condition.to_dict(),
         ).float()
 
@@ -285,9 +297,26 @@ class ActionVideo2WorldModelRectifiedFlow(Text2WorldModelRectifiedFlow):
                 "parallel_state is not initialized, context parallel should be turned off."
             )
 
-        def velocity_fn(noise: torch.Tensor, noise_x: torch.Tensor, timestep: torch.Tensor) -> torch.Tensor:
-            cond_v = self.denoise(noise, noise_x, timestep, condition)
-            uncond_v = self.denoise(noise, noise_x, timestep, uncondition)
+        def velocity_fn(
+            noise: torch.Tensor,
+            noise_x: torch.Tensor,
+            timestep: torch.Tensor,
+            attention_runtime_context: Optional[Dict] = None,
+        ) -> torch.Tensor:
+            cond_v = self.denoise(
+                noise,
+                noise_x,
+                timestep,
+                condition,
+                attention_runtime_context=attention_runtime_context,
+            )
+            uncond_v = self.denoise(
+                noise,
+                noise_x,
+                timestep,
+                uncondition,
+                attention_runtime_context=attention_runtime_context,
+            )
             velocity_pred = cond_v + guidance * (cond_v - uncond_v)
             return velocity_pred
 

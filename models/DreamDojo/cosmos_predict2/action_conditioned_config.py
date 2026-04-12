@@ -15,7 +15,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol
+from typing import Literal, Protocol
 
 from cosmos_predict2.config import (
     DEFAULT_NEGATIVE_PROMPT,
@@ -52,6 +52,19 @@ class ActionConditionedSetupArguments(CommonSetupArguments):
     deterministic_uniform_sampling: bool = False
     checkpoint_interval: int = 2000
     infinite: bool = False
+    use_svg: bool = False
+    svg_variant: Literal["svg1", "svg2"] = "svg1"
+    svg_start_layer_idx: int | None = None
+    svg_dense_step_frac: float | None = None
+    svg_sparsity: float | None = None
+    svg_num_sampled_rows: int | None = None
+    svg_sample_mse_max_row: int | None = None
+    svg_num_q_centroids: int | None = None
+    svg_num_k_centroids: int | None = None
+    svg_top_p_kmeans: float | None = None
+    svg_min_kc_ratio: float | None = None
+    svg_kmeans_iter_init: int | None = None
+    svg_kmeans_iter_step: int | None = None
 
 
 @dataclass

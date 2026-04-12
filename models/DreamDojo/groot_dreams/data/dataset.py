@@ -29,6 +29,8 @@ LE_ROBOT_INFO_FILENAME = "meta/info.json"
 LE_ROBOT_STATS_FILENAME = "meta/stats.json"
 LE_ROBOT_DATA_FILENAME = "data/*/*.parquet"
 
+SHARED_META_DIR = Path(__file__).resolve().parents[2] / "shared_meta"
+
 
 def calculate_dataset_statistics(parquet_paths: list[Path]) -> dict:
     """Calculate the dataset statistics of all columns for a list of parquet files."""
@@ -248,20 +250,20 @@ class LeRobotSingleDataset(Dataset):
         if not (modality_meta_path.exists()):
             if embodiment_tag == EmbodimentTag.GR1:
                 if "inhouse_human" in str(self.dataset_path):
-                    modality_meta_path = Path("shared_meta/GR1_human_modality.json")
-                    print("WARNING: Could not find modality.json in dataset path, falling back to shared_meta/GR1_human_modality.json")
+                    modality_meta_path = SHARED_META_DIR / "GR1_human_modality.json"
+                    print(f"WARNING: Could not find modality.json in dataset path, falling back to {modality_meta_path}")
                 else:
-                    modality_meta_path = Path("shared_meta/GR1_unified_modality.json")
-                    print("WARNING: Could not find modality.json in dataset path, falling back to shared_meta/GR1_unified_modality.json")
+                    modality_meta_path = SHARED_META_DIR / "GR1_unified_modality.json"
+                    print(f"WARNING: Could not find modality.json in dataset path, falling back to {modality_meta_path}")
             elif embodiment_tag == EmbodimentTag.AGIBOT:
-                modality_meta_path = Path("shared_meta/AgiBot_modality.json")
-                print("WARNING: Could not find modality.json in dataset path, falling back to shared_meta/AgiBot_modality.json")
+                modality_meta_path = SHARED_META_DIR / "AgiBot_modality.json"
+                print(f"WARNING: Could not find modality.json in dataset path, falling back to {modality_meta_path}")
             elif embodiment_tag == EmbodimentTag.G1:
-                modality_meta_path = Path("shared_meta/G1_modality.json")
-                print("WARNING: Could not find modality.json in dataset path, falling back to shared_meta/G1_modality.json")
+                modality_meta_path = SHARED_META_DIR / "G1_modality.json"
+                print(f"WARNING: Could not find modality.json in dataset path, falling back to {modality_meta_path}")
             elif embodiment_tag == EmbodimentTag.YAM:
-                modality_meta_path = Path("shared_meta/YAM_modality.json")
-                print("WARNING: Could not find modality.json in dataset path, falling back to shared_meta/YAM_modality.json")
+                modality_meta_path = SHARED_META_DIR / "YAM_modality.json"
+                print(f"WARNING: Could not find modality.json in dataset path, falling back to {modality_meta_path}")
             else:
                 raise ValueError(f"Embodiment tag {embodiment_tag} not supported")
         assert (
@@ -328,20 +330,20 @@ class LeRobotSingleDataset(Dataset):
         has_default_meta = True
         if embodiment_tag == EmbodimentTag.GR1:
             if "inhouse_human" in str(self.dataset_path):
-                default_stats_path = Path("shared_meta/GR1_human_stats.json")
-                default_modality_meta_path = Path("shared_meta/GR1_human_modality.json")
+                default_stats_path = SHARED_META_DIR / "GR1_human_stats.json"
+                default_modality_meta_path = SHARED_META_DIR / "GR1_human_modality.json"
             else:
-                default_stats_path = Path("shared_meta/GR1_unified_stats.json")
-                default_modality_meta_path = Path("shared_meta/GR1_unified_modality.json")
+                default_stats_path = SHARED_META_DIR / "GR1_unified_stats.json"
+                default_modality_meta_path = SHARED_META_DIR / "GR1_unified_modality.json"
         elif embodiment_tag == EmbodimentTag.AGIBOT:
-            default_stats_path = Path("shared_meta/AgiBot_stats.json")
-            default_modality_meta_path = Path("shared_meta/AgiBot_modality.json")
+            default_stats_path = SHARED_META_DIR / "AgiBot_stats.json"
+            default_modality_meta_path = SHARED_META_DIR / "AgiBot_modality.json"
         elif embodiment_tag == EmbodimentTag.G1:
-            default_stats_path = Path("shared_meta/G1_stats.json")
-            default_modality_meta_path = Path("shared_meta/G1_modality.json")
+            default_stats_path = SHARED_META_DIR / "G1_stats.json"
+            default_modality_meta_path = SHARED_META_DIR / "G1_modality.json"
         elif embodiment_tag == EmbodimentTag.YAM:
-            default_stats_path = Path("shared_meta/YAM_stats.json")
-            default_modality_meta_path = Path("shared_meta/YAM_modality.json")
+            default_stats_path = SHARED_META_DIR / "YAM_stats.json"
+            default_modality_meta_path = SHARED_META_DIR / "YAM_modality.json"
         else:
             raise ValueError(f"Embodiment tag {embodiment_tag} not supported")
         if has_default_meta:
@@ -465,20 +467,20 @@ class LeRobotSingleDataset(Dataset):
         if not (modality_meta_path.exists()):
             if self.tag == "gr1":
                 if "inhouse_human" in str(self.dataset_path):
-                    modality_meta_path = Path("shared_meta/GR1_human_modality.json")
-                    print("WARNING: Could not find modality.json in dataset path, falling back to shared_meta/GR1_human_modality.json")
+                    modality_meta_path = SHARED_META_DIR / "GR1_human_modality.json"
+                    print(f"WARNING: Could not find modality.json in dataset path, falling back to {modality_meta_path}")
                 else:
-                    modality_meta_path = Path("shared_meta/GR1_unified_modality.json")
-                    print("WARNING: Could not find modality.json in dataset path, falling back to shared_meta/GR1_unified_modality.json")
+                    modality_meta_path = SHARED_META_DIR / "GR1_unified_modality.json"
+                    print(f"WARNING: Could not find modality.json in dataset path, falling back to {modality_meta_path}")
             elif self.tag == "agibot":
-                modality_meta_path = Path("shared_meta/AgiBot_modality.json")
-                print("WARNING: Could not find modality.json in dataset path, falling back to shared_meta/AgiBot_modality.json")
+                modality_meta_path = SHARED_META_DIR / "AgiBot_modality.json"
+                print(f"WARNING: Could not find modality.json in dataset path, falling back to {modality_meta_path}")
             elif self.tag == "g1":
-                modality_meta_path = Path("shared_meta/G1_modality.json")
-                print("WARNING: Could not find modality.json in dataset path, falling back to shared_meta/G1_modality.json")
+                modality_meta_path = SHARED_META_DIR / "G1_modality.json"
+                print(f"WARNING: Could not find modality.json in dataset path, falling back to {modality_meta_path}")
             elif self.tag == "yam":
-                modality_meta_path = Path("shared_meta/YAM_modality.json")
-                print("WARNING: Could not find modality.json in dataset path, falling back to shared_meta/YAM_modality.json")
+                modality_meta_path = SHARED_META_DIR / "YAM_modality.json"
+                print(f"WARNING: Could not find modality.json in dataset path, falling back to {modality_meta_path}")
             else:
                 raise ValueError(f"Embodiment tag {self.tag} not supported")
         assert (

@@ -16,6 +16,10 @@
 # from neophilia; Author: Qsh (qsh.zh27@gmail.com)
 # MIT License
 
+import importlib.util
+import sys
+from functools import lru_cache
+from pathlib import Path
 from typing import Any, Callable, List, Tuple, Union
 
 import torch
@@ -27,6 +31,28 @@ from torch.nn import Module
 
 from cosmos_predict2._src.predict2.modules.neighborhood_attn import NeighborhoodAttention
 from cosmos_predict2._src.predict2.networks.attention import attention
+
+
+@lru_cache(maxsize=1)
+def _load_svg_runtime_class():
+    runtime_path = (
+        Path(__file__).resolve().parents[6]
+        / "methods"
+        / "sparse_attention"
+        / "svg"
+        / "dreamdojo_runtime.py"
+    )
+    if not runtime_path.exists():
+        raise ImportError(f"[SVG] Missing DreamDojo runtime at {runtime_path}.")
+
+    spec = importlib.util.spec_from_file_location("dreamdojo_svg_runtime", runtime_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"[SVG] Could not load module spec from {runtime_path}.")
+
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module.DreamDojoSVGRuntime
 
 
 def post_all2all(local_seq_2_local_head, seq_world_size):
@@ -224,3 +250,43 @@ class NattenA2AAttnOp(MinimalA2AAttnOp):
         super(NattenA2AAttnOp, self).__init__(None)
         self.natten_op = NeighborhoodAttention(*args, **kwargs, base_attn_op=attention)
         self.local_attn = self.natten_op
+
+
+class SVGLocalAttnOp(torch.nn.Module):
+    def __init__(self, **svg_parameters):
+        super().__init__()
+        svg_runtime_cls = _load_svg_runtime_class()
+        self.runtime = svg_runtime_cls(**svg_parameters)
+
+    def forward(self, query: Tensor, key: Tensor, value: Tensor, *args: Any, **kwargs) -> Tensor:
+        del args
+        video_size = kwargs.pop("video_size", None)
+        attention_runtime_context = kwargs.pop("attention_runtime_context", None)
+        if kwargs:
+            unexpected = ", ".join(sorted(kwargs))
+            raise RuntimeError(f"[SVG] Unexpected keyword arguments: {unexpected}.")
+        return self.runtime.forward(
+            query,
+            key,
+            value,
+            video_size=video_size,
+            attention_runtime_context=attention_runtime_context,
+        )
+
+
+class SVGA2AAttnOp(DistributedAttention):
+    def __init__(self, **svg_parameters):
+        super(SVGA2AAttnOp, self).__init__(SVGLocalAttnOp(**svg_parameters))
+
+    def set_context_parallel_group(self, process_group, ranks, stream, cp_comm_type: str = "p2p"):
+        del cp_comm_type
+        world_size = 1 if process_group is None else dist.get_world_size(process_group)
+        rank_count = 1 if ranks is None else len(ranks)
+        if world_size > 1 or rank_count > 1:
+            raise RuntimeError("[SVG] Context parallel / multi-GPU is not supported in DreamDojo v1.")
+        del ranks
+        super().set_context_parallel_group(process_group, stream)
+
+    def forward(self, query: Tensor, key: Tensor, value: Tensor, *args: Any, **kwargs) -> Tensor:
+        results = super().forward(query, key, value, *args, **kwargs)
+        return rearrange(results, "b ... h d -> b ... (h d)")
