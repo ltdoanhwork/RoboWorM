@@ -1,4 +1,6 @@
 import argparse
+import math
+from typing import Any
 
 
 def add_radial_args(parser: argparse.ArgumentParser) -> None:
@@ -101,3 +103,52 @@ def add_dreamgen_radial_args(parser: argparse.ArgumentParser) -> None:
         help="Radial mask profile to use for DreamGen video self-attention. (default: hunyuan)",
     )
     return parser
+
+
+def _dreamdojo_radial_defaults(num_blocks: int) -> dict[str, Any]:
+    if num_blocks <= 0:
+        raise ValueError(f"`num_blocks` must be positive, got {num_blocks}.")
+
+    return {
+        "decay_factor": 1.0,
+        "block_size": 64,
+        "start_layer_idx": math.ceil(0.20 * num_blocks),
+        "model_type": "hunyuan",
+    }
+
+
+def build_dreamdojo_radial_parameters(
+    num_blocks: int,
+    *,
+    decay_factor: float | None = None,
+    block_size: int | None = None,
+    start_layer_idx: int | None = None,
+    model_type: str | None = None,
+) -> list[dict[str, Any] | None]:
+    defaults = _dreamdojo_radial_defaults(num_blocks=num_blocks)
+
+    decay_factor = defaults["decay_factor"] if decay_factor is None else decay_factor
+    block_size = defaults["block_size"] if block_size is None else block_size
+    start_layer_idx = defaults["start_layer_idx"] if start_layer_idx is None else start_layer_idx
+    model_type = defaults["model_type"] if model_type is None else model_type
+
+    if decay_factor <= 0:
+        raise ValueError(f"`decay_factor` must be positive, got {decay_factor}.")
+    if block_size not in (64, 128):
+        raise ValueError(f"`block_size` must be 64 or 128, got {block_size}.")
+    if start_layer_idx < 0:
+        raise ValueError(f"`start_layer_idx` must be non-negative, got {start_layer_idx}.")
+    if model_type not in {"hunyuan", "wan"}:
+        raise ValueError(f"`model_type` must be 'hunyuan' or 'wan', got {model_type!r}.")
+
+    return [
+        None
+        if layer_idx < start_layer_idx
+        else {
+            "layer_idx": layer_idx,
+            "decay_factor": decay_factor,
+            "block_size": block_size,
+            "model_type": model_type,
+        }
+        for layer_idx in range(num_blocks)
+    ]

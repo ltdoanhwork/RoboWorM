@@ -55,6 +55,28 @@ def _load_svg_runtime_class():
     return module.DreamDojoSVGRuntime
 
 
+@lru_cache(maxsize=1)
+def _load_radial_runtime_class():
+    runtime_path = (
+        Path(__file__).resolve().parents[6]
+        / "methods"
+        / "sparse_attention"
+        / "radial"
+        / "dreamdojo_runtime.py"
+    )
+    if not runtime_path.exists():
+        raise ImportError(f"[Radial] Missing DreamDojo runtime at {runtime_path}.")
+
+    spec = importlib.util.spec_from_file_location("dreamdojo_radial_runtime", runtime_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"[Radial] Could not load module spec from {runtime_path}.")
+
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module.DreamDojoRadialRuntime
+
+
 def post_all2all(local_seq_2_local_head, seq_world_size):
     def post_func(input):
         # b, s, n, h
@@ -250,6 +272,39 @@ class NattenA2AAttnOp(MinimalA2AAttnOp):
         super(NattenA2AAttnOp, self).__init__(None)
         self.natten_op = NeighborhoodAttention(*args, **kwargs, base_attn_op=attention)
         self.local_attn = self.natten_op
+
+
+class RadialLocalAttnOp(torch.nn.Module):
+    def __init__(self, **radial_parameters):
+        super().__init__()
+        radial_runtime_cls = _load_radial_runtime_class()
+        self.runtime = radial_runtime_cls(**radial_parameters)
+
+    def forward(self, query: Tensor, key: Tensor, value: Tensor, *args: Any, **kwargs) -> Tensor:
+        del args
+        video_size = kwargs.pop("video_size", None)
+        if kwargs:
+            unexpected = ", ".join(sorted(kwargs))
+            raise RuntimeError(f"[Radial] Unexpected keyword arguments: {unexpected}.")
+        return self.runtime.forward(query, key, value, video_size=video_size)
+
+
+class RadialA2AAttnOp(DistributedAttention):
+    def __init__(self, **radial_parameters):
+        super(RadialA2AAttnOp, self).__init__(RadialLocalAttnOp(**radial_parameters))
+
+    def set_context_parallel_group(self, process_group, ranks, stream, cp_comm_type: str = "p2p"):
+        del cp_comm_type
+        world_size = 1 if process_group is None else dist.get_world_size(process_group)
+        rank_count = 1 if ranks is None else len(ranks)
+        if world_size > 1 or rank_count > 1:
+            raise RuntimeError("[Radial] Context parallel / multi-GPU is not supported in DreamDojo v1.")
+        del ranks
+        super().set_context_parallel_group(process_group, stream)
+
+    def forward(self, query: Tensor, key: Tensor, value: Tensor, *args: Any, **kwargs) -> Tensor:
+        results = super().forward(query, key, value, *args, **kwargs)
+        return rearrange(results, "b ... h d -> b ... (h d)")
 
 
 class SVGLocalAttnOp(torch.nn.Module):

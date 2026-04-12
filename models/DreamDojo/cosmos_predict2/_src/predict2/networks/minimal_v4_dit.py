@@ -60,9 +60,15 @@ from cosmos_predict2._src.imaginaire.utils import log
 from cosmos_predict2._src.imaginaire.utils.context_parallel import split_inputs_cp
 from cosmos_predict2._src.predict2.conditioner import DataType
 from cosmos_predict2._src.predict2.modules.neighborhood_attn import NeighborhoodAttention
-from cosmos_predict2._src.predict2.networks.a2a_cp import MinimalA2AAttnOp, NattenA2AAttnOp, SVGA2AAttnOp
+from cosmos_predict2._src.predict2.networks.a2a_cp import (
+    MinimalA2AAttnOp,
+    NattenA2AAttnOp,
+    RadialA2AAttnOp,
+    SVGA2AAttnOp,
+)
 from cosmos_predict2._src.predict2.networks.model_weights_stats import WeightTrainingStat
 from cosmos_predict2._src.predict2.networks.selective_activation_checkpoint import SACConfig as _SACConfig
+from methods.sparse_attention.radial.config import build_dreamdojo_radial_parameters
 from methods.sparse_attention.svg.config import build_dreamdojo_svg_parameters
 
 
@@ -486,6 +492,7 @@ class Attention(nn.Module):
         qkv_format: str = "bshd",
         backend: str = "transformer_engine",
         natten_params: Mapping[str, Any] | None = None,
+        radial_params: Mapping[str, Any] | None = None,
         svg_params: Mapping[str, Any] | None = None,
         use_wan_fp32_strategy: bool = False,
     ) -> None:
@@ -496,12 +503,12 @@ class Attention(nn.Module):
         )
         self.is_selfattn = context_dim is None  # self attention
 
-        assert backend in ["transformer_engine", "torch", "torch-flex", "minimal_a2a", "natten", "i4", "svg"], (
+        assert backend in ["transformer_engine", "torch", "torch-flex", "minimal_a2a", "natten", "i4", "radial", "svg"], (
             f"Invalid backend: {backend}"
         )
         self.backend = backend
-        if backend == "svg" and not self.is_selfattn:
-            raise ValueError("[SVG] Cross-attention is not supported in DreamDojo.")
+        if backend in {"radial", "svg"} and not self.is_selfattn:
+            raise ValueError(f"[{backend.upper()}] Cross-attention is not supported in DreamDojo.")
 
         context_dim = query_dim if context_dim is None else context_dim
         inner_dim = head_dim * n_heads
@@ -550,6 +557,10 @@ class Attention(nn.Module):
         elif self.backend == "i4":
             # I4 spatio-temporal attention; returns [B, S, H*D]
             self.attn_op = i4_attention_op
+        elif self.backend == "radial":
+            if radial_params is None:
+                raise ValueError("You must specify `radial_params` when using the Radial backend, got None.")
+            self.attn_op = RadialA2AAttnOp(**radial_params)
         elif self.backend == "svg":
             if svg_params is None:
                 raise ValueError("You must specify `svg_params` when using the SVG backend, got None.")
@@ -621,7 +632,7 @@ class Attention(nn.Module):
         kv_state: Optional[KVCacheLayerState] = None,
     ):
         additional_args = {}
-        if isinstance(self.attn_op, (NattenA2AAttnOp, NeighborhoodAttention, SVGA2AAttnOp)) or self.backend == "i4":
+        if isinstance(self.attn_op, (NattenA2AAttnOp, NeighborhoodAttention, RadialA2AAttnOp, SVGA2AAttnOp)) or self.backend == "i4":
             additional_args["video_size"] = video_size
         if isinstance(self.attn_op, SVGA2AAttnOp):
             additional_args["attention_runtime_context"] = attention_runtime_context
@@ -1258,6 +1269,7 @@ class Block(nn.Module):
         self_attention_backend: str = "transformer_engine",
         cross_attention_backend: str = "transformer_engine",
         natten_params: Mapping[str, Any] | None = None,
+        radial_params: Mapping[str, Any] | None = None,
         svg_params: Mapping[str, Any] | None = None,
         image_context_dim: Optional[int] = None,
         use_wan_fp32_strategy: bool = False,
@@ -1273,6 +1285,7 @@ class Block(nn.Module):
             qkv_format="bshd",
             backend=self_attention_backend,
             natten_params=natten_params,
+            radial_params=radial_params,
             svg_params=svg_params,
             use_wan_fp32_strategy=use_wan_fp32_strategy,
         )
@@ -1612,6 +1625,11 @@ class MiniTrainDIT(WeightTrainingStat):
         sac_config: SACConfig = SACConfig(),
         n_dense_blocks: int = -1,
         natten_parameters: Union[dict, list] = None,
+        radial_parameters: Union[dict, list] = None,
+        radial_decay_factor: Optional[float] = None,
+        radial_block_size: Optional[int] = None,
+        radial_start_layer_idx: Optional[int] = None,
+        radial_model_type: Optional[str] = None,
         svg_parameters: Union[dict, list] = None,
         svg_variant: Optional[str] = None,
         svg_start_layer_idx: Optional[int] = None,
@@ -1671,13 +1689,15 @@ class MiniTrainDIT(WeightTrainingStat):
         self.crossattn_proj_in_channels = crossattn_proj_in_channels
         self.use_wan_fp32_strategy = use_wan_fp32_strategy
         self.zero_init_action_embedder = zero_init_action_embedder
-        if self.cross_attention_backend == "svg":
-            raise ValueError("[SVG] Cross-attention is not supported in DreamDojo.")
+        if self.cross_attention_backend in {"radial", "svg"}:
+            raise ValueError(f"[{self.cross_attention_backend.upper()}] Cross-attention is not supported in DreamDojo.")
         if n_dense_blocks == -1 and isinstance(natten_parameters, Mapping):
             if self.self_attention_backend == "natten":
                 natten_parameters = [natten_parameters for _ in range(num_blocks)]
             else:
                 natten_parameters = None
+        if isinstance(radial_parameters, Mapping):
+            radial_parameters = [radial_parameters for _ in range(num_blocks)]
         if isinstance(svg_parameters, Mapping):
             svg_parameters = [svg_parameters for _ in range(num_blocks)]
 
@@ -1691,6 +1711,16 @@ class MiniTrainDIT(WeightTrainingStat):
             raise ValueError(
                 "`self_attention_backend='natten'` requires `natten_parameters` (or `n_dense_blocks`) to be set."
             )
+
+        if self.self_attention_backend == "radial" and radial_parameters is None:
+            radial_parameters = build_dreamdojo_radial_parameters(
+                num_blocks=num_blocks,
+                decay_factor=radial_decay_factor,
+                block_size=radial_block_size,
+                start_layer_idx=radial_start_layer_idx,
+                model_type=radial_model_type,
+            )
+        _validate_sparse_parameter_list(radial_parameters, name="radial_parameters", num_blocks=num_blocks)
 
         if self.self_attention_backend == "svg" and svg_parameters is None:
             svg_parameters = build_dreamdojo_svg_parameters(
@@ -1714,6 +1744,7 @@ class MiniTrainDIT(WeightTrainingStat):
             name
             for name, parameters in (
                 ("natten", natten_parameters),
+                ("radial", radial_parameters),
                 ("svg", svg_parameters),
             )
             if parameters is not None
@@ -1722,6 +1753,7 @@ class MiniTrainDIT(WeightTrainingStat):
             enabled_str = ", ".join(enabled_sparse_backends)
             raise ValueError(f"Sparse backends are mutually exclusive in MiniTrainDIT, got {enabled_str}.")
 
+        self.has_radial_backend = radial_parameters is not None
         self.has_svg_backend = svg_parameters is not None
         dense_self_attention_backend = (
             atten_backend if enabled_sparse_backends else self.self_attention_backend
@@ -1739,12 +1771,15 @@ class MiniTrainDIT(WeightTrainingStat):
                     self_attention_backend=(
                         "natten"
                         if natten_parameters is not None and natten_parameters[i] is not None
+                        else "radial"
+                        if radial_parameters is not None and radial_parameters[i] is not None
                         else "svg"
                         if svg_parameters is not None and svg_parameters[i] is not None
                         else dense_self_attention_backend
                     ),
                     cross_attention_backend=self.cross_attention_backend,
                     natten_params=None if natten_parameters is None else natten_parameters[i],
+                    radial_params=None if radial_parameters is None else radial_parameters[i],
                     svg_params=None if svg_parameters is None else svg_parameters[i],
                     image_context_dim=None if extra_image_context_dim is None else model_channels,
                     use_wan_fp32_strategy=use_wan_fp32_strategy,

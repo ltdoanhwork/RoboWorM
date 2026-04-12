@@ -44,6 +44,25 @@ from cosmos_predict2.config import MODEL_CHECKPOINTS, VIDEO_EXTENSIONS
 from groot_dreams.dataloader import MultiVideoActionDataset
 
 
+def _build_radial_experiment_opts(setup_args: ActionConditionedSetupArguments) -> list[str]:
+    if not setup_args.use_radial:
+        return []
+
+    opts = [
+        "model.config.net.self_attention_backend=radial",
+        "model.config.net.cross_attention_backend=minimal_a2a",
+    ]
+    if setup_args.radial_decay_factor is not None:
+        opts.append(f"model.config.net.radial_decay_factor={setup_args.radial_decay_factor}")
+    if setup_args.radial_block_size is not None:
+        opts.append(f"model.config.net.radial_block_size={setup_args.radial_block_size}")
+    if setup_args.radial_start_layer_idx is not None:
+        opts.append(f"model.config.net.radial_start_layer_idx={setup_args.radial_start_layer_idx}")
+    if setup_args.radial_model_type is not None:
+        opts.append(f"model.config.net.radial_model_type={setup_args.radial_model_type}")
+    return opts
+
+
 def _build_svg_experiment_opts(setup_args: ActionConditionedSetupArguments) -> list[str]:
     if not setup_args.use_svg:
         return []
@@ -254,6 +273,8 @@ def inference(
         raise ValueError(
             f"num_latent_conditional_frames must be 0, 1 or 2, but got {inference_args.num_latent_conditional_frames}"
         )
+    if setup_args.use_radial and setup_args.context_parallel_size > 1:
+        raise ValueError("[Radial] DreamDojo Radial v1 is single-GPU only; set context_parallel_size=1.")
     if setup_args.use_svg and setup_args.context_parallel_size > 1:
         raise ValueError("[SVG] DreamDojo SVG v1 is single-GPU only; set context_parallel_size=1.")
 
@@ -296,7 +317,7 @@ def inference(
         # pyrefly: ignore  # bad-argument-type
         context_parallel_size=setup_args.context_parallel_size,
         config_file=setup_args.config_file,
-        experiment_opts=_build_svg_experiment_opts(setup_args),
+        experiment_opts=_build_radial_experiment_opts(setup_args) + _build_svg_experiment_opts(setup_args),
     )
 
     mem_bytes = torch.cuda.memory_allocated(device=torch.device("cuda" if torch.cuda.is_available() else "cpu"))
