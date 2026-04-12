@@ -79,10 +79,19 @@ def main(args: Args) -> None:
 
     from cosmos_predict2.action_conditioned import inference
 
-    last_checkpoint_file = Path(args.setup.checkpoints_dir) / "latest_checkpoint.txt"
-    f = open(last_checkpoint_file, "r")
-    last_checkpoint = f.read().strip()
-    f.close()
+    checkpoints_dir = Path(args.setup.checkpoints_dir)
+    last_checkpoint_file = checkpoints_dir / "latest_checkpoint.txt"
+    if not last_checkpoint_file.exists():
+        parent_checkpoint_file = checkpoints_dir.parent / "latest_checkpoint.txt"
+        if parent_checkpoint_file.exists():
+            checkpoints_dir = checkpoints_dir.parent
+            last_checkpoint_file = parent_checkpoint_file
+
+    if not last_checkpoint_file.exists():
+        raise FileNotFoundError(f"Could not find latest_checkpoint.txt in {args.setup.checkpoints_dir} or its parent.")
+
+    with open(last_checkpoint_file, "r") as f:
+        last_checkpoint = f.read().strip()
 
     if args.setup.infinite:
         last_iter = int(last_checkpoint.split("_")[-1])
@@ -97,7 +106,7 @@ def main(args: Args) -> None:
                     legacy_infer_results_dir = Path(args.setup.save_dir) / f"iter_{iter:09d}" / "metrics.json"
                     if legacy_infer_results_dir.exists():
                         continue
-                    checkpoint_iter_dir = Path(args.setup.checkpoints_dir) / f"iter_{iter:09d}"
+                    checkpoint_iter_dir = checkpoints_dir / f"iter_{iter:09d}"
                     if not checkpoint_iter_dir.exists():
                         continue
                     checkpoint_path = resolve_checkpoint_path(checkpoint_iter_dir)
@@ -106,7 +115,7 @@ def main(args: Args) -> None:
                 pass
             time.sleep(60)
     else:
-        checkpoint_iter_dir = Path(args.setup.checkpoints_dir) / last_checkpoint
+        checkpoint_iter_dir = checkpoints_dir / last_checkpoint
         checkpoint_path = resolve_checkpoint_path(checkpoint_iter_dir)
         inference(args.setup, inference_args, checkpoint_path)
 

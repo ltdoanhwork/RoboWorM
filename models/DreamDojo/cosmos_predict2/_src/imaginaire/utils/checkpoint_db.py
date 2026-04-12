@@ -36,11 +36,13 @@ def _iter_local_checkpoint_roots() -> list[Path]:
         if env_value:
             roots.append(Path(env_value).expanduser())
 
-    repo_root = Path(__file__).resolve().parents[4]
+    file_path = Path(__file__).resolve()
     roots.extend(
         [
-            repo_root / "checkpoints" / "nvidia",
-            repo_root.parent / "checkpoints" / "nvidia",
+            Path.cwd() / "checkpoints" / "nvidia",
+            file_path.parents[4] / "checkpoints" / "nvidia",
+            file_path.parents[5] / "checkpoints" / "nvidia",
+            file_path.parents[6] / "checkpoints" / "nvidia",
         ]
     )
 

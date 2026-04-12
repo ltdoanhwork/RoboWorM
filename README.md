@@ -292,3 +292,45 @@ torchrun --master_port=29601 -m models.dreamgen.examples.video2world_gr00t \
   --svg_min_kc_ratio 0.10 \
   --svg_kmeans_iter_init 20 \
   --svg_kmeans_iter_step 2
+
+## dreamdojo
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
+export PYTHONPATH="./models/DreamDojo"
+export CUDA_VISIBLE_DEVICES=0
+export NUM_GPUS=1
+python -m cosmos_predict2._src.predict2.inference.inference_batch \
+  --experiment "Stage-c_pt_4-reason_embeddings-v1p1-Index-26-Size-2B-Res-720-Fps-16-Note-T2V_high_sigma_loss_reweighted_1_1_rectified_flow_only_resume2" \
+  --ckpt_path ./checkpoints/dreamdojo/2B_pretrain/iter_000140000/model \
+  --batch_input ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.jsonl \
+  --output_dir ./output/dream_gen_benchmark/output_base_2b \
+  --resolution 480,640 \
+  --guidance 5 \
+  --num_output_frames 77 \
+  --num_steps 35 \
+  --use_neg_prompt
+
+
+
+
+
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
+export PYTHONPATH="./models/DreamDojo"
+export CUDA_VISIBLE_DEVICES=0
+export NUM_GPUS=1
+cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
+
+export VIRTUAL_ENV="$PWD/.venv"
+export PATH="$VIRTUAL_ENV/bin:$PATH"
+hash -r
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/dreamdojo_hv_eval_2b_g1_gr1 \
+  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000 \
+  --experiment dreamdojo_2b_480_640_gr1 \
+  --save-dir ./output/dreamdojo_results/dreamdojo_EgoDex_Eval_2b_g1_gr1 \
+  --num-frames 49 \
+  --num-samples 65 \
+  --dataset-path "EgoDex_Eval" \
+  --data-split test \
+  --deterministic-uniform-sampling \
+  --checkpoint-interval 5000 \
+  --infinite
