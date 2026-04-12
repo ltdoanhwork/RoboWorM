@@ -80,6 +80,7 @@ class Video2WorldModelRectifiedFlow(Text2WorldModelRectifiedFlow):
         xt_B_C_T_H_W: torch.Tensor,
         timesteps_B_T: torch.Tensor,
         condition: Text2WorldCondition,
+        **kwargs,
     ) -> DenoisePrediction:
         """
         Args:
@@ -126,6 +127,7 @@ class Video2WorldModelRectifiedFlow(Text2WorldModelRectifiedFlow):
             x_B_C_T_H_W=xt_B_C_T_H_W.to(**self.tensor_kwargs),  # Eq. 7 of https://arxiv.org/pdf/2206.00364.pdf
             timesteps_B_T=timesteps_B_T,  # Eq. 7 of https://arxiv.org/pdf/2206.00364.pdf
             **condition.to_dict(),
+            **kwargs,
         ).float()
 
         if condition.is_video and self.config.denoise_replace_gt_frames:
@@ -203,9 +205,9 @@ class Video2WorldModelRectifiedFlow(Text2WorldModelRectifiedFlow):
                 "parallel_state is not initialized, context parallel should be turned off."
             )
 
-        def velocity_fn(noise: torch.Tensor, noise_x: torch.Tensor, timestep: torch.Tensor) -> torch.Tensor:
-            cond_v = self.denoise(noise, noise_x, timestep, condition)
-            uncond_v = self.denoise(noise, noise_x, timestep, uncondition)
+        def velocity_fn(noise: torch.Tensor, noise_x: torch.Tensor, timestep: torch.Tensor, **kwargs) -> torch.Tensor:
+            cond_v = self.denoise(noise, noise_x, timestep, condition, **kwargs)
+            uncond_v = self.denoise(noise, noise_x, timestep, uncondition, **kwargs)
             velocity_pred = cond_v + guidance * (cond_v - uncond_v)
             return velocity_pred
 
@@ -217,6 +219,7 @@ class Video2WorldModelRectifiedFlow(Text2WorldModelRectifiedFlow):
         time: torch.Tensor,
         condition: Video2WorldCondition,
         net_type: Literal["teacher", "fake_score", "student"] = "teacher",
+        **kwargs,
     ) -> DenoisePrediction:
         """
         Network forward to denoise the input noised data given noise level, and condition.
@@ -308,6 +311,7 @@ class Video2WorldModelRectifiedFlow(Text2WorldModelRectifiedFlow):
                 **self.tensor_kwargs
             ),  # Eq. 7 of https://arxiv.org/pdf/2206.00364.pdf
             **condition.to_dict(),
+            **kwargs,
         )
         if net_type == "fake_score" and getattr(self, "intermediate_feature_ids", None):
             call_kwargs["intermediate_feature_ids"] = self.intermediate_feature_ids

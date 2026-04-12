@@ -335,3 +335,64 @@ python -m models.DreamDojo.examples.action_conditioned \
   --checkpoint-interval 5000 \
   --infinite
 
+### dreamdojo svg 1
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/dreamdojo_svg1_eval \
+  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000 \
+  --experiment dreamdojo_2b_480_640_gr1 \
+  --save-dir ./output/dreamdojo_results/svg1_results \
+  --num-frames 49 \
+  --num-samples 65 \
+  --dataset-path "./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
+  --data-split test \
+  --deterministic-uniform-sampling \
+  --use_svg \
+  --svg_variant svg1
+
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/dreamdojo_svg1_eval \
+  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000 \
+  --experiment dreamdojo_2b_480_640_gr1 \
+  --save-dir ./output/dreamdojo_results/svg1_results \
+  --num-frames 49 \
+  --num-samples 65 \
+  --dataset-path "./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
+  --data-split test \
+  --deterministic-uniform-sampling \
+  --use_svg \
+  --svg_variant svg1 \
+  --svg_sparsity 0.2 \
+  --svg_dense_step_frac 0.1 \
+  --svg_start_layer_idx 4
+
+### dreadojo svg2
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/dreamdojo_svg2_eval \
+  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000 \
+  --experiment dreamdojo_2b_480_640_gr1 \
+  --save-dir ./output/dreamdojo_results/svg2_results \
+  --num-frames 49 \
+  --num-samples 65 \
+  --dataset-path "./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
+  --data-split test \
+  --deterministic-uniform-sampling \
+  --use_svg \
+  --svg_variant svg2
+
+
+cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/dreamdojo_svg2_eval \
+  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000 \
+  --experiment dreamdojo_2b_480_640_gr1 \
+  --save-dir ./output/dreamdojo_results/svg2_results \
+  --num-frames 49 \
+  --num-samples 65 \
+  --dataset-path "./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
+  --data-split test \
+  --deterministic-uniform-sampling \
+  --use_svg \
+  --svg_variant svg2 \
+  --svg_num_q_centroids 16 \
+  --svg_num_k_centroids 64 \
+  --svg_top_p_kmeans 0.95
