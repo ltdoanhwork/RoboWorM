@@ -361,6 +361,7 @@ python -m models.DreamDojo.examples.action_conditioned \
   --deterministic-uniform-sampling \
   --use_svg \
   --svg_variant svg1 \
+  --svg_start_layer_idx 2 \
   --svg_sparsity 0.2 \
   --svg_dense_step_frac 0.1 \
   --svg_start_layer_idx 4
@@ -377,6 +378,7 @@ python -m models.DreamDojo.examples.action_conditioned \
   --data-split test \
   --deterministic-uniform-sampling \
   --use_svg \
+  --svg_start_layer_idx 2 \
   --svg_variant svg2
 
 
@@ -393,6 +395,9 @@ python -m models.DreamDojo.examples.action_conditioned \
   --deterministic-uniform-sampling \
   --use_svg \
   --svg_variant svg2 \
-  --svg_num_q_centroids 16 \
-  --svg_num_k_centroids 64 \
-  --svg_top_p_kmeans 0.95
+  --svg_start_layer_idx 18 \
+  --svg_num_q_centroids 8 \
+  --svg_num_k_centroids 16 \
+  --svg_top_p_kmeans 0.3 \
+  --svg_kmeans_iter_init 2 \
+  --svg_kmeans_iter_step 1
