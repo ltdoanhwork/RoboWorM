@@ -14,11 +14,14 @@
 # limitations under the License.
 
 import collections
+import json
 import math
+import time
 from collections import namedtuple
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from typing import Any, List, Optional, Tuple, Union
 
 from cosmos_predict2._src.predict2.utils.kv_cache import AttentionOpWithKVCache, KVCacheConfig, KVCacheLayerState
@@ -66,6 +69,94 @@ from cosmos_predict2._src.predict2.networks.selective_activation_checkpoint impo
 from methods.prunning.SiTo.runtime import SiToTokenPruner, build_sito_parameters
 from methods.prunning.importance_token_merge.runtime import ITMTokenMerger, build_itm_parameters
 from methods.sparse_attention.svg.config import build_dreamdojo_svg_parameters
+
+
+class _ComponentProfiler:
+    def __init__(self) -> None:
+        self.reset()
+
+    def reset(self) -> None:
+        self.enabled = False
+        self.max_model_forwards = 0
+        self.model_forwards_seen = 0
+        self.records: dict[int, dict[str, dict[str, float]]] = {}
+
+    def configure(self, *, enabled: bool, max_model_forwards: int) -> None:
+        self.reset()
+        self.enabled = enabled
+        self.max_model_forwards = max(0, int(max_model_forwards))
+
+    def begin_model_forward(self) -> bool:
+        if not self.enabled:
+            return False
+        if self.model_forwards_seen >= self.max_model_forwards:
+            return False
+        self.model_forwards_seen += 1
+        return True
+
+    def add(self, block_idx: int, component: str, elapsed_ms: float) -> None:
+        block_stats = self.records.setdefault(block_idx, {})
+        component_stats = block_stats.setdefault(component, {"time_ms": 0.0, "calls": 0.0})
+        component_stats["time_ms"] += float(elapsed_ms)
+        component_stats["calls"] += 1.0
+
+    def summary(self) -> dict[str, Any]:
+        total_by_component: dict[str, float] = {}
+        per_block = []
+        for block_idx in sorted(self.records):
+            block_components = self.records[block_idx]
+            block_total_ms = sum(stats["time_ms"] for stats in block_components.values())
+            components = {}
+            for name, stats in sorted(block_components.items()):
+                total_by_component[name] = total_by_component.get(name, 0.0) + stats["time_ms"]
+                components[name] = {
+                    "time_ms": round(stats["time_ms"], 4),
+                    "calls": int(stats["calls"]),
+                    "avg_ms": round(stats["time_ms"] / max(stats["calls"], 1.0), 4),
+                }
+            per_block.append(
+                {
+                    "block_idx": block_idx,
+                    "total_ms": round(block_total_ms, 4),
+                    "components": components,
+                }
+            )
+        return {
+            "enabled": self.enabled,
+            "profiled_model_forwards": self.model_forwards_seen,
+            "total_component_time_ms": {name: round(value, 4) for name, value in sorted(total_by_component.items())},
+            "per_block": per_block,
+        }
+
+    def dump(self, output_path: str | Path) -> None:
+        path = Path(output_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w") as f:
+            json.dump(self.summary(), f, indent=2)
+
+
+_COMPONENT_PROFILER = _ComponentProfiler()
+
+
+def configure_component_profiler(*, enabled: bool, max_model_forwards: int) -> None:
+    _COMPONENT_PROFILER.configure(enabled=enabled, max_model_forwards=max_model_forwards)
+
+
+def dump_component_profiler(output_path: str | Path) -> dict[str, Any]:
+    summary = _COMPONENT_PROFILER.summary()
+    _COMPONENT_PROFILER.dump(output_path)
+    return summary
+
+
+def _time_cuda_component(enabled: bool, fn):
+    if not enabled:
+        return fn(), None
+    torch.cuda.synchronize()
+    start = time.perf_counter()
+    result = fn()
+    torch.cuda.synchronize()
+    elapsed_ms = (time.perf_counter() - start) * 1000.0
+    return result, elapsed_ms
 
 
 # selective activation checkpoint; only apply to the minimal v4 model. if there are change in the networks, some policy will not work as we expect.
@@ -1265,9 +1356,11 @@ class Block(nn.Module):
         itm_params: Mapping[str, Any] | None = None,
         image_context_dim: Optional[int] = None,
         use_wan_fp32_strategy: bool = False,
+        block_idx: Optional[int] = None,
     ):
         super().__init__()
         self.x_dim = x_dim
+        self.block_idx = -1 if block_idx is None else block_idx
         self.layer_norm_self_attn = nn.LayerNorm(x_dim, elementwise_affine=False, eps=1e-6)
         self.self_attn = Attention(
             x_dim,
@@ -1443,6 +1536,7 @@ class Block(nn.Module):
             video_size = VideoSize(T=T * self.cp_size, H=H, W=W)
 
         # Self-attention with optional stateless KV cache state threading
+<<<<<<< HEAD
         self_attn_input = rearrange(normalized_x_B_T_H_W_D, "b t h w d -> b (t h w) d")
         self_attn_rope = rope_emb_L_1_1_D
         sito_plan = None
@@ -1478,7 +1572,23 @@ class Block(nn.Module):
             attention_runtime_context=attention_runtime_context,
             kv_cache_cfg=kv_cache_cfg,
             kv_state=kv_state,
+=======
+        profile_this_forward = _COMPONENT_PROFILER.begin_model_forward() if self.block_idx == 0 else False
+        self_attn_result, elapsed_ms = _time_cuda_component(
+            profile_this_forward,
+            lambda: self.self_attn(
+                rearrange(normalized_x_B_T_H_W_D, "b t h w d -> b (t h w) d"),
+                None,
+                rope_emb=rope_emb_L_1_1_D,
+                video_size=video_size,
+                attention_runtime_context=attention_runtime_context,
+                kv_cache_cfg=kv_cache_cfg,
+                kv_state=kv_state,
+            ),
+>>>>>>> 87186c5 (feat: add component-level CUDA profiling to DiT blocks and integrate into DreamDojo runtime)
         )
+        if elapsed_ms is not None:
+            _COMPONENT_PROFILER.add(self.block_idx, "self_attn", elapsed_ms)
 
         new_kv_state: Optional[KVCacheLayerState] = None
         if isinstance(self_attn_result, tuple):
@@ -1523,13 +1633,18 @@ class Block(nn.Module):
             # _x_B_T_H_W_D = _x_B_T_H_W_D + _gate_cross_attn_B_T_1_1_D * _result_B_T_H_W_D
             return _result_B_T_H_W_D
 
-        result_B_T_H_W_D = _x_fn(
-            x_B_T_H_W_D,
-            self.layer_norm_cross_attn,
-            scale_cross_attn_B_T_1_1_D,
-            shift_cross_attn_B_T_1_1_D,
-            gate_cross_attn_B_T_1_1_D,
+        result_B_T_H_W_D, elapsed_ms = _time_cuda_component(
+            profile_this_forward,
+            lambda: _x_fn(
+                x_B_T_H_W_D,
+                self.layer_norm_cross_attn,
+                scale_cross_attn_B_T_1_1_D,
+                shift_cross_attn_B_T_1_1_D,
+                gate_cross_attn_B_T_1_1_D,
+            ),
         )
+        if elapsed_ms is not None:
+            _COMPONENT_PROFILER.add(self.block_idx, "cross_attn", elapsed_ms)
         x_B_T_H_W_D = result_B_T_H_W_D * gate_cross_attn_B_T_1_1_D + x_B_T_H_W_D
 
         normalized_x_B_T_H_W_D = _fn(
@@ -1856,6 +1971,7 @@ class MiniTrainDIT(WeightTrainingStat):
                     itm_params=None if itm_parameters is None else itm_parameters[i],
                     image_context_dim=None if extra_image_context_dim is None else model_channels,
                     use_wan_fp32_strategy=use_wan_fp32_strategy,
+                    block_idx=i,
                 )
                 for i in range(num_blocks)
             ]

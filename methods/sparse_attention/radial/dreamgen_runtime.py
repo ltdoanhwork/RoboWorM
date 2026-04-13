@@ -51,6 +51,9 @@ class _RadialPlan:
 
 
 class DreamGenRadialRuntime:
+    _GLOBAL_MASK_CACHE: dict[tuple, torch.Tensor] = {}
+    _GLOBAL_PLAN_CACHE: dict[tuple, _RadialPlan] = {}
+
     def __init__(self, *, block_size: int = 64, decay_factor: float = 1.0, model_type: str = "hunyuan"):
         if block_size not in (64, 128):
             raise ValueError(f"[Radial] Only block_size 64 or 128 is supported, got {block_size}.")
@@ -66,8 +69,11 @@ class DreamGenRadialRuntime:
         if self._flashinfer is None:
             raise ImportError("[Radial] flashinfer is required but was not imported by the vendored module.")
 
-        self._mask_cache: dict[tuple, torch.Tensor] = {}
-        self._plan_cache: dict[tuple, _RadialPlan] = {}
+        # Share plans across layers with identical geometry/head layout. DreamDojo
+        # instantiates one runtime per sparse layer, so per-instance caches repeat
+        # the same planning work and erase much of the practical speedup.
+        self._mask_cache = self._GLOBAL_MASK_CACHE
+        self._plan_cache = self._GLOBAL_PLAN_CACHE
 
     def _validate_inputs(
         self,

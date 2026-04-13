@@ -29,6 +29,10 @@ import torch
 import torch.nn.functional as F
 import torchvision
 from loguru import logger
+from cosmos_predict2._src.predict2.networks.minimal_v4_dit import (
+    configure_component_profiler,
+    dump_component_profiler,
+)
 
 from cosmos_predict2._src.imaginaire.utils import distributed
 from cosmos_predict2._src.predict2.action.datasets.dataset_utils import euler2rotm, rotm2euler, rotm2quat
@@ -306,6 +310,11 @@ def inference(
     if sum(bool(enabled) for enabled in (setup_args.use_svg, setup_args.use_sito, setup_args.use_itm)) > 1:
         raise ValueError("[ITM] DreamDojo sparse/token backends are mutually exclusive: SVG, SiTo, ITM.")
 
+    configure_component_profiler(
+        enabled=setup_args.profile_components,
+        max_model_forwards=setup_args.profile_component_steps,
+    )
+
     # Determine supported extensions based on num_latent_conditional_frames
     if inference_args.num_latent_conditional_frames > 1:
         # Check if input folder contains any videos
@@ -495,6 +504,23 @@ def inference(
                 "ssim": f"{sum(all_ssim) / len(all_ssim):.3f}",
                 "lpips": f"{sum(all_lpips) / len(all_lpips):.3f}"
                 }, f)
+        if setup_args.profile_components:
+            profile_path = inference_args.save_root / "component_profile.json"
+            profile_summary = dump_component_profiler(profile_path)
+            logger.info(
+                "Component profile saved to {} (model_forwards={})",
+                profile_path,
+                profile_summary["profiled_model_forwards"],
+            )
+            for component, total_ms in profile_summary["total_component_time_ms"].items():
+                logger.info("Component total {}: {:.2f} ms", component, total_ms)
+            top_blocks = sorted(profile_summary["per_block"], key=lambda item: item["total_ms"], reverse=True)[:5]
+            for block in top_blocks:
+                component_parts = ", ".join(
+                    f"{name}={stats['time_ms']:.2f}ms"
+                    for name, stats in block["components"].items()
+                )
+                logger.info("Hot block {} total={:.2f} ms ({})", block["block_idx"], block["total_ms"], component_parts)
 
     # Synchronize all processes before cleanup
     # pyrefly: ignore  # unsupported-operation
