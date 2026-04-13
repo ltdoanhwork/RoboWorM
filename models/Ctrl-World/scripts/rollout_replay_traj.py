@@ -65,6 +65,13 @@ def _import_sito_module(module_name):
     return importlib.import_module(f"methods.prunning.SiTo.{module_name}")
 
 
+def _import_itm_module(module_name):
+    project_root = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../.."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+    return importlib.import_module(f"methods.prunning.importance_token_merge.{module_name}")
+
+
 class agent():
     def __init__(self,args):
           
@@ -271,10 +278,12 @@ if __name__ == "__main__":
     # ---- SiTo sparse attention (optional, training-free) ----
     _sito_config = _import_sito_module("config")
     _sito_config.add_sito_args(parser)
+    _itm_config = _import_itm_module("config")
+    _itm_config.add_itm_args(parser)
     # ---------------------------------------------------------
     args_new = parser.parse_args()
-    if sum(bool(getattr(args_new, flag, False)) for flag in ("use_pisa", "use_svg", "use_radial", "use_sito")) > 1:
-        raise ValueError("[SiTo] SiTo, PISA, SVG, and Radial are mutually exclusive in Ctrl-World.")
+    if sum(bool(getattr(args_new, flag, False)) for flag in ("use_pisa", "use_svg", "use_radial", "use_sito", "use_itm")) > 1:
+        raise ValueError("[ITM] ITM, SiTo, PISA, SVG, and Radial are mutually exclusive in Ctrl-World.")
 
     args = wm_args(task_type=args_new.task_type)
 
@@ -345,6 +354,20 @@ if __name__ == "__main__":
             noise_alpha=args_new.sito_noise_alpha,
             sim_beta=args_new.sito_sim_beta,
             max_downsample_ratio=args_new.sito_max_downsample_ratio,
+        )
+    if getattr(args_new, 'use_itm', False):
+        _itm_adapter = _import_itm_module("adapter")
+        _itm_adapter.enable_itm(
+            Agent.model.unet,
+            itm_state={},
+            start_layer_idx=args_new.itm_start_layer_idx or 0,
+            compress_ratio=args_new.itm_compress_ratio,
+            prune_from_step=args_new.itm_prune_from_step,
+            merge_from_step=args_new.itm_merge_from_step,
+            merge_attn=args_new.itm_merge_attn,
+            merge_crossattn=args_new.itm_merge_crossattn,
+            merge_mlp=args_new.itm_merge_mlp,
+            max_downsample_ratio=args_new.itm_max_downsample_ratio,
         )
     # -----------------------------------------------------------------
     interact_num = args.interact_num

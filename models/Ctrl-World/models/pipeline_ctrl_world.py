@@ -15,6 +15,34 @@ from diffusers.loaders import LoraLoaderMixin, TextualInversionLoaderMixin
 from diffusers.utils.torch_utils import randn_tensor
 from diffusers.pipelines.stable_video_diffusion.pipeline_stable_video_diffusion import _resize_with_antialiasing
 
+
+def _get_itm_state(unet, *, step_idx: int, do_classifier_free_guidance: bool):
+    itm_state = getattr(unet, "_itm_state", None)
+    if itm_state is None:
+        return None
+    if not do_classifier_free_guidance:
+        raise ValueError("[ITM] Ctrl-World ITM requires classifier-free guidance with guidance_scale > 1.")
+    prune_from_step = int(itm_state.get("prune_from_step", 1))
+    merge_from_step = int(itm_state.get("merge_from_step", 2))
+    if step_idx < prune_from_step or itm_state.get("heat_map") is None:
+        itm_state["phase"] = "disabled"
+        itm_state["merge_mode"] = "mean"
+    elif step_idx < merge_from_step:
+        itm_state["phase"] = "prune"
+        itm_state["merge_mode"] = "none"
+    else:
+        itm_state["phase"] = "merge"
+        itm_state["merge_mode"] = "mean"
+    return itm_state
+
+
+def _update_itm_heat_map(unet, cond_pred: torch.Tensor, uncond_pred: torch.Tensor) -> None:
+    itm_state = getattr(unet, "_itm_state", None)
+    if itm_state is None:
+        return
+    heat_map = torch.abs(cond_pred - uncond_pred).mean(dim=1)
+    itm_state["heat_map"] = heat_map.detach()
+
 def svd_tensor2vid(video: torch.Tensor, processor, output_type="np"):
     # Based on:
     # https://github.com/modelscope/modelscope/blob/1509fdb973e5871f37148a4b5e5964cafd43e64d/modelscope/pipelines/multi_modal/text_to_video_synthesis_pipeline.py#L78
@@ -184,6 +212,7 @@ class LatentToVideoPipeline(TextToVideoSDPipeline):
                 # expand the latents if we are doing classifier free guidance
                 latent_model_input = torch.cat([latents] * 2) if do_classifier_free_guidance else latents
                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
+                _get_itm_state(self.unet, step_idx=i, do_classifier_free_guidance=do_classifier_free_guidance)
                 if motion is not None:
                     motion = torch.tensor(motion, device=device)
                 noise_pred = self.unet(
@@ -198,6 +227,7 @@ class LatentToVideoPipeline(TextToVideoSDPipeline):
                 # perform guidance
                 if do_classifier_free_guidance:
                     noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
+                    _update_itm_heat_map(self.unet, noise_pred_text, noise_pred_uncond)
                     noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
 
                 # reshape latents
@@ -474,6 +504,7 @@ class CtrlWorldDiffusionPipeline(StableVideoDiffusionPipeline):
                 # expand the latents if we are doing classifier free guidance
                 latent_model_input = torch.cat([latents] * 2) if do_classifier_free_guidance else latents
                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
+                _get_itm_state(self.unet, step_idx=i, do_classifier_free_guidance=do_classifier_free_guidance)
 
                 if history is not None:
                     latent_model_input = torch.cat([history, latent_model_input], dim=1) # (bsz*2,frame+F,4,32,32)
@@ -512,6 +543,7 @@ class CtrlWorldDiffusionPipeline(StableVideoDiffusionPipeline):
                 # perform guidance
                 if do_classifier_free_guidance:
                     noise_pred_uncond, noise_pred_cond = noise_pred.chunk(2)
+                    _update_itm_heat_map(self.unet, noise_pred_cond, noise_pred_uncond)
                     noise_pred = noise_pred_uncond + self.guidance_scale * (noise_pred_cond - noise_pred_uncond)
 
                 # model_output = noise_pred
@@ -776,6 +808,7 @@ class TextStableVideoDiffusionPipeline(StableVideoDiffusionPipeline):
                 # expand the latents if we are doing classifier free guidance
                 latent_model_input = torch.cat([latents] * 2) if do_classifier_free_guidance else latents
                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
+                _get_itm_state(self.unet, step_idx=i, do_classifier_free_guidance=do_classifier_free_guidance)
 
                 if motion_mask:
                     # Concatenate image_latents over channels dimention
@@ -794,6 +827,7 @@ class TextStableVideoDiffusionPipeline(StableVideoDiffusionPipeline):
                 # perform guidance
                 if do_classifier_free_guidance:
                     noise_pred_uncond, noise_pred_cond = noise_pred.chunk(2)
+                    _update_itm_heat_map(self.unet, noise_pred_cond, noise_pred_uncond)
                     noise_pred = noise_pred_uncond + self.guidance_scale * (noise_pred_cond - noise_pred_uncond)
                 # compute the previous noisy sample x_t -> x_t-1
                 latents = self.scheduler.step(noise_pred, t, latents).prev_sample

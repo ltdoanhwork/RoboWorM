@@ -40,6 +40,7 @@ from imaginaire.auxiliary.text_encoder import CosmosTextEncoder, CosmosTextEncod
 from imaginaire.lazy_config import LazyDict, instantiate
 from imaginaire.utils import log, misc
 from imaginaire.utils.ema import FastEmaModelUpdater
+from methods.prunning.importance_token_merge.runtime import build_itm_attention_context, compute_itm_heat_map
 
 IS_PREPROCESSED_KEY = "is_preprocessed"
 
@@ -388,6 +389,35 @@ class Text2ImagePipeline(BasePipeline):
         _, uncondition, _, _ = self.broadcast_split_for_model_parallelsim(latent_state, uncondition, None, None)
 
         log.info("Starting image generation...")
+        itm_state: dict[str, Any] | None = None
+        if getattr(self.dit, "has_itm_backend", False):
+            if guidance <= 0:
+                raise ValueError("[ITM] DreamGen ITM requires classifier-free guidance with `guidance > 0`.")
+            itm_state = {"phase": "disabled", "merge_mode": "mean", "heat_map": None}
+
+        def _build_attention_runtime_context(diffusion_step_idx: int, sigma_value: float) -> dict[str, Any]:
+            runtime_context = {
+                "diffusion_step_idx": diffusion_step_idx,
+                "num_sampling_steps": num_sampling_step,
+                "sigma": sigma_value,
+            }
+            if itm_state is None:
+                return runtime_context
+            itm_schedule = getattr(self.dit, "itm_schedule", None) or {"prune_from_step": 1, "merge_from_step": 2}
+            if diffusion_step_idx < itm_schedule["prune_from_step"]:
+                itm_state["phase"] = "disabled"
+                itm_state["merge_mode"] = "mean"
+            elif diffusion_step_idx < itm_schedule["merge_from_step"]:
+                itm_state["phase"] = "prune"
+                itm_state["merge_mode"] = "none"
+            else:
+                itm_state["phase"] = "merge"
+                itm_state["merge_mode"] = "mean"
+            return build_itm_attention_context(
+                runtime_context=runtime_context,
+                itm_state=itm_state,
+                diffusion_step_idx=diffusion_step_idx,
+            )
 
         if self.distill_steps > 0:
             generator = torch.Generator(device=self.tensor_kwargs["device"])
@@ -476,6 +506,7 @@ class Text2ImagePipeline(BasePipeline):
                 "num_sampling_steps": num_sampling_step,
                 "sigma": float(sigma_t.item()),
             }
+            attention_runtime_context = _build_attention_runtime_context(i, float(sigma_t.item()))
             cond_x0 = self.denoise(
                 sample,
                 sigma_in,
@@ -490,6 +521,12 @@ class Text2ImagePipeline(BasePipeline):
                 use_cuda_graphs=use_cuda_graphs,
                 attention_runtime_context=attention_runtime_context,
             ).x0
+            if itm_state is not None:
+                itm_state["heat_map"] = compute_itm_heat_map(
+                    cond_x0,
+                    uncond_x0,
+                    patch_spatial=self.dit.patch_spatial,
+                )
             x0_pred = cond_x0 + guidance * (cond_x0 - uncond_x0)
 
             # Scheduler step (handles float64 internally, returns original dtype)
@@ -504,11 +541,7 @@ class Text2ImagePipeline(BasePipeline):
         sigma_in = sigma_min.repeat(sample.shape[0])
 
         # Final clean pass.
-        attention_runtime_context = {
-            "diffusion_step_idx": num_sampling_step,
-            "num_sampling_steps": num_sampling_step,
-            "sigma": float(sigma_min.item()),
-        }
+        attention_runtime_context = _build_attention_runtime_context(num_sampling_step, float(sigma_min.item()))
         cond_x0 = self.denoise(
             sample,
             sigma_in,

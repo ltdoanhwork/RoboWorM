@@ -54,6 +54,7 @@ from imaginaire.lazy_config import instantiate
 from imaginaire.utils import log, misc
 from imaginaire.utils.easy_io import easy_io
 from imaginaire.utils.ema import FastEmaModelUpdater
+from methods.prunning.importance_token_merge.runtime import build_itm_attention_context, compute_itm_heat_map
 
 IS_PREPROCESSED_KEY = "is_preprocessed"
 _IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", "webp"]
@@ -786,9 +787,32 @@ class Video2WorldPipeline(BasePipeline):
             assert not self.dit.is_context_parallel_enabled, (
                 "parallel_state is not initialized, context parallel should be turned off."
             )
+        itm_state: dict[str, Any] | None = None
+        if getattr(self.dit, "has_itm_backend", False):
+            if guidance <= 0:
+                raise ValueError("[ITM] DreamGen ITM requires classifier-free guidance with `guidance > 0`.")
+            itm_state = {"phase": "disabled", "merge_mode": "mean", "heat_map": None}
 
         def x0_fn(noise_x: torch.Tensor, sigma: torch.Tensor) -> torch.Tensor:
             attention_runtime_context = timing_info.get("attention_runtime_context") if timing_info is not None else None
+            if itm_state is not None:
+                diffusion_step_idx = 0 if attention_runtime_context is None else int(attention_runtime_context["diffusion_step_idx"])
+                sigma_value = 0.0 if attention_runtime_context is None else float(attention_runtime_context["sigma"])
+                itm_schedule = getattr(self.dit, "itm_schedule", None) or {"prune_from_step": 1, "merge_from_step": 2}
+                if diffusion_step_idx < itm_schedule["prune_from_step"]:
+                    itm_state["phase"] = "disabled"
+                    itm_state["merge_mode"] = "mean"
+                elif diffusion_step_idx < itm_schedule["merge_from_step"]:
+                    itm_state["phase"] = "prune"
+                    itm_state["merge_mode"] = "none"
+                else:
+                    itm_state["phase"] = "merge"
+                    itm_state["merge_mode"] = "mean"
+                attention_runtime_context = build_itm_attention_context(
+                    runtime_context=attention_runtime_context,
+                    itm_state=itm_state,
+                    diffusion_step_idx=diffusion_step_idx,
+                )
             cond_x0 = self.denoise(
                 noise_x,
                 sigma,
@@ -805,6 +829,12 @@ class Video2WorldPipeline(BasePipeline):
                 timing_info=timing_info,
                 attention_runtime_context=attention_runtime_context,
             ).x0
+            if itm_state is not None:
+                itm_state["heat_map"] = compute_itm_heat_map(
+                    cond_x0,
+                    uncond_x0,
+                    patch_spatial=self.dit.patch_spatial,
+                )
             raw_x0 = cond_x0 + guidance * (cond_x0 - uncond_x0)
             if "guided_image" in data_batch:
                 # replacement trick that enables inpainting with base model

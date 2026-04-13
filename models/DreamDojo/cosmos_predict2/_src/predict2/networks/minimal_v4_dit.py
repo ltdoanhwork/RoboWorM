@@ -64,6 +64,7 @@ from cosmos_predict2._src.predict2.networks.a2a_cp import MinimalA2AAttnOp, Natt
 from cosmos_predict2._src.predict2.networks.model_weights_stats import WeightTrainingStat
 from cosmos_predict2._src.predict2.networks.selective_activation_checkpoint import SACConfig as _SACConfig
 from methods.prunning.SiTo.runtime import SiToTokenPruner, build_sito_parameters
+from methods.prunning.importance_token_merge.runtime import ITMTokenMerger, build_itm_parameters
 from methods.sparse_attention.svg.config import build_dreamdojo_svg_parameters
 
 
@@ -1261,6 +1262,7 @@ class Block(nn.Module):
         natten_params: Mapping[str, Any] | None = None,
         svg_params: Mapping[str, Any] | None = None,
         sito_params: Mapping[str, Any] | None = None,
+        itm_params: Mapping[str, Any] | None = None,
         image_context_dim: Optional[int] = None,
         use_wan_fp32_strategy: bool = False,
     ):
@@ -1329,6 +1331,7 @@ class Block(nn.Module):
         self.cp_size = None
         self.use_wan_fp32_strategy = use_wan_fp32_strategy
         self.sito_runtime = None if sito_params is None else SiToTokenPruner(**dict(sito_params))
+        self.itm_runtime = None if itm_params is None else ITMTokenMerger(**dict(itm_params))
 
     def set_context_parallel_group(self, process_group, ranks, stream, cp_comm_type: str = "p2p"):
         self.cp_size = None if ranks is None else len(ranks)
@@ -1443,6 +1446,9 @@ class Block(nn.Module):
         self_attn_input = rearrange(normalized_x_B_T_H_W_D, "b t h w d -> b (t h w) d")
         self_attn_rope = rope_emb_L_1_1_D
         sito_plan = None
+        itm_context = None if attention_runtime_context is None else attention_runtime_context.get("itm")
+        itm_plan = None
+        itm_merge_mode = "mean"
         if self.sito_runtime is not None and kv_cache_cfg is None and kv_state is None:
             if self.cp_size is not None and self.cp_size > 1:
                 raise ValueError("[SiTo] DreamDojo SiTo v1 is single-GPU only; set context_parallel_size=1.")
@@ -1450,6 +1456,19 @@ class Block(nn.Module):
             if sito_plan is not None:
                 self_attn_input = self.sito_runtime.prune(self_attn_input, sito_plan)
                 self_attn_rope = self.sito_runtime.prune_rope(rope_emb_L_1_1_D, sito_plan)
+        elif self.itm_runtime is not None and kv_cache_cfg is None and kv_state is None:
+            if self.cp_size is not None and self.cp_size > 1:
+                raise ValueError("[ITM] DreamDojo ITM v1 is single-GPU only; set context_parallel_size=1.")
+            if itm_context is not None:
+                itm_merge_mode = itm_context.get("merge_mode", "mean")
+                itm_plan = self.itm_runtime.prepare(
+                    self_attn_input,
+                    heat_map=itm_context.get("heat_map"),
+                    video_size=VideoSize(T=T, H=H, W=W),
+                )
+                if itm_plan is not None and self.itm_runtime.merge_attn:
+                    self_attn_input = self.itm_runtime.merge(self_attn_input, itm_plan, mode=itm_merge_mode)
+                    self_attn_rope = self.itm_runtime.merge_rope(self_attn_rope, itm_plan)
 
         self_attn_result = self.self_attn(
             self_attn_input,
@@ -1468,6 +1487,8 @@ class Block(nn.Module):
             self_attn_output = self_attn_result
         if sito_plan is not None:
             self_attn_output = self.sito_runtime.recover(self_attn_output, sito_plan)
+        elif itm_plan is not None and self.itm_runtime is not None and self.itm_runtime.merge_attn:
+            self_attn_output = self.itm_runtime.unmerge(self_attn_output, itm_plan, mode=itm_merge_mode)
 
         result_B_T_H_W_D = rearrange(
             self_attn_output,
@@ -1488,17 +1509,17 @@ class Block(nn.Module):
             _normalized_x_B_T_H_W_D = _fn(
                 _x_B_T_H_W_D, layer_norm_cross_attn, _scale_cross_attn_B_T_1_1_D, _shift_cross_attn_B_T_1_1_D
             )
-            _result_B_T_H_W_D = rearrange(
-                self.cross_attn(
-                    rearrange(_normalized_x_B_T_H_W_D, "b t h w d -> b (t h w) d"),
-                    crossattn_emb,
-                    rope_emb=rope_emb_L_1_1_D,
-                ),
-                "b (t h w) d -> b t h w d",
-                t=T,
-                h=H,
-                w=W,
+            cross_attn_input = rearrange(_normalized_x_B_T_H_W_D, "b t h w d -> b (t h w) d")
+            if itm_plan is not None and self.itm_runtime is not None and self.itm_runtime.merge_crossattn:
+                cross_attn_input = self.itm_runtime.merge(cross_attn_input, itm_plan, mode=itm_merge_mode)
+            cross_attn_output = self.cross_attn(
+                cross_attn_input,
+                crossattn_emb,
+                rope_emb=rope_emb_L_1_1_D,
             )
+            if itm_plan is not None and self.itm_runtime is not None and self.itm_runtime.merge_crossattn:
+                cross_attn_output = self.itm_runtime.unmerge(cross_attn_output, itm_plan, mode=itm_merge_mode)
+            _result_B_T_H_W_D = rearrange(cross_attn_output, "b (t h w) d -> b t h w d", t=T, h=H, w=W)
             # _x_B_T_H_W_D = _x_B_T_H_W_D + _gate_cross_attn_B_T_1_1_D * _result_B_T_H_W_D
             return _result_B_T_H_W_D
 
@@ -1517,7 +1538,14 @@ class Block(nn.Module):
             scale_mlp_B_T_1_1_D,
             shift_mlp_B_T_1_1_D,
         )
-        result_B_T_H_W_D = self.mlp(normalized_x_B_T_H_W_D)
+        if itm_plan is not None and self.itm_runtime is not None and self.itm_runtime.merge_mlp:
+            mlp_input = rearrange(normalized_x_B_T_H_W_D, "b t h w d -> b (t h w) d")
+            mlp_input = self.itm_runtime.merge(mlp_input, itm_plan, mode=itm_merge_mode)
+            mlp_output = self.mlp(mlp_input)
+            mlp_output = self.itm_runtime.unmerge(mlp_output, itm_plan, mode=itm_merge_mode)
+            result_B_T_H_W_D = rearrange(mlp_output, "b (t h w) d -> b t h w d", t=T, h=H, w=W)
+        else:
+            result_B_T_H_W_D = self.mlp(normalized_x_B_T_H_W_D)
         x_B_T_H_W_D = x_B_T_H_W_D + gate_mlp_B_T_1_1_D * result_B_T_H_W_D
 
         if new_kv_state is not None:
@@ -1638,6 +1666,16 @@ class MiniTrainDIT(WeightTrainingStat):
         sito_patch_w: int = 2,
         sito_noise_alpha: float = 0.1,
         sito_sim_beta: float = 1.0,
+        itm_parameters: Union[dict, list] = None,
+        use_itm: bool = False,
+        itm_start_layer_idx: Optional[int] = None,
+        itm_keep_last_n_dense: int = 2,
+        itm_compress_ratio: Optional[float] = None,
+        itm_prune_from_step: int = 1,
+        itm_merge_from_step: int = 2,
+        itm_merge_attn: bool = True,
+        itm_merge_crossattn: bool = False,
+        itm_merge_mlp: bool = False,
         svg_variant: Optional[str] = None,
         svg_start_layer_idx: Optional[int] = None,
         svg_dense_step_frac: Optional[float] = None,
@@ -1707,6 +1745,8 @@ class MiniTrainDIT(WeightTrainingStat):
             svg_parameters = [svg_parameters for _ in range(num_blocks)]
         if isinstance(sito_parameters, Mapping):
             sito_parameters = [sito_parameters for _ in range(num_blocks)]
+        if isinstance(itm_parameters, Mapping):
+            itm_parameters = [itm_parameters for _ in range(num_blocks)]
 
         natten_parameters = _build_natten_parameter_list(
             num_blocks=num_blocks,
@@ -1747,8 +1787,22 @@ class MiniTrainDIT(WeightTrainingStat):
                 sim_beta=sito_sim_beta,
                 group_mode="per_frame",
             )
+        if use_itm and itm_parameters is None:
+            itm_parameters = build_itm_parameters(
+                num_blocks=num_blocks,
+                start_layer_idx=itm_start_layer_idx,
+                keep_last_n_dense=itm_keep_last_n_dense,
+                compress_ratio=itm_compress_ratio,
+                prune_from_step=itm_prune_from_step,
+                merge_from_step=itm_merge_from_step,
+                merge_attn=itm_merge_attn,
+                merge_crossattn=itm_merge_crossattn,
+                merge_mlp=itm_merge_mlp,
+                group_mode="per_frame",
+            )
         _validate_sparse_parameter_list(svg_parameters, name="svg_parameters", num_blocks=num_blocks)
         _validate_sparse_parameter_list(sito_parameters, name="sito_parameters", num_blocks=num_blocks)
+        _validate_sparse_parameter_list(itm_parameters, name="itm_parameters", num_blocks=num_blocks)
 
         enabled_sparse_backends = [
             name
@@ -1756,6 +1810,7 @@ class MiniTrainDIT(WeightTrainingStat):
                 ("natten", natten_parameters),
                 ("svg", svg_parameters),
                 ("sito", sito_parameters),
+                ("itm", itm_parameters),
             )
             if parameters is not None
         ]
@@ -1765,6 +1820,15 @@ class MiniTrainDIT(WeightTrainingStat):
 
         self.has_svg_backend = svg_parameters is not None
         self.has_sito_backend = sito_parameters is not None
+        self.has_itm_backend = itm_parameters is not None
+        self.itm_schedule = None
+        if itm_parameters is not None:
+            first_itm_parameters = next((params for params in itm_parameters if params is not None), None)
+            if first_itm_parameters is not None:
+                self.itm_schedule = {
+                    "prune_from_step": int(first_itm_parameters.get("prune_from_step", 1)),
+                    "merge_from_step": int(first_itm_parameters.get("merge_from_step", 2)),
+                }
         dense_self_attention_backend = (
             atten_backend if enabled_sparse_backends else self.self_attention_backend
         )
@@ -1789,6 +1853,7 @@ class MiniTrainDIT(WeightTrainingStat):
                     natten_params=None if natten_parameters is None else natten_parameters[i],
                     svg_params=None if svg_parameters is None else svg_parameters[i],
                     sito_params=None if sito_parameters is None else sito_parameters[i],
+                    itm_params=None if itm_parameters is None else itm_parameters[i],
                     image_context_dim=None if extra_image_context_dim is None else model_channels,
                     use_wan_fp32_strategy=use_wan_fp32_strategy,
                 )
@@ -2113,6 +2178,8 @@ class MiniTrainDIT(WeightTrainingStat):
     def enable_context_parallel(self, process_group: Optional[ProcessGroup] = None):
         if self.has_sito_backend:
             raise ValueError("[SiTo] DreamDojo SiTo v1 is single-GPU only; set context_parallel_size=1.")
+        if self.has_itm_backend:
+            raise ValueError("[ITM] DreamDojo ITM v1 is single-GPU only; set context_parallel_size=1.")
         # pos_embedder
         self.pos_embedder.enable_context_parallel(process_group=process_group)
         if self.extra_per_block_abs_pos_emb:

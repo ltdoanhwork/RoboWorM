@@ -176,3 +176,124 @@ python models/Ctrl-World/scripts/rollout_replay_traj.py \
   --use_sito \
   --sito_max_downsample_ratio 4
 ```
+
+## ITM Overview
+
+Importance Token Merge (ITM) is integrated as an inference-only token-merging backend driven by CFG error heat maps.
+
+- DreamGen: supported through block-level token merge/unmerge on post-patchify video tokens.
+- DreamDojo: supported through the same block-level path and per-frame token heat maps.
+- Ctrl-World: supported through a diffusers `AttnProcessor` on large spatial self-attention layers.
+
+## ITM Consistency Rules
+
+- ITM is distinct from SiTo and cannot be combined with `SiTo`, `NATTEN`, `PISA`, `Radial`, or `SVG`.
+- DreamGen and DreamDojo are single-GPU only for ITM v1. Do not combine ITM with context parallelism.
+- ITM needs classifier-free guidance. Use `guidance > 0` for DreamGen and DreamDojo, and `guidance_scale > 1` for Ctrl-World.
+- DreamGen and DreamDojo use post-patchify `per_frame` heat maps.
+- Ctrl-World uses framewise spatial heat maps on supported spatial self-attention layers only.
+
+## ITM Recommended Defaults
+
+- DreamGen 28-block models: `--itm_start_layer_idx 4 --itm_keep_last_n_dense 2`
+- DreamGen 36-block models: `--itm_start_layer_idx 6 --itm_keep_last_n_dense 2`
+- DreamDojo 2B/7B: `--itm_start_layer_idx 4 --itm_keep_last_n_dense 2`
+- DreamDojo 14B: `--itm_start_layer_idx 6 --itm_keep_last_n_dense 2`
+- Ctrl-World: `--itm_max_downsample_ratio 4`
+
+Auto `compress_ratio` is chosen from tokens per group:
+
+- `>= 2048`: `0.35`
+- `>= 512`: `0.25`
+- `>= 128`: `0.15`
+- `< 128`: disabled
+
+## DreamGen ITM Examples
+
+Video-to-world with ITM:
+
+```bash
+export PYTHONPATH="./models/dreamgen"
+export CUDA_VISIBLE_DEVICES=0
+export NUM_GPUS=1
+
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+  --model_size 14B \
+  --gr00t_variant gr1 \
+  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS} \
+  --use_itm \
+  --itm_start_layer_idx 6 \
+  --itm_keep_last_n_dense 2 \
+  --itm_prune_from_step 1 \
+  --itm_merge_from_step 2
+```
+
+Text-to-image with ITM:
+
+```bash
+export PYTHONPATH="./models/dreamgen"
+python -m models.dreamgen.examples.text2image \
+  --model_size 2B \
+  --guidance 4 \
+  --use_itm \
+  --itm_start_layer_idx 4 \
+  --itm_keep_last_n_dense 2
+```
+
+## DreamDojo ITM Example
+
+```bash
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/dreamdojo_itm_eval \
+  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000 \
+  --experiment dreamdojo_2b_480_640_gr1 \
+  --save-dir ./output/dreamdojo_results/itm \
+  --num-frames 49 \
+  --num-samples 65 \
+  --dataset-path "./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
+  --data-split test \
+  --deterministic-uniform-sampling \
+  --guidance 1.5 \
+  --use_itm \
+  --itm_start_layer_idx 4 \
+  --itm_keep_last_n_dense 2 \
+  --itm_prune_from_step 1 \
+  --itm_merge_from_step 2
+```
+
+## Ctrl-World ITM Examples
+
+Interactive rollout with ITM:
+
+```bash
+export PYTHONPATH="./models/Ctrl-World"
+CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-World/scripts/rollout_interact_pi.py \
+  --dataset_root_path ./models/Ctrl-World/dataset_example \
+  --dataset_meta_info_path ./models/Ctrl-World/dataset_meta_info \
+  --dataset_names ./models/Ctrl-World/droid_subset \
+  --svd_model_path ./checkpoints/stabilityai/stable-video-diffusion-img2vid \
+  --clip_model_path ./checkpoints/openai/clip-vit-base-patch32 \
+  --ckpt_path ./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt \
+  --task_type pickplace \
+  --use_itm \
+  --itm_max_downsample_ratio 4 \
+  --itm_prune_from_step 1 \
+  --itm_merge_from_step 2
+```
+
+Replay trajectory with ITM:
+
+```bash
+export PYTHONPATH="./models/Ctrl-World"
+python models/Ctrl-World/scripts/rollout_replay_traj.py \
+  --dataset_root_path ./models/Ctrl-World/dataset_example \
+  --dataset_meta_info_path ./models/Ctrl-World/dataset_meta_info \
+  --dataset_names ./models/Ctrl-World/droid_subset \
+  --svd_model_path ./checkpoints/stabilityai/stable-video-diffusion-img2vid \
+  --clip_model_path ./checkpoints/openai/clip-vit-base-patch32 \
+  --ckpt_path ./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt \
+  --use_itm \
+  --itm_max_downsample_ratio 4
+```

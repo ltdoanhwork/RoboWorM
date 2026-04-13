@@ -51,6 +51,7 @@ from imaginaire.auxiliary.text_encoder import CosmosTextEncoderConfig
 from imaginaire.utils import log
 from imaginaire.utils.graph import create_cuda_graph
 from methods.prunning.SiTo.runtime import SiToTokenPruner
+from methods.prunning.importance_token_merge.runtime import ITMTokenMerger
 
 
 # selective activation checkpoint; only apply to the minimal v4 model. if there are change in the networks, some policy will not work as we expect.
@@ -963,6 +964,7 @@ class Block(nn.Module):
         radial_params: Mapping | None = None,
         svg_params: Mapping | None = None,
         sito_params: Mapping | None = None,
+        itm_params: Mapping | None = None,
     ):
         super().__init__()
         self.x_dim = x_dim
@@ -1012,6 +1014,7 @@ class Block(nn.Module):
 
         self.cp_size = None
         self.sito_runtime = None if sito_params is None else SiToTokenPruner(**dict(sito_params))
+        self.itm_runtime = None if itm_params is None else ITMTokenMerger(**dict(itm_params))
 
     def set_context_parallel_group(self, process_group, ranks, stream):
         self.cp_size = None if ranks is None else len(ranks)
@@ -1111,6 +1114,9 @@ class Block(nn.Module):
         self_attn_input = rearrange(normalized_x_B_T_H_W_D, "b t h w d -> b (t h w) d")
         self_attn_rope = rope_emb_L_1_1_D
         sito_plan = None
+        itm_context = None if attention_runtime_context is None else attention_runtime_context.get("itm")
+        itm_plan = None
+        itm_merge_mode = "mean"
         if self.sito_runtime is not None:
             if self.cp_size is not None and self.cp_size > 1:
                 raise ValueError("[SiTo] DreamGen SiTo v1 is single-GPU only; disable context parallelism.")
@@ -1118,6 +1124,19 @@ class Block(nn.Module):
             if sito_plan is not None:
                 self_attn_input = self.sito_runtime.prune(self_attn_input, sito_plan)
                 self_attn_rope = self.sito_runtime.prune_rope(rope_emb_L_1_1_D, sito_plan)
+        elif self.itm_runtime is not None:
+            if self.cp_size is not None and self.cp_size > 1:
+                raise ValueError("[ITM] DreamGen ITM v1 is single-GPU only; disable context parallelism.")
+            if itm_context is not None:
+                itm_merge_mode = itm_context.get("merge_mode", "mean")
+                itm_plan = self.itm_runtime.prepare(
+                    self_attn_input,
+                    heat_map=itm_context.get("heat_map"),
+                    video_size=VideoSize(T=T, H=H, W=W),
+                )
+                if itm_plan is not None and self.itm_runtime.merge_attn:
+                    self_attn_input = self.itm_runtime.merge(self_attn_input, itm_plan, mode=itm_merge_mode)
+                    self_attn_rope = self.itm_runtime.merge_rope(self_attn_rope, itm_plan)
 
         if timing_info is not None:
             torch.cuda.synchronize()
@@ -1132,6 +1151,8 @@ class Block(nn.Module):
         )
         if sito_plan is not None:
             self_attn_output = self.sito_runtime.recover(self_attn_output, sito_plan)
+        elif itm_plan is not None and self.itm_runtime is not None and self.itm_runtime.merge_attn:
+            self_attn_output = self.itm_runtime.unmerge(self_attn_output, itm_plan, mode=itm_merge_mode)
         result_B_T_H_W_D = rearrange(
             self_attn_output,
             "b (t h w) d -> b t h w d",
@@ -1154,17 +1175,17 @@ class Block(nn.Module):
             _normalized_x_B_T_H_W_D = _fn(
                 _x_B_T_H_W_D, layer_norm_cross_attn, _scale_cross_attn_B_T_1_1_D, _shift_cross_attn_B_T_1_1_D
             )
-            _result_B_T_H_W_D = rearrange(
-                self.cross_attn(
-                    rearrange(_normalized_x_B_T_H_W_D, "b t h w d -> b (t h w) d"),
-                    crossattn_emb,
-                    rope_emb=rope_emb_L_1_1_D,
-                ),
-                "b (t h w) d -> b t h w d",
-                t=T,
-                h=H,
-                w=W,
+            cross_attn_input = rearrange(_normalized_x_B_T_H_W_D, "b t h w d -> b (t h w) d")
+            if itm_plan is not None and self.itm_runtime is not None and self.itm_runtime.merge_crossattn:
+                cross_attn_input = self.itm_runtime.merge(cross_attn_input, itm_plan, mode=itm_merge_mode)
+            cross_attn_output = self.cross_attn(
+                cross_attn_input,
+                crossattn_emb,
+                rope_emb=rope_emb_L_1_1_D,
             )
+            if itm_plan is not None and self.itm_runtime is not None and self.itm_runtime.merge_crossattn:
+                cross_attn_output = self.itm_runtime.unmerge(cross_attn_output, itm_plan, mode=itm_merge_mode)
+            _result_B_T_H_W_D = rearrange(cross_attn_output, "b (t h w) d -> b t h w d", t=T, h=H, w=W)
             return _result_B_T_H_W_D
 
         if timing_info is not None:
@@ -1193,7 +1214,14 @@ class Block(nn.Module):
             torch.cuda.synchronize()
             start_mlp = time.perf_counter()
 
-        result_B_T_H_W_D = self.mlp(normalized_x_B_T_H_W_D)
+        if itm_plan is not None and self.itm_runtime is not None and self.itm_runtime.merge_mlp:
+            mlp_input = rearrange(normalized_x_B_T_H_W_D, "b t h w d -> b (t h w) d")
+            mlp_input = self.itm_runtime.merge(mlp_input, itm_plan, mode=itm_merge_mode)
+            mlp_output = self.mlp(mlp_input)
+            mlp_output = self.itm_runtime.unmerge(mlp_output, itm_plan, mode=itm_merge_mode)
+            result_B_T_H_W_D = rearrange(mlp_output, "b (t h w) d -> b t h w d", t=T, h=H, w=W)
+        else:
+            result_B_T_H_W_D = self.mlp(normalized_x_B_T_H_W_D)
         x_B_T_H_W_D = x_B_T_H_W_D + gate_mlp_B_T_1_1_D * result_B_T_H_W_D
 
         if timing_info is not None:
@@ -1284,6 +1312,7 @@ class MiniTrainDIT(WeightTrainingStat):
         radial_parameters: dict | list = None,  # noqa: RUF013
         svg_parameters: dict | list = None,  # noqa: RUF013
         sito_parameters: dict | list = None,  # noqa: RUF013
+        itm_parameters: dict | list = None,  # noqa: RUF013
     ) -> None:
         super().__init__()
         self.max_img_h = max_img_h
@@ -1344,6 +1373,8 @@ class MiniTrainDIT(WeightTrainingStat):
             )
         if isinstance(sito_parameters, Mapping):
             sito_parameters = [sito_parameters for _ in range(num_blocks)]
+        if isinstance(itm_parameters, Mapping):
+            itm_parameters = [itm_parameters for _ in range(num_blocks)]
 
         if pisa_parameters is not None and not isinstance(pisa_parameters, Sequence):
             raise ValueError(
@@ -1415,6 +1446,21 @@ class MiniTrainDIT(WeightTrainingStat):
                 "`sito_parameters` must be a list of Nones or dicts describing per-block SiTo settings, "
                 f"got {sito_parameters=}."
             )
+        if itm_parameters is not None and not isinstance(itm_parameters, Sequence):
+            raise ValueError(
+                "`itm_parameters` must either be None, or a list of the same length as the number of blocks, "
+                f"got {type(itm_parameters)=}."
+            )
+        if itm_parameters is not None and len(itm_parameters) != num_blocks:
+            raise ValueError(
+                "`itm_parameters` must either be None, or a list of the same length as the number of blocks, "
+                f"got {len(itm_parameters)=} != {num_blocks=}."
+            )
+        if itm_parameters is not None and any(x is not None and not isinstance(x, Mapping) for x in itm_parameters):
+            raise ValueError(
+                "`itm_parameters` must be a list of Nones or dicts describing per-block ITM settings, "
+                f"got {itm_parameters=}."
+            )
 
         enabled_sparse_backends = [
             name
@@ -1424,6 +1470,7 @@ class MiniTrainDIT(WeightTrainingStat):
                 ("radial", radial_parameters),
                 ("svg", svg_parameters),
                 ("sito", sito_parameters),
+                ("itm", itm_parameters),
             )
             if parameters is not None
         ]
@@ -1432,6 +1479,15 @@ class MiniTrainDIT(WeightTrainingStat):
             raise ValueError(f"Sparse backends are mutually exclusive in MiniTrainDIT, got {enabled_str}.")
         self.has_svg_backend = svg_parameters is not None
         self.has_sito_backend = sito_parameters is not None
+        self.has_itm_backend = itm_parameters is not None
+        self.itm_schedule = None
+        if itm_parameters is not None:
+            first_itm_parameters = next((params for params in itm_parameters if params is not None), None)
+            if first_itm_parameters is not None:
+                self.itm_schedule = {
+                    "prune_from_step": int(first_itm_parameters.get("prune_from_step", 1)),
+                    "merge_from_step": int(first_itm_parameters.get("merge_from_step", 2)),
+                }
 
         self.blocks = nn.ModuleList(
             [
@@ -1459,6 +1515,7 @@ class MiniTrainDIT(WeightTrainingStat):
                     radial_params=None if radial_parameters is None else radial_parameters[i],
                     svg_params=None if svg_parameters is None else svg_parameters[i],
                     sito_params=None if sito_parameters is None else sito_parameters[i],
+                    itm_params=None if itm_parameters is None else itm_parameters[i],
                 )
                 for i in range(num_blocks)
             ]
@@ -1789,6 +1846,8 @@ class MiniTrainDIT(WeightTrainingStat):
     def enable_context_parallel(self, process_group: ProcessGroup | None = None) -> None:
         if self.has_sito_backend:
             raise ValueError("[SiTo] DreamGen SiTo v1 is single-GPU only; disable context parallelism.")
+        if self.has_itm_backend:
+            raise ValueError("[ITM] DreamGen ITM v1 is single-GPU only; disable context parallelism.")
         # pos_embedder
         self.pos_embedder.enable_context_parallel(process_group=process_group)
         if self.extra_per_block_abs_pos_emb:

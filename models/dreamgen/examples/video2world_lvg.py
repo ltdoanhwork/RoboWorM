@@ -52,10 +52,11 @@ def _import_sparse_backends():
         sys.path.insert(0, project_root)
 
     from methods.prunning.SiTo.config import add_dreamgen_sito_args
+    from methods.prunning.importance_token_merge.config import add_dreamgen_itm_args
     from methods.sparse_attention.pisa.config import add_pisa_args
     from methods.sparse_attention.svg.config import add_dreamgen_svg_args
     from methods.sparse_attention.radial.config import add_dreamgen_radial_args
-    return add_pisa_args, add_dreamgen_svg_args, add_dreamgen_radial_args, add_dreamgen_sito_args
+    return add_pisa_args, add_dreamgen_svg_args, add_dreamgen_radial_args, add_dreamgen_sito_args, add_dreamgen_itm_args
 # -----------------------------------
 
 _DEFAULT_NEGATIVE_PROMPT = "The video captures a series of frames showing ugly scenes, static with no motion, motion blur, over-saturation, shaky footage, low resolution, grainy texture, pixelated images, poorly lit areas, underexposed and overexposed scenes, poor color balance, washed out colors, choppy sequences, jerky movements, low frame rate, artifacting, color banding, unnatural transitions, outdated special effects, fake elements, unconvincing visuals, poorly edited content, jump cuts, visual noise, and flickering. Overall, the video is of poor quality."
@@ -174,11 +175,12 @@ def parse_args() -> argparse.Namespace:
     )
 
     # ---- Sparse Backend Integration ----
-    add_pisa_args, add_svg_args, add_radial_args, add_sito_args = _import_sparse_backends()
+    add_pisa_args, add_svg_args, add_radial_args, add_sito_args, add_itm_args = _import_sparse_backends()
     add_pisa_args(parser)
     add_svg_args(parser)
     add_radial_args(parser)
     add_sito_args(parser)
+    add_itm_args(parser)
     # -----------------------------------
 
     return parser.parse_args()
@@ -201,6 +203,15 @@ def setup_pipeline(args: argparse.Namespace):
         radial_block_size=getattr(args, "radial_block_size", 64),
         radial_start_layer_idx=getattr(args, "radial_start_layer_idx", 4),
         radial_model_type=getattr(args, "radial_model_type", "hunyuan"),
+        itm=getattr(args, "use_itm", False),
+        itm_compress_ratio=getattr(args, "itm_compress_ratio", None),
+        itm_prune_from_step=getattr(args, "itm_prune_from_step", 1),
+        itm_merge_from_step=getattr(args, "itm_merge_from_step", 2),
+        itm_merge_attn=getattr(args, "itm_merge_attn", True),
+        itm_merge_crossattn=getattr(args, "itm_merge_crossattn", False),
+        itm_merge_mlp=getattr(args, "itm_merge_mlp", False),
+        itm_start_layer_idx=getattr(args, "itm_start_layer_idx", None),
+        itm_keep_last_n_dense=getattr(args, "itm_keep_last_n_dense", 2),
         sito=getattr(args, "use_sito", False),
         sito_prune_ratio=getattr(args, "sito_prune_ratio", None),
         sito_start_layer_idx=getattr(args, "sito_start_layer_idx", None),

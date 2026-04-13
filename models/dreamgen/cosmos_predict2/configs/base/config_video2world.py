@@ -26,6 +26,7 @@ from cosmos_predict2.configs.base.config_natten import (
 )
 from cosmos_predict2.configs.base.config_pisa import build_pisa_parameters
 from cosmos_predict2.configs.base.config_radial import build_radial_parameters
+from cosmos_predict2.configs.base.config_itm import build_itm_parameters
 from cosmos_predict2.configs.base.config_sito import build_sito_parameters
 from cosmos_predict2.configs.base.config_svg import build_svg_parameters
 from cosmos_predict2.configs.base.config_text2image import CosmosGuardrailConfig, SolverTimestampConfig
@@ -492,6 +493,15 @@ def get_cosmos_predict2_video2world_pipeline(
     radial_block_size: int = 64,
     radial_start_layer_idx: int = 4,
     radial_model_type: str = "hunyuan",
+    itm: bool = False,
+    itm_compress_ratio: float | None = None,
+    itm_prune_from_step: int = 1,
+    itm_merge_from_step: int = 2,
+    itm_merge_attn: bool = True,
+    itm_merge_crossattn: bool = False,
+    itm_merge_mlp: bool = False,
+    itm_start_layer_idx: int | None = None,
+    itm_keep_last_n_dense: int = 2,
     sito: bool = False,
     sito_prune_ratio: float | None = None,
     sito_start_layer_idx: int | None = None,
@@ -514,8 +524,8 @@ def get_cosmos_predict2_video2world_pipeline(
     svg_kmeans_iter_init: int = 5,
     svg_kmeans_iter_step: int = 2,
 ) -> Video2WorldPipelineConfig:
-    if sum(bool(enabled) for enabled in (natten, pisa, radial, svg, sito)) > 1:
-        raise ValueError("NATTEN, PISA, Radial, SVG, and SiTo cannot be enabled at the same time.")
+    if sum(bool(enabled) for enabled in (natten, pisa, radial, svg, sito, itm)) > 1:
+        raise ValueError("NATTEN, PISA, Radial, SVG, SiTo, and ITM cannot be enabled at the same time.")
     key = _Video2WorldPipelineConfig(model_size, resolution, fps, natten=natten)
     config = deepcopy(_PREDICT2_VIDEO2WORLD_PIPELINES[key])
     if pisa:
@@ -533,6 +543,19 @@ def get_cosmos_predict2_video2world_pipeline(
             block_size=radial_block_size,
             start_layer_idx=radial_start_layer_idx,
             model_type=radial_model_type,
+        )
+    if itm:
+        config.net.itm_parameters = build_itm_parameters(
+            config.net.num_blocks,
+            start_layer_idx=itm_start_layer_idx,
+            keep_last_n_dense=itm_keep_last_n_dense,
+            compress_ratio=itm_compress_ratio,
+            prune_from_step=itm_prune_from_step,
+            merge_from_step=itm_merge_from_step,
+            merge_attn=itm_merge_attn,
+            merge_crossattn=itm_merge_crossattn,
+            merge_mlp=itm_merge_mlp,
+            group_mode="per_frame",
         )
     if sito:
         config.net.sito_parameters = build_sito_parameters(

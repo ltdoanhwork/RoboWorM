@@ -53,10 +53,11 @@ def _import_sparse_backends():
         sys.path.insert(0, project_root)
 
     from methods.prunning.SiTo.config import add_dreamgen_sito_args
+    from methods.prunning.importance_token_merge.config import add_dreamgen_itm_args
     from methods.sparse_attention.pisa.config import add_pisa_args
     from methods.sparse_attention.svg.config import add_dreamgen_svg_args
     from methods.sparse_attention.radial.config import add_dreamgen_radial_args
-    return add_pisa_args, add_dreamgen_svg_args, add_dreamgen_radial_args, add_dreamgen_sito_args
+    return add_pisa_args, add_dreamgen_svg_args, add_dreamgen_radial_args, add_dreamgen_sito_args, add_dreamgen_itm_args
 # -----------------------------------
 
 _DEFAULT_POSITIVE_PROMPT = "An autonomous welding robot arm operating inside a modern automotive factory, sparks flying as it welds a car frame with precision under bright overhead lights."
@@ -176,11 +177,12 @@ def parse_args() -> argparse.Namespace:
     )
 
     # ---- Sparse Backend Integration ----
-    add_pisa_args, add_svg_args, add_radial_args, add_sito_args = _import_sparse_backends()
+    add_pisa_args, add_svg_args, add_radial_args, add_sito_args, add_itm_args = _import_sparse_backends()
     add_pisa_args(parser)
     add_svg_args(parser)
     add_radial_args(parser)
     add_sito_args(parser)
+    add_itm_args(parser)
     # -----------------------------------
 
     return parser.parse_args()

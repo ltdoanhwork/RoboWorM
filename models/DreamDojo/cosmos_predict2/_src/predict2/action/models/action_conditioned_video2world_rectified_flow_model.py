@@ -33,6 +33,7 @@ from cosmos_predict2._src.predict2.models.text2world_model_rectified_flow import
     Text2WorldModelRectifiedFlow,
     Text2WorldModelRectifiedFlowConfig,
 )
+from methods.prunning.importance_token_merge.runtime import build_itm_attention_context, compute_itm_heat_map
 
 NUM_CONDITIONAL_FRAMES_KEY: str = "num_conditional_frames"
 
@@ -296,6 +297,11 @@ class ActionVideo2WorldModelRectifiedFlow(Text2WorldModelRectifiedFlow):
             assert not self.net.is_context_parallel_enabled, (
                 "parallel_state is not initialized, context parallel should be turned off."
             )
+        itm_state: Optional[Dict] = None
+        if getattr(self.net, "has_itm_backend", False):
+            if guidance <= 0:
+                raise ValueError("[ITM] DreamDojo ITM requires classifier-free guidance with `guidance > 0`.")
+            itm_state = {"phase": "disabled", "merge_mode": "mean", "heat_map": None}
 
         def velocity_fn(
             noise: torch.Tensor,
@@ -303,6 +309,23 @@ class ActionVideo2WorldModelRectifiedFlow(Text2WorldModelRectifiedFlow):
             timestep: torch.Tensor,
             attention_runtime_context: Optional[Dict] = None,
         ) -> torch.Tensor:
+            if itm_state is not None:
+                diffusion_step_idx = 0 if attention_runtime_context is None else int(attention_runtime_context["diffusion_step_idx"])
+                itm_schedule = getattr(self.net, "itm_schedule", None) or {"prune_from_step": 1, "merge_from_step": 2}
+                if diffusion_step_idx < itm_schedule["prune_from_step"]:
+                    itm_state["phase"] = "disabled"
+                    itm_state["merge_mode"] = "mean"
+                elif diffusion_step_idx < itm_schedule["merge_from_step"]:
+                    itm_state["phase"] = "prune"
+                    itm_state["merge_mode"] = "none"
+                else:
+                    itm_state["phase"] = "merge"
+                    itm_state["merge_mode"] = "mean"
+                attention_runtime_context = build_itm_attention_context(
+                    runtime_context=attention_runtime_context,
+                    itm_state=itm_state,
+                    diffusion_step_idx=diffusion_step_idx,
+                )
             cond_v = self.denoise(
                 noise,
                 noise_x,
@@ -317,6 +340,12 @@ class ActionVideo2WorldModelRectifiedFlow(Text2WorldModelRectifiedFlow):
                 uncondition,
                 attention_runtime_context=attention_runtime_context,
             )
+            if itm_state is not None:
+                itm_state["heat_map"] = compute_itm_heat_map(
+                    cond_v,
+                    uncond_v,
+                    patch_spatial=self.net.patch_spatial,
+                )
             velocity_pred = cond_v + guidance * (cond_v - uncond_v)
             return velocity_pred
 

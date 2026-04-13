@@ -54,6 +54,7 @@ class ActionConditionedSetupArguments(CommonSetupArguments):
     infinite: bool = False
     use_svg: bool = False
     use_sito: bool = False
+    use_itm: bool = False
     sito_start_layer_idx: int | None = None
     sito_keep_last_n_dense: int = 2
     sito_prune_ratio: float | None = None
@@ -61,6 +62,14 @@ class ActionConditionedSetupArguments(CommonSetupArguments):
     sito_patch_w: int = 2
     sito_noise_alpha: float = 0.1
     sito_sim_beta: float = 1.0
+    itm_start_layer_idx: int | None = None
+    itm_keep_last_n_dense: int = 2
+    itm_compress_ratio: float | None = None
+    itm_prune_from_step: int = 1
+    itm_merge_from_step: int = 2
+    itm_merge_attn: bool = True
+    itm_merge_crossattn: bool = False
+    itm_merge_mlp: bool = False
     svg_variant: Literal["svg1", "svg2"] = "svg1"
     svg_start_layer_idx: int | None = None
     svg_dense_step_frac: float | None = None

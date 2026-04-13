@@ -61,10 +61,11 @@ def _import_sparse_backends():
         sys.path.insert(0, project_root)
 
     from methods.prunning.SiTo.config import add_dreamgen_sito_args
+    from methods.prunning.importance_token_merge.config import add_dreamgen_itm_args
     from methods.sparse_attention.pisa.config import add_pisa_args
     from methods.sparse_attention.svg.config import add_dreamgen_svg_args
     from methods.sparse_attention.radial.config import add_dreamgen_radial_args
-    return add_pisa_args, add_dreamgen_svg_args, add_dreamgen_radial_args, add_dreamgen_sito_args
+    return add_pisa_args, add_dreamgen_svg_args, add_dreamgen_radial_args, add_dreamgen_sito_args, add_dreamgen_itm_args
 # -----------------------------------
 
 _DEFAULT_POSITIVE_PROMPT = "A point-of-view video shot from inside a vehicle, capturing a snowy suburban street in the winter filled with snow on the side of the road."
@@ -277,11 +278,12 @@ def parse_args() -> argparse.Namespace:
     )
 
     # ---- Sparse Backend Integration ----
-    add_pisa_args, add_svg_args, add_radial_args, add_sito_args = _import_sparse_backends()
+    add_pisa_args, add_svg_args, add_radial_args, add_sito_args, add_itm_args = _import_sparse_backends()
     add_pisa_args(parser)
     add_svg_args(parser)
     add_radial_args(parser)
     add_sito_args(parser)
+    add_itm_args(parser)
     # -----------------------------------
 
     return parser.parse_args()
@@ -304,6 +306,15 @@ def setup_video2world_pipeline(args: argparse.Namespace, text_encoder: CosmosTex
         radial_block_size=getattr(args, "radial_block_size", 64),
         radial_start_layer_idx=getattr(args, "radial_start_layer_idx", 4),
         radial_model_type=getattr(args, "radial_model_type", "hunyuan"),
+        itm=getattr(args, "use_itm", False),
+        itm_compress_ratio=getattr(args, "itm_compress_ratio", None),
+        itm_prune_from_step=getattr(args, "itm_prune_from_step", 1),
+        itm_merge_from_step=getattr(args, "itm_merge_from_step", 2),
+        itm_merge_attn=getattr(args, "itm_merge_attn", True),
+        itm_merge_crossattn=getattr(args, "itm_merge_crossattn", False),
+        itm_merge_mlp=getattr(args, "itm_merge_mlp", False),
+        itm_start_layer_idx=getattr(args, "itm_start_layer_idx", None),
+        itm_keep_last_n_dense=getattr(args, "itm_keep_last_n_dense", 2),
         sito=getattr(args, "use_sito", False),
         sito_prune_ratio=getattr(args, "sito_prune_ratio", None),
         sito_start_layer_idx=getattr(args, "sito_start_layer_idx", None),
@@ -412,6 +423,15 @@ def setup_text2image_pipeline(
         radial_block_size=getattr(args, "radial_block_size", 64),
         radial_start_layer_idx=getattr(args, "radial_start_layer_idx", 4),
         radial_model_type=getattr(args, "radial_model_type", "hunyuan"),
+        itm=getattr(args, "use_itm", False),
+        itm_compress_ratio=getattr(args, "itm_compress_ratio", None),
+        itm_prune_from_step=getattr(args, "itm_prune_from_step", 1),
+        itm_merge_from_step=getattr(args, "itm_merge_from_step", 2),
+        itm_merge_attn=getattr(args, "itm_merge_attn", True),
+        itm_merge_crossattn=getattr(args, "itm_merge_crossattn", False),
+        itm_merge_mlp=getattr(args, "itm_merge_mlp", False),
+        itm_start_layer_idx=getattr(args, "itm_start_layer_idx", None),
+        itm_keep_last_n_dense=getattr(args, "itm_keep_last_n_dense", 2),
         sito=getattr(args, "use_sito", False),
         sito_prune_ratio=getattr(args, "sito_prune_ratio", None),
         sito_start_layer_idx=getattr(args, "sito_start_layer_idx", None),
