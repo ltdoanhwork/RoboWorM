@@ -44,15 +44,33 @@ from cosmos_predict2.config import MODEL_CHECKPOINTS, VIDEO_EXTENSIONS
 from groot_dreams.dataloader import MultiVideoActionDataset
 
 
-def _build_svg_experiment_opts(setup_args: ActionConditionedSetupArguments) -> list[str]:
-    if not setup_args.use_svg:
+def _build_sparse_experiment_opts(setup_args: ActionConditionedSetupArguments) -> list[str]:
+    enabled_sparse_backends = [
+        name for name, enabled in (("pisa", setup_args.use_pisa), ("svg", setup_args.use_svg)) if enabled
+    ]
+    if len(enabled_sparse_backends) > 1:
+        enabled_str = ", ".join(enabled_sparse_backends)
+        raise ValueError(f"Sparse backends are mutually exclusive in DreamDojo setup, got {enabled_str}.")
+    if not enabled_sparse_backends:
         return []
 
+    backend = enabled_sparse_backends[0]
     opts = [
-        "model.config.net.self_attention_backend=svg",
+        f"model.config.net.self_attention_backend={backend}",
         "model.config.net.cross_attention_backend=minimal_a2a",
-        f"model.config.net.svg_variant={setup_args.svg_variant}",
     ]
+    if backend == "pisa":
+        if setup_args.pisa_density is not None:
+            opts.append(f"model.config.net.pisa_density={setup_args.pisa_density}")
+        if setup_args.pisa_block_size is not None:
+            opts.append(f"model.config.net.pisa_block_size={setup_args.pisa_block_size}")
+        if setup_args.pisa_start_layer_idx is not None:
+            opts.append(f"model.config.net.pisa_start_layer_idx={setup_args.pisa_start_layer_idx}")
+        if setup_args.pisa_use_bias is not None:
+            opts.append(f"model.config.net.pisa_use_bias={str(setup_args.pisa_use_bias).lower()}")
+        return opts
+
+    opts.append(f"model.config.net.svg_variant={setup_args.svg_variant}")
     if setup_args.svg_start_layer_idx is not None:
         opts.append(f"model.config.net.svg_start_layer_idx={setup_args.svg_start_layer_idx}")
     if setup_args.svg_dense_step_frac is not None:
@@ -296,7 +314,7 @@ def inference(
         # pyrefly: ignore  # bad-argument-type
         context_parallel_size=setup_args.context_parallel_size,
         config_file=setup_args.config_file,
-        experiment_opts=_build_svg_experiment_opts(setup_args),
+        experiment_opts=_build_sparse_experiment_opts(setup_args),
     )
 
     mem_bytes = torch.cuda.memory_allocated(device=torch.device("cuda" if torch.cuda.is_available() else "cpu"))

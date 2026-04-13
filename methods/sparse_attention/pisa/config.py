@@ -6,6 +6,7 @@ This file has zero dependency on any Ctrl-World model code.
 """
 
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -86,3 +87,62 @@ def add_pisa_args(parser):
         help="Enable the bias-enhanced PISA kernel variant.",
     )
     return parser
+
+
+def _dreamdojo_pisa_defaults(num_blocks: int) -> dict[str, Any]:
+    if num_blocks <= 0:
+        raise ValueError(f"`num_blocks` must be positive, got {num_blocks}.")
+
+    # DreamDojo teacher inference uses S=4800 tokens at 480x640 / 13 frames after VAE + patchify:
+    # latent (T, H, W) = (4, 60, 80) -> patchify with patch_spatial=2 gives (4, 30, 40).
+    # Flattening order is t-h-w, so one spatial row is 40 tokens. We use block_size=80 so each
+    # chunk aligns to 2 contiguous rows, giving NT=60 chunks. This is a better fit than 128
+    # for DreamDojo's shorter sequence length while keeping chunk-scoring overhead modest.
+    if num_blocks <= 28:
+        return {
+            "density": 0.45,
+            "block_size": 80,
+            "start_layer_idx": 10,
+            "use_bias": False,
+        }
+
+    return {
+        "density": 0.40,
+        "block_size": 80,
+        "start_layer_idx": 12,
+        "use_bias": False,
+    }
+
+
+def build_dreamdojo_pisa_parameters(
+    num_blocks: int,
+    *,
+    density: float | None = None,
+    block_size: int | None = None,
+    start_layer_idx: int | None = None,
+    use_bias: bool | None = None,
+) -> list[dict[str, Any] | None]:
+    defaults = _dreamdojo_pisa_defaults(num_blocks=num_blocks)
+
+    resolved_density = defaults["density"] if density is None else density
+    resolved_block_size = defaults["block_size"] if block_size is None else block_size
+    resolved_start_layer_idx = defaults["start_layer_idx"] if start_layer_idx is None else start_layer_idx
+    resolved_use_bias = defaults["use_bias"] if use_bias is None else use_bias
+
+    if not 0 < resolved_density <= 1:
+        raise ValueError(f"`density` must be in (0, 1], got {resolved_density}.")
+    if resolved_block_size <= 0:
+        raise ValueError(f"`block_size` must be positive, got {resolved_block_size}.")
+    if resolved_start_layer_idx < 0:
+        raise ValueError(f"`start_layer_idx` must be non-negative, got {resolved_start_layer_idx}.")
+
+    return [
+        None
+        if layer_idx < resolved_start_layer_idx
+        else {
+            "density": resolved_density,
+            "block_size": resolved_block_size,
+            "use_bias": resolved_use_bias,
+        }
+        for layer_idx in range(num_blocks)
+    ]

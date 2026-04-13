@@ -52,6 +52,11 @@ class ActionConditionedSetupArguments(CommonSetupArguments):
     deterministic_uniform_sampling: bool = False
     checkpoint_interval: int = 2000
     infinite: bool = False
+    use_pisa: bool = False
+    pisa_density: float | None = None
+    pisa_block_size: int | None = None
+    pisa_start_layer_idx: int | None = None
+    pisa_use_bias: bool | None = None
     use_svg: bool = False
     svg_variant: Literal["svg1", "svg2"] = "svg1"
     svg_start_layer_idx: int | None = None

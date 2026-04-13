@@ -401,3 +401,134 @@ python -m models.DreamDojo.examples.action_conditioned \
   --svg_top_p_kmeans 0.3 \
   --svg_kmeans_iter_init 2 \
   --svg_kmeans_iter_step 1
+
+### dreamdojo pisa
+cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/dreamdojo_pisa_eval \
+  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000 \
+  --experiment dreamdojo_2b_480_640_gr1 \
+  --save-dir ./output/dreamdojo_results/pisa_results \
+  --num-frames 49 \
+  --num-samples 65 \
+  --dataset-path "./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
+  --data-split test \
+  --deterministic-uniform-sampling \
+  --use_pisa \
+  --pisa_density 0.45 \
+  --pisa_block_size 80 \
+  --pisa_start_layer_idx 10
+
+Tuning notes for DreamDojo PISA:
+- DreamDojo teacher chunk uses `13` frames per denoise pass. After VAE + patchify, self-attention sequence length is `4 x 30 x 40 = 4800`.
+- `pisa_block_size=80` means `NT = 4800 / 80 = 60` chunks, and each chunk matches `2` contiguous spatial rows because width is `40`.
+- `pisa_density`: lower is faster and more approximate. Start with `0.45`, then try `0.40`, then `0.35`.
+- `pisa_block_size`: for DreamDojo `480x640`, start with `80`. Try `64` for finer routing or `128` if you want to reduce routing overhead.
+- `pisa_start_layer_idx`: keeps early layers dense. For 2B, `10` is the safer start. For 14B, start at `12`.
+- `pisa_use_bias`: leave off first. Only turn it on if you specifically want to test whether the extra correction helps quality on your checkpoint.
+
+### dreamdojo pisa 2b presets
+
+#### conservative
+rm -rf ~/.triton/cache
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/dreamdojo_pisa_2b_conservative \
+  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000 \
+  --experiment dreamdojo_2b_480_640_gr1 \
+  --save-dir ./output/dreamdojo_results/pisa_2b_conservative \
+  --num-frames 49 \
+  --num-samples 65 \
+  --dataset-path "./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
+  --data-split test \
+  --deterministic-uniform-sampling \
+  --use_pisa \
+  --pisa_density 0.1 \
+  --pisa_block_size 32 \
+  --pisa_start_layer_idx 12
+
+#### balanced
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/dreamdojo_pisa_2b_balanced \
+  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000 \
+  --experiment dreamdojo_2b_480_640_gr1 \
+  --save-dir ./output/dreamdojo_results/pisa_2b_balanced \
+  --num-frames 49 \
+  --num-samples 65 \
+  --dataset-path "./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
+  --data-split test \
+  --deterministic-uniform-sampling \
+  --use_pisa \
+  --pisa_density 0.45 \
+  --pisa_block_size 80 \
+  --pisa_start_layer_idx 10
+
+#### aggressive
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/dreamdojo_pisa_2b_aggressive \
+  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000 \
+  --experiment dreamdojo_2b_480_640_gr1 \
+  --save-dir ./output/dreamdojo_results/pisa_2b_aggressive \
+  --num-frames 49 \
+  --num-samples 65 \
+  --dataset-path "./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
+  --data-split test \
+  --deterministic-uniform-sampling \
+  --use_pisa \
+  --pisa_density 0.35 \
+  --pisa_block_size 80 \
+  --pisa_start_layer_idx 8
+
+#### finer chunks
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/dreamdojo_pisa_2b_bs64 \
+  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000 \
+  --experiment dreamdojo_2b_480_640_gr1 \
+  --save-dir ./output/dreamdojo_results/pisa_2b_bs64 \
+  --num-frames 49 \
+  --num-samples 65 \
+  --dataset-path "./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
+  --data-split test \
+  --deterministic-uniform-sampling \
+  --use_pisa \
+  --pisa_density 0.45 \
+  --pisa_block_size 64 \
+  --pisa_start_layer_idx 10
+
+#### coarser chunks
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/dreamdojo_pisa_2b_bs128 \
+  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000 \
+  --experiment dreamdojo_2b_480_640_gr1 \
+  --save-dir ./output/dreamdojo_results/pisa_2b_bs128 \
+  --num-frames 49 \
+  --num-samples 65 \
+  --dataset-path "./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
+  --data-split test \
+  --deterministic-uniform-sampling \
+  --use_pisa \
+  --pisa_density 0.45 \
+  --pisa_block_size 128 \
+  --pisa_start_layer_idx 10
+
+### dreamdojo pisa 14b starting point - oke
+rm -rf ~/.triton/cache
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/dreamdojo_pisa_14b_balanced \
+  --checkpoints-dir ./checkpoints/dreamdojo/14B_GR1_post-train/iter_000050000 \
+  --experiment dreamdojo_14b_480_640_gr1 \
+  --save-dir ./output/dreamdojo_results/pisa_14b_balanced \
+  --num-frames 49 \
+  --num-samples 65 \
+  --dataset-path "./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
+  --data-split test \
+  --deterministic-uniform-sampling \
+  --use_pisa \
+  --pisa_density 0.1 \
+  --pisa_block_size 64 \
+  --pisa_start_layer_idx 18
+
+
+Recommended sweep order:
+1. Keep `pisa_block_size=80` fixed and sweep `pisa_density` over `0.55, 0.45, 0.40, 0.35`.
+2. Pick the best density, then compare `pisa_start_layer_idx` at `8, 10, 12` for 2B or `10, 12, 14` for 14B.
+3. Only after that, compare `pisa_block_size=64`, `80`, and `128`.

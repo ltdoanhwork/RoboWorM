@@ -34,6 +34,27 @@ from cosmos_predict2._src.predict2.networks.attention import attention
 
 
 @lru_cache(maxsize=1)
+def _load_piecewise_sparse_attention():
+    kernel_path = (
+        Path(__file__).resolve().parents[6]
+        / "methods"
+        / "sparse_attention"
+        / "pisa"
+        / "piecewise_sparse_attn_tma.py"
+    )
+    if not kernel_path.exists():
+        raise ImportError(f"[PISA] Missing vendored kernel at {kernel_path}.")
+
+    spec = importlib.util.spec_from_file_location("dreamdojo_pisa_kernel", kernel_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"[PISA] Could not load module spec from {kernel_path}.")
+
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.piecewise_sparse_attention
+
+
+@lru_cache(maxsize=1)
 def _load_svg_runtime_class():
     runtime_path = (
         Path(__file__).resolve().parents[6]
@@ -250,6 +271,54 @@ class NattenA2AAttnOp(MinimalA2AAttnOp):
         super(NattenA2AAttnOp, self).__init__(None)
         self.natten_op = NeighborhoodAttention(*args, **kwargs, base_attn_op=attention)
         self.local_attn = self.natten_op
+
+
+class PISALocalAttnOp(torch.nn.Module):
+    def __init__(self, density: float = 0.5, block_size: int = 64, use_bias: bool = False):
+        super().__init__()
+        self.density = density
+        self.block_size = block_size
+        self.use_bias = use_bias
+
+    def forward(self, query: Tensor, key: Tensor, value: Tensor, *args: Any, **kwargs) -> Tensor:
+        del args, kwargs
+        if query.shape[1] != key.shape[1] or key.shape[1] != value.shape[1]:
+            raise RuntimeError(
+                f"[PISA] Cross-attention is not supported by the config-driven backend "
+                f"(T_q={query.shape[1]}, T_k={key.shape[1]}, T_v={value.shape[1]})."
+            )
+
+        piecewise_sparse_attention = _load_piecewise_sparse_attention()
+        
+        # Preallocate output buffer in (B, S, H, D) format
+        B, S, H, D = query.shape
+        out_bshd = torch.empty((B, S, H, D), dtype=query.dtype, device=query.device)
+
+        # Pass views directly. piecewise_sparse_attention now handles strides.
+        piecewise_sparse_attention(
+            query.transpose(1, 2), # (B, H, S, D) View
+            key.transpose(1, 2),   # (B, H, S, D) View
+            value.transpose(1, 2), # (B, H, S, D) View
+            o=out_bshd.transpose(1, 2), # (B, H, S, D) View
+            density=self.density,
+            block_size=min(self.block_size, S),
+            scale=None,
+            use_bias=self.use_bias,
+        )
+        return out_bshd # Already (B, S, H, D) and contiguous if allocated as such
+
+
+class PISAA2AAttnOp(DistributedAttention):
+    def __init__(self, density: float = 0.5, block_size: int = 64, use_bias: bool = False):
+        super(PISAA2AAttnOp, self).__init__(PISALocalAttnOp(density=density, block_size=block_size, use_bias=use_bias))
+
+    def set_context_parallel_group(self, process_group, ranks, stream, cp_comm_type: str = "p2p"):
+        del ranks, cp_comm_type
+        super().set_context_parallel_group(process_group, stream)
+
+    def forward(self, query: Tensor, key: Tensor, value: Tensor, *args: Any, **kwargs) -> Tensor:
+        results = super().forward(query, key, value, *args, **kwargs)
+        return rearrange(results, "b ... h d -> b ... (h d)")
 
 
 class SVGLocalAttnOp(torch.nn.Module):

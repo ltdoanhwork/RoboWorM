@@ -1,6 +1,7 @@
 # Copyright (c) 2025-2026, Haopeng Li
 
 import functools
+import warnings
 
 import torch
 import torch.nn.functional as F
@@ -53,7 +54,10 @@ def chunk_reduce_kernel(
     qc,
     kc,
     vc,
-    T,
+    T, H,
+    stride_qb, stride_qh, stride_qt, stride_qd,
+    stride_kb, stride_kh, stride_kt, stride_kd,
+    stride_vb, stride_vh, stride_vt, stride_vd,
     N: tl.constexpr,
     K: tl.constexpr,
     V: tl.constexpr,
@@ -63,14 +67,21 @@ def chunk_reduce_kernel(
 ):
     i_kv, i_t, i_bh = tl.program_id(0), tl.program_id(1), tl.program_id(2)
 
+    i_b = i_bh // H
+    i_h = i_bh % H
+
+    q_base = q + i_b * stride_qb + i_h * stride_qh
+    k_base = k + i_b * stride_kb + i_h * stride_kh
+    v_base = v + i_b * stride_vb + i_h * stride_vh
+
     i_k = i_kv // tl.cdiv(V, BV)
     i_v = i_kv % tl.cdiv(V, BV)
 
     block_size = tl.minimum(BT, T - i_t * BT)
 
-    p_q = tl.make_block_ptr(q + i_bh * T * K, (T, K), (K, 1), (i_t * BT, i_k * BK), (BT, BK), (1, 0))
-    p_k = tl.make_block_ptr(k + i_bh * T * K, (T, K), (K, 1), (i_t * BT, i_k * BK), (BT, BK), (1, 0))
-    p_v = tl.make_block_ptr(v + i_bh * T * V, (T, V), (V, 1), (i_t * BT, i_v * BV), (BT, BV), (1, 0))
+    p_q = tl.make_block_ptr(q_base, (T, K), (stride_qt, stride_qd), (i_t * BT, i_k * BK), (BT, BK), (1, 0))
+    p_k = tl.make_block_ptr(k_base, (T, K), (stride_kt, stride_kd), (i_t * BT, i_k * BK), (BT, BK), (1, 0))
+    p_v = tl.make_block_ptr(v_base, (T, V), (stride_vt, stride_vd), (i_t * BT, i_v * BV), (BT, BV), (1, 0))
 
     b_q = tl.load(p_q, boundary_check=(0, 1))
     b_k = tl.load(p_k, boundary_check=(0, 1))
@@ -97,8 +108,11 @@ def fused_chunk_reduce_kernel(
     qc,
     kc,
     vc,
-    hc,
-    T,
+    h_out,
+    T, H,
+    stride_qb, stride_qh, stride_qt, stride_qd,
+    stride_kb, stride_kh, stride_kt, stride_kd,
+    stride_vb, stride_vh, stride_vt, stride_vd,
     N: tl.constexpr,
     K: tl.constexpr,
     V: tl.constexpr,
@@ -108,14 +122,21 @@ def fused_chunk_reduce_kernel(
 ):
     i_kv, i_t, i_bh = tl.program_id(0), tl.program_id(1), tl.program_id(2)
 
+    i_b = i_bh // H
+    i_h = i_bh % H
+
+    q_base = q + i_b * stride_qb + i_h * stride_qh
+    k_base = k + i_b * stride_kb + i_h * stride_kh
+    v_base = v + i_b * stride_vb + i_h * stride_vh
+
     i_k = i_kv // tl.cdiv(V, BV)
     i_v = i_kv % tl.cdiv(V, BV)
 
     block_size = tl.minimum(BT, T - i_t * BT)
 
-    p_q = tl.make_block_ptr(q + i_bh * T * K, (T, K), (K, 1), (i_t * BT, i_k * BK), (BT, BK), (1, 0))
-    p_k = tl.make_block_ptr(k + i_bh * T * K, (T, K), (K, 1), (i_t * BT, i_k * BK), (BT, BK), (1, 0))
-    p_v = tl.make_block_ptr(v + i_bh * T * V, (T, V), (V, 1), (i_t * BT, i_v * BV), (BT, BV), (1, 0))
+    p_q = tl.make_block_ptr(q_base, (T, K), (stride_qt, stride_qd), (i_t * BT, i_k * BK), (BT, BK), (1, 0))
+    p_k = tl.make_block_ptr(k_base, (T, K), (stride_kt, stride_kd), (i_t * BT, i_k * BK), (BT, BK), (1, 0))
+    p_v = tl.make_block_ptr(v_base, (T, V), (stride_vt, stride_vd), (i_t * BT, i_v * BV), (BT, BV), (1, 0))
 
     b_q = tl.load(p_q, boundary_check=(0, 1))
     b_k = tl.load(p_k, boundary_check=(0, 1))
@@ -124,19 +145,31 @@ def fused_chunk_reduce_kernel(
     b_qc = tl.sum(b_q, axis=0) / block_size
     b_kc = tl.sum(b_k, axis=0) / block_size
     b_vc = tl.sum(b_v, axis=0)
-    b_hc = tl.dot(tl.trans(b_k - b_kc[None, :]).to(b_v.dtype), b_v)
+
+    # Algebraic decomposition to avoid tl.sum→tl.dot chain that crashes
+    # Triton 3.3.0 MLIR inliner. Math:
+    #   (K - mean_K)^T @ V = K^T @ V - mean_K[:,None] * sum_V[None,:]
+    b_kt = tl.trans(b_k).to(b_v.dtype)
+    b_ktv = tl.dot(b_kt, b_v)                           # [BK,BV] f32
+    b_correction = b_kc[:, None] * b_vc.to(tl.float32)[None, :]  # [BK,BV] f32
+    b_hc = b_ktv - b_correction
 
     p_qc = tl.make_block_ptr(qc + i_bh * N * K + i_t * K, (K,), (1,), (i_k * BK,), (BK,), (0,))
     p_kc = tl.make_block_ptr(kc + i_bh * N * K + i_t * K, (K,), (1,), (i_k * BK,), (BK,), (0,))
     p_vc = tl.make_block_ptr(vc + i_bh * N * V + i_t * V, (V,), (1,), (i_v * BV,), (BV,), (0,))
-    p_hc = tl.make_block_ptr(
-        hc + i_bh * N * K * V + i_t * K * V, (K, V), (V, 1), (i_k * BK, i_v * BV), (BK, BV), (1, 0)
-    )
 
     tl.store(p_qc, b_qc.to(p_qc.dtype.element_ty), boundary_check=(0,))
     tl.store(p_kc, b_kc.to(p_kc.dtype.element_ty), boundary_check=(0,))
     tl.store(p_vc, b_vc.to(p_vc.dtype.element_ty), boundary_check=(0,))
-    tl.store(p_hc, b_hc.to(p_hc.dtype.element_ty), boundary_check=(0, 1))
+
+    # Use manual pointers for atomic_add — tl.make_block_ptr + tl.atomic_add
+    # triggers 'tt.atomic_rmw ptr/value type mismatch' in Triton 3.3.0.
+    h_base = h_out + i_bh * K * V + i_k * BK * V + i_v * BV
+    offs_k = tl.arange(0, BK)
+    offs_v = tl.arange(0, BV)
+    p_h = h_base + offs_k[:, None] * V + offs_v[None, :]
+    mask_h = (i_k * BK + offs_k[:, None] < K) & (i_v * BV + offs_v[None, :] < V)
+    tl.atomic_add(p_h, b_hc.to(h_out.dtype.element_ty), mask=mask_h)
 
 
 def chunk_reduce(q, k, v, chunk_size):
@@ -158,7 +191,10 @@ def chunk_reduce(q, k, v, chunk_size):
         qc=qc,
         kc=kc,
         vc=vc,
-        T=T,
+        T=T, H=H,
+        stride_qb=q.stride(0), stride_qh=q.stride(1), stride_qt=q.stride(2), stride_qd=q.stride(3),
+        stride_kb=k.stride(0), stride_kh=k.stride(1), stride_kt=k.stride(2), stride_kd=k.stride(3),
+        stride_vb=v.stride(0), stride_vh=v.stride(1), stride_vt=v.stride(2), stride_vd=v.stride(3),
         N=N,
         K=K,
         V=V,
@@ -210,40 +246,10 @@ def fused_chunk_reduce_pytorch(q, k, v, chunk_size, use_bias=False, p=2):
 
 
 def fused_chunk_reduce(q, k, v, chunk_size, use_bias=False, p=2):
-    B, H, T, K, V = *k.shape, v.shape[-1]
-    N = triton.cdiv(T, chunk_size)
-
-    BK = min(128, triton.next_power_of_2(K))
-    BV = min(128, triton.next_power_of_2(V))
-
-    qc = torch.empty(B, H, N, K, device=k.device, dtype=k.dtype)
-    kc = torch.empty(B, H, N, K, device=k.device, dtype=k.dtype)
-    vc = torch.empty(B, H, N, V, device=v.device, dtype=v.dtype)
-    hc = torch.empty(B, H, N, K, V, device=v.device, dtype=v.dtype)
-
-    grid = (triton.cdiv(K, BK) * triton.cdiv(V, BV), N, B * H)
-    fused_chunk_reduce_kernel[grid](
-        q=q,
-        k=k,
-        v=v,
-        qc=qc,
-        kc=kc,
-        vc=vc,
-        hc=hc,
-        T=T,
-        N=N,
-        K=K,
-        V=V,
-        BT=chunk_size,
-        BK=BK,
-        BV=BV,
-        **_safe_kernel_config(),
-    )
-
-    if use_bias:
-        h_norm = torch.norm(hc.flatten(-2, -1), p=p, dim=-1)
-        return qc, kc, vc, hc.sum(dim=2), h_norm[..., None, :]
-    return qc, kc, vc, hc.sum(dim=2), None
+    # Triton kernel for this op hangs during MLIR compilation on Triton 3.3.0
+    # (tl.sum inlining causes infinite loop in MLIR canonicalizer).
+    # Use PyTorch — this is just mean/sum/outer-product, not the bottleneck.
+    return fused_chunk_reduce_pytorch(q, k, v, chunk_size, use_bias, p)
 
 
 @triton.jit
@@ -257,7 +263,11 @@ def piecewise_sparse_attention_fwd_kernel(
     o,
     indices,
     scale,
-    T,
+    T, H,
+    stride_qb, stride_qh, stride_qt, stride_qd,
+    stride_kb, stride_kh, stride_kt, stride_kd,
+    stride_vb, stride_vh, stride_vt, stride_vd,
+    stride_ob, stride_oh, stride_ot, stride_od,
     K: tl.constexpr,
     V: tl.constexpr,
     BT: tl.constexpr,
@@ -269,7 +279,15 @@ def piecewise_sparse_attention_fwd_kernel(
 ):
     i_v, i_t, i_bh = tl.program_id(0), tl.program_id(1), tl.program_id(2)
 
-    p_q = tl.make_block_ptr(q + i_bh * T * K, (T, K), (K, 1), (i_t * BT, 0), (BT, BK), (1, 0))
+    i_b = i_bh // H
+    i_h = i_bh % H
+
+    q_base = q + i_b * stride_qb + i_h * stride_qh
+    k_base = k + i_b * stride_kb + i_h * stride_kh
+    v_base = v + i_b * stride_vb + i_h * stride_vh
+    o_base = o + i_b * stride_ob + i_h * stride_oh
+
+    p_q = tl.make_block_ptr(q_base, (T, K), (stride_qt, stride_qd), (i_t * BT, 0), (BT, BK), (1, 0))
     b_q = tl.load(p_q, boundary_check=(0, 1))
 
     acc = tl.zeros([BT, BV], dtype=tl.float32)
@@ -282,8 +300,8 @@ def piecewise_sparse_attention_fwd_kernel(
         i_n = tl.load(indices + i_bh * NT * NS + i_t * NS + i).to(tl.int32)
         bos = i_n * BT
 
-        p_k = tl.make_block_ptr(k + i_bh * T * K, (T, K), (K, 1), (bos, 0), (BT, BK), (1, 0))
-        p_v = tl.make_block_ptr(v + i_bh * T * V, (T, V), (V, 1), (bos, i_v * BV), (BT, BV), (1, 0))
+        p_k = tl.make_block_ptr(k_base, (T, K), (stride_kt, stride_kd), (bos, 0), (BT, BK), (1, 0))
+        p_v = tl.make_block_ptr(v_base, (T, V), (stride_vt, stride_vd), (bos, i_v * BV), (BT, BV), (1, 0))
         b_k = tl.load(p_k, boundary_check=(0, 1))
         b_v = tl.load(p_v, boundary_check=(0, 1))
 
@@ -349,11 +367,11 @@ def piecewise_sparse_attention_fwd_kernel(
     l_i += g_l
     acc /= l_i[:, None]
 
-    p_o = tl.make_block_ptr(o + i_bh * T * V, (T, V), (V, 1), (i_t * BT, i_v * BV), (BT, BV), (1, 0))
+    p_o = tl.make_block_ptr(o_base, (T, V), (stride_ot, stride_od), (i_t * BT, i_v * BV), (BT, BV), (1, 0))
     tl.store(p_o, acc.to(b_q.dtype), boundary_check=(0, 1))
 
 
-def piecewise_sparse_attention(q, k, v, density=0.1, block_size=64, scale=None, use_bias=False):
+def piecewise_sparse_attention(q, k, v, o=None, density=0.1, block_size=64, scale=None, use_bias=False):
     B, H, T, K, V = *k.shape, v.shape[-1]
     scale = K ** -0.5 if scale is None else scale
 
@@ -362,6 +380,16 @@ def piecewise_sparse_attention(q, k, v, density=0.1, block_size=64, scale=None, 
             f"[PISA] Cross-attention is not supported by the config-driven PISA backend "
             f"(T_q={q.shape[2]}, T_kv={T})."
         )
+
+    # Triton make_block_ptr requires power-of-2 block shapes.
+    block_size_po2 = triton.next_power_of_2(block_size)
+    if block_size_po2 != block_size:
+        warnings.warn(
+            f"[PISA] block_size={block_size} rounded to {block_size_po2} "
+            f"(Triton requires power of 2)",
+            stacklevel=2,
+        )
+        block_size = block_size_po2
 
     NT = triton.cdiv(T, block_size)
     BK = min(128, triton.next_power_of_2(K))
@@ -377,7 +405,8 @@ def piecewise_sparse_attention(q, k, v, density=0.1, block_size=64, scale=None, 
     top_k = max(1, int(density * NT))
     indices = torch.topk(score, k=top_k, dim=-1).indices
 
-    o = torch.empty_like(v)
+    if o is None:
+        o = torch.empty(B, H, T, V, device=v.device, dtype=v.dtype)
 
     grid = (triton.cdiv(V, BV), NT, B * H)
     piecewise_sparse_attention_fwd_kernel[grid](
@@ -390,7 +419,11 @@ def piecewise_sparse_attention(q, k, v, density=0.1, block_size=64, scale=None, 
         o=o,
         indices=indices,
         scale=scale,
-        T=T,
+        T=T, H=H,
+        stride_qb=q.stride(0), stride_qh=q.stride(1), stride_qt=q.stride(2), stride_qd=q.stride(3),
+        stride_kb=k.stride(0), stride_kh=k.stride(1), stride_kt=k.stride(2), stride_kd=k.stride(3),
+        stride_vb=v.stride(0), stride_vh=v.stride(1), stride_vt=v.stride(2), stride_vd=v.stride(3),
+        stride_ob=o.stride(0), stride_oh=o.stride(1), stride_ot=o.stride(2), stride_od=o.stride(3),
         K=K,
         V=V,
         BT=block_size,

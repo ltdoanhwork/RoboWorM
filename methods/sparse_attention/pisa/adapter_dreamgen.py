@@ -88,16 +88,22 @@ class PISAAttentionWrapper(nn.Module):
                 "Fallback is disabled."
             )
 
-        # PISA expects (B, H, S, D)
+        # PISA expects (B, H, S, D) natively, but now we pass strided tensor views directly.
         bs = min(self.block_size, T)
-        out = piecewise_sparse_attention(
-            q.transpose(1, 2).contiguous(),
-            k.transpose(1, 2).contiguous(),
-            v.transpose(1, 2).contiguous(),
+        
+        # Preallocate output buffer natively contiguous in (B, S, H, D)
+        B, S, H, D = q.shape
+        out_bshd = torch.empty((B, S, H, D), dtype=q.dtype, device=q.device)
+        
+        piecewise_sparse_attention(
+            q.transpose(1, 2),
+            k.transpose(1, 2),
+            v.transpose(1, 2),
+            o=out_bshd.transpose(1, 2),
             density=self.density,
             block_size=bs,
         )
-        return out.transpose(1, 2)   # (B, S, H, D)
+        return out_bshd   # (B, S, H, D)
 
     # ------------------------------------------------------------------
     # forward — handles single-GPU and context-parallel cases

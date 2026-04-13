@@ -60,9 +60,15 @@ from cosmos_predict2._src.imaginaire.utils import log
 from cosmos_predict2._src.imaginaire.utils.context_parallel import split_inputs_cp
 from cosmos_predict2._src.predict2.conditioner import DataType
 from cosmos_predict2._src.predict2.modules.neighborhood_attn import NeighborhoodAttention
-from cosmos_predict2._src.predict2.networks.a2a_cp import MinimalA2AAttnOp, NattenA2AAttnOp, SVGA2AAttnOp
+from cosmos_predict2._src.predict2.networks.a2a_cp import (
+    MinimalA2AAttnOp,
+    NattenA2AAttnOp,
+    PISAA2AAttnOp,
+    SVGA2AAttnOp,
+)
 from cosmos_predict2._src.predict2.networks.model_weights_stats import WeightTrainingStat
 from cosmos_predict2._src.predict2.networks.selective_activation_checkpoint import SACConfig as _SACConfig
+from methods.sparse_attention.pisa.config import build_dreamdojo_pisa_parameters
 from methods.sparse_attention.svg.config import build_dreamdojo_svg_parameters
 
 
@@ -486,6 +492,7 @@ class Attention(nn.Module):
         qkv_format: str = "bshd",
         backend: str = "transformer_engine",
         natten_params: Mapping[str, Any] | None = None,
+        pisa_params: Mapping[str, Any] | None = None,
         svg_params: Mapping[str, Any] | None = None,
         use_wan_fp32_strategy: bool = False,
     ) -> None:
@@ -496,12 +503,12 @@ class Attention(nn.Module):
         )
         self.is_selfattn = context_dim is None  # self attention
 
-        assert backend in ["transformer_engine", "torch", "torch-flex", "minimal_a2a", "natten", "i4", "svg"], (
+        assert backend in ["transformer_engine", "torch", "torch-flex", "minimal_a2a", "natten", "pisa", "i4", "svg"], (
             f"Invalid backend: {backend}"
         )
         self.backend = backend
-        if backend == "svg" and not self.is_selfattn:
-            raise ValueError("[SVG] Cross-attention is not supported in DreamDojo.")
+        if backend in {"pisa", "svg"} and not self.is_selfattn:
+            raise ValueError(f"[{backend.upper()}] Cross-attention is not supported in DreamDojo.")
 
         context_dim = query_dim if context_dim is None else context_dim
         inner_dim = head_dim * n_heads
@@ -542,6 +549,10 @@ class Attention(nn.Module):
             if natten_params is None:
                 raise ValueError("You must specify `natten_params` when using the NATTEN backend, got None.")
             self.attn_op = NattenA2AAttnOp(natten_parameters=natten_params)
+        elif self.backend == "pisa":
+            if pisa_params is None:
+                raise ValueError("You must specify `pisa_params` when using the PISA backend, got None.")
+            self.attn_op = PISAA2AAttnOp(**pisa_params)
         elif self.backend == "torch":
             self.attn_op = torch_attention_op
         elif self.backend == "torch-flex":
@@ -1258,6 +1269,7 @@ class Block(nn.Module):
         self_attention_backend: str = "transformer_engine",
         cross_attention_backend: str = "transformer_engine",
         natten_params: Mapping[str, Any] | None = None,
+        pisa_params: Mapping[str, Any] | None = None,
         svg_params: Mapping[str, Any] | None = None,
         image_context_dim: Optional[int] = None,
         use_wan_fp32_strategy: bool = False,
@@ -1273,6 +1285,7 @@ class Block(nn.Module):
             qkv_format="bshd",
             backend=self_attention_backend,
             natten_params=natten_params,
+            pisa_params=pisa_params,
             svg_params=svg_params,
             use_wan_fp32_strategy=use_wan_fp32_strategy,
         )
@@ -1612,6 +1625,11 @@ class MiniTrainDIT(WeightTrainingStat):
         sac_config: SACConfig = SACConfig(),
         n_dense_blocks: int = -1,
         natten_parameters: Union[dict, list] = None,
+        pisa_parameters: Union[dict, list] = None,
+        pisa_density: Optional[float] = None,
+        pisa_block_size: Optional[int] = None,
+        pisa_start_layer_idx: Optional[int] = None,
+        pisa_use_bias: Optional[bool] = None,
         svg_parameters: Union[dict, list] = None,
         svg_variant: Optional[str] = None,
         svg_start_layer_idx: Optional[int] = None,
@@ -1671,13 +1689,15 @@ class MiniTrainDIT(WeightTrainingStat):
         self.crossattn_proj_in_channels = crossattn_proj_in_channels
         self.use_wan_fp32_strategy = use_wan_fp32_strategy
         self.zero_init_action_embedder = zero_init_action_embedder
-        if self.cross_attention_backend == "svg":
-            raise ValueError("[SVG] Cross-attention is not supported in DreamDojo.")
+        if self.cross_attention_backend in {"pisa", "svg"}:
+            raise ValueError(f"[{self.cross_attention_backend.upper()}] Cross-attention is not supported in DreamDojo.")
         if n_dense_blocks == -1 and isinstance(natten_parameters, Mapping):
             if self.self_attention_backend == "natten":
                 natten_parameters = [natten_parameters for _ in range(num_blocks)]
             else:
                 natten_parameters = None
+        if isinstance(pisa_parameters, Mapping):
+            pisa_parameters = [pisa_parameters for _ in range(num_blocks)]
         if isinstance(svg_parameters, Mapping):
             svg_parameters = [svg_parameters for _ in range(num_blocks)]
 
@@ -1691,6 +1711,16 @@ class MiniTrainDIT(WeightTrainingStat):
             raise ValueError(
                 "`self_attention_backend='natten'` requires `natten_parameters` (or `n_dense_blocks`) to be set."
             )
+
+        if self.self_attention_backend == "pisa" and pisa_parameters is None:
+            pisa_parameters = build_dreamdojo_pisa_parameters(
+                num_blocks=num_blocks,
+                density=pisa_density,
+                block_size=pisa_block_size,
+                start_layer_idx=pisa_start_layer_idx,
+                use_bias=pisa_use_bias,
+            )
+        _validate_sparse_parameter_list(pisa_parameters, name="pisa_parameters", num_blocks=num_blocks)
 
         if self.self_attention_backend == "svg" and svg_parameters is None:
             svg_parameters = build_dreamdojo_svg_parameters(
@@ -1714,6 +1744,7 @@ class MiniTrainDIT(WeightTrainingStat):
             name
             for name, parameters in (
                 ("natten", natten_parameters),
+                ("pisa", pisa_parameters),
                 ("svg", svg_parameters),
             )
             if parameters is not None
@@ -1739,12 +1770,15 @@ class MiniTrainDIT(WeightTrainingStat):
                     self_attention_backend=(
                         "natten"
                         if natten_parameters is not None and natten_parameters[i] is not None
+                        else "pisa"
+                        if pisa_parameters is not None and pisa_parameters[i] is not None
                         else "svg"
                         if svg_parameters is not None and svg_parameters[i] is not None
                         else dense_self_attention_backend
                     ),
                     cross_attention_backend=self.cross_attention_backend,
                     natten_params=None if natten_parameters is None else natten_parameters[i],
+                    pisa_params=None if pisa_parameters is None else pisa_parameters[i],
                     svg_params=None if svg_parameters is None else svg_parameters[i],
                     image_context_dim=None if extra_image_context_dim is None else model_channels,
                     use_wan_fp32_strategy=use_wan_fp32_strategy,
