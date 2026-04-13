@@ -54,10 +54,11 @@ def _import_sparse_backends():
     if project_root not in sys.path:
         sys.path.insert(0, project_root)
 
+    from methods.prunning.SiTo.config import add_dreamgen_sito_args
     from methods.sparse_attention.pisa.config import add_pisa_args
     from methods.sparse_attention.svg.config import add_dreamgen_svg_args
     from methods.sparse_attention.radial.config import add_dreamgen_radial_args
-    return add_pisa_args, add_dreamgen_svg_args, add_dreamgen_radial_args
+    return add_pisa_args, add_dreamgen_svg_args, add_dreamgen_radial_args, add_dreamgen_sito_args
 # -----------------------------------
 
 
@@ -154,10 +155,11 @@ def parse_args() -> argparse.Namespace:
     )
 
     # ---- Sparse Backend Integration ----
-    add_pisa_args, add_svg_args, add_radial_args = _import_sparse_backends()
+    add_pisa_args, add_svg_args, add_radial_args, add_sito_args = _import_sparse_backends()
     add_pisa_args(parser)
     add_svg_args(parser)
     add_radial_args(parser)
+    add_sito_args(parser)
     # -----------------------------------
 
     return parser.parse_args()
@@ -180,6 +182,14 @@ def setup_pipeline(args: argparse.Namespace):
         radial_block_size=getattr(args, "radial_block_size", 64),
         radial_start_layer_idx=getattr(args, "radial_start_layer_idx", 4),
         radial_model_type=getattr(args, "radial_model_type", "hunyuan"),
+        sito=getattr(args, "use_sito", False),
+        sito_prune_ratio=getattr(args, "sito_prune_ratio", None),
+        sito_start_layer_idx=getattr(args, "sito_start_layer_idx", None),
+        sito_keep_last_n_dense=getattr(args, "sito_keep_last_n_dense", 2),
+        sito_patch_h=getattr(args, "sito_patch_h", 2),
+        sito_patch_w=getattr(args, "sito_patch_w", 2),
+        sito_noise_alpha=getattr(args, "sito_noise_alpha", 0.1),
+        sito_sim_beta=getattr(args, "sito_sim_beta", 1.0),
         svg=getattr(args, "use_svg", False),
         svg_variant=getattr(args, "svg_variant", "svg1"),
         svg_start_layer_idx=getattr(args, "svg_start_layer_idx", 4),

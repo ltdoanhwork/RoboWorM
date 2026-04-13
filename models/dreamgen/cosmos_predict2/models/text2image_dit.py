@@ -50,6 +50,7 @@ from cosmos_predict2.utils.context_parallel import split_inputs_cp
 from imaginaire.auxiliary.text_encoder import CosmosTextEncoderConfig
 from imaginaire.utils import log
 from imaginaire.utils.graph import create_cuda_graph
+from methods.prunning.SiTo.runtime import SiToTokenPruner
 
 
 # selective activation checkpoint; only apply to the minimal v4 model. if there are change in the networks, some policy will not work as we expect.
@@ -961,6 +962,7 @@ class Block(nn.Module):
         pisa_params: Mapping | None = None,
         radial_params: Mapping | None = None,
         svg_params: Mapping | None = None,
+        sito_params: Mapping | None = None,
     ):
         super().__init__()
         self.x_dim = x_dim
@@ -1009,6 +1011,7 @@ class Block(nn.Module):
             self.adaln_modulation_mlp = nn.Sequential(nn.SiLU(), nn.Linear(x_dim, 3 * x_dim, bias=False))
 
         self.cp_size = None
+        self.sito_runtime = None if sito_params is None else SiToTokenPruner(**dict(sito_params))
 
     def set_context_parallel_group(self, process_group, ranks, stream):
         self.cp_size = None if ranks is None else len(ranks)
@@ -1105,19 +1108,32 @@ class Block(nn.Module):
         if self.cp_size is not None and self.cp_size > 1:
             video_size = VideoSize(T=T * self.cp_size, H=H, W=W)
 
+        self_attn_input = rearrange(normalized_x_B_T_H_W_D, "b t h w d -> b (t h w) d")
+        self_attn_rope = rope_emb_L_1_1_D
+        sito_plan = None
+        if self.sito_runtime is not None:
+            if self.cp_size is not None and self.cp_size > 1:
+                raise ValueError("[SiTo] DreamGen SiTo v1 is single-GPU only; disable context parallelism.")
+            sito_plan = self.sito_runtime.prepare(self_attn_input, video_size=VideoSize(T=T, H=H, W=W))
+            if sito_plan is not None:
+                self_attn_input = self.sito_runtime.prune(self_attn_input, sito_plan)
+                self_attn_rope = self.sito_runtime.prune_rope(rope_emb_L_1_1_D, sito_plan)
+
         if timing_info is not None:
             torch.cuda.synchronize()
             start_sa = time.perf_counter()
 
+        self_attn_output = self.self_attn(
+            self_attn_input,
+            None,
+            rope_emb=self_attn_rope,
+            video_size=video_size,
+            attention_runtime_context=attention_runtime_context,
+        )
+        if sito_plan is not None:
+            self_attn_output = self.sito_runtime.recover(self_attn_output, sito_plan)
         result_B_T_H_W_D = rearrange(
-            self.self_attn(
-                # normalized_x_B_T_HW_D,
-                rearrange(normalized_x_B_T_H_W_D, "b t h w d -> b (t h w) d"),
-                None,
-                rope_emb=rope_emb_L_1_1_D,
-                video_size=video_size,
-                attention_runtime_context=attention_runtime_context,
-            ),
+            self_attn_output,
             "b (t h w) d -> b t h w d",
             t=T,
             h=H,
@@ -1267,6 +1283,7 @@ class MiniTrainDIT(WeightTrainingStat):
         pisa_parameters: dict | list = None,  # noqa: RUF013
         radial_parameters: dict | list = None,  # noqa: RUF013
         svg_parameters: dict | list = None,  # noqa: RUF013
+        sito_parameters: dict | list = None,  # noqa: RUF013
     ) -> None:
         super().__init__()
         self.max_img_h = max_img_h
@@ -1325,6 +1342,8 @@ class MiniTrainDIT(WeightTrainingStat):
                 "`natten_parameters` must be a list of Nones (self attention, no sparsity) or dicts "
                 f"that indicate at least a `window_size`, got {natten_parameters=}."
             )
+        if isinstance(sito_parameters, Mapping):
+            sito_parameters = [sito_parameters for _ in range(num_blocks)]
 
         if pisa_parameters is not None and not isinstance(pisa_parameters, Sequence):
             raise ValueError(
@@ -1381,6 +1400,21 @@ class MiniTrainDIT(WeightTrainingStat):
                 "`svg_parameters` must be a list of Nones or dicts describing per-block SVG settings, "
                 f"got {svg_parameters=}."
             )
+        if sito_parameters is not None and not isinstance(sito_parameters, Sequence):
+            raise ValueError(
+                "`sito_parameters` must either be None, or a list of the same length as the number of blocks, "
+                f"got {type(sito_parameters)=}."
+            )
+        if sito_parameters is not None and len(sito_parameters) != num_blocks:
+            raise ValueError(
+                "`sito_parameters` must either be None, or a list of the same length as the number of blocks, "
+                f"got {len(sito_parameters)=} != {num_blocks=}."
+            )
+        if sito_parameters is not None and any(x is not None and not isinstance(x, Mapping) for x in sito_parameters):
+            raise ValueError(
+                "`sito_parameters` must be a list of Nones or dicts describing per-block SiTo settings, "
+                f"got {sito_parameters=}."
+            )
 
         enabled_sparse_backends = [
             name
@@ -1389,6 +1423,7 @@ class MiniTrainDIT(WeightTrainingStat):
                 ("pisa", pisa_parameters),
                 ("radial", radial_parameters),
                 ("svg", svg_parameters),
+                ("sito", sito_parameters),
             )
             if parameters is not None
         ]
@@ -1396,6 +1431,7 @@ class MiniTrainDIT(WeightTrainingStat):
             enabled_str = ", ".join(enabled_sparse_backends)
             raise ValueError(f"Sparse backends are mutually exclusive in MiniTrainDIT, got {enabled_str}.")
         self.has_svg_backend = svg_parameters is not None
+        self.has_sito_backend = sito_parameters is not None
 
         self.blocks = nn.ModuleList(
             [
@@ -1422,6 +1458,7 @@ class MiniTrainDIT(WeightTrainingStat):
                     pisa_params=None if pisa_parameters is None else pisa_parameters[i],
                     radial_params=None if radial_parameters is None else radial_parameters[i],
                     svg_params=None if svg_parameters is None else svg_parameters[i],
+                    sito_params=None if sito_parameters is None else sito_parameters[i],
                 )
                 for i in range(num_blocks)
             ]
@@ -1750,6 +1787,8 @@ class MiniTrainDIT(WeightTrainingStat):
         self._is_context_parallel_enabled = False
 
     def enable_context_parallel(self, process_group: ProcessGroup | None = None) -> None:
+        if self.has_sito_backend:
+            raise ValueError("[SiTo] DreamGen SiTo v1 is single-GPU only; disable context parallelism.")
         # pos_embedder
         self.pos_embedder.enable_context_parallel(process_group=process_group)
         if self.extra_per_block_abs_pos_emb:

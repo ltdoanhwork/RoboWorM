@@ -63,6 +63,7 @@ from cosmos_predict2._src.predict2.modules.neighborhood_attn import Neighborhood
 from cosmos_predict2._src.predict2.networks.a2a_cp import MinimalA2AAttnOp, NattenA2AAttnOp, SVGA2AAttnOp
 from cosmos_predict2._src.predict2.networks.model_weights_stats import WeightTrainingStat
 from cosmos_predict2._src.predict2.networks.selective_activation_checkpoint import SACConfig as _SACConfig
+from methods.prunning.SiTo.runtime import SiToTokenPruner, build_sito_parameters
 from methods.sparse_attention.svg.config import build_dreamdojo_svg_parameters
 
 
@@ -1259,6 +1260,7 @@ class Block(nn.Module):
         cross_attention_backend: str = "transformer_engine",
         natten_params: Mapping[str, Any] | None = None,
         svg_params: Mapping[str, Any] | None = None,
+        sito_params: Mapping[str, Any] | None = None,
         image_context_dim: Optional[int] = None,
         use_wan_fp32_strategy: bool = False,
     ):
@@ -1326,6 +1328,7 @@ class Block(nn.Module):
 
         self.cp_size = None
         self.use_wan_fp32_strategy = use_wan_fp32_strategy
+        self.sito_runtime = None if sito_params is None else SiToTokenPruner(**dict(sito_params))
 
     def set_context_parallel_group(self, process_group, ranks, stream, cp_comm_type: str = "p2p"):
         self.cp_size = None if ranks is None else len(ranks)
@@ -1437,10 +1440,21 @@ class Block(nn.Module):
             video_size = VideoSize(T=T * self.cp_size, H=H, W=W)
 
         # Self-attention with optional stateless KV cache state threading
+        self_attn_input = rearrange(normalized_x_B_T_H_W_D, "b t h w d -> b (t h w) d")
+        self_attn_rope = rope_emb_L_1_1_D
+        sito_plan = None
+        if self.sito_runtime is not None and kv_cache_cfg is None and kv_state is None:
+            if self.cp_size is not None and self.cp_size > 1:
+                raise ValueError("[SiTo] DreamDojo SiTo v1 is single-GPU only; set context_parallel_size=1.")
+            sito_plan = self.sito_runtime.prepare(self_attn_input, video_size=VideoSize(T=T, H=H, W=W))
+            if sito_plan is not None:
+                self_attn_input = self.sito_runtime.prune(self_attn_input, sito_plan)
+                self_attn_rope = self.sito_runtime.prune_rope(rope_emb_L_1_1_D, sito_plan)
+
         self_attn_result = self.self_attn(
-            rearrange(normalized_x_B_T_H_W_D, "b t h w d -> b (t h w) d"),
+            self_attn_input,
             None,
-            rope_emb=rope_emb_L_1_1_D,
+            rope_emb=self_attn_rope,
             video_size=video_size,
             attention_runtime_context=attention_runtime_context,
             kv_cache_cfg=kv_cache_cfg,
@@ -1452,6 +1466,8 @@ class Block(nn.Module):
             self_attn_output, new_kv_state = self_attn_result
         else:
             self_attn_output = self_attn_result
+        if sito_plan is not None:
+            self_attn_output = self.sito_runtime.recover(self_attn_output, sito_plan)
 
         result_B_T_H_W_D = rearrange(
             self_attn_output,
@@ -1613,6 +1629,15 @@ class MiniTrainDIT(WeightTrainingStat):
         n_dense_blocks: int = -1,
         natten_parameters: Union[dict, list] = None,
         svg_parameters: Union[dict, list] = None,
+        sito_parameters: Union[dict, list] = None,
+        use_sito: bool = False,
+        sito_start_layer_idx: Optional[int] = None,
+        sito_keep_last_n_dense: int = 2,
+        sito_prune_ratio: Optional[float] = None,
+        sito_patch_h: int = 2,
+        sito_patch_w: int = 2,
+        sito_noise_alpha: float = 0.1,
+        sito_sim_beta: float = 1.0,
         svg_variant: Optional[str] = None,
         svg_start_layer_idx: Optional[int] = None,
         svg_dense_step_frac: Optional[float] = None,
@@ -1680,6 +1705,8 @@ class MiniTrainDIT(WeightTrainingStat):
                 natten_parameters = None
         if isinstance(svg_parameters, Mapping):
             svg_parameters = [svg_parameters for _ in range(num_blocks)]
+        if isinstance(sito_parameters, Mapping):
+            sito_parameters = [sito_parameters for _ in range(num_blocks)]
 
         natten_parameters = _build_natten_parameter_list(
             num_blocks=num_blocks,
@@ -1708,13 +1735,27 @@ class MiniTrainDIT(WeightTrainingStat):
                 kmeans_iter_init=svg_kmeans_iter_init,
                 kmeans_iter_step=svg_kmeans_iter_step,
             )
+        if use_sito and sito_parameters is None:
+            sito_parameters = build_sito_parameters(
+                num_blocks=num_blocks,
+                start_layer_idx=sito_start_layer_idx,
+                keep_last_n_dense=sito_keep_last_n_dense,
+                prune_ratio=sito_prune_ratio,
+                patch_h=sito_patch_h,
+                patch_w=sito_patch_w,
+                noise_alpha=sito_noise_alpha,
+                sim_beta=sito_sim_beta,
+                group_mode="per_frame",
+            )
         _validate_sparse_parameter_list(svg_parameters, name="svg_parameters", num_blocks=num_blocks)
+        _validate_sparse_parameter_list(sito_parameters, name="sito_parameters", num_blocks=num_blocks)
 
         enabled_sparse_backends = [
             name
             for name, parameters in (
                 ("natten", natten_parameters),
                 ("svg", svg_parameters),
+                ("sito", sito_parameters),
             )
             if parameters is not None
         ]
@@ -1723,6 +1764,7 @@ class MiniTrainDIT(WeightTrainingStat):
             raise ValueError(f"Sparse backends are mutually exclusive in MiniTrainDIT, got {enabled_str}.")
 
         self.has_svg_backend = svg_parameters is not None
+        self.has_sito_backend = sito_parameters is not None
         dense_self_attention_backend = (
             atten_backend if enabled_sparse_backends else self.self_attention_backend
         )
@@ -1746,6 +1788,7 @@ class MiniTrainDIT(WeightTrainingStat):
                     cross_attention_backend=self.cross_attention_backend,
                     natten_params=None if natten_parameters is None else natten_parameters[i],
                     svg_params=None if svg_parameters is None else svg_parameters[i],
+                    sito_params=None if sito_parameters is None else sito_parameters[i],
                     image_context_dim=None if extra_image_context_dim is None else model_channels,
                     use_wan_fp32_strategy=use_wan_fp32_strategy,
                 )
@@ -2068,6 +2111,8 @@ class MiniTrainDIT(WeightTrainingStat):
         self._is_context_parallel_enabled = False
 
     def enable_context_parallel(self, process_group: Optional[ProcessGroup] = None):
+        if self.has_sito_backend:
+            raise ValueError("[SiTo] DreamDojo SiTo v1 is single-GPU only; set context_parallel_size=1.")
         # pos_embedder
         self.pos_embedder.enable_context_parallel(process_group=process_group)
         if self.extra_per_block_abs_pos_emb:

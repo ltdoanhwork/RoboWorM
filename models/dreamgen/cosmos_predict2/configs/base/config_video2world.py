@@ -26,6 +26,7 @@ from cosmos_predict2.configs.base.config_natten import (
 )
 from cosmos_predict2.configs.base.config_pisa import build_pisa_parameters
 from cosmos_predict2.configs.base.config_radial import build_radial_parameters
+from cosmos_predict2.configs.base.config_sito import build_sito_parameters
 from cosmos_predict2.configs.base.config_svg import build_svg_parameters
 from cosmos_predict2.configs.base.config_text2image import CosmosGuardrailConfig, SolverTimestampConfig
 from cosmos_predict2.configs.base.defaults.ema import EMAConfig
@@ -491,6 +492,14 @@ def get_cosmos_predict2_video2world_pipeline(
     radial_block_size: int = 64,
     radial_start_layer_idx: int = 4,
     radial_model_type: str = "hunyuan",
+    sito: bool = False,
+    sito_prune_ratio: float | None = None,
+    sito_start_layer_idx: int | None = None,
+    sito_keep_last_n_dense: int = 2,
+    sito_patch_h: int = 2,
+    sito_patch_w: int = 2,
+    sito_noise_alpha: float = 0.1,
+    sito_sim_beta: float = 1.0,
     svg: bool = False,
     svg_variant: str = "svg1",
     svg_start_layer_idx: int = 4,
@@ -505,8 +514,8 @@ def get_cosmos_predict2_video2world_pipeline(
     svg_kmeans_iter_init: int = 5,
     svg_kmeans_iter_step: int = 2,
 ) -> Video2WorldPipelineConfig:
-    if sum(bool(enabled) for enabled in (natten, pisa, radial, svg)) > 1:
-        raise ValueError("NATTEN, PISA, Radial, and SVG cannot be enabled at the same time.")
+    if sum(bool(enabled) for enabled in (natten, pisa, radial, svg, sito)) > 1:
+        raise ValueError("NATTEN, PISA, Radial, SVG, and SiTo cannot be enabled at the same time.")
     key = _Video2WorldPipelineConfig(model_size, resolution, fps, natten=natten)
     config = deepcopy(_PREDICT2_VIDEO2WORLD_PIPELINES[key])
     if pisa:
@@ -524,6 +533,18 @@ def get_cosmos_predict2_video2world_pipeline(
             block_size=radial_block_size,
             start_layer_idx=radial_start_layer_idx,
             model_type=radial_model_type,
+        )
+    if sito:
+        config.net.sito_parameters = build_sito_parameters(
+            config.net.num_blocks,
+            start_layer_idx=sito_start_layer_idx,
+            keep_last_n_dense=sito_keep_last_n_dense,
+            prune_ratio=sito_prune_ratio,
+            patch_h=sito_patch_h,
+            patch_w=sito_patch_w,
+            noise_alpha=sito_noise_alpha,
+            sim_beta=sito_sim_beta,
+            group_mode="per_frame",
         )
     if svg:
         config.net.svg_parameters = build_svg_parameters(

@@ -4,9 +4,10 @@ This guide explains how to apply sparse attention patterns to DreamDojo's DiT ba
 
 ## Background
 
-DreamDojo's DiT uses full bidirectional self-attention over flattened video tokens `(T * H * W)`. For 14B at 480x640 with 13 frames:
-- Latent shape: `(4, 60, 80)` = 19,200 tokens per sequence
-- Full attention: O(19200^2) = ~368M attention pairs per layer per head
+DreamDojo's DiT uses full bidirectional self-attention over flattened video tokens after patchify. For 14B at 480x640 with 13 frames:
+- Latent shape before patchify: `(4, 60, 80)`
+- DiT token grid after `patch_spatial=2`: `(4, 30, 40)` = 4,800 tokens per sequence
+- Full attention: O(4800^2) = ~23M attention pairs per layer per head
 - 36 layers x 40 heads = significant compute
 
 Sparse attention reduces this by restricting which tokens can attend to each other.
@@ -135,7 +136,7 @@ def strided_mask(b, h, q_idx, kv_idx):
 block_mask = create_block_mask(
     temporal_causal_mask,
     B=1, H=40,  # batch, num_heads
-    Q_LEN=19200, KV_LEN=19200,
+    Q_LEN=4800, KV_LEN=4800,
     device="cuda",
     _compile=True,
 )

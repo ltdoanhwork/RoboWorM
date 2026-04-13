@@ -401,3 +401,60 @@ python -m models.DreamDojo.examples.action_conditioned \
   --svg_top_p_kmeans 0.3 \
   --svg_kmeans_iter_init 2 \
   --svg_kmeans_iter_step 1
+
+### dreamgen - sito
+SiTo is inference-only, self-attention only, and single-GPU only in DreamGen v1.
+
+```bash
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+export PYTHONPATH="./models/dreamgen"
+export CUDA_VISIBLE_DEVICES=0
+export NUM_GPUS=1
+
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+  --model_size 14B \
+  --gr00t_variant gr1 \
+  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS} \
+  --use_sito \
+  --sito_start_layer_idx 6 \
+  --sito_keep_last_n_dense 2
+```
+
+### dreamdojo - sito
+SiTo uses post-patchify per-frame token grouping. For the common `(4, 60, 80)` latent grid, the DiT sequence is `4 * 30 * 40 = 4800` tokens.
+
+```bash
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/dreamdojo_sito_eval \
+  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000 \
+  --experiment dreamdojo_2b_480_640_gr1 \
+  --save-dir ./output/dreamdojo_results/sito_results \
+  --num-frames 49 \
+  --num-samples 65 \
+  --dataset-path "./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
+  --data-split test \
+  --deterministic-uniform-sampling \
+  --use_sito \
+  --sito_start_layer_idx 4 \
+  --sito_keep_last_n_dense 2
+```
+
+### ctrl-world - sito
+SiTo is applied only on large spatial self-attention layers in Ctrl-World.
+
+```bash
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+export PYTHONPATH="./models/Ctrl-World"
+CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-World/scripts/rollout_interact_pi.py \
+  --dataset_root_path ./models/Ctrl-World/dataset_example \
+  --dataset_meta_info_path ./models/Ctrl-World/dataset_meta_info \
+  --dataset_names ./models/Ctrl-World/droid_subset \
+  --svd_model_path ./checkpoints/stabilityai/stable-video-diffusion-img2vid \
+  --clip_model_path ./checkpoints/openai/clip-vit-base-patch32 \
+  --ckpt_path ./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt \
+  --task_type pickplace \
+  --use_sito \
+  --sito_max_downsample_ratio 4
+```

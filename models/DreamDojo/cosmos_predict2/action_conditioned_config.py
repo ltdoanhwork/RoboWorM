@@ -53,6 +53,14 @@ class ActionConditionedSetupArguments(CommonSetupArguments):
     checkpoint_interval: int = 2000
     infinite: bool = False
     use_svg: bool = False
+    use_sito: bool = False
+    sito_start_layer_idx: int | None = None
+    sito_keep_last_n_dense: int = 2
+    sito_prune_ratio: float | None = None
+    sito_patch_h: int = 2
+    sito_patch_w: int = 2
+    sito_noise_alpha: float = 0.1
+    sito_sim_beta: float = 1.0
     svg_variant: Literal["svg1", "svg2"] = "svg1"
     svg_start_layer_idx: int | None = None
     svg_dense_step_frac: float | None = None

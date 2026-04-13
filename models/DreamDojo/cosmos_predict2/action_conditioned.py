@@ -78,6 +78,25 @@ def _build_svg_experiment_opts(setup_args: ActionConditionedSetupArguments) -> l
     return opts
 
 
+def _build_sito_experiment_opts(setup_args: ActionConditionedSetupArguments) -> list[str]:
+    if not setup_args.use_sito:
+        return []
+
+    opts = [
+        "model.config.net.use_sito=true",
+        f"model.config.net.sito_keep_last_n_dense={setup_args.sito_keep_last_n_dense}",
+        f"model.config.net.sito_patch_h={setup_args.sito_patch_h}",
+        f"model.config.net.sito_patch_w={setup_args.sito_patch_w}",
+        f"model.config.net.sito_noise_alpha={setup_args.sito_noise_alpha}",
+        f"model.config.net.sito_sim_beta={setup_args.sito_sim_beta}",
+    ]
+    if setup_args.sito_start_layer_idx is not None:
+        opts.append(f"model.config.net.sito_start_layer_idx={setup_args.sito_start_layer_idx}")
+    if setup_args.sito_prune_ratio is not None:
+        opts.append(f"model.config.net.sito_prune_ratio={setup_args.sito_prune_ratio}")
+    return opts
+
+
 def _get_robot_states(label, state_key="state", gripper_key="continuous_gripper_state"):
     """
     Extracts the robot arm and gripper states from the label dictionary for the specified frame indices.
@@ -256,6 +275,10 @@ def inference(
         )
     if setup_args.use_svg and setup_args.context_parallel_size > 1:
         raise ValueError("[SVG] DreamDojo SVG v1 is single-GPU only; set context_parallel_size=1.")
+    if setup_args.use_sito and setup_args.context_parallel_size > 1:
+        raise ValueError("[SiTo] DreamDojo SiTo v1 is single-GPU only; set context_parallel_size=1.")
+    if setup_args.use_sito and setup_args.use_svg:
+        raise ValueError("[SiTo] SiTo and SVG are mutually exclusive in DreamDojo.")
 
     # Determine supported extensions based on num_latent_conditional_frames
     if inference_args.num_latent_conditional_frames > 1:
@@ -296,7 +319,7 @@ def inference(
         # pyrefly: ignore  # bad-argument-type
         context_parallel_size=setup_args.context_parallel_size,
         config_file=setup_args.config_file,
-        experiment_opts=_build_svg_experiment_opts(setup_args),
+        experiment_opts=_build_svg_experiment_opts(setup_args) + _build_sito_experiment_opts(setup_args),
     )
 
     mem_bytes = torch.cuda.memory_allocated(device=torch.device("cuda" if torch.cuda.is_available() else "cpu"))

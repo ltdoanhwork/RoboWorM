@@ -60,6 +60,13 @@ def _import_radial_module(module_name):
         sys.path.insert(0, project_root)
     return importlib.import_module(f"methods.sparse_attention.radial.{module_name}")
 
+
+def _import_sito_module(module_name):
+    project_root = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../.."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+    return importlib.import_module(f"methods.prunning.SiTo.{module_name}")
+
 class agent():
     def __init__(self,args):
           
@@ -335,8 +342,13 @@ if __name__ == "__main__":
     # ---- Radial sparse attention (optional, training-free) --
     _radial_config = _import_radial_module("config")
     _radial_config.add_radial_args(parser)
+    # ---- SiTo sparse attention (optional, training-free) ----
+    _sito_config = _import_sito_module("config")
+    _sito_config.add_sito_args(parser)
     # ---------------------------------------------------------
     args_new = parser.parse_args()
+    if sum(bool(getattr(args_new, flag, False)) for flag in ("use_pisa", "use_svg", "use_radial", "use_sito")) > 1:
+        raise ValueError("[SiTo] SiTo, PISA, SVG, and Radial are mutually exclusive in Ctrl-World.")
 
     args = wm_args(task_type=args_new.task_type)
 
@@ -391,6 +403,19 @@ if __name__ == "__main__":
             H_per_view=args_new.radial_h_per_view,
             W=args_new.radial_w,
             model_type=args_new.radial_model_type,
+        )
+    # ---- Enable SiTo after model is loaded (non-invasive) ----------
+    if getattr(args_new, 'use_sito', False):
+        _sito_adapter = _import_sito_module("adapter")
+        _sito_adapter.enable_sito(
+            Agent.model.unet,
+            start_layer_idx=args_new.sito_start_layer_idx or 0,
+            prune_ratio=args_new.sito_prune_ratio,
+            patch_h=args_new.sito_patch_h,
+            patch_w=args_new.sito_patch_w,
+            noise_alpha=args_new.sito_noise_alpha,
+            sim_beta=args_new.sito_sim_beta,
+            max_downsample_ratio=args_new.sito_max_downsample_ratio,
         )
     # -----------------------------------------------------------------
     interact_num = args.interact_num

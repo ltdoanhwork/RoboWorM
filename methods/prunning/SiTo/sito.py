@@ -2,6 +2,7 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import torch.nn.functional as F
 from typing import Tuple, Callable, Optional, Dict, Any
 import math
 from .utils import init_generator
@@ -10,7 +11,8 @@ from .utils import init_generator
 def do_nothing(x: torch.Tensor, mode: str = None):
     return x
 
-count_num = torch.zeros((2, 4096), dtype=torch.int32, device="cuda")
+mps_gather_workaround = torch.gather
+count_num = torch.zeros((2, 4096), dtype=torch.int32, device="cuda" if torch.cuda.is_available() else "cpu")
 
 
 def do_nothing(x: torch.Tensor, mode: str = None):
