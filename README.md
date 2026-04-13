@@ -401,3 +401,60 @@ python -m models.DreamDojo.examples.action_conditioned \
   --svg_top_p_kmeans 0.3 \
   --svg_kmeans_iter_init 2 \
   --svg_kmeans_iter_step 1
+
+### dreamdojo radial
+Radial cho DreamDojo cần `flashinfer` và hiện chỉ hỗ trợ single GPU (`context_parallel_size=1`).
+#### 2b model
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
+export PYTHONPATH="./models/DreamDojo"
+export CUDA_VISIBLE_DEVICES=0
+export NUM_GPUS=1
+cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
+
+python -m pip install -r ./methods/sparse_attention/radial-attention/requirements.txt
+python -m pip install flashinfer-python -i https://flashinfer.ai/whl/cu124/torch2.5/
+
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/dreamdojo_radial_eval \
+  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000 \
+  --experiment dreamdojo_2b_480_640_gr1 \
+  --save-dir ./output/dreamdojo_results/radial_results \
+  --num-frames 49 \
+  --num-samples 65 \
+  --dataset-path "./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
+  --data-split test \
+  --deterministic-uniform-sampling \
+  --use_radial
+
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/dreamdojo_radial_eval \
+  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000 \
+  --experiment dreamdojo_2b_480_640_gr1 \
+  --save-dir ./output/dreamdojo_results/radial_results \
+  --num-frames 49 \
+  --num-samples 65 \
+  --dataset-path "./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
+  --data-split test \
+  --deterministic-uniform-sampling \
+  --use_radial \
+  --radial_decay_factor 1.0 \
+  --radial_block_size 64 \
+  --radial_start_layer_idx 6 \
+  --radial_model_type hunyuan
+
+#### 14b model
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/dreamdojo_radial_14b_balanced \
+  --checkpoints-dir ./checkpoints/dreamdojo/14B_GR1_post-train/iter_000050000 \
+  --experiment dreamdojo_14b_480_640_gr1 \
+  --save-dir ./output/dreamdojo_results/radial_14b_balanced \
+  --num-frames 49 \
+  --num-samples 65 \
+  --dataset-path "./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
+  --data-split test \
+  --deterministic-uniform-sampling \
+  --use_radial \
+  --radial_decay_factor 0.5 \
+  --radial_block_size 64 \
+  --radial_start_layer_idx 2 \
+  --radial_model_type hunyuan

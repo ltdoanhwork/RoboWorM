@@ -278,7 +278,9 @@ class RadialLocalAttnOp(torch.nn.Module):
     def __init__(self, **radial_parameters):
         super().__init__()
         radial_runtime_cls = _load_radial_runtime_class()
-        self.runtime = radial_runtime_cls(**radial_parameters)
+        runtime_parameters = dict(radial_parameters)
+        runtime_parameters.pop("layer_idx", None)
+        self.runtime = radial_runtime_cls(**runtime_parameters)
 
     def forward(self, query: Tensor, key: Tensor, value: Tensor, *args: Any, **kwargs) -> Tensor:
         del args

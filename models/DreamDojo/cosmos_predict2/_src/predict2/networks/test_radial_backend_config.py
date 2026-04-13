@@ -5,6 +5,7 @@ import torch
 
 from methods.sparse_attention.radial.config import build_dreamdojo_radial_parameters
 
+from cosmos_predict2._src.predict2.networks import a2a_cp as a2a_cp_mod
 from cosmos_predict2._src.predict2.networks import minimal_v4_dit as dit_mod
 from cosmos_predict2._src.predict2.networks.a2a_cp import RadialA2AAttnOp
 
@@ -138,6 +139,29 @@ def test_radial_a2a_rejects_context_parallel():
     op = RadialA2AAttnOp(block_size=64, decay_factor=1.0, model_type="hunyuan")
     with pytest.raises(RuntimeError, match="single-GPU|multi-GPU|Context parallel"):
         op.set_context_parallel_group(process_group=None, ranks=[0, 1], stream=None)
+
+
+def test_radial_local_attn_op_strips_layer_idx(monkeypatch):
+    captured = {}
+
+    class _DummyRuntime:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.setattr(a2a_cp_mod, "_load_radial_runtime_class", lambda: _DummyRuntime)
+    a2a_cp_mod.RadialLocalAttnOp(
+        layer_idx=6,
+        block_size=64,
+        decay_factor=1.0,
+        model_type="hunyuan",
+    )
+
+    assert "layer_idx" not in captured
+    assert captured == {
+        "block_size": 64,
+        "decay_factor": 1.0,
+        "model_type": "hunyuan",
+    }
 
 
 def test_action_conditioned_radial_guard():
