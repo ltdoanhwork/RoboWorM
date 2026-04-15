@@ -78,9 +78,72 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
   --num_gpus ${NUM_GPUS} \
   --use_sito \
   --sito_start_layer_idx 6 \
+  --sito_prune_ratio 0.15 \
   --sito_keep_last_n_dense 2 \
   --sito_patch_h 2 \
   --sito_patch_w 2
+
+
+
+
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+  --model_size 14B \
+  --gr00t_variant gr1 \
+  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS} \
+  --use_sito \
+  --sito_start_layer_idx 18 \
+  --sito_keep_last_n_dense 2 \
+  --sito_patch_h 2 \
+  --sito_patch_w 2
+
+
+torchrun -m models.dreamgen.examples.video2world \
+  --model_size 2B \
+  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS} \
+  --use_sito \
+  --sito_start_layer_idx 12 \
+  --sito_keep_last_n_dense 2 \
+  --sito_prune_ratio 0.4 \
+  --sito_patch_h 2 \
+  --sito_patch_w 2
+
+
+
+torchrun -m models.dreamgen.examples.video2world \
+  --model_size 2B \
+  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS} \
+  --use_sito \
+  --use_sito \
+  --sito_start_layer_idx 16 \
+  --sito_keep_last_n_dense 4 \
+  --sito_prune_ratio 0.25 \
+  --sito_patch_h 2 \
+  --sito_patch_w 2 \
+  --sito_sim_beta 1.0 \
+  --sito_noise_alpha 0.1
+
+torchrun --master_port=29501 -m models.dreamgen.examples.video2world \
+  --model_size 2B \
+  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS} \
+  --use_sito \
+  --sito_start_layer_idx 20 \
+  --sito_keep_last_n_dense 4 \
+  --sito_prune_ratio 0.25 \
+  --sito_patch_h 2 \
+  --sito_patch_w 2 \
+  --sito_sim_beta 1.0 \
+  --sito_noise_alpha 0.05
+
+
+
 ```
 
 Text-to-image with SiTo:
@@ -224,7 +287,7 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
   --disable_guardrail \
   --num_gpus ${NUM_GPUS} \
   --use_itm \
-  --itm_start_layer_idx 6 \
+  --itm_start_layer_idx 18 \
   --itm_keep_last_n_dense 2 \
   --itm_prune_from_step 1 \
   --itm_merge_from_step 2
@@ -297,3 +360,117 @@ python models/Ctrl-World/scripts/rollout_replay_traj.py \
   --use_itm \
   --itm_max_downsample_ratio 4
 ```
+
+## ITM Tuning Guide
+
+### Parameter Reference
+
+| Flag | Default | Range | Effect |
+|---|---|---|---|
+| `--itm_compress_ratio` | auto | `[0, 0.75)` | Fraction of tokens to merge/prune per group. Leave unset to use auto schedule. |
+| `--itm_start_layer_idx` | auto (6 for 36-block, 4 for 28-block) | `[0, num_blocks)` | First layer ITM is active. Higher = more dense compute = better quality. |
+| `--itm_keep_last_n_dense` | `2` | `[0, ...]` | Always keep this many tail layers dense. Increase for sharper final-step outputs. |
+| `--itm_prune_from_step` | `1` | `[0, T)` | Diffusion step index where ITM starts pruning (no merge). Step 0 is the noisiest. |
+| `--itm_merge_from_step` | `2` | `[prune, T)` | Step where ITM switches from prune-only to full merge (mean-pool into dst tokens). |
+| `--itm_merge_attn` | `true` | flag | Apply merging around self-attention. Always keep on. |
+| `--itm_merge_crossattn` | `false` | flag | Apply merging around cross-attention. May hurt text-following. Experimental. |
+| `--itm_merge_mlp` | `false` | flag | Apply merging around MLP blocks. Largest VRAM savings, highest quality risk. |
+
+### Token Geometry for DreamGen 14B / 480p / 16fps
+
+Video tokens after patchification (patch_spatial=2):
+
+- Latent grid: `(T=24, H=60, W=80)` → DiT grid: `(T=24, H=30, W=40)`
+- Tokens per frame (group): `30 × 40 = 1200`
+- Total sequence length: `24 × 1200 = 28800`
+
+Auto compress schedule for `tokens_per_group = 1200` → **0.25** (merge 25% of tokens per frame).
+
+Effective tokens kept per frame with `compress_ratio=0.25`: `1200 × 0.75 = 900`
+
+### Prune vs Merge Phase Explained
+
+ITM operates in two phases within a single diffusion trajectory:
+
+- **Prune phase** (`step < itm_merge_from_step`): tokens are removed without aggregation. Fast but reconstructed positions copy from their nearest dst anchor.
+- **Merge phase** (`step >= itm_merge_from_step`): removed tokens are mean-pooled into their anchor dst token before attention. More accurate, slightly slower due to scatter_reduce.
+
+Setting `--itm_prune_from_step 0 --itm_merge_from_step 0` applies full merge from the very first step (max aggression). Setting `--itm_prune_from_step 3 --itm_merge_from_step 5` preserves early denoising steps fully dense (max quality, lower speedup).
+
+### DreamGen 14B Presets
+
+#### Conservative — high quality, moderate speedup
+
+Merging starts late, only 20% tokens reduced, last 4 layers dense:
+
+```bash
+export PYTHONPATH="./models/dreamgen"
+export CUDA_VISIBLE_DEVICES=0
+export NUM_GPUS=1
+
+torchrun --master_port=29501 -m models.dreamgen.examples.video2world_gr00t \
+  --model_size 14B \
+  --gr00t_variant gr1 \
+  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS} \
+  --use_itm \
+  --itm_start_layer_idx 20 \
+  --itm_keep_last_n_dense 4 \
+  --itm_compress_ratio 0.20 \
+  --itm_prune_from_step 2 \
+  --itm_merge_from_step 4
+```
+
+#### Balanced — good quality, solid speedup
+
+```bash
+export PYTHONPATH="./models/dreamgen"
+export CUDA_VISIBLE_DEVICES=0
+export NUM_GPUS=1
+
+torchrun --master_port=29501 -m models.dreamgen.examples.video2world_gr00t \
+  --model_size 14B \
+  --gr00t_variant gr1 \
+  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS} \
+  --use_itm \
+  --itm_start_layer_idx 16 \
+  --itm_keep_last_n_dense 2 \
+  --itm_compress_ratio 0.25 \
+  --itm_prune_from_step 1 \
+  --itm_merge_from_step 2
+```
+
+#### Aggressive — max speedup, acceptable quality for evals
+
+```bash
+export PYTHONPATH="./models/dreamgen"
+export CUDA_VISIBLE_DEVICES=0
+export NUM_GPUS=1
+
+torchrun --master_port=29501 -m models.dreamgen.examples.video2world_gr00t \
+  --model_size 14B \
+  --gr00t_variant gr1 \
+  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS} \
+  --use_itm \
+  --itm_start_layer_idx 10 \
+  --itm_keep_last_n_dense 2 \
+  --itm_compress_ratio 0.30 \
+  --itm_prune_from_step 0 \
+  --itm_merge_from_step 0
+```
+
+### ITM vs SiTo Decision Matrix
+
+| Scenario | Recommendation |
+|---|---|
+| Benchmark quality reporting | No pruning (base run) |
+| Best quality with speedup | ITM Conservative |
+| Fast iteration / ablation | ITM Balanced |
+| Max throughput, quality acceptable | ITM Aggressive or SiTo Balanced |
+| VRAM reduction priority | Add `--itm_merge_mlp` to any ITM preset |
+| Multi-GPU inference needed | Neither (SiTo/ITM are single-GPU only) |
