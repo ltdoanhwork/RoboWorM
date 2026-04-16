@@ -75,29 +75,49 @@ They should be treated as starting points, not as verified benchmark claims for 
 
 ### WorldCache
 
-Recommended starting values:
+> **Note on threshold calibration for this repo**
+>
+> The `VLA-Humanoid` reference repo contained two math bugs that artificially inflated
+> the cache hit rate when using `--worldcache-rel-l1-thresh 0.03`:
+>
+> 1. **`num_steps` miscounting**: Sequential CFG produces 70 forward passes but the
+>    original code set `worldcache_num_steps=35`, causing the drift accumulator to
+>    reset halfway through — effectively running two "easy" warm-up windows.
+> 2. **`t_embedding_norm` order**: The original code mixed `action_emb` *after*
+>    `t_embedding_norm`, which suppressed timestep-to-timestep variance and made
+>    `delta_y` scores fall below `0.03` very easily.
+>
+> Both bugs are **fixed** in this repo. As a result the threshold must be raised to
+> achieve the same skip rate (≈30–40%) and the same ≈6–7 it/s throughput.
+> **Do not use 0.03 here** — it will give only ~8% skip and roughly half the speed.
+
+Recommended starting values for **this repo**:
 
 - 2B / 7B, `28` blocks:
   - `--worldcache-probe-depth 4`
-  - `--worldcache-ret-ratio 0.4`
-  - `--worldcache-rel-l1-thresh 0.03`
+  - `--worldcache-ret-ratio 0.5`
+  - `--worldcache-rel-l1-thresh 0.08`
 - 14B, `36` blocks:
   - `--worldcache-probe-depth 6`
-  - `--worldcache-ret-ratio 0.45`
-  - `--worldcache-rel-l1-thresh 0.026`
+  - `--worldcache-ret-ratio 0.5`
+  - `--worldcache-rel-l1-thresh 0.065`
 
 Interpretation:
 
-- `probe_depth` should cover enough early blocks to reflect deep-feature drift without paying most of the block stack.
-- `ret_ratio` is the unconditional warm-up portion before reuse starts.
-- `rel_l1_thresh` should be lower for deeper or more sensitive models.
+- `probe_depth=4` covers ~14% of the 28-block stack — enough to measure drift cheaply.
+- `ret_ratio=0.5` means the first 50% of timesteps (17/35) always run full forward;
+  reuse only starts mid-denoising when the latent is already converging.
+- `rel_l1_thresh` is now correctly calibrated against the normalized `t_embedding`
+  distribution. Values in `[0.05, 0.12]` are the practical operating range:
+  - lower → fewer skips, higher quality, slower
+  - higher → more skips, potential drift artifacts, faster
 
-Optional quality guards:
+Optional quality guards (activate in order if needed):
 
-- `--worldcache-hf-enabled` when high-frequency detail is unstable
-- `--worldcache-saliency-enabled` when object-centric motion matters
-- `--worldcache-dynamic-decay` when late denoising steps become easier to cache
-- `--worldcache-aduc-enabled` only after baseline cache behavior is stable
+- `--worldcache-hf-enabled` — blocks skips when high-frequency edge detail drifts
+- `--worldcache-saliency-enabled` — weights drift by per-channel variance saliency
+- `--worldcache-dynamic-decay` — relaxes threshold linearly toward end of denoising
+- `--worldcache-aduc-enabled` — skips the unconditional branch at late timesteps
 
 ### DiCache
 
@@ -200,10 +220,13 @@ python -m models.DreamDojo.examples.action_conditioned \
   --deterministic-uniform-sampling \
   --worldcache-enabled \
   --worldcache-num-steps 35 \
+  --worldcache-rel-l1-thresh 0.08 \
   --worldcache-probe-depth 4 \
-  --worldcache-ret-ratio 0.4 \
-  --worldcache-rel-l1-thresh 0.03
+  --worldcache-ret-ratio 0.5
 ```
+
+> **For 14B model**, use `--worldcache-rel-l1-thresh 0.065 --worldcache-probe-depth 6`.
+
 
 ## Suggested Tuning Order
 
