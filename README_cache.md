@@ -170,7 +170,7 @@ cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_p
 export PYTHONPATH="./models/DreamDojo:${PYTHONPATH}"
 ```
 
-### Baseline
+### Baseline (DreamDojo)
 
 ```bash
 python -m models.DreamDojo.examples.action_conditioned \
@@ -185,7 +185,7 @@ python -m models.DreamDojo.examples.action_conditioned \
   --deterministic-uniform-sampling
 ```
 
-### DiCache
+### DiCache (DreamDojo)
 
 ```bash
 python -m models.DreamDojo.examples.action_conditioned \
@@ -205,7 +205,7 @@ python -m models.DreamDojo.examples.action_conditioned \
   --dicache-rel-l1-thresh 0.08
 ```
 
-### WorldCache
+### WorldCache (DreamDojo)
 
 ```bash
 python -m models.DreamDojo.examples.action_conditioned \
@@ -225,7 +225,32 @@ python -m models.DreamDojo.examples.action_conditioned \
   --worldcache-ret-ratio 0.5
 ```
 
-> **For 14B model**, use `--worldcache-rel-l1-thresh 0.065 --worldcache-probe-depth 6`.
+## How To Run (DreamGen 2.0 / GR00T)
+
+The `cache_strategy` module is also natively integrated into the `models/dreamgen/examples/` pipeline. Below is an example applying **WorldCache** to the `video2world_gr00t.py` script.
+
+> **Note**: For `DreamGen`, make sure `PYTHONPATH` points to the workspace root rather than `models/DreamDojo`.
+
+```bash
+cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
+
+export PYTHONPATH="./models/dreamgen"
+
+# Execute text/image-to-world with 14B GR00T
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+    --model_size 14B \
+    --gr00t_variant gr1 \
+    --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+    --disable_guardrail \
+    --num_gpus 1 \
+    --worldcache-enabled \
+    --worldcache-num-steps 35 \
+    --worldcache-rel-l1-thresh 0.065 \
+    --worldcache-probe-depth 6 \
+    --worldcache-ret-ratio 0.5
+```
+
+> Same DiCache flags (`--dicache-enabled`, etc.) seamlessly apply to DreamGen scripts.
 
 
 ## Suggested Tuning Order
