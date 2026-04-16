@@ -137,6 +137,22 @@ Interpretation:
 - DiCache uses a shallower probe and simpler reuse schedule than WorldCache.
 - It is usually the safer first cache baseline if you want minimal tuning.
 
+### FasterCache
+
+Recommended starting values:
+
+- `--use_fastercache`
+- `--fastercache_start_step 0`
+- `--fastercache_model_interval 5`
+- `--fastercache_block_interval 3`
+
+Interpretation:
+
+- `fastercache_start_step=0` auto-resolves to `ceil(0.3 * num_inference_steps)`.
+- Model-level FasterCache only shortcuts the unconditional CFG branch on non-anchor denoising steps.
+- Block-level FasterCache is self-attention only and stays disabled for short sequences.
+- For the common GR1 action-conditioned setting in this repo, `seq_len = 4800`, so the block-level path is eligible.
+
 ## Threshold Scaling Rule
 
 For other sequence lengths, start from the `S = 4800` reference and rescale the threshold as:
@@ -226,6 +242,25 @@ python -m models.DreamDojo.examples.action_conditioned \
 ```
 
 > **For 14B model**, use `--worldcache-rel-l1-thresh 0.065 --worldcache-probe-depth 6`.
+
+### FasterCache
+
+```bash
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/action_conditioned/cache_fastercache \
+  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train \
+  --experiment dreamdojo_2b_480_640_gr1 \
+  --save-dir ./output/dreamdojo_cache/fastercache \
+  --num-frames 49 \
+  --num-samples 65 \
+  --dataset-path ./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot \
+  --data-split test \
+  --deterministic-uniform-sampling \
+  --use_fastercache \
+  --fastercache_start_step 0 \
+  --fastercache_model_interval 5 \
+  --fastercache_block_interval 3
+```
 
 
 ## Suggested Tuning Order
