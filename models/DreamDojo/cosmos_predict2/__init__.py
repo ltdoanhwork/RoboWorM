@@ -13,7 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from pathlib import Path
+import sys
+
 from .__about__ import __version__ as __version__
+
+
+def _add_project_root_to_sys_path() -> None:
+    """Ensure the Video World repo root is importable for top-level `methods.*` modules."""
+    current_file = Path(__file__).resolve()
+    for parent in current_file.parents:
+        if (parent / "methods").is_dir() and (parent / "models").is_dir():
+            parent_str = str(parent)
+            if parent_str not in sys.path:
+                sys.path.insert(0, parent_str)
+            return
 
 
 def _check_cuda_extra():
@@ -29,4 +43,5 @@ def _check_cuda_extra():
         )
 
 
+_add_project_root_to_sys_path()
 _check_cuda_extra()

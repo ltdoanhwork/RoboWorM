@@ -60,6 +60,14 @@ import torchvision
 from einops import rearrange
 from megatron.core import parallel_state
 from PIL import Image
+from methods.cache_strategy.common import (
+    CacheRuntimeConfig,
+    DiCacheConfig,
+    FasterCacheConfig,
+    WorldCacheConfig,
+    get_cache_backend_name,
+    reset_cache_runtime,
+)
 
 from cosmos_predict2._src.imaginaire.flags import INTERNAL
 from cosmos_predict2._src.imaginaire.utils import distributed, log
@@ -251,6 +259,7 @@ class Video2WorldInference:
         offload_diffusion_model: bool = False,
         offload_text_encoder: bool = False,
         offload_tokenizer: bool = False,
+        cache_config: CacheRuntimeConfig | None = None,
     ):
         """
         Initializes the Video2WorldInference class.
@@ -273,6 +282,11 @@ class Video2WorldInference:
         self.offload_diffusion_model = offload_diffusion_model
         self.offload_text_encoder = offload_text_encoder
         self.offload_tokenizer = offload_tokenizer
+        self.cache_config = cache_config
+        self.cache_backend = get_cache_backend_name(cache_config)
+
+        if self.cache_config is not None and self.context_parallel_size > 1:
+            raise ValueError("[Cache] DreamDojo cache backends are v1 single-GPU only; set context_parallel_size=1.")
 
         # If no offloading is specified, instruct model loader to move the model to GPU
         model_device = None if offload_diffusion_model else "cuda"
@@ -340,6 +354,13 @@ class Video2WorldInference:
         if self.context_parallel_size > 1:
             model.net.enable_context_parallel(self.process_group)
 
+        patch_target = model.net if hasattr(model, "net") else model
+        patch_target = self._apply_cache_backend(patch_target)
+        if hasattr(model, "net"):
+            model.net = patch_target
+        else:
+            model = patch_target
+
         self.model = model
         self.config = config
         self.batch_size = 1
@@ -361,6 +382,58 @@ class Video2WorldInference:
 
         log.info(f"Initialized context parallel with size {self.context_parallel_size}")
         log.info(f"Current rank: {distributed.get_rank()}, World size: {distributed.get_world_size()}")
+
+    def _validate_cache_backend_compatibility(self, net) -> None:
+        if self.cache_config is None:
+            return
+
+        active_sparse_backends = []
+        self_backend = getattr(net, "self_attention_backend", None)
+        cross_backend = getattr(net, "cross_attention_backend", None)
+        if self_backend not in (None, "minimal_a2a"):
+            active_sparse_backends.append(f"self_attention_backend={self_backend}")
+        if cross_backend not in (None, "minimal_a2a"):
+            active_sparse_backends.append(f"cross_attention_backend={cross_backend}")
+
+        for attr_name, label in (
+            ("has_svg_backend", "SVG"),
+            ("has_sito_backend", "SiTo"),
+            ("has_itm_backend", "ITM"),
+        ):
+            if getattr(net, attr_name, False):
+                active_sparse_backends.append(label)
+
+        if active_sparse_backends:
+            raise ValueError(
+                "[Cache] DreamDojo cache backends require dense DreamDojo attention. "
+                f"Found incompatible backend(s): {', '.join(active_sparse_backends)}."
+            )
+
+    def _apply_cache_backend(self, net):
+        if self.cache_config is None:
+            return net
+
+        self._validate_cache_backend_compatibility(net)
+
+        if isinstance(self.cache_config, WorldCacheConfig):
+            from methods.cache_strategy.WorldCache.runtime import apply_worldcache
+
+            log.info("[WorldCache] Applying WorldCache runtime from methods.cache_strategy.WorldCache")
+            return apply_worldcache(net, self.cache_config)
+        if isinstance(self.cache_config, DiCacheConfig):
+            from methods.cache_strategy.DiCache.runtime import apply_dicache
+
+            log.info("[DiCache] Applying DiCache runtime from methods.cache_strategy.DiCache")
+            return apply_dicache(net, self.cache_config)
+        if isinstance(self.cache_config, FasterCacheConfig):
+            raise ValueError("[FasterCache] FasterCache runtime is not available in this workspace.")
+
+        raise TypeError(f"Unsupported cache config type: {type(self.cache_config)!r}")
+
+    def _get_effective_num_steps(self, num_steps: int) -> int:
+        if isinstance(self.cache_config, (WorldCacheConfig, DiCacheConfig)):
+            return self.cache_config.num_steps
+        return num_steps
 
     def _get_data_batch_input(
         self,
@@ -588,13 +661,16 @@ class Video2WorldInference:
             generate_samples = self.model.generate_samples_from_batch_lora
         else:
             generate_samples = self.model.generate_samples_from_batch
+        effective_num_steps = self._get_effective_num_steps(num_steps)
+        patch_target = self.model.net if hasattr(self.model, "net") else self.model
+        reset_cache_runtime(patch_target, self.cache_config, num_steps=effective_num_steps)
         sample = generate_samples(
             data_batch,
             n_sample=1,  # Generate one sample
             guidance=guidance,
             seed=seed,  # Fixed seed for reproducibility
             is_negative_prompt=True,  # Use classifier-free guidance
-            num_steps=num_steps,
+            num_steps=effective_num_steps,
             **extra_kwargs,
         )
 

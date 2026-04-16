@@ -35,6 +35,10 @@ from cosmos_predict2._src.predict2.action.datasets.dataset_utils import euler2ro
 from cosmos_predict2._src.predict2.inference.video2world import (
     Video2WorldInference,
 )
+from cosmos_predict2.cache_runtime import (
+    build_cache_runtime_config,
+    validate_runtime_backend_args,
+)
 from cosmos_predict2.action_conditioned_config import (
     ActionConditionedInferenceArguments,
     ActionConditionedSetupArguments,
@@ -293,18 +297,7 @@ def inference(
         raise ValueError(
             f"num_latent_conditional_frames must be 0, 1 or 2, but got {inference_args.num_latent_conditional_frames}"
         )
-    if setup_args.use_svg and setup_args.context_parallel_size > 1:
-        raise ValueError("[SVG] DreamDojo SVG v1 is single-GPU only; set context_parallel_size=1.")
-    if setup_args.use_sito and setup_args.context_parallel_size > 1:
-        raise ValueError("[SiTo] DreamDojo SiTo v1 is single-GPU only; set context_parallel_size=1.")
-    if setup_args.use_itm and setup_args.context_parallel_size > 1:
-        raise ValueError("[ITM] DreamDojo ITM v1 is single-GPU only; set context_parallel_size=1.")
-    if setup_args.use_sito and setup_args.use_svg:
-        raise ValueError("[SiTo] SiTo and SVG are mutually exclusive in DreamDojo.")
-    if setup_args.use_itm and inference_args.guidance <= 0:
-        raise ValueError("[ITM] DreamDojo ITM requires classifier-free guidance with `guidance > 0`.")
-    if sum(bool(enabled) for enabled in (setup_args.use_svg, setup_args.use_sito, setup_args.use_itm)) > 1:
-        raise ValueError("[ITM] DreamDojo sparse/token backends are mutually exclusive: SVG, SiTo, ITM.")
+    validate_runtime_backend_args(setup_args, inference_args)
 
     # Determine supported extensions based on num_latent_conditional_frames
     if inference_args.num_latent_conditional_frames > 1:
@@ -337,6 +330,8 @@ def inference(
     if experiment is None:
         raise ValueError("Experiment name must be provided either in setup args or checkpoint metadata")
 
+    cache_config = build_cache_runtime_config(setup_args)
+
     # Initialize the inference handler with context parallel support
     video2world_cli = Video2WorldInference(
         experiment_name=experiment,
@@ -350,6 +345,7 @@ def inference(
             + _build_sito_experiment_opts(setup_args)
             + _build_itm_experiment_opts(setup_args)
         ),
+        cache_config=cache_config,
     )
 
     mem_bytes = torch.cuda.memory_allocated(device=torch.device("cuda" if torch.cuda.is_available() else "cpu"))

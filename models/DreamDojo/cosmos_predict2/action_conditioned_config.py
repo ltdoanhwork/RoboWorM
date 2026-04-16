@@ -82,6 +82,32 @@ class ActionConditionedSetupArguments(CommonSetupArguments):
     svg_min_kc_ratio: float | None = None
     svg_kmeans_iter_init: int | None = None
     svg_kmeans_iter_step: int | None = None
+    worldcache_enabled: bool = False
+    worldcache_num_steps: int = 35
+    worldcache_rel_l1_thresh: float = 0.03
+    worldcache_ret_ratio: float = 0.4
+    worldcache_probe_depth: int = 4
+    worldcache_motion_sensitivity: float = 5.0
+    worldcache_flow_enabled: bool = False
+    worldcache_flow_scale: float = 0.5
+    worldcache_hf_enabled: bool = False
+    worldcache_hf_thresh: float = 0.01
+    worldcache_saliency_enabled: bool = False
+    worldcache_saliency_weight: float = 5.0
+    worldcache_osi_enabled: bool = False
+    worldcache_dynamic_decay: bool = False
+    worldcache_aduc_enabled: bool = False
+    worldcache_aduc_start: float = 0.5
+    worldcache_parallel_cfg: bool = False
+    dicache_enabled: bool = False
+    dicache_num_steps: int = 35
+    dicache_rel_l1_thresh: float = 0.08
+    dicache_ret_ratio: float = 0.2
+    dicache_probe_depth: int = 2
+    fastercache_enabled: bool = False
+    fastercache_start_step: int = 1
+    fastercache_model_interval: int = 2
+    fastercache_block_interval: int = 3
 
 
 @dataclass
