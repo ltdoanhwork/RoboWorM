@@ -64,6 +64,16 @@ def _prepare_fastercache_step(unet, *, step_idx: int, num_inference_steps: int):
     return runtime_state
 
 
+def _prepare_ctrl_cache_step(unet, *, step_idx: int, num_inference_steps: int, do_classifier_free_guidance: bool):
+    runtime = getattr(unet, "_ctrl_cache_runtime", None)
+    if runtime is None:
+        return None
+    runtime.current_step_idx = int(step_idx)
+    runtime.total_steps = int(num_inference_steps)
+    runtime.do_classifier_free_guidance = bool(do_classifier_free_guidance)
+    return runtime
+
+
 def _reset_fastercache_state(unet, *, num_inference_steps: int) -> None:
     runtime_state = getattr(unet, "_fastercache_state", None)
     if runtime_state is None:
@@ -74,6 +84,13 @@ def _reset_fastercache_state(unet, *, num_inference_steps: int) -> None:
     runtime_state["delta_lf"] = None
     runtime_state["delta_hf"] = None
     runtime_state["block_histories"] = {}
+
+
+def _reset_ctrl_cache_state(unet, *, num_inference_steps: int) -> None:
+    runtime = getattr(unet, "_ctrl_cache_runtime", None)
+    if runtime is None:
+        return
+    runtime.reset(num_inference_steps)
 
 
 def _should_skip_fastercache_model(runtime_state: dict | None, *, step_idx: int) -> bool:
@@ -103,6 +120,12 @@ def _run_unet_with_fastercache(
             return result.sample
         return result
 
+    _prepare_ctrl_cache_step(
+        unet,
+        step_idx=step_idx,
+        num_inference_steps=num_inference_steps,
+        do_classifier_free_guidance=do_classifier_free_guidance,
+    )
     runtime_state = _prepare_fastercache_step(unet, step_idx=step_idx, num_inference_steps=num_inference_steps)
     if not do_classifier_free_guidance or not _should_skip_fastercache_model(runtime_state, step_idx=step_idx):
         noise_pred = _extract_sample(unet(
@@ -298,6 +321,7 @@ class LatentToVideoPipeline(TextToVideoSDPipeline):
         # 7. Denoising loop
         num_warmup_steps = len(timesteps) - num_inference_steps * self.scheduler.order
         _reset_fastercache_state(self.unet, num_inference_steps=num_inference_steps)
+        _reset_ctrl_cache_state(self.unet, num_inference_steps=num_inference_steps)
         uncondition_latent = condition_latent
         condition_latent = torch.cat([uncondition_latent, condition_latent]) if do_classifier_free_guidance else condition_latent 
         with self.progress_bar(total=num_inference_steps) as progress_bar:
@@ -590,6 +614,7 @@ class CtrlWorldDiffusionPipeline(StableVideoDiffusionPipeline):
         num_warmup_steps = len(timesteps) - num_inference_steps * self.scheduler.order
         self._num_timesteps = len(timesteps)
         _reset_fastercache_state(self.unet, num_inference_steps=num_inference_steps)
+        _reset_ctrl_cache_state(self.unet, num_inference_steps=num_inference_steps)
         # print("prediction type",self.scheduler.config.prediction_type)
         if cond_wrist is not None:
             B,F, C, H, W = latents.shape
@@ -910,6 +935,7 @@ class TextStableVideoDiffusionPipeline(StableVideoDiffusionPipeline):
         num_warmup_steps = len(timesteps) - num_inference_steps * self.scheduler.order
         self._num_timesteps = len(timesteps)
         _reset_fastercache_state(self.unet, num_inference_steps=num_inference_steps)
+        _reset_ctrl_cache_state(self.unet, num_inference_steps=num_inference_steps)
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             for i, t in enumerate(timesteps):
                 # expand the latents if we are doing classifier free guidance

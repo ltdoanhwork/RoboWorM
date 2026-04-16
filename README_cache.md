@@ -262,6 +262,52 @@ python -m models.DreamDojo.examples.action_conditioned \
   --fastercache_block_interval 3
 ```
 
+## Ctrl-World Cache Backends
+
+Run from the `video_gen_physics` root:
+
+```bash
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
+cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
+export PYTHONPATH="./models/Ctrl-World:${PYTHONPATH}"
+```
+
+Ctrl-World cache backends are inference-only and mutually exclusive with `PISA`, `Radial`, `SVG`, `SiTo`, `ITM`, and `FasterCache`.
+
+### Ctrl-World DiCache
+
+```bash
+python models/Ctrl-World/scripts/rollout_interact_pi.py \
+  --dataset_root_path ./models/Ctrl-World/dataset_example \
+  --dataset_meta_info_path ./models/Ctrl-World/dataset_meta_info \
+  --dataset_names ./models/Ctrl-World/droid_subset \
+  --svd_model_path ./checkpoints/stabilityai/stable-video-diffusion-img2vid \
+  --clip_model_path ./checkpoints/openai/clip-vit-base-patch32 \
+  --ckpt_path ./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt \
+  --task_type pickplace \
+  --use_dicache \
+  --dicache_rel_l1_thresh 0.08 \
+  --dicache_ret_ratio 0.2 \
+  --dicache_probe_depth 2
+```
+
+### Ctrl-World WorldCache
+
+```bash
+python models/Ctrl-World/scripts/rollout_replay_traj.py \
+  --dataset_root_path ./models/Ctrl-World/dataset_example \
+  --dataset_meta_info_path ./models/Ctrl-World/dataset_meta_info \
+  --dataset_names ./models/Ctrl-World/droid_subset \
+  --svd_model_path ./checkpoints/stabilityai/stable-video-diffusion-img2vid \
+  --clip_model_path ./checkpoints/openai/clip-vit-base-patch32 \
+  --ckpt_path ./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt \
+  --use_worldcache \
+  --worldcache_rel_l1_thresh 0.03 \
+  --worldcache_ret_ratio 0.4 \
+  --worldcache_probe_depth 3 \
+  --worldcache_motion_sensitivity 5.0
+```
+
 
 ## Suggested Tuning Order
 
