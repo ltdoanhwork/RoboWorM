@@ -1733,6 +1733,8 @@ class MiniTrainDIT(WeightTrainingStat):
 
         if use_cuda_graphs and self.has_svg_backend:
             raise RuntimeError("[SVG] CUDA Graphs are not supported in DreamGen v1.")
+        if use_cuda_graphs and getattr(self, "has_fastercache_backend", False):
+            raise RuntimeError("[FasterCache] CUDA Graphs are not supported with DreamGen FasterCache v1.")
 
         if use_cuda_graphs:
             shapes_key = create_cuda_graph(
@@ -1848,6 +1850,8 @@ class MiniTrainDIT(WeightTrainingStat):
             raise ValueError("[SiTo] DreamGen SiTo v1 is single-GPU only; disable context parallelism.")
         if self.has_itm_backend:
             raise ValueError("[ITM] DreamGen ITM v1 is single-GPU only; disable context parallelism.")
+        if getattr(self, "has_fastercache_backend", False):
+            raise ValueError("[FasterCache] DreamGen FasterCache v1 is single-GPU only; disable context parallelism.")
         # pos_embedder
         self.pos_embedder.enable_context_parallel(process_group=process_group)
         if self.extra_per_block_abs_pos_emb:

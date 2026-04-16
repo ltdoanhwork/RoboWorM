@@ -52,12 +52,22 @@ def _import_sparse_backends():
     if project_root not in sys.path:
         sys.path.insert(0, project_root)
 
+    from methods.cache_strategy.FasterCache.config import add_fastercache_args
+    from methods.cache_strategy.FasterCache.runtime import apply_fastercache
     from methods.prunning.SiTo.config import add_dreamgen_sito_args
     from methods.prunning.importance_token_merge.config import add_dreamgen_itm_args
     from methods.sparse_attention.pisa.config import add_pisa_args
     from methods.sparse_attention.svg.config import add_dreamgen_svg_args
     from methods.sparse_attention.radial.config import add_dreamgen_radial_args
-    return add_pisa_args, add_dreamgen_svg_args, add_dreamgen_radial_args, add_dreamgen_sito_args, add_dreamgen_itm_args
+    return (
+        add_pisa_args,
+        add_dreamgen_svg_args,
+        add_dreamgen_radial_args,
+        add_dreamgen_sito_args,
+        add_dreamgen_itm_args,
+        add_fastercache_args,
+        apply_fastercache,
+    )
 # -----------------------------------
 
 _DEFAULT_POSITIVE_PROMPT = "A well-worn broom sweeps across a dusty wooden floor, its bristles gathering crumbs and flecks of debris in swift, rhythmic strokes. Dust motes dance in the sunbeams filtering through the window, glowing momentarily before settling. The quiet swish of straw brushing wood is interrupted only by the occasional creak of old floorboards. With each pass, the floor grows cleaner, restoring a sense of quiet order to the humble room."
@@ -126,12 +136,13 @@ def parse_args() -> argparse.Namespace:
     )
 
     # ---- Sparse Backend Integration ----
-    add_pisa_args, add_svg_args, add_radial_args, add_sito_args, add_itm_args = _import_sparse_backends()
+    add_pisa_args, add_svg_args, add_radial_args, add_sito_args, add_itm_args, add_fastercache_args, _ = _import_sparse_backends()
     add_pisa_args(parser)
     add_svg_args(parser)
     add_radial_args(parser)
     add_sito_args(parser)
     add_itm_args(parser)
+    add_fastercache_args(parser)
     # -----------------------------------
 
     return parser.parse_args()
@@ -139,6 +150,8 @@ def parse_args() -> argparse.Namespace:
 
 def setup_pipeline(args: argparse.Namespace, text_encoder: CosmosTextEncoder | None = None) -> Text2ImagePipeline:
     print_environment_info(args)
+    if getattr(args, "use_fastercache", False) and getattr(args, "use_cuda_graphs", False):
+        raise ValueError("[FasterCache] DreamGen FasterCache v1 is incompatible with --use_cuda_graphs.")
 
     config = get_cosmos_predict2_text2image_pipeline(
         model_size=args.model_size,
@@ -183,6 +196,10 @@ def setup_pipeline(args: argparse.Namespace, text_encoder: CosmosTextEncoder | N
         svg_min_kc_ratio=getattr(args, "svg_min_kc_ratio", 0.0),
         svg_kmeans_iter_init=getattr(args, "svg_kmeans_iter_init", 5),
         svg_kmeans_iter_step=getattr(args, "svg_kmeans_iter_step", 2),
+        fastercache=getattr(args, "use_fastercache", False),
+        fastercache_start_step=getattr(args, "fastercache_start_step", 0),
+        fastercache_model_interval=getattr(args, "fastercache_model_interval", 5),
+        fastercache_block_interval=getattr(args, "fastercache_block_interval", 3),
     )
     if hasattr(args, "dit_path") and args.dit_path:
         dit_path = args.dit_path
@@ -234,6 +251,10 @@ def setup_pipeline(args: argparse.Namespace, text_encoder: CosmosTextEncoder | N
                 load_ema_to_reg=args.load_ema,
                 distill_steps=args.distill_steps,
             )
+            fastercache_config = getattr(config.net, "fastercache_config", None)
+            if fastercache_config is not None:
+                *_, apply_fastercache = _import_sparse_backends()
+                apply_fastercache(pipe.dit, fastercache_config, cfg_mode="sequential")
 
             return pipe
         else:
@@ -275,6 +296,11 @@ def setup_pipeline(args: argparse.Namespace, text_encoder: CosmosTextEncoder | N
         # Set the provided text encoder if one was passed
         if text_encoder is not None:
             pipe.text_encoder = text_encoder
+
+        fastercache_config = getattr(config.net, "fastercache_config", None)
+        if fastercache_config is not None:
+            *_, apply_fastercache = _import_sparse_backends()
+            apply_fastercache(pipe.dit, fastercache_config, cfg_mode="sequential")
 
         return pipe
 

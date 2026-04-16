@@ -105,8 +105,8 @@ class ActionConditionedSetupArguments(CommonSetupArguments):
     dicache_ret_ratio: float = 0.2
     dicache_probe_depth: int = 2
     fastercache_enabled: bool = False
-    fastercache_start_step: int = 1
-    fastercache_model_interval: int = 2
+    fastercache_start_step: int = 0
+    fastercache_model_interval: int = 5
     fastercache_block_interval: int = 3
 
 

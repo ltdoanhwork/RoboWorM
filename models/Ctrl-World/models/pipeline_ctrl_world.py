@@ -14,6 +14,10 @@ from diffusers.pipelines.stable_video_diffusion.pipeline_stable_video_diffusion 
 from diffusers.loaders import LoraLoaderMixin, TextualInversionLoaderMixin
 from diffusers.utils.torch_utils import randn_tensor
 from diffusers.pipelines.stable_video_diffusion.pipeline_stable_video_diffusion import _resize_with_antialiasing
+from methods.cache_strategy.FasterCache.runtime import (
+    compute_fastercache_deltas,
+    reconstruct_fastercache_output,
+)
 
 
 def _get_itm_state(unet, *, step_idx: int, do_classifier_free_guidance: bool):
@@ -42,6 +46,94 @@ def _update_itm_heat_map(unet, cond_pred: torch.Tensor, uncond_pred: torch.Tenso
         return
     heat_map = torch.abs(cond_pred - uncond_pred).mean(dim=1)
     itm_state["heat_map"] = heat_map.detach()
+
+
+def _slice_cfg_tensor(value, *, half_batch: int):
+    if isinstance(value, torch.Tensor) and value.shape[0] == half_batch * 2:
+        return value[half_batch:]
+    return value
+
+
+def _prepare_fastercache_step(unet, *, step_idx: int, num_inference_steps: int):
+    runtime_state = getattr(unet, "_fastercache_state", None)
+    if runtime_state is None:
+        return None
+    start_step = int(runtime_state.get("start_step", 0))
+    runtime_state["current_step_idx"] = int(step_idx)
+    runtime_state["resolved_start_step"] = start_step if start_step > 0 else int(torch.ceil(torch.tensor(num_inference_steps * 0.3)).item())
+    return runtime_state
+
+
+def _reset_fastercache_state(unet, *, num_inference_steps: int) -> None:
+    runtime_state = getattr(unet, "_fastercache_state", None)
+    if runtime_state is None:
+        return
+    start_step = int(runtime_state.get("start_step", 0))
+    runtime_state["current_step_idx"] = -1
+    runtime_state["resolved_start_step"] = start_step if start_step > 0 else int(torch.ceil(torch.tensor(num_inference_steps * 0.3)).item())
+    runtime_state["delta_lf"] = None
+    runtime_state["delta_hf"] = None
+    runtime_state["block_histories"] = {}
+
+
+def _should_skip_fastercache_model(runtime_state: dict | None, *, step_idx: int) -> bool:
+    if runtime_state is None or runtime_state.get("delta_lf") is None or runtime_state.get("delta_hf") is None:
+        return False
+    start_step = int(runtime_state.get("resolved_start_step", 0))
+    if step_idx < start_step:
+        return False
+    model_interval = max(int(runtime_state.get("model_interval", 5)), 1)
+    return ((step_idx - start_step) % model_interval) != 0
+
+
+def _run_unet_with_fastercache(
+    unet,
+    *,
+    latent_model_input: torch.Tensor,
+    timestep,
+    do_classifier_free_guidance: bool,
+    step_idx: int,
+    num_inference_steps: int,
+    unet_kwargs: dict,
+):
+    def _extract_sample(result):
+        if isinstance(result, tuple):
+            return result[0]
+        if hasattr(result, "sample"):
+            return result.sample
+        return result
+
+    runtime_state = _prepare_fastercache_step(unet, step_idx=step_idx, num_inference_steps=num_inference_steps)
+    if not do_classifier_free_guidance or not _should_skip_fastercache_model(runtime_state, step_idx=step_idx):
+        noise_pred = _extract_sample(unet(
+            latent_model_input,
+            timestep,
+            **unet_kwargs,
+        ))
+        if do_classifier_free_guidance and runtime_state is not None:
+            noise_pred_uncond, noise_pred_cond = noise_pred.chunk(2)
+            runtime_state["delta_lf"], runtime_state["delta_hf"] = compute_fastercache_deltas(
+                noise_pred_cond,
+                noise_pred_uncond,
+            )
+        return noise_pred
+
+    half_batch = latent_model_input.shape[0] // 2
+    cond_kwargs = {
+        key: _slice_cfg_tensor(value, half_batch=half_batch)
+        for key, value in unet_kwargs.items()
+    }
+    cond_noise_pred = _extract_sample(unet(
+        latent_model_input[half_batch:],
+        timestep,
+        **cond_kwargs,
+    ))
+    uncond_noise_pred = reconstruct_fastercache_output(
+        cond_noise_pred,
+        runtime_state["delta_lf"],
+        runtime_state["delta_hf"],
+    )
+    return torch.cat([uncond_noise_pred, cond_noise_pred], dim=0)
 
 def svd_tensor2vid(video: torch.Tensor, processor, output_type="np"):
     # Based on:
@@ -205,6 +297,7 @@ class LatentToVideoPipeline(TextToVideoSDPipeline):
 
         # 7. Denoising loop
         num_warmup_steps = len(timesteps) - num_inference_steps * self.scheduler.order
+        _reset_fastercache_state(self.unet, num_inference_steps=num_inference_steps)
         uncondition_latent = condition_latent
         condition_latent = torch.cat([uncondition_latent, condition_latent]) if do_classifier_free_guidance else condition_latent 
         with self.progress_bar(total=num_inference_steps) as progress_bar:
@@ -215,15 +308,21 @@ class LatentToVideoPipeline(TextToVideoSDPipeline):
                 _get_itm_state(self.unet, step_idx=i, do_classifier_free_guidance=do_classifier_free_guidance)
                 if motion is not None:
                     motion = torch.tensor(motion, device=device)
-                noise_pred = self.unet(
-                    latent_model_input,
-                    t,
-                    encoder_hidden_states=prompt_embeds,
-                    cross_attention_kwargs=cross_attention_kwargs,
-                    condition_latent=condition_latent,
-                    mask=mask,
-                    motion=motion
-                ).sample
+                noise_pred = _run_unet_with_fastercache(
+                    self.unet,
+                    latent_model_input=latent_model_input,
+                    timestep=t,
+                    do_classifier_free_guidance=do_classifier_free_guidance,
+                    step_idx=i,
+                    num_inference_steps=num_inference_steps,
+                    unet_kwargs={
+                        "encoder_hidden_states": prompt_embeds,
+                        "cross_attention_kwargs": cross_attention_kwargs,
+                        "condition_latent": condition_latent,
+                        "mask": mask,
+                        "motion": motion,
+                    },
+                )
                 # perform guidance
                 if do_classifier_free_guidance:
                     noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
@@ -490,6 +589,7 @@ class CtrlWorldDiffusionPipeline(StableVideoDiffusionPipeline):
         # 8. Denoising loop
         num_warmup_steps = len(timesteps) - num_inference_steps * self.scheduler.order
         self._num_timesteps = len(timesteps)
+        _reset_fastercache_state(self.unet, num_inference_steps=num_inference_steps)
         # print("prediction type",self.scheduler.config.prediction_type)
         if cond_wrist is not None:
             B,F, C, H, W = latents.shape
@@ -524,14 +624,20 @@ class CtrlWorldDiffusionPipeline(StableVideoDiffusionPipeline):
                 # print('latent_model_input_shape:',latent_model_input.shape)
                 # print('encoder_hidden_states:',image_embeddings.shape)
                 # print('added_time_ids:',added_time_ids.shape)
-                noise_pred = self.unet(
-                    latent_model_input,
-                    t,
-                    encoder_hidden_states=image_embeddings,
-                    added_time_ids=added_time_ids,
-                    return_dict=False,
-                    frame_level_cond=frame_level_cond,
-                )[0]
+                noise_pred = _run_unet_with_fastercache(
+                    self.unet,
+                    latent_model_input=latent_model_input,
+                    timestep=t,
+                    do_classifier_free_guidance=do_classifier_free_guidance,
+                    step_idx=i,
+                    num_inference_steps=num_inference_steps,
+                    unet_kwargs={
+                        "encoder_hidden_states": image_embeddings,
+                        "added_time_ids": added_time_ids,
+                        "return_dict": False,
+                        "frame_level_cond": frame_level_cond,
+                    },
+                )
 
                 if cond_wrist is not None:
                     noise_pred = noise_pred[:, :,:,:H, :W] # remove cond_wrist
@@ -803,6 +909,7 @@ class TextStableVideoDiffusionPipeline(StableVideoDiffusionPipeline):
         # 8. Denoising loop
         num_warmup_steps = len(timesteps) - num_inference_steps * self.scheduler.order
         self._num_timesteps = len(timesteps)
+        _reset_fastercache_state(self.unet, num_inference_steps=num_inference_steps)
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             for i, t in enumerate(timesteps):
                 # expand the latents if we are doing classifier free guidance
@@ -816,13 +923,19 @@ class TextStableVideoDiffusionPipeline(StableVideoDiffusionPipeline):
                 else:
                     latent_model_input = torch.cat([latent_model_input, condition_latent], dim=2)
                 # predict the noise residual
-                noise_pred = self.unet(
-                    latent_model_input,
-                    t,
-                    encoder_hidden_states=image_embeddings,
-                    added_time_ids=added_time_ids,
-                    return_dict=False,
-                )[0]
+                noise_pred = _run_unet_with_fastercache(
+                    self.unet,
+                    latent_model_input=latent_model_input,
+                    timestep=t,
+                    do_classifier_free_guidance=do_classifier_free_guidance,
+                    step_idx=i,
+                    num_inference_steps=num_inference_steps,
+                    unet_kwargs={
+                        "encoder_hidden_states": image_embeddings,
+                        "added_time_ids": added_time_ids,
+                        "return_dict": False,
+                    },
+                )
 
                 # perform guidance
                 if do_classifier_free_guidance:

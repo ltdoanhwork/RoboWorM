@@ -54,12 +54,22 @@ def _import_sparse_backends():
     if project_root not in sys.path:
         sys.path.insert(0, project_root)
 
+    from methods.cache_strategy.FasterCache.config import add_fastercache_args
+    from methods.cache_strategy.FasterCache.runtime import apply_fastercache
     from methods.prunning.SiTo.config import add_dreamgen_sito_args
     from methods.prunning.importance_token_merge.config import add_dreamgen_itm_args
     from methods.sparse_attention.pisa.config import add_pisa_args
     from methods.sparse_attention.svg.config import add_dreamgen_svg_args
     from methods.sparse_attention.radial.config import add_dreamgen_radial_args
-    return add_pisa_args, add_dreamgen_svg_args, add_dreamgen_radial_args, add_dreamgen_sito_args, add_dreamgen_itm_args
+    return (
+        add_pisa_args,
+        add_dreamgen_svg_args,
+        add_dreamgen_radial_args,
+        add_dreamgen_sito_args,
+        add_dreamgen_itm_args,
+        add_fastercache_args,
+        apply_fastercache,
+    )
 # -----------------------------------
 
 _DEFAULT_NEGATIVE_PROMPT = "The video captures a series of frames showing ugly scenes, static with no motion, motion blur, over-saturation, shaky footage, low resolution, grainy texture, pixelated images, poorly lit areas, underexposed and overexposed scenes, poor color balance, washed out colors, choppy sequences, jerky movements, low frame rate, artifacting, color banding, unnatural transitions, outdated special effects, fake elements, unconvincing visuals, poorly edited content, jump cuts, visual noise, and flickering. Overall, the video is of poor quality."
@@ -209,12 +219,13 @@ def parse_args() -> argparse.Namespace:
     )
 
     # ---- Sparse Backend Integration ----
-    add_pisa_args, add_svg_args, add_radial_args, add_sito_args, add_itm_args = _import_sparse_backends()
+    add_pisa_args, add_svg_args, add_radial_args, add_sito_args, add_itm_args, add_fastercache_args, _ = _import_sparse_backends()
     add_pisa_args(parser)
     add_svg_args(parser)
     add_radial_args(parser)
     add_sito_args(parser)
     add_itm_args(parser)
+    add_fastercache_args(parser)
     # -----------------------------------
 
     return parser.parse_args()
@@ -222,6 +233,11 @@ def parse_args() -> argparse.Namespace:
 
 def setup_pipeline(args: argparse.Namespace, text_encoder: CosmosTextEncoder | None = None):
     print_environment_info(args)
+    if getattr(args, "use_fastercache", False):
+        if args.num_gpus > 1:
+            raise ValueError("[FasterCache] DreamGen FasterCache v1 is single-GPU only; set --num_gpus 1.")
+        if args.use_cuda_graphs:
+            raise ValueError("[FasterCache] DreamGen FasterCache v1 is incompatible with --use_cuda_graphs.")
 
     config = get_cosmos_predict2_video2world_pipeline(
         model_size=args.model_size,
@@ -268,6 +284,10 @@ def setup_pipeline(args: argparse.Namespace, text_encoder: CosmosTextEncoder | N
         svg_min_kc_ratio=getattr(args, "svg_min_kc_ratio", 0.0),
         svg_kmeans_iter_init=getattr(args, "svg_kmeans_iter_init", 5),
         svg_kmeans_iter_step=getattr(args, "svg_kmeans_iter_step", 2),
+        fastercache=getattr(args, "use_fastercache", False),
+        fastercache_start_step=getattr(args, "fastercache_start_step", 0),
+        fastercache_model_interval=getattr(args, "fastercache_model_interval", 5),
+        fastercache_block_interval=getattr(args, "fastercache_block_interval", 3),
     )
     if hasattr(args, "dit_path") and args.dit_path:
         dit_path = args.dit_path
@@ -344,6 +364,11 @@ def setup_pipeline(args: argparse.Namespace, text_encoder: CosmosTextEncoder | N
     # Set the provided text encoder if one was passed
     if text_encoder is not None:
         pipe.text_encoder = text_encoder
+
+    fastercache_config = getattr(config.net, "fastercache_config", None)
+    if fastercache_config is not None:
+        *_, apply_fastercache = _import_sparse_backends()
+        apply_fastercache(pipe.dit, fastercache_config, cfg_mode="sequential")
 
     return pipe
 
