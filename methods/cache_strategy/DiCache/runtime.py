@@ -8,12 +8,17 @@ import torch.amp as amp
 
 from methods.cache_strategy.common import (
     DiCacheConfig,
+    _maybe_concat_condition_mask,
     _maybe_embed_action,
     initialize_dicache_state,
+    prepare_cache_runtime_model,
 )
 
 try:
-    from cosmos_predict2._src.predict2.conditioner import DataType
+    try:
+        from cosmos_predict2.conditioner import DataType
+    except ImportError:
+        from cosmos_predict2._src.predict2.conditioner import DataType
 except Exception:  # pragma: no cover - test fallback for minimal environments
     from enum import Enum
 
@@ -22,7 +27,10 @@ except Exception:  # pragma: no cover - test fallback for minimal environments
         IMAGE = "image"
 
 try:
-    from cosmos_predict2._src.imaginaire.utils import log
+    try:
+        from imaginaire.utils import log
+    except ImportError:
+        from cosmos_predict2._src.imaginaire.utils import log
 except Exception:  # pragma: no cover - test fallback for minimal environments
     class _FallbackLog:
         @staticmethod
@@ -48,29 +56,14 @@ def dicache_mini_train_dit_forward(
     del intermediate_feature_ids
     assert isinstance(data_type, DataType), f"Expected DataType, got {type(data_type)}."
 
-    is_lvg = hasattr(self, "timestep_scale")
-    if is_lvg:
-        if kwargs.get("timestep_scale") is None:
-            timesteps_B_T = timesteps_B_T * self.timestep_scale
-        if data_type == DataType.VIDEO:
-            if condition_video_input_mask_B_C_T_H_W is not None:
-                x_B_C_T_H_W = torch.cat(
-                    [x_B_C_T_H_W, condition_video_input_mask_B_C_T_H_W.type_as(x_B_C_T_H_W)],
-                    dim=1,
-                )
-        else:
-            batch, _channels, time, height, width = x_B_C_T_H_W.shape
-            x_B_C_T_H_W = torch.cat(
-                [
-                    x_B_C_T_H_W,
-                    torch.zeros(
-                        (batch, 1, time, height, width),
-                        dtype=x_B_C_T_H_W.dtype,
-                        device=x_B_C_T_H_W.device,
-                    ),
-                ],
-                dim=1,
-            )
+    if kwargs.get("timestep_scale") is None and hasattr(self, "timestep_scale"):
+        timesteps_B_T = timesteps_B_T * self.timestep_scale
+    x_B_C_T_H_W = _maybe_concat_condition_mask(
+        self,
+        x_B_C_T_H_W,
+        is_video=data_type == DataType.VIDEO,
+        condition_video_input_mask_B_C_T_H_W=condition_video_input_mask_B_C_T_H_W,
+    )
 
     x_B_T_H_W_D, rope_emb_L_1_1_D, extra_pos_emb = self.prepare_embedded_sequence(
         x_B_C_T_H_W,
@@ -78,7 +71,7 @@ def dicache_mini_train_dit_forward(
         padding_mask=padding_mask,
     )
 
-    if self.use_crossattn_projection:
+    if self.crossattn_proj is not None:
         crossattn_emb = self.crossattn_proj(crossattn_emb)
 
     if img_context_emb is not None:
@@ -88,7 +81,7 @@ def dicache_mini_train_dit_forward(
     else:
         context_input = crossattn_emb
 
-    with amp.autocast("cuda", enabled=self.use_wan_fp32_strategy, dtype=torch.float32):
+    with amp.autocast("cuda", enabled=getattr(self, "use_wan_fp32_strategy", False), dtype=torch.float32):
         if timesteps_B_T.ndim == 1:
             timesteps_B_T = timesteps_B_T.unsqueeze(1)
         t_embedding_B_T_D, adaln_lora_B_T_3D = self.t_embedder(timesteps_B_T)
@@ -210,6 +203,7 @@ def apply_dicache(model, config: DiCacheConfig):
     model.dicache_probe_depth = config.probe_depth
 
     initialize_dicache_state(model, num_steps=config.num_steps)
+    prepare_cache_runtime_model(model)
     model.forward = types.MethodType(dicache_mini_train_dit_forward, model)
 
     log.info(

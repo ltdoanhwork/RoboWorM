@@ -375,6 +375,7 @@ class Video2WorldPipeline(BasePipeline):
         with init_weights_on_device():
             dit_config = config.net
             pipe.dit = instantiate(dit_config).eval()  # inference
+            pipe.dit.config = dit_config
 
         if dit_path:
             state_dict = load_state_dict(dit_path)
@@ -418,18 +419,16 @@ class Video2WorldPipeline(BasePipeline):
     def _validate_cache_backend_compatibility(self, net) -> None:
         if self.cache_config is None:
             return
-        # PISA check
-        if getattr(net.config, "pisa", False):
-            raise ValueError("[Cache] DreamGen cache backends are incompatible with PISA.")
-        # SVG check
-        if getattr(net.config, "svg", False):
-            raise ValueError("[Cache] DreamGen cache backends are incompatible with SVG.")
-        # SiTo check
-        if getattr(net.config, "sito", False):
-            raise ValueError("[Cache] DreamGen cache backends are incompatible with SiTo.")
-        # ITM check
-        if getattr(net.config, "itm", False):
-            raise ValueError("[Cache] DreamGen cache backends are incompatible with ITM.")
+
+        # Use net.config if available, otherwise fallback to self.config.net
+        net_config = getattr(net, "config", self.config.net)
+
+        # Check for sparse backends in the config
+        # We check for both boolean flags and parameter lists/dicts
+        incompatible_backends = ["pisa", "svg", "sito", "itm", "radial", "natten"]
+        for backend in incompatible_backends:
+            if getattr(net_config, backend, False) or getattr(net_config, f"{backend}_parameters", None) is not None:
+                raise ValueError(f"[Cache] DreamGen cache backends are incompatible with {backend.upper()}.")
 
     def _apply_cache_backend(self, net):
         if self.cache_config is None:
