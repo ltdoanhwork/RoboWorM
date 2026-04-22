@@ -294,7 +294,7 @@ python -m models.DreamDojo.examples.action_conditioned \
   --dataset-path ./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot \
   --data-split test \
   --deterministic-uniform-sampling \
-  --use_fastercache \
+  --fastercache-enabled \
   --fastercache_start_step 0 \
   --fastercache_model_interval 5 \
   --fastercache_block_interval 3

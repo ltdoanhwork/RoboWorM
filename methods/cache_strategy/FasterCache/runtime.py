@@ -175,6 +175,7 @@ def _patch_dit_block_self_attention(model) -> None:
             rope_emb: torch.Tensor | None = None,
             video_size=None,
             attention_runtime_context: dict | None = None,
+            **kwargs,
         ):
             del attention_runtime_context
             if context is not None:
@@ -183,6 +184,7 @@ def _patch_dit_block_self_attention(model) -> None:
                     context=context,
                     rope_emb=rope_emb,
                     video_size=video_size,
+                    **kwargs,
                 )
 
             runtime_state: FasterCacheRuntimeState = model.fastercache_state
@@ -207,6 +209,7 @@ def _patch_dit_block_self_attention(model) -> None:
                 context=context,
                 rope_emb=rope_emb,
                 video_size=video_size,
+                **kwargs,
             )
             layer_history.append(_clone_detached(out))
             if len(layer_history) > 2:
@@ -255,10 +258,6 @@ def apply_fastercache(model, config: FasterCacheConfig, *, cfg_mode: str = "sequ
 
     model.forward = types.MethodType(_wrapped_forward, model)
     log.info(
-        "[FasterCache] Applied DiT runtime: start_step=%s model_interval=%s block_interval=%s cfg_mode=%s",
-        config.start_step,
-        config.model_interval,
-        config.block_interval,
-        cfg_mode,
+        f"[FasterCache] Applied DiT runtime: start_step={config.start_step} model_interval={config.model_interval} block_interval={config.block_interval} cfg_mode={cfg_mode}"
     )
     return model
