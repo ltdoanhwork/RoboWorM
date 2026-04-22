@@ -40,6 +40,7 @@ from imaginaire.auxiliary.text_encoder import CosmosTextEncoder, CosmosTextEncod
 from imaginaire.lazy_config import LazyDict, instantiate
 from imaginaire.utils import log, misc
 from imaginaire.utils.ema import FastEmaModelUpdater
+from methods.cache_strategy.common import reset_cache_runtime
 from methods.prunning.importance_token_merge.runtime import build_itm_attention_context, compute_itm_heat_map
 
 IS_PREPROCESSED_KEY = "is_preprocessed"
@@ -345,6 +346,9 @@ class Text2ImagePipeline(BasePipeline):
         # Parameter check
         width, height = IMAGE_RES_SIZE_INFO[self.config.resolution][aspect_ratio]
         height, width = self.check_resize_height_width(height, width)
+        fastercache_config = getattr(self.dit, "fastercache_config", None)
+        if fastercache_config is not None:
+            reset_cache_runtime(self.dit, fastercache_config, num_steps=num_sampling_step)
 
         # Run text guardrail on the prompt
         if self.text_guardrail_runner is not None:

@@ -2180,6 +2180,8 @@ class MiniTrainDIT(WeightTrainingStat):
             raise ValueError("[SiTo] DreamDojo SiTo v1 is single-GPU only; set context_parallel_size=1.")
         if self.has_itm_backend:
             raise ValueError("[ITM] DreamDojo ITM v1 is single-GPU only; set context_parallel_size=1.")
+        if getattr(self, "has_fastercache_backend", False):
+            raise ValueError("[FasterCache] DreamDojo FasterCache v1 is single-GPU only; set context_parallel_size=1.")
         # pos_embedder
         self.pos_embedder.enable_context_parallel(process_group=process_group)
         if self.extra_per_block_abs_pos_emb:

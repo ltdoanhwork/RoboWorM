@@ -137,6 +137,22 @@ Interpretation:
 - DiCache uses a shallower probe and simpler reuse schedule than WorldCache.
 - It is usually the safer first cache baseline if you want minimal tuning.
 
+### FasterCache
+
+Recommended starting values:
+
+- `--use_fastercache`
+- `--fastercache_start_step 0`
+- `--fastercache_model_interval 5`
+- `--fastercache_block_interval 3`
+
+Interpretation:
+
+- `fastercache_start_step=0` auto-resolves to `ceil(0.3 * num_inference_steps)`.
+- Model-level FasterCache only shortcuts the unconditional CFG branch on non-anchor denoising steps.
+- Block-level FasterCache is self-attention only and stays disabled for short sequences.
+- For the common GR1 action-conditioned setting in this repo, `seq_len = 4800`, so the block-level path is eligible.
+
 ## Threshold Scaling Rule
 
 For other sequence lengths, start from the `S = 4800` reference and rescale the threshold as:
@@ -264,6 +280,71 @@ Bật --worldcache-dynamic-decay nếu muốn skip mạnh hơn về cuối denoi
 Bật --worldcache-aduc-enabled nếu muốn tăng tốc thêm nhánh uncond ở cuối, nhưng đây không phải full-step skip.
 
 > Same DiCache flags (`--dicache-enabled`, etc.) seamlessly apply to DreamGen scripts.
+
+### FasterCache
+
+```bash
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/action_conditioned/cache_fastercache \
+  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train \
+  --experiment dreamdojo_2b_480_640_gr1 \
+  --save-dir ./output/dreamdojo_cache/fastercache \
+  --num-frames 49 \
+  --num-samples 65 \
+  --dataset-path ./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot \
+  --data-split test \
+  --deterministic-uniform-sampling \
+  --use_fastercache \
+  --fastercache_start_step 0 \
+  --fastercache_model_interval 5 \
+  --fastercache_block_interval 3
+```
+
+## Ctrl-World Cache Backends
+
+Run from the `video_gen_physics` root:
+
+```bash
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
+cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
+export PYTHONPATH="./models/Ctrl-World:${PYTHONPATH}"
+```
+
+Ctrl-World cache backends are inference-only and mutually exclusive with `PISA`, `Radial`, `SVG`, `SiTo`, `ITM`, and `FasterCache`.
+
+### Ctrl-World DiCache
+
+```bash
+python models/Ctrl-World/scripts/rollout_interact_pi.py \
+  --dataset_root_path ./models/Ctrl-World/dataset_example \
+  --dataset_meta_info_path ./models/Ctrl-World/dataset_meta_info \
+  --dataset_names ./models/Ctrl-World/droid_subset \
+  --svd_model_path ./checkpoints/stabilityai/stable-video-diffusion-img2vid \
+  --clip_model_path ./checkpoints/openai/clip-vit-base-patch32 \
+  --ckpt_path ./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt \
+  --task_type pickplace \
+  --use_dicache \
+  --dicache_rel_l1_thresh 0.08 \
+  --dicache_ret_ratio 0.2 \
+  --dicache_probe_depth 2
+```
+
+### Ctrl-World WorldCache
+
+```bash
+python models/Ctrl-World/scripts/rollout_replay_traj.py \
+  --dataset_root_path ./models/Ctrl-World/dataset_example \
+  --dataset_meta_info_path ./models/Ctrl-World/dataset_meta_info \
+  --dataset_names ./models/Ctrl-World/droid_subset \
+  --svd_model_path ./checkpoints/stabilityai/stable-video-diffusion-img2vid \
+  --clip_model_path ./checkpoints/openai/clip-vit-base-patch32 \
+  --ckpt_path ./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt \
+  --use_worldcache \
+  --worldcache_rel_l1_thresh 0.03 \
+  --worldcache_ret_ratio 0.4 \
+  --worldcache_probe_depth 3 \
+  --worldcache_motion_sensitivity 5.0
+```
 
 
 ## Suggested Tuning Order

@@ -54,13 +54,25 @@ def _import_sparse_backends():
     if project_root not in sys.path:
         sys.path.insert(0, project_root)
 
+    from methods.cache_strategy.FasterCache.config import add_fastercache_args
+    from methods.cache_strategy.FasterCache.runtime import apply_fastercache
     from methods.prunning.SiTo.config import add_dreamgen_sito_args
     from methods.prunning.importance_token_merge.config import add_dreamgen_itm_args
     from methods.sparse_attention.pisa.config import add_pisa_args
     from methods.sparse_attention.svg.config import add_dreamgen_svg_args
     from methods.sparse_attention.radial.config import add_dreamgen_radial_args
     from methods.cache_strategy.config import add_dreamgen_cache_args, build_cache_runtime_config
-    return add_pisa_args, add_dreamgen_svg_args, add_dreamgen_radial_args, add_dreamgen_sito_args, add_dreamgen_itm_args, add_dreamgen_cache_args, build_cache_runtime_config
+    return (
+        add_pisa_args,
+        add_dreamgen_svg_args,
+        add_dreamgen_radial_args,
+        add_dreamgen_sito_args,
+        add_dreamgen_itm_args,
+        add_dreamgen_cache_args
+        add_fastercache_args,
+        build_cache_runtime_config
+        apply_fastercache,
+    )
 # -----------------------------------
 
 
@@ -156,14 +168,15 @@ def parse_args() -> argparse.Namespace:
         "--prompt_prefix", type=str, default="The robot arm is performing a task. ", help="Prefix to add to all prompts"
     )
 
-    # ---- Sparse Backend Integration ----
-    add_pisa_args, add_svg_args, add_radial_args, add_sito_args, add_itm_args, add_cache_args, build_cache_runtime_config = _import_sparse_backends()
+    # ---- Sparse Backend Integration ---
+    add_pisa_args, add_svg_args, add_radial_args, add_sito_args, add_itm_args, add_fastercache_args, add_cache_args, build_cache_runtime_config _ = _import_sparse_backends()
     add_pisa_args(parser)
     add_svg_args(parser)
     add_radial_args(parser)
     add_sito_args(parser)
     add_itm_args(parser)
     add_cache_args(parser)
+    add_fastercache_args(parser)
     # -----------------------------------
 
     return parser.parse_args()
@@ -172,6 +185,8 @@ def parse_args() -> argparse.Namespace:
 def setup_pipeline(args: argparse.Namespace):
     resolution = "480"
     fps = 16
+    if getattr(args, "use_fastercache", False) and args.num_gpus > 1:
+        raise ValueError("[FasterCache] DreamGen FasterCache v1 is single-GPU only; set --num_gpus 1.")
     config = get_cosmos_predict2_video2world_pipeline(
         model_size=args.model_size,
         resolution=resolution,
@@ -216,6 +231,10 @@ def setup_pipeline(args: argparse.Namespace):
         svg_min_kc_ratio=getattr(args, "svg_min_kc_ratio", 0.0),
         svg_kmeans_iter_init=getattr(args, "svg_kmeans_iter_init", 5),
         svg_kmeans_iter_step=getattr(args, "svg_kmeans_iter_step", 2),
+        fastercache=getattr(args, "use_fastercache", False),
+        fastercache_start_step=getattr(args, "fastercache_start_step", 0),
+        fastercache_model_interval=getattr(args, "fastercache_model_interval", 5),
+        fastercache_block_interval=getattr(args, "fastercache_block_interval", 3),
     )
     config.prompt_refiner_config.enabled = False
     if args.dit_path:
@@ -264,6 +283,11 @@ def setup_pipeline(args: argparse.Namespace):
         load_prompt_refiner=False,  # Disable prompt refiner for GR00T
         cache_config=cache_config,
     )
+
+    fastercache_config = getattr(config.net, "fastercache_config", None)
+    if fastercache_config is not None:
+        *_, apply_fastercache = _import_sparse_backends()
+        apply_fastercache(pipe.dit, fastercache_config, cfg_mode="sequential")
 
     return pipe
 

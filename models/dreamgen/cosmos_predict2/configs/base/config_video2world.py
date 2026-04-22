@@ -19,6 +19,7 @@ from enum import Enum
 
 import attrs
 
+from methods.cache_strategy.common import FasterCacheConfig
 from cosmos_predict2.conditioner import BooleanFlag, ReMapkey, TextAttr, VideoConditioner
 from cosmos_predict2.configs.base.config_natten import (
     PREDICT2_VIDEO2WORLD_NET_2B_NATTEN_PARAMETERS,
@@ -523,9 +524,13 @@ def get_cosmos_predict2_video2world_pipeline(
     svg_min_kc_ratio: float = 0.0,
     svg_kmeans_iter_init: int = 5,
     svg_kmeans_iter_step: int = 2,
+    fastercache: bool = False,
+    fastercache_start_step: int = 0,
+    fastercache_model_interval: int = 5,
+    fastercache_block_interval: int = 3,
 ) -> Video2WorldPipelineConfig:
-    if sum(bool(enabled) for enabled in (natten, pisa, radial, svg, sito, itm)) > 1:
-        raise ValueError("NATTEN, PISA, Radial, SVG, SiTo, and ITM cannot be enabled at the same time.")
+    if sum(bool(enabled) for enabled in (natten, pisa, radial, svg, sito, itm, fastercache)) > 1:
+        raise ValueError("NATTEN, PISA, Radial, SVG, SiTo, ITM, and FasterCache cannot be enabled at the same time.")
     key = _Video2WorldPipelineConfig(model_size, resolution, fps, natten=natten)
     config = deepcopy(_PREDICT2_VIDEO2WORLD_PIPELINES[key])
     if pisa:
@@ -584,5 +589,11 @@ def get_cosmos_predict2_video2world_pipeline(
             min_kc_ratio=svg_min_kc_ratio,
             kmeans_iter_init=svg_kmeans_iter_init,
             kmeans_iter_step=svg_kmeans_iter_step,
+        )
+    if fastercache:
+        config.net.fastercache_config = FasterCacheConfig(
+            start_step=fastercache_start_step,
+            model_interval=fastercache_model_interval,
+            block_interval=fastercache_block_interval,
         )
     return config

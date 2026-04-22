@@ -18,6 +18,7 @@ from copy import deepcopy
 
 import attrs
 
+from methods.cache_strategy.common import FasterCacheConfig
 from cosmos_predict2.conditioner import ReMapkey, TextAttr, TextConditioner
 from cosmos_predict2.configs.base.config_pisa import build_pisa_parameters
 from cosmos_predict2.configs.base.config_radial import build_radial_parameters
@@ -417,9 +418,13 @@ def get_cosmos_predict2_text2image_pipeline(
     svg_min_kc_ratio: float = 0.0,
     svg_kmeans_iter_init: int = 5,
     svg_kmeans_iter_step: int = 2,
+    fastercache: bool = False,
+    fastercache_start_step: int = 0,
+    fastercache_model_interval: int = 5,
+    fastercache_block_interval: int = 3,
 ) -> Text2ImagePipelineConfig:
-    if sum(bool(enabled) for enabled in (pisa, radial, svg, sito, itm)) > 1:
-        raise ValueError("PISA, Radial, SVG, SiTo, and ITM cannot be enabled at the same time.")
+    if sum(bool(enabled) for enabled in (pisa, radial, svg, sito, itm, fastercache)) > 1:
+        raise ValueError("PISA, Radial, SVG, SiTo, ITM, and FasterCache cannot be enabled at the same time.")
     key = _Text2ImagePipelineConfig(model_size, fast_tokenizer=fast_tokenizer)
     config = deepcopy(_PREDICT2_TEXT2IMAGE_PIPELINES[key])
     if pisa:
@@ -478,5 +483,11 @@ def get_cosmos_predict2_text2image_pipeline(
             min_kc_ratio=svg_min_kc_ratio,
             kmeans_iter_init=svg_kmeans_iter_init,
             kmeans_iter_step=svg_kmeans_iter_step,
+        )
+    if fastercache:
+        config.net.fastercache_config = FasterCacheConfig(
+            start_step=fastercache_start_step,
+            model_interval=fastercache_model_interval,
+            block_interval=fastercache_block_interval,
         )
     return config

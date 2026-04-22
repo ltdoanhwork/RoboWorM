@@ -12,7 +12,7 @@ cosmos_cuda = types.ModuleType("cosmos_cuda")
 cosmos_cuda.__version__ = "1.4.1"
 sys.modules.setdefault("cosmos_cuda", cosmos_cuda)
 
-from methods.cache_strategy.common import WorldCacheConfig
+from methods.cache_strategy.common import FasterCacheConfig, WorldCacheConfig
 from cosmos_predict2.cache_runtime import (
     build_cache_runtime_config,
     validate_runtime_backend_args,
@@ -50,8 +50,8 @@ def _make_setup(**kwargs):
         dicache_ret_ratio=0.2,
         dicache_probe_depth=2,
         fastercache_enabled=False,
-        fastercache_start_step=1,
-        fastercache_model_interval=2,
+        fastercache_start_step=0,
+        fastercache_model_interval=5,
         fastercache_block_interval=3,
     )
     defaults.update(kwargs)
@@ -76,6 +76,22 @@ def test_build_worldcache_runtime_config_uses_prefixed_fields():
     assert isinstance(config, WorldCacheConfig)
     assert config.rel_l1_thresh == 0.07
     assert config.probe_depth == 6
+
+
+def test_build_fastercache_runtime_config_uses_prefixed_fields():
+    config = build_cache_runtime_config(
+        _make_setup(
+            fastercache_enabled=True,
+            fastercache_start_step=0,
+            fastercache_model_interval=7,
+            fastercache_block_interval=4,
+        )
+    )
+
+    assert isinstance(config, FasterCacheConfig)
+    assert config.start_step == 0
+    assert config.model_interval == 7
+    assert config.block_interval == 4
 
 
 def test_multiple_cache_backends_raise():

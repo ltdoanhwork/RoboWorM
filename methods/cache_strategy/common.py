@@ -37,8 +37,8 @@ class DiCacheConfig:
 
 @dataclass(frozen=True)
 class FasterCacheConfig:
-    start_step: int = 1
-    model_interval: int = 2
+    start_step: int = 0
+    model_interval: int = 5
     block_interval: int = 3
 
 
@@ -141,7 +141,9 @@ def reset_cache_runtime(model, config: CacheRuntimeConfig | None, num_steps: int
     if isinstance(config, DiCacheConfig):
         return reset_dicache_state(model, config, num_steps=num_steps)
     if isinstance(config, FasterCacheConfig):
-        raise ValueError("[FasterCache] FasterCache runtime is not available in this workspace.")
+        from methods.cache_strategy.FasterCache.runtime import reset_fastercache_state
+
+        return reset_fastercache_state(model, config, num_steps=num_steps)
     raise TypeError(f"Unsupported cache config type: {type(config)!r}")
 
 

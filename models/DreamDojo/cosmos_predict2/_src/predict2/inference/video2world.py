@@ -426,7 +426,10 @@ class Video2WorldInference:
             log.info("[DiCache] Applying DiCache runtime from methods.cache_strategy.DiCache")
             return apply_dicache(net, self.cache_config)
         if isinstance(self.cache_config, FasterCacheConfig):
-            raise ValueError("[FasterCache] FasterCache runtime is not available in this workspace.")
+            from methods.cache_strategy.FasterCache.runtime import apply_fastercache
+
+            log.info("[FasterCache] Applying FasterCache runtime from methods.cache_strategy.FasterCache")
+            return apply_fastercache(net, self.cache_config, cfg_mode="sequential")
 
         raise TypeError(f"Unsupported cache config type: {type(self.cache_config)!r}")
 

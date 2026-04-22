@@ -16,9 +16,11 @@ import torch
 import torch.nn as nn
 
 from methods.cache_strategy.DiCache.runtime import apply_dicache
+from methods.cache_strategy.FasterCache.runtime import apply_fastercache
 from methods.cache_strategy.WorldCache.runtime import apply_worldcache
 from methods.cache_strategy.common import (
     DiCacheConfig,
+    FasterCacheConfig,
     WorldCacheConfig,
     reset_cache_runtime,
 )
@@ -101,6 +103,47 @@ class MockCacheModel(nn.Module):
         return x_B_T_H_W_D.permute(0, 4, 1, 2, 3)
 
 
+class MockAttention(nn.Module):
+    def __init__(self, bias: float):
+        super().__init__()
+        self.bias = bias
+        self.compute_calls = 0
+
+    def forward(self, x: torch.Tensor, context=None, rope_emb=None, video_size=None):
+        del context, rope_emb, video_size
+        self.compute_calls += 1
+        return x + self.bias
+
+
+class MockFasterCacheBlock(nn.Module):
+    def __init__(self, bias: float):
+        super().__init__()
+        self.self_attn = MockAttention(bias)
+
+    def forward(self, x_B_T_H_W_D: torch.Tensor, *args, **kwargs) -> torch.Tensor:
+        del args, kwargs
+        batch_size, time, height, width, channels = x_B_T_H_W_D.shape
+        hidden = x_B_T_H_W_D.reshape(batch_size, time * height * width, channels)
+        hidden = self.self_attn(hidden)
+        return hidden.reshape(batch_size, time, height, width, channels)
+
+
+class MockFasterCacheModel(nn.Module):
+    def __init__(self, num_blocks: int = 20):
+        super().__init__()
+        self.blocks = nn.ModuleList([MockFasterCacheBlock(0.1 + 0.01 * i) for i in range(num_blocks)])
+        self.num_blocks = num_blocks
+        self.actual_forward_calls = 0
+
+    def forward(self, x_B_C_T_H_W: torch.Tensor, timesteps_B_T: torch.Tensor, crossattn_emb: torch.Tensor) -> torch.Tensor:
+        del timesteps_B_T, crossattn_emb
+        self.actual_forward_calls += 1
+        hidden = x_B_C_T_H_W.permute(0, 2, 3, 4, 1).to(torch.float32)
+        for block in self.blocks:
+            hidden = block(hidden)
+        return hidden.permute(0, 4, 1, 2, 3)
+
+
 def _build_inputs():
     x = torch.ones(1, 4, 3, 1, 1)
     timesteps = torch.ones(1, 3)
@@ -160,3 +203,53 @@ def test_dicache_reset_logic_uses_cfg_double_pass():
     assert model.dicache_num_steps == 18
     assert model.cnt == 0
     assert model.previous_input == [None, None]
+
+
+def test_fastercache_reset_logic_uses_denoising_steps():
+    model = MockFasterCacheModel()
+    config = FasterCacheConfig(start_step=0, model_interval=5, block_interval=3)
+    apply_fastercache(model, config, cfg_mode="sequential")
+
+    target_steps = reset_cache_runtime(model, config, num_steps=35)
+
+    assert target_steps == 35
+    assert model.fastercache_state.total_steps == 35
+    assert model.fastercache_state.resolved_start_step == 11
+    assert model.fastercache_state.call_idx == 0
+    assert model.fastercache_state.delta_lf is None
+    assert model.fastercache_state.block_histories == {}
+
+
+def test_fastercache_model_shortcut_skips_unconditional_forward():
+    model = MockFasterCacheModel()
+    config = FasterCacheConfig(start_step=1, model_interval=4, block_interval=100)
+    apply_fastercache(model, config, cfg_mode="sequential")
+    reset_cache_runtime(model, config, num_steps=8)
+
+    x, timesteps, crossattn = _build_inputs()
+    outputs = []
+    for _ in range(6):
+        outputs.append(model(x, timesteps, crossattn))
+    out_sixth = outputs[-1]
+
+    assert out_sixth.shape == x.shape
+    assert model.fastercache_state.call_idx == 6
+    assert model.actual_forward_calls == 5
+    assert model.fastercache_state.delta_lf is not None
+    assert model.fastercache_state.delta_hf is not None
+
+
+def test_fastercache_block_reuse_skips_dense_attention_on_eligible_steps():
+    model = MockFasterCacheModel()
+    config = FasterCacheConfig(start_step=1, model_interval=100, block_interval=4)
+    apply_fastercache(model, config, cfg_mode="sequential")
+    reset_cache_runtime(model, config, num_steps=8)
+
+    x = torch.ones(1, 4, 1, 32, 64)
+    timesteps = torch.ones(1, 1)
+    crossattn = torch.zeros(1, 1, 4)
+    for _ in range(6):
+        _ = model(x, timesteps, crossattn)
+
+    total_compute_calls = sum(block.self_attn.compute_calls for block in model.blocks)
+    assert total_compute_calls == 85

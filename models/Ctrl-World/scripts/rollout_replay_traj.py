@@ -72,6 +72,27 @@ def _import_itm_module(module_name):
     return importlib.import_module(f"methods.prunning.importance_token_merge.{module_name}")
 
 
+def _import_fastercache_module(module_name):
+    project_root = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../.."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+    return importlib.import_module(f"methods.cache_strategy.FasterCache.{module_name}")
+
+
+def _import_dicache_module(module_name):
+    project_root = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../.."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+    return importlib.import_module(f"methods.cache_strategy.DiCache.{module_name}")
+
+
+def _import_worldcache_module(module_name):
+    project_root = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../.."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+    return importlib.import_module(f"methods.cache_strategy.WorldCache.{module_name}")
+
+
 class agent():
     def __init__(self,args):
           
@@ -280,10 +301,17 @@ if __name__ == "__main__":
     _sito_config.add_sito_args(parser)
     _itm_config = _import_itm_module("config")
     _itm_config.add_itm_args(parser)
+    _fastercache_config = _import_fastercache_module("config")
+    _fastercache_config.add_fastercache_args(parser)
+    _dicache_config = _import_dicache_module("config")
+    _dicache_config.add_dicache_args(parser)
+    _worldcache_config = _import_worldcache_module("config")
+    _worldcache_config.add_worldcache_args(parser)
     # ---------------------------------------------------------
     args_new = parser.parse_args()
-    if sum(bool(getattr(args_new, flag, False)) for flag in ("use_pisa", "use_svg", "use_radial", "use_sito", "use_itm")) > 1:
-        raise ValueError("[ITM] ITM, SiTo, PISA, SVG, and Radial are mutually exclusive in Ctrl-World.")
+    from methods.cache_strategy.ctrl_world_utils import validate_ctrl_world_backend_args
+
+    validate_ctrl_world_backend_args(args_new)
 
     args = wm_args(task_type=args_new.task_type)
 
@@ -368,6 +396,40 @@ if __name__ == "__main__":
             merge_crossattn=args_new.itm_merge_crossattn,
             merge_mlp=args_new.itm_merge_mlp,
             max_downsample_ratio=args_new.itm_max_downsample_ratio,
+        )
+    if getattr(args_new, "use_fastercache", False):
+        _fastercache_adapter = _import_fastercache_module("adapter")
+        _fastercache_adapter.enable_fastercache(
+            Agent.model.unet,
+            start_step=args_new.fastercache_start_step,
+            model_interval=args_new.fastercache_model_interval,
+            block_interval=args_new.fastercache_block_interval,
+            first_layers_fp=2,
+        )
+    if getattr(args_new, "use_dicache", False):
+        _dicache_adapter = _import_dicache_module("adapter")
+        _dicache_adapter.enable_dicache(
+            Agent.model.unet,
+            num_steps=args.num_inference_steps,
+            rel_l1_thresh=args_new.dicache_rel_l1_thresh,
+            ret_ratio=args_new.dicache_ret_ratio,
+            probe_depth=args_new.dicache_probe_depth,
+        )
+    if getattr(args_new, "use_worldcache", False):
+        _worldcache_adapter = _import_worldcache_module("adapter")
+        _worldcache_adapter.enable_worldcache(
+            Agent.model.unet,
+            num_steps=args.num_inference_steps,
+            rel_l1_thresh=args_new.worldcache_rel_l1_thresh,
+            ret_ratio=args_new.worldcache_ret_ratio,
+            probe_depth=args_new.worldcache_probe_depth,
+            motion_sensitivity=args_new.worldcache_motion_sensitivity,
+            hf_enabled=args_new.worldcache_hf_enabled,
+            hf_thresh=args_new.worldcache_hf_thresh,
+            saliency_enabled=args_new.worldcache_saliency_enabled,
+            saliency_weight=args_new.worldcache_saliency_weight,
+            osi_enabled=args_new.worldcache_osi_enabled,
+            dynamic_decay=args_new.worldcache_dynamic_decay,
         )
     # -----------------------------------------------------------------
     interact_num = args.interact_num

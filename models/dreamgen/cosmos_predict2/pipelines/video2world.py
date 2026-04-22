@@ -54,6 +54,7 @@ from imaginaire.lazy_config import instantiate
 from imaginaire.utils import log, misc
 from imaginaire.utils.easy_io import easy_io
 from imaginaire.utils.ema import FastEmaModelUpdater
+from methods.cache_strategy.common import reset_cache_runtime
 from methods.prunning.importance_token_merge.runtime import build_itm_attention_context, compute_itm_heat_map
 from methods.cache_strategy.common import (
     CacheRuntimeConfig,
@@ -916,6 +917,9 @@ class Video2WorldPipeline(BasePipeline):
         height, width = self.check_resize_height_width(height, width)
         assert num_conditional_frames in [1, 5], "num_conditional_frames must be 1 or 5"
         num_latent_conditional_frames = self.tokenizer.get_latent_num_frames(num_conditional_frames)
+        fastercache_config = getattr(self.dit, "fastercache_config", None)
+        if fastercache_config is not None:
+            reset_cache_runtime(self.dit, fastercache_config, num_steps=num_sampling_step)
 
         # Run text guardrail on the prompt
         if self.text_guardrail_runner is not None:
