@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from dataclasses import dataclass
 
 import torch
@@ -69,6 +70,42 @@ def initialize_common_cache_state(model) -> None:
     model.previous_internal_states = _fresh_slot_list(None)
     model.previous_input = _fresh_slot_list(None)
     model.resume_flag = [False, False]
+
+
+def prepare_cache_runtime_model(model) -> None:
+    signature = inspect.signature(model.forward)
+    model._cache_runtime_uses_condition_mask = "condition_video_input_mask_B_C_T_H_W" in signature.parameters
+
+
+def _maybe_concat_condition_mask(
+    model,
+    x_B_C_T_H_W: torch.Tensor,
+    *,
+    is_video: bool,
+    condition_video_input_mask_B_C_T_H_W: torch.Tensor | None,
+) -> torch.Tensor:
+    if not getattr(model, "_cache_runtime_uses_condition_mask", False):
+        return x_B_C_T_H_W
+
+    extra_view_channels = getattr(model, "view_condition_dim", 0) if getattr(model, "concat_view_embedding", False) else 0
+    expected_channels = getattr(model, "in_channels", x_B_C_T_H_W.shape[1])
+    needs_condition_mask = x_B_C_T_H_W.shape[1] + 1 + extra_view_channels == expected_channels
+    if not needs_condition_mask:
+        return x_B_C_T_H_W
+
+    if is_video:
+        if condition_video_input_mask_B_C_T_H_W is None:
+            raise ValueError("condition_video_input_mask_B_C_T_H_W is required for cache-enabled video-conditioned models.")
+        condition_channel = condition_video_input_mask_B_C_T_H_W.type_as(x_B_C_T_H_W)
+    else:
+        batch, _channels, time, height, width = x_B_C_T_H_W.shape
+        condition_channel = torch.zeros(
+            (batch, 1, time, height, width),
+            dtype=x_B_C_T_H_W.dtype,
+            device=x_B_C_T_H_W.device,
+        )
+
+    return torch.cat([x_B_C_T_H_W, condition_channel], dim=1)
 
 
 def initialize_worldcache_state(model, num_steps: int) -> None:
