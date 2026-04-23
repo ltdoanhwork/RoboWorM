@@ -61,14 +61,17 @@ def _import_sparse_backends():
     from methods.sparse_attention.pisa.config import add_pisa_args
     from methods.sparse_attention.svg.config import add_dreamgen_svg_args
     from methods.sparse_attention.radial.config import add_dreamgen_radial_args
+    from methods.cache_strategy.config import add_dreamgen_cache_args, build_cache_runtime_config
     return (
         add_pisa_args,
         add_dreamgen_svg_args,
         add_dreamgen_radial_args,
         add_dreamgen_sito_args,
         add_dreamgen_itm_args,
+        add_dreamgen_cache_args,
         add_fastercache_args,
         apply_fastercache,
+        build_cache_runtime_config,
     )
 # -----------------------------------
 
@@ -165,13 +168,14 @@ def parse_args() -> argparse.Namespace:
         "--prompt_prefix", type=str, default="The robot arm is performing a task. ", help="Prefix to add to all prompts"
     )
 
-    # ---- Sparse Backend Integration ----
-    add_pisa_args, add_svg_args, add_radial_args, add_sito_args, add_itm_args, add_fastercache_args, _ = _import_sparse_backends()
+    # ---- Sparse Backend Integration ---
+    add_pisa_args, add_svg_args, add_radial_args, add_sito_args, add_itm_args, add_cache_args, add_fastercache_args, apply_fastercache, build_cache_runtime_config = _import_sparse_backends()
     add_pisa_args(parser)
     add_svg_args(parser)
     add_radial_args(parser)
     add_sito_args(parser)
     add_itm_args(parser)
+    add_cache_args(parser)
     add_fastercache_args(parser)
     # -----------------------------------
 
@@ -231,6 +235,7 @@ def setup_pipeline(args: argparse.Namespace):
         fastercache_start_step=getattr(args, "fastercache_start_step", 0),
         fastercache_model_interval=getattr(args, "fastercache_model_interval", 5),
         fastercache_block_interval=getattr(args, "fastercache_block_interval", 3),
+        fastercache_debug=getattr(args, "fastercache_debug", False),
     )
     config.prompt_refiner_config.enabled = False
     if args.dit_path:
@@ -268,6 +273,8 @@ def setup_pipeline(args: argparse.Namespace):
 
     # Load models
     log.info(f"Initializing Video2WorldPipeline with GR00T variant: {args.gr00t_variant}")
+    _, _, _, _, _, _, _, _, build_cache_runtime_config = _import_sparse_backends()
+    cache_config = build_cache_runtime_config(args)
     pipe = Video2WorldPipeline.from_config(
         config=config,
         dit_path=dit_path,
@@ -275,6 +282,7 @@ def setup_pipeline(args: argparse.Namespace):
         torch_dtype=torch.bfloat16,
         load_ema_to_reg=args.load_ema,
         load_prompt_refiner=False,  # Disable prompt refiner for GR00T
+        cache_config=cache_config,
     )
 
     fastercache_config = getattr(config.net, "fastercache_config", None)

@@ -56,6 +56,14 @@ from imaginaire.utils.easy_io import easy_io
 from imaginaire.utils.ema import FastEmaModelUpdater
 from methods.cache_strategy.common import reset_cache_runtime
 from methods.prunning.importance_token_merge.runtime import build_itm_attention_context, compute_itm_heat_map
+from methods.cache_strategy.common import (
+    CacheRuntimeConfig,
+    WorldCacheConfig,
+    DiCacheConfig,
+    FasterCacheConfig,
+    get_cache_backend_name,
+    reset_cache_runtime,
+)
 
 IS_PREPROCESSED_KEY = "is_preprocessed"
 _IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", "webp"]
@@ -273,6 +281,8 @@ class Video2WorldPipeline(BasePipeline):
         self.height_division_factor = 16
         self.width_division_factor = 16
         self.use_unified_sequence_parallel = False
+        self.cache_config: CacheRuntimeConfig | None = None
+        self.cache_backend: str | None = None
 
     @staticmethod
     def from_config(
@@ -285,9 +295,12 @@ class Video2WorldPipeline(BasePipeline):
         torch_dtype: torch.dtype = torch.bfloat16,
         load_ema_to_reg: bool = False,
         load_prompt_refiner: bool = False,
+        cache_config: CacheRuntimeConfig | None = None,
         ) -> Any:
         # Create a pipe
         pipe = Video2WorldPipeline(device=device, torch_dtype=torch_dtype)
+        pipe.cache_config = cache_config
+        pipe.cache_backend = get_cache_backend_name(cache_config)
         pipe.config = config
         pipe.precision = {
             "float32": torch.float32,
@@ -363,6 +376,7 @@ class Video2WorldPipeline(BasePipeline):
         with init_weights_on_device():
             dit_config = config.net
             pipe.dit = instantiate(dit_config).eval()  # inference
+            pipe.dit.config = dit_config
 
         if dit_path:
             state_dict = load_state_dict(dit_path)
@@ -392,6 +406,7 @@ class Video2WorldPipeline(BasePipeline):
             pipe.dit_ema_worker.copy_to(src_model=pipe.dit, tgt_model=pipe.dit_ema)
 
         pipe.dit = pipe.dit.to(device=device, dtype=torch_dtype)
+        pipe.dit = pipe._apply_cache_backend(pipe.dit)
         torch.cuda.empty_cache()
 
         # 7. training states
@@ -401,6 +416,41 @@ class Video2WorldPipeline(BasePipeline):
             pipe.data_parallel_size = 1
 
         return pipe
+
+    def _validate_cache_backend_compatibility(self, net) -> None:
+        if self.cache_config is None:
+            return
+
+        # Use net.config if available, otherwise fallback to self.config.net
+        net_config = getattr(net, "config", self.config.net)
+
+        # Check for sparse backends in the config
+        # We check for both boolean flags and parameter lists/dicts
+        incompatible_backends = ["pisa", "svg", "sito", "itm", "radial", "natten"]
+        for backend in incompatible_backends:
+            if getattr(net_config, backend, False) or getattr(net_config, f"{backend}_parameters", None) is not None:
+                raise ValueError(f"[Cache] DreamGen cache backends are incompatible with {backend.upper()}.")
+
+    def _apply_cache_backend(self, net):
+        if self.cache_config is None:
+            return net
+
+        self._validate_cache_backend_compatibility(net)
+
+        if isinstance(self.cache_config, WorldCacheConfig):
+            from methods.cache_strategy.WorldCache.runtime import apply_worldcache
+
+            log.info("[WorldCache] Applying WorldCache runtime from methods.cache_strategy.WorldCache")
+            return apply_worldcache(net, self.cache_config)
+        if isinstance(self.cache_config, DiCacheConfig):
+            from methods.cache_strategy.DiCache.runtime import apply_dicache
+
+            log.info("[DiCache] Applying DiCache runtime from methods.cache_strategy.DiCache")
+            return apply_dicache(net, self.cache_config)
+        if isinstance(self.cache_config, FasterCacheConfig):
+            raise ValueError("[FasterCache] FasterCache runtime is not available in DreamGen context.")
+        
+        raise TypeError(f"Unsupported cache config type: {type(self.cache_config)!r}")
 
     def setup_data_key(self) -> None:
         self.input_video_key = self.config.input_video_key  # by default it is video key for Video diffusion model
@@ -1000,6 +1050,8 @@ class Video2WorldPipeline(BasePipeline):
         step_times = []
         torch.cuda.synchronize()
         start_inference_time = time.perf_counter()
+
+        reset_cache_runtime(self.dit, self.cache_config, num_steps=num_sampling_step)
 
         for i, _ in enumerate(tqdm(scheduler.timesteps, desc="Generating world", leave=False)):
             # Current noise level (sigma_t).

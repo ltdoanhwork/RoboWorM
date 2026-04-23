@@ -528,6 +528,7 @@ def get_cosmos_predict2_video2world_pipeline(
     fastercache_start_step: int = 0,
     fastercache_model_interval: int = 5,
     fastercache_block_interval: int = 3,
+    fastercache_debug: bool = False,
 ) -> Video2WorldPipelineConfig:
     if sum(bool(enabled) for enabled in (natten, pisa, radial, svg, sito, itm, fastercache)) > 1:
         raise ValueError("NATTEN, PISA, Radial, SVG, SiTo, ITM, and FasterCache cannot be enabled at the same time.")
@@ -590,10 +591,10 @@ def get_cosmos_predict2_video2world_pipeline(
             kmeans_iter_init=svg_kmeans_iter_init,
             kmeans_iter_step=svg_kmeans_iter_step,
         )
-    if fastercache:
         config.net.fastercache_config = FasterCacheConfig(
             start_step=fastercache_start_step,
             model_interval=fastercache_model_interval,
             block_interval=fastercache_block_interval,
+            debug=fastercache_debug,
         )
     return config

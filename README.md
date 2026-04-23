@@ -516,3 +516,30 @@ CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-Wor
   --use_itm \
   --itm_max_downsample_ratio 4
 ```
+
+
+
+python -m models.dreamgen.scripts.prepare_batch_input_json \
+  --dataset_path /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/datasets/dream_gen_benchmark/gr1_behavior \
+  --save_path /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/output/dreamgen_lvg/2b_behaviour \
+  --output_path /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/output/dreamgen_lvg/2b_behaviour/batch_input.json
+
+export PYTHONPATH="./models/dreamgen"
+export NUM_GPUS=2
+
+torchrun --nproc_per_node=${NUM_GPUS} -m models.dreamgen.examples.video2world_lvg \
+  --model_size 2B \
+  --batch_input_json /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/output/dreamgen_lvg/2b_behaviour/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS}
+
+
+
+torchrun -m models.dreamgen.examples.video2world_gr00t_lvg \
+  --model_size 14B \
+  --gr00t_variant gr1 \
+  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS} \
+  --num_chunks 3 \
+  --num_conditional_frames 1

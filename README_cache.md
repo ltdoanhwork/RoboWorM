@@ -186,7 +186,7 @@ cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_p
 export PYTHONPATH="./models/DreamDojo:${PYTHONPATH}"
 ```
 
-### Baseline
+### Baseline (DreamDojo)
 
 ```bash
 python -m models.DreamDojo.examples.action_conditioned \
@@ -201,7 +201,7 @@ python -m models.DreamDojo.examples.action_conditioned \
   --deterministic-uniform-sampling
 ```
 
-### DiCache
+### DiCache (DreamDojo)
 
 ```bash
 python -m models.DreamDojo.examples.action_conditioned \
@@ -221,7 +221,7 @@ python -m models.DreamDojo.examples.action_conditioned \
   --dicache-rel-l1-thresh 0.08
 ```
 
-### WorldCache
+### WorldCache (DreamDojo)
 
 ```bash
 python -m models.DreamDojo.examples.action_conditioned \
@@ -236,12 +236,69 @@ python -m models.DreamDojo.examples.action_conditioned \
   --deterministic-uniform-sampling \
   --worldcache-enabled \
   --worldcache-num-steps 35 \
-  --worldcache-rel-l1-thresh 0.08 \
+  --worldcache-rel-l1-thresh 0.065 \
+  --worldcache-motion-sensitivity 3.0 \
   --worldcache-probe-depth 4 \
   --worldcache-ret-ratio 0.5
 ```
+## How To Run (DreamGen 2.0 / GR00T)
 
-> **For 14B model**, use `--worldcache-rel-l1-thresh 0.065 --worldcache-probe-depth 6`.
+The `cache_strategy` module is also natively integrated into the `models/dreamgen/examples/` pipeline. Below is an example applying **WorldCache** to the `video2world_gr00t.py` script.
+
+> **Note**: For `DreamGen`, make sure `PYTHONPATH` points to the workspace root rather than `models/DreamDojo`.
+
+```bash
+cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
+
+export PYTHONPATH="./models/dreamgen"
+
+# Execute text/image-to-world with 14B GR00T
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+    --model_size 14B \
+    --gr00t_variant gr1 \
+    --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+    --disable_guardrail \
+    --num_gpus 1 \
+    --worldcache-enabled \
+    --worldcache-num-steps 35 \
+    --worldcache-rel-l1-thresh 0.08 \
+    --worldcache-ret-ratio 0.5 \
+    --worldcache-probe-depth 4 \
+    --worldcache-motion-sensitivity 4.0 \
+    --worldcache-dynamic-decay
+--->>> Total inference time: 347.0921 seconds
+```
+
+### FasterCache (DreamGen)
+
+FasterCache acceleration is also supported in the DreamGen pipeline. Note that FasterCache v1 is currently limited to single-GPU inference.
+
+```bash
+export PYTHONPATH="./models/dreamgen:${PYTHONPATH}"
+
+# Execute with FasterCache enabled (Optimized for speed)
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+    --model_size 2B \
+    --gr00t_variant gr1 \
+    --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_2b_gr1_behavior/batch_input.json \
+    --num_gpus 1 \
+    --use_fastercache \
+    --fastercache_model_interval 10 \
+    --fastercache_block_interval 6 \
+    --fastercache_debug
+```
+Nếu đang dùng WorldCache, tham số chính để skip mạnh hơn là --worldcache-rel-l1-thresh. Tăng cái này trước.
+
+Với config hiện tại của bạn 0.065 / 6 / 0.5, thứ tự chỉnh nên là:
+
+Tăng --worldcache-rel-l1-thresh lên 0.075, rồi 0.08, nếu còn muốn mạnh nữa thì 0.085.
+Giảm --worldcache-ret-ratio từ 0.5 xuống 0.4 hoặc 0.35.
+Giảm --worldcache-probe-depth từ 6 xuống 5 hoặc 4.
+Giảm --worldcache-motion-sensitivity từ 5.0 xuống 3.0 nếu muốn cache bớt nhạy với motion.
+Bật --worldcache-dynamic-decay nếu muốn skip mạnh hơn về cuối denoise.
+Bật --worldcache-aduc-enabled nếu muốn tăng tốc thêm nhánh uncond ở cuối, nhưng đây không phải full-step skip.
+
+> Same DiCache flags (`--dicache-enabled`, etc.) seamlessly apply to DreamGen scripts.
 
 ### FasterCache
 
@@ -256,10 +313,57 @@ python -m models.DreamDojo.examples.action_conditioned \
   --dataset-path ./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot \
   --data-split test \
   --deterministic-uniform-sampling \
-  --use_fastercache \
+  --fastercache-enabled \
+  --fastercache-debug \
   --fastercache_start_step 0 \
   --fastercache_model_interval 5 \
   --fastercache_block_interval 3
+```
+
+## Ctrl-World Cache Backends
+
+Run from the `video_gen_physics` root:
+
+```bash
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
+cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
+export PYTHONPATH="./models/Ctrl-World:${PYTHONPATH}"
+```
+
+Ctrl-World cache backends are inference-only and mutually exclusive with `PISA`, `Radial`, `SVG`, `SiTo`, `ITM`, and `FasterCache`.
+
+### Ctrl-World DiCache
+
+```bash
+python models/Ctrl-World/scripts/rollout_interact_pi.py \
+  --dataset_root_path ./models/Ctrl-World/dataset_example \
+  --dataset_meta_info_path ./models/Ctrl-World/dataset_meta_info \
+  --dataset_names ./models/Ctrl-World/droid_subset \
+  --svd_model_path ./checkpoints/stabilityai/stable-video-diffusion-img2vid \
+  --clip_model_path ./checkpoints/openai/clip-vit-base-patch32 \
+  --ckpt_path ./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt \
+  --task_type pickplace \
+  --use_dicache \
+  --dicache_rel_l1_thresh 0.08 \
+  --dicache_ret_ratio 0.2 \
+  --dicache_probe_depth 2
+```
+
+### Ctrl-World WorldCache
+
+```bash
+python models/Ctrl-World/scripts/rollout_replay_traj.py \
+  --dataset_root_path ./models/Ctrl-World/dataset_example \
+  --dataset_meta_info_path ./models/Ctrl-World/dataset_meta_info \
+  --dataset_names ./models/Ctrl-World/droid_subset \
+  --svd_model_path ./checkpoints/stabilityai/stable-video-diffusion-img2vid \
+  --clip_model_path ./checkpoints/openai/clip-vit-base-patch32 \
+  --ckpt_path ./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt \
+  --use_worldcache \
+  --worldcache_rel_l1_thresh 0.03 \
+  --worldcache_ret_ratio 0.4 \
+  --worldcache_probe_depth 3 \
+  --worldcache_motion_sensitivity 5.0
 ```
 
 
@@ -290,3 +394,20 @@ When checkpoints become available locally, compare:
 - output PSNR / SSIM / LPIPS artifacts already produced by the DreamDojo eval path
 
 Keep prompt, chunking, checkpoint, dataset split, and seed policy fixed across comparisons.
+
+
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+    --model_size 14B \
+    --gr00t_variant gr1 \
+    --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+    --disable_guardrail \
+    --num_gpus 1 \
+    --dicache-enabled \
+    --dicache-num-steps 35 \
+    --dicache-probe-depth 2 \
+    --dicache-ret-ratio 0.2 \
+    --dicache-rel-l1-thresh 0.08
+
+    
+---> Total inference time: 355.6783 seconds
+

@@ -67,6 +67,18 @@ class UNetSpatioTemporalConditionModel(ModelMixin, ConfigMixin, UNet2DConditionL
 
     _supports_gradient_checkpointing = True
 
+    @staticmethod
+    def _maybe_return_cached_output(
+        cached_output: Optional[torch.Tensor],
+        *,
+        return_dict: bool,
+    ) -> Optional[Union[UNetSpatioTemporalConditionOutput, Tuple]]:
+        if cached_output is None:
+            return None
+        if not return_dict:
+            return (cached_output,)
+        return UNetSpatioTemporalConditionOutput(sample=cached_output)
+
     @register_to_config
     def __init__(
         self,
@@ -393,6 +405,8 @@ class UNetSpatioTemporalConditionModel(ModelMixin, ConfigMixin, UNet2DConditionL
             logger.info("Forward upsample size to force interpolation output size.")
             forward_upsample_size = True
 
+        ctrl_cache_runtime = getattr(self, "_ctrl_cache_runtime", None)
+
         # 1. time
         timesteps = timestep
         if not torch.is_tensor(timesteps):
@@ -410,6 +424,12 @@ class UNetSpatioTemporalConditionModel(ModelMixin, ConfigMixin, UNet2DConditionL
 
         # broadcast to batch dimension in a way that's compatible with ONNX/Core ML
         batch_size, num_frames = sample.shape[:2]
+        if ctrl_cache_runtime is not None:
+            ctrl_cache_runtime.begin_step(
+                sample,
+                step_idx=getattr(ctrl_cache_runtime, "current_step_idx", -1),
+                do_classifier_free_guidance=getattr(ctrl_cache_runtime, "do_classifier_free_guidance", False),
+            )
         timesteps = timesteps.expand(batch_size)
 
         t_emb = self.time_proj(timesteps)
@@ -461,6 +481,13 @@ class UNetSpatioTemporalConditionModel(ModelMixin, ConfigMixin, UNet2DConditionL
                     encoder_hidden_states=encoder_hidden_states,
                     image_only_indicator=image_only_indicator,
                 )
+                if ctrl_cache_runtime is not None:
+                    maybe_cached = self._maybe_return_cached_output(
+                        ctrl_cache_runtime.observe_probe(sample),
+                        return_dict=return_dict,
+                    )
+                    if maybe_cached is not None:
+                        return maybe_cached
             else:
                 sample, res_samples = downsample_block(
                     hidden_states=sample,
@@ -477,6 +504,13 @@ class UNetSpatioTemporalConditionModel(ModelMixin, ConfigMixin, UNet2DConditionL
             encoder_hidden_states=encoder_hidden_states,
             image_only_indicator=image_only_indicator,
         )
+        if ctrl_cache_runtime is not None:
+            maybe_cached = self._maybe_return_cached_output(
+                ctrl_cache_runtime.observe_probe(sample),
+                return_dict=return_dict,
+            )
+            if maybe_cached is not None:
+                return maybe_cached
 
         # 5. up
         for i, upsample_block in enumerate(self.up_blocks):
@@ -499,6 +533,13 @@ class UNetSpatioTemporalConditionModel(ModelMixin, ConfigMixin, UNet2DConditionL
                     upsample_size=upsample_size,
                     image_only_indicator=image_only_indicator,
                 )
+                if ctrl_cache_runtime is not None:
+                    maybe_cached = self._maybe_return_cached_output(
+                        ctrl_cache_runtime.observe_probe(sample),
+                        return_dict=return_dict,
+                    )
+                    if maybe_cached is not None:
+                        return maybe_cached
             else:
                 sample = upsample_block(
                     hidden_states=sample,
@@ -515,6 +556,8 @@ class UNetSpatioTemporalConditionModel(ModelMixin, ConfigMixin, UNet2DConditionL
 
         # 7. Reshape back to original shape
         sample = sample.reshape(batch_size, num_frames, *sample.shape[1:])
+        if ctrl_cache_runtime is not None:
+            sample = ctrl_cache_runtime.finish_step(sample)
 
         if not return_dict:
             return (sample,)
