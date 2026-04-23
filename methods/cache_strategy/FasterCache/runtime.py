@@ -8,7 +8,10 @@ from typing import Any
 import torch
 
 try:
-    from cosmos_predict2._src.imaginaire.utils import log
+    try:
+        from imaginaire.utils import log
+    except ImportError:
+        from cosmos_predict2._src.imaginaire.utils import log
 except Exception:  # pragma: no cover - test fallback for minimal environments
     class _FallbackLog:
         @staticmethod
@@ -58,6 +61,16 @@ def _compose_from_fft_bands(
 
 def _clone_detached(x: torch.Tensor) -> torch.Tensor:
     return x.detach().clone()
+
+
+def _clone_detached_cpu(x: torch.Tensor) -> torch.Tensor:
+    return x.detach().to("cpu", copy=True)
+
+
+def _materialize_to_device(x: torch.Tensor, device: torch.device) -> torch.Tensor:
+    if x.device == device:
+        return x
+    return x.to(device, non_blocking=False)
 
 
 def compute_fastercache_deltas(
@@ -206,8 +219,8 @@ def _patch_dit_block_self_attention(model) -> None:
                 and _history_for_shape(layer_history, x.shape)
             )
             if can_reuse:
-                latest = layer_history[-1]
-                previous = layer_history[-2]
+                latest = _materialize_to_device(layer_history[-1], x.device).type_as(x)
+                previous = _materialize_to_device(layer_history[-2], x.device).type_as(x)
                 return latest + (latest - previous) * runtime_state.block_alpha
 
             out = self._fastercache_original_forward(
@@ -217,7 +230,7 @@ def _patch_dit_block_self_attention(model) -> None:
                 video_size=video_size,
                 **kwargs,
             )
-            layer_history.append(_clone_detached(out))
+            layer_history.append(_clone_detached_cpu(out))
             if len(layer_history) > 2:
                 del layer_history[:-2]
             return out
@@ -242,6 +255,7 @@ def apply_fastercache(model, config: FasterCacheConfig, *, cfg_mode: str = "sequ
 
         runtime_state.current_step_idx = runtime_state.call_idx // 2
         runtime_state.current_branch = "cond" if runtime_state.call_idx % 2 == 0 else "uncond"
+        model_shortcut_eligible = not runtime_state.is_model_anchor_step(runtime_state.current_step_idx)
 
         if _run_dit_model_shortcut(runtime_state):
             if runtime_state.config.debug:
@@ -250,9 +264,9 @@ def apply_fastercache(model, config: FasterCacheConfig, *, cfg_mode: str = "sequ
             
             # Move needed tensors back to GPU for reconstruction
             device = next(self.parameters()).device
-            p_cond = runtime_state.pending_cond_output.to(device)
-            d_lf = runtime_state.delta_lf.to(device)
-            d_hf = runtime_state.delta_hf.to(device)
+            p_cond = _materialize_to_device(runtime_state.pending_cond_output, device)
+            d_lf = _materialize_to_device(runtime_state.delta_lf, device)
+            d_hf = _materialize_to_device(runtime_state.delta_hf, device)
             
             output = _compose_from_fft_bands(p_cond, d_lf, d_hf)
         else:
@@ -264,13 +278,18 @@ def apply_fastercache(model, config: FasterCacheConfig, *, cfg_mode: str = "sequ
             output = self._fastercache_original_forward(*args, **kwargs)
 
         if runtime_state.current_branch == "cond":
-            # Clone and move to CPU immediately to free GPU for Uncond pass
-            runtime_state.pending_cond_output = _clone_detached(output).to("cpu")
-            torch.cuda.empty_cache()
-        elif runtime_state.pending_cond_output is not None:
-            # Move back to GPU to compute deltas
+            if model_shortcut_eligible:
+                # Only keep the conditional output when the upcoming unconditional pass may use it.
+                runtime_state.pending_cond_output = _clone_detached_cpu(output)
+                torch.cuda.empty_cache()
+            else:
+                runtime_state.pending_cond_output = None
+                runtime_state.delta_lf = None
+                runtime_state.delta_hf = None
+        elif model_shortcut_eligible and runtime_state.pending_cond_output is not None:
+            # Compute/update FFT deltas only on steps where future model shortcut may be used.
             device = output.device
-            cond_output = runtime_state.pending_cond_output.to(device)
+            cond_output = _materialize_to_device(runtime_state.pending_cond_output, device).type_as(output)
             dlf, dhf = compute_fastercache_deltas(cond_output, output)
             
             # Store results on CPU
@@ -284,6 +303,8 @@ def apply_fastercache(model, config: FasterCacheConfig, *, cfg_mode: str = "sequ
                 
             if runtime_state.current_step_idx >= runtime_state.total_steps - 1:
                 log.info(f"[FasterCache] Generation completed. Total timesteps completely skipped: {runtime_state.skipped_timesteps_count}")
+        elif runtime_state.current_branch == "uncond":
+            runtime_state.pending_cond_output = None
 
         runtime_state.call_idx += 1
         return output
