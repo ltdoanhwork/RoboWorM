@@ -235,12 +235,13 @@ python -m models.DreamDojo.examples.action_conditioned \
   --data-split test \
   --deterministic-uniform-sampling \
   --worldcache-enabled \
+
+```
   --worldcache-num-steps 35 \
-  --worldcache-rel-l1-thresh 0.08 \
+  --worldcache-rel-l1-thresh 0.065 \
+  --worldcache-motion-sensitivity 3.0 \
   --worldcache-probe-depth 4 \
   --worldcache-ret-ratio 0.5
-```
-
 ## How To Run (DreamGen 2.0 / GR00T)
 
 The `cache_strategy` module is also natively integrated into the `models/dreamgen/examples/` pipeline. Below is an example applying **WorldCache** to the `video2world_gr00t.py` script.
