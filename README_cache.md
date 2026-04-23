@@ -271,6 +271,15 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
 
 ### FasterCache (DreamGen)
 
+Baseline:
+```bash
+torchrun -m models.dreamgen.examples.video2world_gr00t     --model_size 14B     --gr00t_variant gr1     --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json     --disable_guardrail     --num_gpus 1 
+
+```
+[04-23 04:09:25|INFO|models/dreamgen/cosmos_predict2/models/text2image_dit.py:1779:forward] DiT Blocks time: 7.1864 seconds
+[04-23 04:09:25|INFO|models/dreamgen/cosmos_predict2/models/text2image_dit.py:1781:forward]   - Total Self-Attention: 4.5648s
+
+
 FasterCache acceleration is also supported in the DreamGen pipeline. Note that FasterCache v1 is currently limited to single-GPU inference.
 
 ```bash
@@ -278,9 +287,10 @@ export PYTHONPATH="./models/dreamgen:${PYTHONPATH}"
 
 # Execute with FasterCache enabled (Optimized for speed)
 torchrun -m models.dreamgen.examples.video2world_gr00t \
-    --model_size 2B \
+    --model_size 14B \
     --gr00t_variant gr1 \
-    --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_2b_gr1_behavior/batch_input.json \
+    --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+    --disable_guardrail \
     --num_gpus 1 \
     --use_fastercache \
     --fastercache_model_interval 10 \

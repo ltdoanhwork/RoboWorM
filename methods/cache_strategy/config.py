@@ -44,7 +44,7 @@ def add_dreamgen_cache_args(parser: argparse.ArgumentParser):
 
 
 def build_cache_runtime_config(setup_args: Any) -> CacheRuntimeConfig | None:
-    if getattr(setup_args, "fastercache_enabled", False):
+    if getattr(setup_args, "fastercache_enabled", False) or getattr(setup_args, "use_fastercache", False):
         from methods.cache_strategy.common import FasterCacheConfig
         return FasterCacheConfig(
             start_step=getattr(setup_args, "fastercache_start_step", 0),

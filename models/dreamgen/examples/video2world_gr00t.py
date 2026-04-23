@@ -285,11 +285,6 @@ def setup_pipeline(args: argparse.Namespace):
         cache_config=cache_config,
     )
 
-    fastercache_config = getattr(config.net, "fastercache_config", None)
-    if fastercache_config is not None:
-        *_, apply_fastercache = _import_sparse_backends()
-        apply_fastercache(pipe.dit, fastercache_config, cfg_mode="sequential")
-
     return pipe
 
 
