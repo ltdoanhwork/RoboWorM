@@ -32,6 +32,8 @@ def _history_for_shape(history: list[torch.Tensor], shape: torch.Size) -> bool:
 
 def _split_fft_bands(x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
     flat = x.reshape(x.shape[0], -1)
+    if flat.dtype == torch.bfloat16:
+        flat = flat.to(torch.float32)
     freq = torch.fft.rfft(flat, dim=-1)
     split_idx = max(freq.shape[-1] // 4, 1)
     lf = freq.clone()
@@ -47,6 +49,8 @@ def _compose_from_fft_bands(
     delta_hf: torch.Tensor,
 ) -> torch.Tensor:
     ref_flat = reference.reshape(reference.shape[0], -1)
+    if ref_flat.dtype == torch.bfloat16:
+        ref_flat = ref_flat.to(torch.float32)
     ref_freq = torch.fft.rfft(ref_flat, dim=-1)
     recon = torch.fft.irfft(ref_freq + delta_lf + delta_hf, n=ref_flat.shape[-1], dim=-1)
     return recon.reshape_as(reference).type_as(reference)
@@ -243,11 +247,14 @@ def apply_fastercache(model, config: FasterCacheConfig, *, cfg_mode: str = "sequ
             if runtime_state.config.debug:
                 log.info(f"[FasterCache] Step {runtime_state.current_step_idx} ({runtime_state.current_branch}): Model forward SKIPPED completely")
             runtime_state.skipped_timesteps_count += 1
-            output = _compose_from_fft_bands(
-                runtime_state.pending_cond_output,
-                runtime_state.delta_lf,
-                runtime_state.delta_hf,
-            )
+            
+            # Move needed tensors back to GPU for reconstruction
+            device = next(self.parameters()).device
+            p_cond = runtime_state.pending_cond_output.to(device)
+            d_lf = runtime_state.delta_lf.to(device)
+            d_hf = runtime_state.delta_hf.to(device)
+            
+            output = _compose_from_fft_bands(p_cond, d_lf, d_hf)
         else:
             if runtime_state.config.debug:
                 if runtime_state.is_block_anchor_step(runtime_state.current_step_idx):
@@ -257,13 +264,23 @@ def apply_fastercache(model, config: FasterCacheConfig, *, cfg_mode: str = "sequ
             output = self._fastercache_original_forward(*args, **kwargs)
 
         if runtime_state.current_branch == "cond":
-            runtime_state.pending_cond_output = _clone_detached(output)
+            # Clone and move to CPU immediately to free GPU for Uncond pass
+            runtime_state.pending_cond_output = _clone_detached(output).to("cpu")
+            torch.cuda.empty_cache()
         elif runtime_state.pending_cond_output is not None:
-            cond_output = runtime_state.pending_cond_output
-            runtime_state.delta_lf, runtime_state.delta_hf = compute_fastercache_deltas(cond_output, output)
+            # Move back to GPU to compute deltas
+            device = output.device
+            cond_output = runtime_state.pending_cond_output.to(device)
+            dlf, dhf = compute_fastercache_deltas(cond_output, output)
+            
+            # Store results on CPU
+            runtime_state.delta_lf = dlf.to("cpu")
+            runtime_state.delta_hf = dhf.to("cpu")
+            torch.cuda.empty_cache()
+            
             runtime_state.pending_cond_output = None
             if runtime_state.config.debug:
-                log.info(f"[FasterCache] Step {runtime_state.current_step_idx}: Computed FFT deltas for Uncond branch")
+                log.info(f"[FasterCache] Step {runtime_state.current_step_idx}: Computed FFT deltas (all cache on CPU)")
                 
             if runtime_state.current_step_idx >= runtime_state.total_steps - 1:
                 log.info(f"[FasterCache] Generation completed. Total timesteps completely skipped: {runtime_state.skipped_timesteps_count}")
