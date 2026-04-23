@@ -40,6 +40,7 @@ class FasterCacheConfig:
     start_step: int = 0
     model_interval: int = 5
     block_interval: int = 3
+    debug: bool = False
 
 
 CacheRuntimeConfig = WorldCacheConfig | DiCacheConfig | FasterCacheConfig

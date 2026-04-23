@@ -88,6 +88,7 @@ class FasterCacheRuntimeState:
     block_histories: dict[tuple[str, int], list[torch.Tensor]] = field(default_factory=dict)
     block_seq_len_min: int = 2048
     block_alpha: float = 0.3
+    skipped_timesteps_count: int = 0
 
     def reset(self, num_steps: int) -> None:
         self.total_steps = int(num_steps)
@@ -99,6 +100,7 @@ class FasterCacheRuntimeState:
         self.delta_lf = None
         self.delta_hf = None
         self.block_histories.clear()
+        self.skipped_timesteps_count = 0
 
     def is_model_anchor_step(self, step_idx: int) -> bool:
         if step_idx < self.resolved_start_step:
@@ -238,12 +240,20 @@ def apply_fastercache(model, config: FasterCacheConfig, *, cfg_mode: str = "sequ
         runtime_state.current_branch = "cond" if runtime_state.call_idx % 2 == 0 else "uncond"
 
         if _run_dit_model_shortcut(runtime_state):
+            if runtime_state.config.debug:
+                log.info(f"[FasterCache] Step {runtime_state.current_step_idx} ({runtime_state.current_branch}): Model forward SKIPPED completely")
+            runtime_state.skipped_timesteps_count += 1
             output = _compose_from_fft_bands(
                 runtime_state.pending_cond_output,
                 runtime_state.delta_lf,
                 runtime_state.delta_hf,
             )
         else:
+            if runtime_state.config.debug:
+                if runtime_state.is_block_anchor_step(runtime_state.current_step_idx):
+                    log.info(f"[FasterCache] Step {runtime_state.current_step_idx} ({runtime_state.current_branch}): Model EXECUTED (Anchor Step - Blocks COMPUTED)")
+                else:
+                    log.info(f"[FasterCache] Step {runtime_state.current_step_idx} ({runtime_state.current_branch}): Model EXECUTED (Blocks REUSED)")
             output = self._fastercache_original_forward(*args, **kwargs)
 
         if runtime_state.current_branch == "cond":
@@ -252,6 +262,11 @@ def apply_fastercache(model, config: FasterCacheConfig, *, cfg_mode: str = "sequ
             cond_output = runtime_state.pending_cond_output
             runtime_state.delta_lf, runtime_state.delta_hf = compute_fastercache_deltas(cond_output, output)
             runtime_state.pending_cond_output = None
+            if runtime_state.config.debug:
+                log.info(f"[FasterCache] Step {runtime_state.current_step_idx}: Computed FFT deltas for Uncond branch")
+                
+            if runtime_state.current_step_idx >= runtime_state.total_steps - 1:
+                log.info(f"[FasterCache] Generation completed. Total timesteps completely skipped: {runtime_state.skipped_timesteps_count}")
 
         runtime_state.call_idx += 1
         return output

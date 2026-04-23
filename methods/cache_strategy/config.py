@@ -12,6 +12,10 @@ from methods.cache_strategy.common import (
 def add_dreamgen_cache_args(parser: argparse.ArgumentParser):
     group = parser.add_argument_group("DreamGen Cache Backends")
     
+    # FasterCache
+    group.add_argument("--fastercache-enabled", action="store_true", help="Enable FasterCache acceleration.")
+    group.add_argument("--fastercache-debug", action="store_true", help="Enable debug logs for FasterCache.")
+    
     # WorldCache
     group.add_argument("--worldcache-enabled", action="store_true", help="Enable WorldCache acceleration for DiT inference.")
     group.add_argument("--worldcache-num-steps", type=int, default=35, help="Total denoising steps (must match --num-steps in inference).")
@@ -40,6 +44,14 @@ def add_dreamgen_cache_args(parser: argparse.ArgumentParser):
 
 
 def build_cache_runtime_config(setup_args: Any) -> CacheRuntimeConfig | None:
+    if getattr(setup_args, "fastercache_enabled", False):
+        from methods.cache_strategy.common import FasterCacheConfig
+        return FasterCacheConfig(
+            start_step=getattr(setup_args, "fastercache_start_step", 0),
+            model_interval=getattr(setup_args, "fastercache_model_interval", 5),
+            block_interval=getattr(setup_args, "fastercache_block_interval", 3),
+            debug=getattr(setup_args, "fastercache_debug", False),
+        )
     if getattr(setup_args, "worldcache_enabled", False):
         return WorldCacheConfig(
             num_steps=getattr(setup_args, "worldcache_num_steps", 35),

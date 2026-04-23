@@ -108,6 +108,7 @@ class ActionConditionedSetupArguments(CommonSetupArguments):
     fastercache_start_step: int = 0
     fastercache_model_interval: int = 5
     fastercache_block_interval: int = 3
+    fastercache_debug: bool = False
 
 
 @dataclass
