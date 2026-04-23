@@ -591,7 +591,8 @@ def get_cosmos_predict2_video2world_pipeline(
             kmeans_iter_init=svg_kmeans_iter_init,
             kmeans_iter_step=svg_kmeans_iter_step,
         )
-        config.net.fastercache_config = FasterCacheConfig(
+    if fastercache:
+        config.fastercache_config = FasterCacheConfig(
             start_step=fastercache_start_step,
             model_interval=fastercache_model_interval,
             block_interval=fastercache_block_interval,
