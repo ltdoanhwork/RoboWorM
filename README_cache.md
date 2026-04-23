@@ -235,13 +235,12 @@ python -m models.DreamDojo.examples.action_conditioned \
   --data-split test \
   --deterministic-uniform-sampling \
   --worldcache-enabled \
-
-```
   --worldcache-num-steps 35 \
   --worldcache-rel-l1-thresh 0.065 \
   --worldcache-motion-sensitivity 3.0 \
   --worldcache-probe-depth 4 \
   --worldcache-ret-ratio 0.5
+```
 ## How To Run (DreamGen 2.0 / GR00T)
 
 The `cache_strategy` module is also natively integrated into the `models/dreamgen/examples/` pipeline. Below is an example applying **WorldCache** to the `video2world_gr00t.py` script.
@@ -268,6 +267,25 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
     --worldcache-motion-sensitivity 4.0 \
     --worldcache-dynamic-decay
 --->>> Total inference time: 347.0921 seconds
+```
+
+### FasterCache (DreamGen)
+
+FasterCache acceleration is also supported in the DreamGen pipeline. Note that FasterCache v1 is currently limited to single-GPU inference.
+
+```bash
+export PYTHONPATH="./models/dreamgen:${PYTHONPATH}"
+
+# Execute with FasterCache enabled (Optimized for speed)
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+    --model_size 2B \
+    --gr00t_variant gr1 \
+    --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_2b_gr1_behavior/batch_input.json \
+    --num_gpus 1 \
+    --use_fastercache \
+    --fastercache_model_interval 10 \
+    --fastercache_block_interval 6 \
+    --fastercache_debug
 ```
 Nếu đang dùng WorldCache, tham số chính để skip mạnh hơn là --worldcache-rel-l1-thresh. Tăng cái này trước.
 
@@ -296,6 +314,7 @@ python -m models.DreamDojo.examples.action_conditioned \
   --data-split test \
   --deterministic-uniform-sampling \
   --fastercache-enabled \
+  --fastercache-debug \
   --fastercache_start_step 0 \
   --fastercache_model_interval 5 \
   --fastercache_block_interval 3

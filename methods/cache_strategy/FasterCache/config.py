@@ -25,3 +25,8 @@ def add_fastercache_args(parser) -> None:
         default=3,
         help="Anchor interval for block-level self-attention refresh.",
     )
+    parser.add_argument(
+        "--fastercache_debug",
+        action="store_true",
+        help="Enable debug logs for FasterCache.",
+    )
