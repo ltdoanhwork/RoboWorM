@@ -278,9 +278,10 @@ export PYTHONPATH="./models/dreamgen:${PYTHONPATH}"
 
 # Execute with FasterCache enabled (Optimized for speed)
 torchrun -m models.dreamgen.examples.video2world_gr00t \
-    --model_size 2B \
+    --model_size 14B \
     --gr00t_variant gr1 \
     --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_2b_gr1_behavior/batch_input.json \
+    --disable_guardrail \
     --num_gpus 1 \
     --use_fastercache \
     --fastercache_model_interval 10 \
