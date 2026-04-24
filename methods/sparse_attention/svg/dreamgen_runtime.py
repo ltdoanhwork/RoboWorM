@@ -389,6 +389,11 @@ class DreamGenSVG2Runtime:
         self._q_centroids = None
         self._k_centroids = None
         self._centroid_shape = None
+        
+        print(f"[SVG2] Initialized DreamGenSVG2Runtime with "
+              f"q_centroids={num_q_centroids}, k_centroids={num_k_centroids}, "
+              f"top_p_kmeans={top_p_kmeans}, min_kc_ratio={min_kc_ratio}, "
+              f"iter_init={kmeans_iter_init}, iter_step={kmeans_iter_step}")
 
     def _validate(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, *, video_size) -> None:
         if not query.is_cuda:

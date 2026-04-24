@@ -125,9 +125,9 @@ export PYTHONPATH="./models/dreamgen"
 export CUDA_VISIBLE_DEVICES=0 
 export NUM_GPUS=1
 python -m scripts.prepare_batch_input_json \
-  --dataset_path ./datasets/dream_gen_benchmark/gr1_env \
-  --save_path ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_env \
-  --output_path ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_env/batch_input.json
+  --dataset_path ./datasets/dream_gen_benchmark/gr1_object \
+  --save_path ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_object \
+  --output_path ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_object/batch_input.json
 
 ### dreamgen base - one gpu
 source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
@@ -171,6 +171,24 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
   --pisa_density 0.2 \
   --pisa_block_size 64 \
   --pisa_start_layer_idx 2
+--> Total inference time: 414.5592 seconds
+
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
+export PYTHONPATH="./models/dreamgen"
+export CUDA_VISIBLE_DEVICES=0 
+export NUM_GPUS=1
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+  --model_size 14B \
+  --gr00t_variant gr1 \
+  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_env/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS} \
+  --use_pisa \
+  --pisa_density 0.05 \
+  --pisa_block_size 64 \
+  --pisa_start_layer_idx 0
+--> Total inference time: 315.6579 seconds 
+
 
 source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/dreamgen"
@@ -200,7 +218,7 @@ export NUM_GPUS=1
 torchrun -m models.dreamgen.examples.video2world_gr00t \
   --model_size 14B \
   --gr00t_variant gr1 \
-  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_object/batch_input.json \
   --disable_guardrail \
   --num_gpus ${NUM_GPUS} \
   --use_radial \
@@ -208,6 +226,10 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
   --radial_block_size 64 \
   --radial_start_layer_idx 4 \
   --radial_model_type hunyuan
+--> Total inference time: 397.3452 seconds 
+
+
+
 
 ### dreamgen - svg
 `SVG1` and `SVG2` have different environment requirements.
@@ -286,12 +308,29 @@ torchrun --master_port=29601 -m models.dreamgen.examples.video2world_gr00t \
   --svg_variant svg2 \
   --svg_start_layer_idx 1 \
   --svg_dense_step_frac 0.3 \
-  --svg_num_q_centroids 64 \
-  --svg_num_k_centroids 128 \
+  --svg_num_q_centroids 32 \
+  --svg_num_k_centroids 64 \
   --svg_top_p_kmeans 0.9 \
   --svg_min_kc_ratio 0.10 \
   --svg_kmeans_iter_init 10 \
   --svg_kmeans_iter_step 1
+-->  Total inference time: 473.8372 seconds 
+
+torchrun --master_port=29601 -m models.dreamgen.examples.video2world_gr00t \
+  --model_size 14B \
+  --gr00t_variant gr1 \
+  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS} \
+  --use_svg \
+  --svg_variant svg1 \
+  --svg_start_layer_idx 1 \
+  --svg_dense_step_frac 0.1 \
+  --svg_sparsity 0.15 \
+  --svg_num_sampled_rows 64 \
+  --svg_sample_mse_max_row 3000
+
+
 
 ## dreamdojo
 source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
