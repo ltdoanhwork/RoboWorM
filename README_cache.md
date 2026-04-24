@@ -267,7 +267,76 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
     --worldcache-motion-sensitivity 4.0 \
     --worldcache-dynamic-decay
 --->>> Total inference time: 347.0921 seconds
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+    --model_size 14B \
+    --gr00t_variant gr1 \
+    --batch_input_json ./output/dream_gen_benchmark_world_cache/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+    --disable_guardrail \
+    --num_gpus 1 \
+    --worldcache-enabled \
+    --worldcache-num-steps 35 \
+    --worldcache-rel-l1-thresh 0.06 \
+    --worldcache-ret-ratio 0.6 \
+    --worldcache-probe-depth 6 \
+    --worldcache-motion-sensitivity 5.0 \
+    --worldcache-dynamic-decay
+--->>> Total inference time: 399.7761 seconds 
+
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+    --model_size 14B \
+    --gr00t_variant gr1 \
+    --batch_input_json ./output/dream_gen_benchmark_world_cache/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+    --disable_guardrail \
+    --num_gpus 1 \
+    --worldcache-enabled \
+    --worldcache-num-steps 35 \
+    --worldcache-rel-l1-thresh 0.05 \
+    --worldcache-ret-ratio 0.65 \
+    --worldcache-probe-depth 7 \
+    --worldcache-motion-sensitivity 5.0 \
+    --worldcache-dynamic-decay
+--> Total inference time: 408.3197 seconds
+
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+    --model_size 14B \
+    --gr00t_variant gr1 \
+    --batch_input_json ./output/dream_gen_benchmark_world_cache/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+    --disable_guardrail \
+    --num_gpus 1 \
+    --worldcache-enabled \
+    --worldcache-num-steps 35 \
+    --worldcache-rel-l1-thresh 0.05 \
+    --worldcache-ret-ratio 0.55 \
+    --worldcache-probe-depth 10 \
+    --worldcache-motion-sensitivity 7.0 \
+    --worldcache-dynamic-decay
+--> Total inference time: 413.3745 seconds                                               
+
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+    --model_size 14B \
+    --gr00t_variant gr1 \
+    --batch_input_json ./output/dream_gen_benchmark_world_cache/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+    --disable_guardrail \
+    --num_gpus 1 \
+    --worldcache-enabled \
+    --worldcache-num-steps 35 \
+    --worldcache-rel-l1-thresh 0.03 \
+    --worldcache-ret-ratio 0.6 \
+    --worldcache-probe-depth 15 \
+    --worldcache-motion-sensitivity 9.0 \
+    --worldcache-dynamic-decay
+
 ```
+Nếu đang dùng WorldCache, tham số chính để skip mạnh hơn là --worldcache-rel-l1-thresh. Tăng cái này trước.
+
+Với config hiện tại của bạn 0.065 / 6 / 0.5, thứ tự chỉnh nên là:
+
+Tăng --worldcache-rel-l1-thresh lên 0.075, rồi 0.08, nếu còn muốn mạnh nữa thì 0.085.
+Giảm --worldcache-ret-ratio từ 0.5 xuống 0.4 hoặc 0.35.
+Giảm --worldcache-probe-depth từ 6 xuống 5 hoặc 4.
+Giảm --worldcache-motion-sensitivity từ 5.0 xuống 3.0 nếu muốn cache bớt nhạy với motion.
+Bật --worldcache-dynamic-decay nếu muốn skip mạnh hơn về cuối denoise.
+Bật --worldcache-aduc-enabled nếu muốn tăng tốc thêm nhánh uncond ở cuối, nhưng đây không phải full-step skip.
 
 ### FasterCache (DreamGen)
 
@@ -296,23 +365,52 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
     --fastercache_model_interval 10 \
     --fastercache_block_interval 6 \
     --fastercache_debug
+] Total inference time: 375.0514 seconds 
+
+**Giải thích các thông số FasterCache và cách tune để tăng chất lượng ("tối ưu quality hơn"):**
+
+- `--fastercache_start_step`: Bước (timestep) bắt đầu bật cache. Các bước đầu tiên của diffusion cực kỳ quan trọng để định hình cấu trúc và chi tiết của video.
+  - **Cách tune để tăng quality:** Tăng giá trị này lên (ví dụ từ 0 hoặc 5 lên `10` hoặc `15`). Chạy đầy đủ không cache ở các bước đầu càng nhiều thì video xuất ra càng đẹp, sắc nét và bám sát prompt, đánh đổi lại là tốc độ giảm đi đôi chút.
+- `--fastercache_model_interval`: Khoảng cách số bước để model tính toán lại hoàn toàn nhánh *unconditional* (thay vì skip và dùng FFT deltas tính từ nhánh conditional).
+  - **Cách tune để tăng quality:** Giảm giá trị này xuống (ví dụ từ 10 xuống `3` hoặc `2`). Cập nhật nhánh uncond thường xuyên hơn giúp Classifier-Free Guidance (CFG) ổn định hơn, tránh vỡ hình ảnh.
+- `--fastercache_block_interval`: Khoảng cách số bước để tính toán lại chính xác *Self-Attention* trong các DiT blocks (thay vì dùng lại output của các bước trước).
+  - **Cách tune để tăng quality:** Giảm giá trị này xuống (ví dụ từ 6 xuống `4` hoặc `3`). Giúp các token duy trì liên kết không gian - thời gian tốt hơn, giảm hiện tượng bóng mờ (ghosting) hoặc nhiễu chi tiết.
+
+--> Ví dụ lệnh chạy tối ưu quality hơn (chậm hơn một chút nhưng chi tiết tốt hơn):
+```bash
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+    --model_size 14B \
+    --gr00t_variant gr1 \
+    --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+    --disable_guardrail \
+    --num_gpus 1 \
+    --use_fastercache \
+    --fastercache_start_step 10 \
+    --fastercache_model_interval 3 \
+    --fastercache_block_interval 3 \
+    --fastercache_debug
+--->>> Total inference time: 461.3048 seconds 
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+    --model_size 14B \
+    --gr00t_variant gr1 \
+    --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+    --disable_guardrail \
+    --num_gpus 1 \
+    --use_fastercache \
+    --fastercache_start_step 12 \
+    --fastercache_model_interval 2  \
+    --fastercache_block_interval 3 \
+    --fastercache_debug
+Total inference time: 516.1998 seconds
 ```
-Nếu đang dùng WorldCache, tham số chính để skip mạnh hơn là --worldcache-rel-l1-thresh. Tăng cái này trước.
 
-Với config hiện tại của bạn 0.065 / 6 / 0.5, thứ tự chỉnh nên là:
-
-Tăng --worldcache-rel-l1-thresh lên 0.075, rồi 0.08, nếu còn muốn mạnh nữa thì 0.085.
-Giảm --worldcache-ret-ratio từ 0.5 xuống 0.4 hoặc 0.35.
-Giảm --worldcache-probe-depth từ 6 xuống 5 hoặc 4.
-Giảm --worldcache-motion-sensitivity từ 5.0 xuống 3.0 nếu muốn cache bớt nhạy với motion.
-Bật --worldcache-dynamic-decay nếu muốn skip mạnh hơn về cuối denoise.
-Bật --worldcache-aduc-enabled nếu muốn tăng tốc thêm nhánh uncond ở cuối, nhưng đây không phải full-step skip.
 
 > Same DiCache flags (`--dicache-enabled`, etc.) seamlessly apply to DreamGen scripts.
 
 ### FasterCache
 
 ```bash
+export PYTHONPATH="./models/DreamDojo:${PYTHONPATH}"
 python -m models.DreamDojo.examples.action_conditioned \
   -o ./output/action_conditioned/cache_fastercache \
   --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train \
@@ -326,8 +424,8 @@ python -m models.DreamDojo.examples.action_conditioned \
   --fastercache-enabled \
   --fastercache-debug \
   --fastercache_start_step 0 \
-  --fastercache_model_interval 5 \
-  --fastercache_block_interval 3
+  --fastercache_model_interval 2 \
+  --fastercache_block_interval 5
 ```
 
 ## Ctrl-World Cache Backends

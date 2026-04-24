@@ -20,7 +20,7 @@ CUDA_VISIBLE_DEVICES=0 python scripts/rollout_key_board.py  --dataset_root_path 
 
 
 ### Default
-source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/Ctrl-World"
 CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-World/scripts/rollout_interact_pi.py \
   --dataset_root_path ./models/Ctrl-World/dataset_example \
@@ -32,7 +32,7 @@ CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-Wor
   --task_type pickplace
 
 ### Use with Pisa
-source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/Ctrl-World"
 CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-World/scripts/rollout_interact_pi.py \
   --dataset_root_path ./models/Ctrl-World/dataset_example \
@@ -45,7 +45,7 @@ CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-Wor
   --use_pisa --pisa_density 0.5 --pisa_block_size 32
 
 ### Use-svg v1
-source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/Ctrl-World"
 CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-World/scripts/rollout_interact_pi.py \
   --dataset_root_path ./models/Ctrl-World/dataset_example \
@@ -58,9 +58,9 @@ CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-Wor
   --use_svg --svg_pattern SVG1 --svg_sparsity 0.25
 
 ### Use-svg v2
-export VENV=/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv
+export VENV=/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv
 export LD_LIBRARY_PATH=$VENV/lib/python3.10/site-packages/nvidia/nvjitlink/lib:$VENV/lib/python3.10/site-packages/nvidia/cusparse/lib:$VENV/lib/python3.10/site-packages/torch/lib:$LD_LIBRARY_PATH
-source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/Ctrl-World"
 CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-World/scripts/rollout_interact_pi.py \
   --dataset_root_path ./models/Ctrl-World/dataset_example \
@@ -74,7 +74,7 @@ CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-Wor
 
 
 ### use with radial attention (padding)
-source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/Ctrl-World"
 CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-World/scripts/rollout_interact_pi.py \
   --dataset_root_path ./models/Ctrl-World/dataset_example \
@@ -90,7 +90,7 @@ CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-Wor
 
 ### use with radial attention (no padding)
 
-source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/Ctrl-World"
 CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-World/scripts/rollout_interact_pi.py \
   --dataset_root_path ./models/Ctrl-World/dataset_example \
@@ -105,7 +105,7 @@ CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-Wor
 
 ### use with radial attention (no padding)
 
-source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/Ctrl-World"
 CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-World/scripts/rollout_interact_pi.py \
   --dataset_root_path ./models/Ctrl-World/dataset_example \
@@ -120,7 +120,7 @@ CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-Wor
   --radial_model_type hunyuan \
   --radial_first_layers_fp 0
 ## dreamgen base 
-source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/dreamgen"
 export CUDA_VISIBLE_DEVICES=0 
 export NUM_GPUS=1
@@ -130,7 +130,7 @@ python -m scripts.prepare_batch_input_json \
   --output_path ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_env/batch_input.json
 
 ### dreamgen base - one gpu
-source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/dreamgen"
 export CUDA_VISIBLE_DEVICES=0 
 export NUM_GPUS=1
@@ -142,7 +142,7 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
   --num_gpus ${NUM_GPUS}
 
 ### dreamgen base - 4 gpu
-source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/dreamgen"
 export CUDA_VISIBLE_DEVICES=0,1,2,3 
 export NUM_GPUS=4
@@ -157,7 +157,7 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
 cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/methods/sparse_attention/piecewise-sparse-attention
 uv pip install -e .
 
-source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/dreamgen"
 export CUDA_VISIBLE_DEVICES=0 
 export NUM_GPUS=1
@@ -172,7 +172,7 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
   --pisa_block_size 64 \
   --pisa_start_layer_idx 2
 
-source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/dreamgen"
 export CUDA_VISIBLE_DEVICES=0,1
 export NUM_GPUS=2
@@ -193,7 +193,7 @@ Radial is not supported in the default `DreamDojo/.venv`. It requires a separate
 cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
 bash ./scripts/bootstrap_radial_env.sh
 
-source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/dreamgen"
 export CUDA_VISIBLE_DEVICES=0
 export NUM_GPUS=1
@@ -221,7 +221,7 @@ Do not install `cuvs-cu12` into `DreamDojo/.venv`. That env currently uses a Tor
 cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
 bash ./scripts/bootstrap_svg_env.sh
 
-source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/dreamgen"
 export CUDA_VISIBLE_DEVICES=0
 export NUM_GPUS=1
@@ -271,7 +271,7 @@ Quality-focused (only SVG on spatially-local layers):
 
 
 ### dreamgen - svg2
-source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/dreamgen"
 export CUDA_VISIBLE_DEVICES=0
 export NUM_GPUS=1
@@ -286,12 +286,12 @@ torchrun --master_port=29601 -m models.dreamgen.examples.video2world_gr00t \
   --svg_variant svg2 \
   --svg_start_layer_idx 1 \
   --svg_dense_step_frac 0.3 \
-  --svg_num_q_centroids 150 \
-  --svg_num_k_centroids 400 \
+  --svg_num_q_centroids 64 \
+  --svg_num_k_centroids 128 \
   --svg_top_p_kmeans 0.9 \
   --svg_min_kc_ratio 0.10 \
-  --svg_kmeans_iter_init 20 \
-  --svg_kmeans_iter_step 2
+  --svg_kmeans_iter_init 10 \
+  --svg_kmeans_iter_step 1
 
 ## dreamdojo
 source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
@@ -406,7 +406,7 @@ python -m models.DreamDojo.examples.action_conditioned \
 SiTo is inference-only, self-attention only, and single-GPU only in DreamGen v1.
 
 ```bash
-source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/dreamgen"
 export CUDA_VISIBLE_DEVICES=0
 export NUM_GPUS=1
@@ -445,7 +445,7 @@ python -m models.DreamDojo.examples.action_conditioned \
 SiTo is applied only on large spatial self-attention layers in Ctrl-World.
 
 ```bash
-source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/DreamDojo/.venv/bin/activate
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/Ctrl-World"
 CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-World/scripts/rollout_interact_pi.py \
   --dataset_root_path ./models/Ctrl-World/dataset_example \
