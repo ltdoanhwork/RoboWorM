@@ -592,8 +592,10 @@ class Video2WorldPipeline(BasePipeline):
                 expected_length = 93
                 print(f"DEBUG: Hardcoding expected_length to {expected_length}")
                 original_length = data_batch[input_key].shape[2]
-                if original_length != expected_length:
+                if original_length > expected_length:
                     data_batch[input_key] = temporal_sample(data_batch[input_key], expected_length)
+                # If original_length <= expected_length (e.g. single frame input), skip temporal sampling
+
 
     def _augment_image_dim_inplace(self, data_batch: dict[str, torch.Tensor], input_key: str = None) -> None:  # noqa: RUF013
         input_key = self.input_image_key if input_key is None else input_key

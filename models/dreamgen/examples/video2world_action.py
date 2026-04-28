@@ -25,6 +25,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 import torch
 from megatron.core import parallel_state
+from tqdm import tqdm
 
 from cosmos_predict2.configs.action_conditioned.config import get_cosmos_predict2_action_conditioned_pipeline
 from cosmos_predict2.pipelines.video2world_action import Video2WorldActionConditionedPipeline
@@ -112,6 +113,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--disable_prompt_refiner", action="store_true", help="Disable prompt refiner that enhances short prompts"
     )
+    parser.add_argument(
+        "--batch_input_json",
+        type=str,
+        default=None,
+        help="Path to JSON file containing batch inputs.",
+    )
     return parser.parse_args()
 
 
@@ -177,7 +184,7 @@ def process_single_generation(
     actions = get_action_sequence(input_annotation)
     first_frame = read_first_frame(input_path)
 
-    log.info(f"Running Video2WorldPipeline\ninput: {input_path}")
+    log.info(f"Running Video2WorldPipeline\ninput: {input_path}\naction: {input_annotation}")
 
     if autoregressive:
         log.info("Using autoregressive mode")
@@ -218,16 +225,41 @@ def process_single_generation(
 
 
 def generate_video(args: argparse.Namespace, pipe: Video2WorldActionConditionedPipeline) -> None:
-    process_single_generation(
-        pipe=pipe,
-        input_path=args.input_video,
-        input_annotation=args.input_annotation,
-        output_path=args.save_path,
-        guidance=args.guidance,
-        seed=args.seed,
-        chunk_size=args.chunk_size,
-        autoregressive=args.autoregressive,
-    )
+    if args.batch_input_json is not None:
+        log.info(f"Loading batch inputs from JSON file: {args.batch_input_json}")
+        with open(args.batch_input_json) as f:
+            batch_inputs = json.load(f)
+
+        for idx, item in enumerate(tqdm(batch_inputs)):
+            input_video = item.get("input_video", "")
+            input_annotation = item.get("input_annotation", "")
+            output_video = item.get("output_video", f"output_{idx}.mp4")
+
+            if not input_video or not input_annotation:
+                log.warning(f"Skipping item {idx}: Missing input_video or input_annotation")
+                continue
+
+            process_single_generation(
+                pipe=pipe,
+                input_path=input_video,
+                input_annotation=input_annotation,
+                output_path=output_video,
+                guidance=args.guidance,
+                seed=args.seed,
+                chunk_size=args.chunk_size,
+                autoregressive=args.autoregressive,
+            )
+    else:
+        process_single_generation(
+            pipe=pipe,
+            input_path=args.input_video,
+            input_annotation=args.input_annotation,
+            output_path=args.save_path,
+            guidance=args.guidance,
+            seed=args.seed,
+            chunk_size=args.chunk_size,
+            autoregressive=args.autoregressive,
+        )
     return
 
 

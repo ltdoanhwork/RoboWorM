@@ -72,8 +72,8 @@ torchrun -m models.dreamgen.examples.video2world_gr00t_lvg \
 
 ### Dense 
 export PYTHONPATH="./models/dreamgen"
-export CUDA_VISIBLE_DEVICES=0 
-export NUM_GPUS=1
+export CUDA_VISIBLE_DEVICES=0,1
+export NUM_GPUS=2
 python -m scripts.prepare_batch_input_json_csv \
   --dataset_path ./datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/EgoDex_Eval \
   --dataset_type lerobot \
@@ -82,14 +82,15 @@ python -m scripts.prepare_batch_input_json_csv \
 
 source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/dreamgen"
-export CUDA_VISIBLE_DEVICES=0
-export NUM_GPUS=1
-torchrun -m models.dreamgen.examples.video2world_gr00t \
+export CUDA_VISIBLE_DEVICES=0,1
+export NUM_GPUS=2
+torchrun --nproc_per_node=${NUM_GPUS} -m models.dreamgen.examples.video2world_gr00t_lvg \
   --model_size 14B \
   --gr00t_variant gr1 \
   --batch_input_json ./sampling_dataset/PhysicalAI-Robotics-GR00T-Teleop-GR1/EgoDex_Eval/dense/batch_input.json \
   --disable_guardrail \
-  --num_gpus ${NUM_GPUS}
+  --num_gpus ${NUM_GPUS} \
+  --num_chunks 2
 
 ## Dataset: PhysicalAI-Robotics-GR00T-Teleop-GR1/In-lab_Eval
 
@@ -107,9 +108,10 @@ source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_g
 export PYTHONPATH="./models/dreamgen"
 export CUDA_VISIBLE_DEVICES=0
 export NUM_GPUS=1
-torchrun -m models.dreamgen.examples.video2world_gr00t \
+torchrun -m models.dreamgen.examples.video2world_gr00t_lvg \
   --model_size 14B \
   --gr00t_variant gr1 \
   --batch_input_json ./sampling_dataset/PhysicalAI-Robotics-GR00T-Teleop-GR1/In-lab_Eval/dense/batch_input.json \
   --disable_guardrail \
-  --num_gpus ${NUM_GPUS}
+  --num_gpus ${NUM_GPUS} \
+  --num_chunks 4

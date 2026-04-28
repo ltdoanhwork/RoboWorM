@@ -15,6 +15,19 @@ def parse_args():
     parser.add_argument("--recursive", action="store_true", help="Recursively search for video files")
     return parser.parse_args()
 
+def clean_prompt(text):
+    if not text:
+        return ""
+    # Remove technical prefixes
+    text = text.replace("locked waist: ", "")
+    if text.startswith("grid_"):
+        text = text.replace("grid_", "")
+    # Replace underscores with spaces for more natural language
+    text = text.replace("_", " ")
+    # Strip extra whitespace
+    text = text.strip()
+    return text
+
 def main():
     args = parse_args()
     dataset_path = args.dataset_path
@@ -32,7 +45,7 @@ def main():
         with open(metadata_path, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
-                metadata_csv[row['file_name']] = row['text']
+                metadata_csv[row['file_name']] = clean_prompt(row['text'])
 
     if recursive or dataset_type == "lerobot":
         input_files = glob.glob(os.path.join(dataset_path, "**", "*.mp4"), recursive=True) + \
@@ -51,6 +64,8 @@ def main():
         file_name = os.path.basename(input_file)
         
         prompt = ""
+        output_video_name = ""
+        
         if dataset_type == "csv":
             if file_name not in metadata_csv:
                 print(f"Warning: {file_name} not found in metadata.")
@@ -81,7 +96,7 @@ def main():
                                 tasks = obj.get("tasks", [])
                                 desc = obj.get("description", "")
                                 text = tasks[0] if tasks else desc
-                                meta_dict[idx] = text
+                                meta_dict[idx] = clean_prompt(text)
                     lerobot_metadata_cache[jsonl_path] = meta_dict
             
             # Extract episode index from filename (e.g., episode_000000.mp4)
