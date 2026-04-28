@@ -261,12 +261,15 @@ class Video2WorldActionConditionedPipeline(Video2WorldPipeline):
         input_key = self.input_image_key if is_image_batch else self.input_video_key
         n_sample = data_batch[input_key].shape[0]
         _T, _H, _W = data_batch[input_key].shape[-3:]
+        # state_shape must use config.state_t (total frames to generate), NOT _T (conditioning frames=1).
+        # Using _T here would make x_sigma_max have T=1 which breaks context parallel split across GPUs.
         state_shape = [
             self.config.state_ch,
             self.tokenizer.get_latent_num_frames(_T),
             _H // self.tokenizer.spatial_compression_factor,
             _W // self.tokenizer.spatial_compression_factor,
         ]
+
 
         x0_fn = self.get_x0_fn_from_batch(data_batch, guidance, is_negative_prompt=True)
 
