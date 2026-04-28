@@ -228,8 +228,31 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
   --radial_model_type hunyuan
 --> Total inference time: 397.3452 seconds 
 
+#### Quality-Focused Radial Configuration
+To improve generation quality (at the cost of a slightly longer inference time), you can increase the start layer index and change the mask profile to `wan` which has a larger attention window:
+
+```bash
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+  --model_size 14B \
+  --gr00t_variant gr1 \
+  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_object/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS} \
+  --use_radial \
+  --radial_decay_factor 1.0 \
+  --radial_block_size 64 \
+  --radial_start_layer_idx 8 \
+  --radial_model_type wan
+```
+--> Total inference time: 418.5359 seconds
 
 
+
+#### Tuning Radial Parameters
+- `--radial_start_layer_idx` (default: 4): The number of initial self-attention layers to compute exactly (no sparsity). **Increasing this (e.g. to 8 or 12)** is the most effective way to improve visual quality and object structure, as early layers are critical for forming the image.
+- `--radial_model_type` (default: `hunyuan`): The sparsity mask profile. Changing this to `wan` uses a larger attention window and sink, looking at more tokens and generally resulting in better quality.
+- `--radial_decay_factor` (default: 1.0): Controls how quickly the radial mask drops tokens. 
+- `--radial_block_size` (default: 64): Block size for sparse attention. Only `64` and `128` are supported. `64` is typically the best balance.
 
 ### dreamgen - svg
 `SVG1` and `SVG2` have different environment requirements.
@@ -329,6 +352,22 @@ torchrun --master_port=29601 -m models.dreamgen.examples.video2world_gr00t \
   --svg_sparsity 0.15 \
   --svg_num_sampled_rows 64 \
   --svg_sample_mse_max_row 3000
+--> Total inference time: 369.3853 seconds 
+
+torchrun --master_port=29601 -m models.dreamgen.examples.video2world_gr00t \
+  --model_size 14B \
+  --gr00t_variant gr1 \
+  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS} \
+  --use_svg \
+  --svg_variant svg1 \
+  --svg_start_layer_idx 4 \
+  --svg_dense_step_frac 0.4 \
+  --svg_sparsity 0.25 \
+  --svg_num_sampled_rows 64 \
+  --svg_sample_mse_max_row 3000
+
 
 
 
