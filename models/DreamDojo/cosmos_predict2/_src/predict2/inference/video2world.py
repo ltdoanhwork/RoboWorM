@@ -649,13 +649,16 @@ class Video2WorldInference:
                 "num_output_video": num_output_video,
             }
         
-        # lam_video = rearrange(data_batch["lam_video"], "b (p t) h w c -> (b p) t h w c", t=2)
-        # lam_input = {"videos": lam_video}
-        # with torch.no_grad():
-        #     outputs = self.model.lam.lam(lam_input)
-        # latent_action = outputs["z_rep"].squeeze().to(data_batch["action"].dtype).detach()
-        # latent_action = rearrange(latent_action, "(t b) d -> b t d", t=data_batch["action"].shape[1])
-        # data_batch["action"][:, :, -32:] = data_batch["action"][:, :, -32:] * latent_action
+        if lam_video is not None:
+            print("Processing lam_video")
+            lam_video_tensor = rearrange(data_batch["lam_video"], "b (p t) h w c -> (b p) t h w c", t=2)
+            lam_input = {"videos": lam_video_tensor}
+            self.model._ensure_lam(data_batch["action"].device)
+            with torch.no_grad():
+                outputs = self.model.lam.lam(lam_input)
+            latent_action = outputs["z_rep"].squeeze().to(data_batch["action"].dtype).detach()
+            latent_action = rearrange(latent_action, "(t b) d -> b t d", t=data_batch["action"].shape[1])
+            data_batch["action"][:, :, -32:] = data_batch["action"][:, :, -32:] * latent_action
 
         # Generate latent samples using the diffusion model
         # Video should be of shape torch.Size([1, 3, 93, 192, 320]) # Note: Shape check comment

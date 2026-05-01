@@ -390,16 +390,16 @@ python -m cosmos_predict2._src.predict2.inference.inference_batch \
 
 
 
-
+export VIRTUAL_ENV="$PWD/.venv"
+export PATH="$VIRTUAL_ENV/bin:$PATH"
+hash -r
 source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/DreamDojo"
 export CUDA_VISIBLE_DEVICES=0
 export NUM_GPUS=1
 cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
 
-export VIRTUAL_ENV="$PWD/.venv"
-export PATH="$VIRTUAL_ENV/bin:$PATH"
-hash -r
+
 python -m models.DreamDojo.examples.action_conditioned \
   -o ./output/dreamdojo_hv_eval_2b_g1_gr1 \
   --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000 \

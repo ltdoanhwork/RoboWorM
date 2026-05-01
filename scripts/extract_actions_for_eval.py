@@ -48,6 +48,10 @@ def parse_args():
     parser.add_argument("--video_subdir", type=str,
                         default="observation.images.ego_view_freq20",
                         help="Video subdirectory under videos/chunk-*/")
+    parser.add_argument("--stride", type=int, default=5,
+                        help="Subsample stride to convert source FPS -> model FPS "
+                             "(default 5 = 20Hz dataset -> 4Hz model). Each output "
+                             "delta then represents motion over 1/4 s, matching training.")
     return parser.parse_args()
 
 
@@ -57,35 +61,46 @@ def load_modality(dataset_path):
         return json.load(f)
 
 
-def extract_action_ee(raw_actions, modality):
-    """Return (T, 6) array of per-frame deltas, pre-divided by INFERENCE_SCALE."""
+def extract_action_ee(raw_actions, modality, stride):
+    """Return (T_out, 6) array of per-frame deltas, pre-divided by INFERENCE_SCALE.
+
+    `stride` subsamples the source-FPS actions to the model FPS so each delta
+    represents motion over one model-frame (e.g. 20Hz -> 4Hz with stride=5).
+    """
     action_def = modality["action"]
 
     if "delta_right_wrist" in action_def:
         s = action_def["delta_right_wrist"]["start"]
-        # First 6D of the 144-D delta block = next-frame EE wrist delta.
-        delta = raw_actions[:, s:s + 6]
-        return delta / INFERENCE_SCALE, "delta_right_wrist"
+        # The 144-D block is 24 future-frame deltas at source FPS.
+        # First 6D = +1-frame delta. To get a +stride-frame delta at model FPS,
+        # use the slot at index (stride-1)*6.
+        slot = (stride - 1) * 6
+        delta = raw_actions[::stride, s + slot:s + slot + 6]
+        return delta / INFERENCE_SCALE, f"delta_right_wrist[slot={slot}], stride={stride}"
 
     if "right_arm" in action_def:
         s = action_def["right_arm"]["start"]
-        # Take first 6 joints of right_arm as proxy; compute frame-to-frame delta.
         arm = raw_actions[:, s:s + 6]
-        delta = np.diff(arm, axis=0, prepend=arm[:1])  # (T, 6)
-        return delta / INFERENCE_SCALE, "right_arm_diff (best-effort)"
+        # Stride-spaced finite difference: delta[i] = arm[(i+1)*stride] - arm[i*stride]
+        arm_ds = arm[::stride]  # (T_out+1, 6) ideally
+        if arm_ds.shape[0] < 2:
+            raise ValueError("Episode too short for stride")
+        delta = np.diff(arm_ds, axis=0, prepend=arm_ds[:1])  # (T_out, 6)
+        return delta / INFERENCE_SCALE, f"right_arm_diff, stride={stride} (best-effort)"
 
     raise ValueError("No usable action channel found in modality.json")
 
 
-def extract_gripper(raw_actions, modality):
-    """Return (T,) gripper state in [0, 1]."""
+def extract_gripper(raw_actions, modality, stride, length):
+    """Return (length,) gripper state in [0, 1] aligned to the strided actions."""
     action_def = modality["action"]
     if "right_hand" not in action_def:
-        # Fall back to zeros if no hand channel.
-        return np.zeros(raw_actions.shape[0], dtype=np.float32)
+        return np.zeros(length, dtype=np.float32)
 
     s = action_def["right_hand"]["start"]
-    g = raw_actions[:, s].astype(np.float32)
+    g = raw_actions[::stride, s].astype(np.float32)[:length]
+    if g.shape[0] < length:
+        g = np.pad(g, (0, length - g.shape[0]), mode="edge")
     g_min, g_max = float(g.min()), float(g.max())
     if g_max - g_min > 1e-6:
         g = (g - g_min) / (g_max - g_min)
@@ -130,8 +145,8 @@ def main():
         df = pd.read_parquet(parquets[0])
         raw_actions = np.stack(df["action"].values)  # (T, D)
 
-        action_ee, fmt = extract_action_ee(raw_actions, modality)
-        gripper = extract_gripper(raw_actions, modality)
+        action_ee, fmt = extract_action_ee(raw_actions, modality, args.stride)
+        gripper = extract_gripper(raw_actions, modality, args.stride, action_ee.shape[0])
         fmt_used = fmt
 
         # video2world_action.get_action_sequence does gripper[1:], so we pad to T+1.

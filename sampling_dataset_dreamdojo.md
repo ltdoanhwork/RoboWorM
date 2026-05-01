@@ -64,7 +64,21 @@ python -m models.DreamDojo.examples.action_conditioned \
   --save-dir ./output/dreamdojo_cache/worldcache \
   --num-frames 49 \
   --num-samples 65 \
-  --dataset-path ./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot \
+  --dataset-path ./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1 \
   --data-split test \
   --deterministic-uniform-sampling \
   --batch-input-json ./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dreamdojo_dense/batch_input.json
+
+
+
+
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/action_conditioned/cache_worldcache \
+  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train \
+  --experiment dreamdojo_2b_480_640_gr1 \
+  --save-dir ./output/dreamdojo_cache/worldcache \
+  --num-frames 49 \
+  --num-samples 65 \
+  --dataset-path ./datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot \
+  --data-split test \
+  --deterministic-uniform-sampling

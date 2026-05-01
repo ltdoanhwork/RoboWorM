@@ -76,6 +76,8 @@ torchrun --nproc_per_node=${NUM_GPUS} -m models.dreamgen.examples.video2world_ac
   --model_size 2B \
   --batch_input_json ./sampling_dataset/PhysicalAI-Robotics-GR00T-Teleop-GR1/EgoDex_Eval/batch_input_action.json \
   --disable_guardrail \
+  --autoregressive \
+  --chunk_size 12 \
   --num_gpus ${NUM_GPUS}
 ```
 
@@ -86,6 +88,8 @@ torchrun --nproc_per_node=${NUM_GPUS} -m models.dreamgen.examples.video2world_ac
   --model_size 2B \
   --batch_input_json ./sampling_dataset/PhysicalAI-Robotics-GR00T-Teleop-GR1/DreamDojo-HV_Eval/batch_input_action.json \
   --disable_guardrail \
+  --autoregressive \
+  --chunk_size 12 \
   --num_gpus ${NUM_GPUS}
 ```
 
@@ -101,12 +105,24 @@ for task_dir in "$SAVE_ROOT"/gr1_unified.*_robot; do
     --model_size 2B \
     --batch_input_json "$batch" \
     --disable_guardrail \
+    --autoregressive \
+    --chunk_size 12 \
     --num_gpus ${NUM_GPUS}
 done
 ```
 
 > [!NOTE]
-> The action-conditioned model currently supports the 2B variant. Action space
-> is 7-D (6D EE-wrist delta + 1D gripper). For `EgoDex_Eval` and
-> `DreamDojo-HV_Eval` we fall back to joint-space differences because those
-> datasets don't expose `delta_right_wrist`; expect lower fidelity than In-lab.
+> **Video length / FPS.** Model runs at 4 FPS, datasets are at 20 FPS, so the
+> extract script subsamples by `--stride 5` (default) so each delta covers
+> 1/4 s of motion (matches training). Without this, deltas are 5× too small
+> and the arm appears nearly static.
+>
+> **Length control.** Each pipe call generates ~13 frames = ~3.25 s. Use
+> `--autoregressive --chunk_size 12` to chain chunks; need ≥ `chunk_size * N`
+> actions to get `~3.25 * N` seconds. For ~18 s of output: `N = 6` chunks =
+> 72 actions (the strided JSON has more than enough).
+>
+> **Action space.** 7-D (6D EE-wrist delta + 1D gripper). Only `In-lab_Eval`
+> matches training distribution. `EgoDex_Eval` / `DreamDojo-HV_Eval` fall back
+> to joint-space differences (no `delta_right_wrist` in 52-D modality), so
+> expect lower fidelity.
