@@ -109,6 +109,7 @@ class ActionConditionedSetupArguments(CommonSetupArguments):
     fastercache_model_interval: int = 5
     fastercache_block_interval: int = 3
     fastercache_debug: bool = False
+    batch_input_json: str | None = None
 
 
 @dataclass

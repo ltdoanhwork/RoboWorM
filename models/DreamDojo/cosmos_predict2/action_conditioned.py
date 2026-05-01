@@ -371,16 +371,52 @@ def inference(
         restrict_len=num_samples,
         deterministic_uniform_sampling=setup_args.deterministic_uniform_sampling,
     )
-    # eval_indices = list(range(0, len(dataset), max(len(dataset) // num_samples, 1)))[:num_samples]
-    eval_indices = [idx for idx in range(len(dataset)) if not (inference_args.save_root / f"{idx:04d}_psnr.json").exists()]
+    batch_inputs = []
+    if getattr(setup_args, "batch_input_json", None) is not None:
+        logger.info(f"Loading batch inputs from JSON file: {setup_args.batch_input_json}")
+        with open(setup_args.batch_input_json) as f:
+            batch_inputs = json.load(f)
+
+    items_to_run = []
+    if batch_inputs:
+        for idx, item in enumerate(batch_inputs):
+            input_video = item.get("input_video", "")
+            output_video = item.get("output_video", f"output_{idx}.mp4")
+            
+            import re
+            match = re.search(r'episode_(\d+)', input_video)
+            if not match:
+                logger.warning(f"Could not parse episode index from {input_video}")
+                continue
+            traj_id = int(match.group(1))
+            
+            data_id = None
+            current_offset = 0
+            for ds in dataset.datasets:
+                if hasattr(ds, "lerobot_dataset"):
+                    for i, (t_id, base_idx) in enumerate(ds.lerobot_dataset.all_steps):
+                        if t_id == traj_id and base_idx == 0:
+                            data_id = current_offset + i
+                            break
+                current_offset += len(ds)
+                if data_id is not None:
+                    break
+            
+            if data_id is not None:
+                items_to_run.append((data_id, output_video))
+            else:
+                logger.warning(f"Could not find episode {traj_id} in dataset")
+    else:
+        eval_indices = [idx for idx in range(len(dataset)) if not (inference_args.save_root / f"{idx:04d}_psnr.json").exists()]
+        items_to_run = [(idx, None) for idx in eval_indices]
 
     all_psnr = []
     all_ssim = []
     all_lpips = []
 
     # Process each file in the input directory
-    for idx in eval_indices:
-        data = dataset[idx]
+    for data_id, custom_output_video in items_to_run:
+        data = dataset[data_id]
         gt_video = data["video"].permute(1, 2, 3, 0)
         img_array = data["video"].transpose(0, 1)[:1]
         actions = data["action"][:num_frames - 1].numpy()
@@ -391,11 +427,26 @@ def inference(
 
         frames = [img_array]
         chunk_video = []
-        save_name = f"{idx:04d}"
+        
+        if custom_output_video is None:
+            save_name = f"{data_id:04d}"
+            video_name = str(inference_args.save_root / save_name)
+            chunk_video_name = str(inference_args.save_root / f"{save_name}_pred.mp4")
+            gt_video_name = str(inference_args.save_root / f"{save_name}_gt.mp4")
+            merged_video_name = str(inference_args.save_root / f"{save_name}_merged.mp4")
+            actions_name = str(inference_args.save_root / f"{save_name}_actions.npy")
+            metrics_name = inference_args.save_root / f"{save_name}_metrics.json"
+        else:
+            save_name = Path(custom_output_video).stem
+            video_name = custom_output_video
+            chunk_video_name = custom_output_video
+            Path(custom_output_video).parent.mkdir(parents=True, exist_ok=True)
+            gt_video_name = str(Path(custom_output_video).parent / f"{save_name}_gt.mp4")
+            merged_video_name = str(Path(custom_output_video).parent / f"{save_name}_merged.mp4")
+            actions_name = str(Path(custom_output_video).parent / f"{save_name}_actions.npy")
+            metrics_name = Path(custom_output_video).parent / f"{save_name}_metrics.json"
 
-        video_name = str(inference_args.save_root / save_name)
-        chunk_video_name = str(inference_args.save_root / f"{save_name}_pred.mp4")
-        logger.info(f"Saving video to {video_name}")
+        logger.info(f"Saving video to {chunk_video_name}")
         if os.path.exists(chunk_video_name):
             logger.info(f"Video already exists: {chunk_video_name}")
             continue
@@ -461,21 +512,20 @@ def inference(
             chunk_video[i][: inference_args.chunk_size] for i in range(1, len(chunk_video))
         ]
         chunk_video = np.concatenate(chunk_list, axis=0)
-        chunk_video_name = str(inference_args.save_root / f"{save_name}_pred.mp4")
 
         if rank0:
             mediapy.write_video(chunk_video_name, chunk_video, fps=inference_args.save_fps)
-            mediapy.write_video(str(inference_args.save_root / f"{save_name}_gt.mp4"), gt_video.numpy(), fps=inference_args.save_fps)
+            mediapy.write_video(gt_video_name, gt_video.numpy(), fps=inference_args.save_fps)
             concat_video = np.concatenate([gt_video.numpy(), chunk_video], axis=2)
-            mediapy.write_video(str(inference_args.save_root / f"{save_name}_merged.mp4"), concat_video, fps=inference_args.save_fps)
-            np.save(str(inference_args.save_root / f"{save_name}_actions.npy"), actions)
+            mediapy.write_video(merged_video_name, concat_video, fps=inference_args.save_fps)
+            np.save(actions_name, actions)
             logger.info(f"Saved video to {chunk_video_name}")
             x_batch = torch.clamp(torch.from_numpy(chunk_video) / 255.0, 0, 1).permute(0, 3, 1, 2)
             y_batch = torch.clamp(gt_video / 255.0, 0, 1).permute(0, 3, 1, 2)
             psnr = piq.psnr(x_batch, y_batch).mean().item()
             ssim = piq.ssim(x_batch, y_batch).mean().item()
             lpips = piq.LPIPS()(x_batch, y_batch).mean().item()
-            with open(inference_args.save_root / f"{save_name}_metrics.json", "w") as f:
+            with open(metrics_name, "w") as f:
                 json.dump({"psnr": float(psnr), "ssim": float(ssim), "lpips": float(lpips)}, f)
             all_psnr.append(psnr)
             all_ssim.append(ssim)

@@ -580,21 +580,25 @@ class Video2WorldPipeline(BasePipeline):
                 def temporal_sample(video: torch.Tensor, expected_length: int) -> torch.Tensor:
                     # sample consecutive video frames to match expected_length
                     original_length = video.shape[2]
-                    if original_length != expected_length:
-                        # video in [B C T H W] format
-                        start_frame = np.random.randint(0, original_length - expected_length)
+                    if original_length == expected_length:
+                        return video
+                    elif original_length == 1:
+                        # Single frame input (action-conditioned): repeat to fill expected_length
+                        return video.repeat(1, 1, expected_length, 1, 1)
+                    elif original_length > expected_length:
+                        # Video longer than expected: randomly crop a clip
+                        start_frame = np.random.randint(0, original_length - expected_length + 1)
                         end_frame = start_frame + expected_length
-                        video = video[:, :, start_frame:end_frame, :, :]
-                    return video
+                        return video[:, :, start_frame:end_frame, :, :]
+                    else:
+                        # Video shorter than expected but > 1: repeat last frame to pad
+                        pad = video[:, :, -1:, :, :].repeat(1, 1, expected_length - original_length, 1, 1)
+                        return torch.cat([video, pad], dim=2)
 
-                #expected_length = self.tokenizer.get_pixel_num_frames(self.config.state_t)
-                # === TEMPORARY FIX: Hardcode the expected frame length ===
-                expected_length = 93
-                print(f"DEBUG: Hardcoding expected_length to {expected_length}")
+                expected_length = self.tokenizer.get_pixel_num_frames(self.config.state_t)
                 original_length = data_batch[input_key].shape[2]
-                if original_length > expected_length:
+                if original_length != expected_length:
                     data_batch[input_key] = temporal_sample(data_batch[input_key], expected_length)
-                # If original_length <= expected_length (e.g. single frame input), skip temporal sampling
 
 
     def _augment_image_dim_inplace(self, data_batch: dict[str, torch.Tensor], input_key: str = None) -> None:  # noqa: RUF013
