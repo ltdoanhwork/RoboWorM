@@ -432,11 +432,12 @@ if __name__ == "__main__":
             dynamic_decay=args_new.worldcache_dynamic_decay,
         )
     # -----------------------------------------------------------------
-    interact_num = args.interact_num
+    # Set longer duration (40 steps ~ 25-30 seconds)
+    interact_num = 40 
     pred_step = args.pred_step
     num_history = args.num_history
     num_frames = args.num_frames
-    print(f'rollout with {args.task_type}')
+    print(f'rollout with {args.task_type} for {interact_num} steps')
 
 
     for val_id_i, text_i, start_idx_i in zip(args.val_id, args.instruction, args.start_idx):
@@ -510,14 +511,26 @@ if __name__ == "__main__":
         # save rollout video and info with parameters
         video = np.concatenate(video_to_save, axis=0)
         task_name = args.task_name
-        text_id = text_i.replace(' ', '_').replace(',', '').replace('.', '').replace('\'', '').replace('\"', '')[:30]
+        # Remove truncation [:30] and use a longer limit for filename safety
+        text_id = text_i.replace(' ', '_').replace(',', '').replace('.', '').replace('\'', '').replace('\"', '')[:100]
         videos_dir = args.val_model_path.split('/')[:-1]
         videos_dir = '/'.join(videos_dir)
         uuid = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename_video = f"{args.save_dir}/{task_name}/video/time_{uuid}_traj_{val_id_i}_{start_idx_i}_{pred_step}_{text_id}.mp4"
+        
+        base_path = f"{args.save_dir}/{task_name}/video/time_{uuid}_traj_{val_id_i}_{start_idx_i}_{pred_step}_{text_id}"
+        filename_video = f"{base_path}.mp4"
+        filename_prompt = f"{base_path}.txt"
+        
         os.makedirs(os.path.dirname(filename_video), exist_ok=True)
+        
+        # Save Video
         mediapy.write_video(filename_video, video, fps=4)
         print(f"Saving video to {filename_video}")
+        
+        # Save Prompt TXT
+        with open(filename_prompt, "w") as f:
+            f.write(text_i)
+        print(f"Saving prompt to {filename_prompt}")
         print("##########################################################################")
 
 

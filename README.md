@@ -1,6 +1,6 @@
 
 # video_gen_physics
-
+hf upload-large-folder doanh25032004/video_gen_physics_dataset sampling_dataset/ --repo-type dataset
 
 ## Ctrl world
 
@@ -621,3 +621,38 @@ torchrun -m models.dreamgen.examples.video2world_gr00t_lvg \
   --num_gpus ${NUM_GPUS} \
   --num_chunks 3 \
   --num_conditional_frames 1
+
+### dreamgen - multiview
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
+export PYTHONPATH=$(pwd)/models/dreamgen:$PYTHONPATH
+export CUDA_VISIBLE_DEVICES=0
+export NUM_GPUS=1
+
+python -m examples.multiview \
+  --model_size 2B \
+  --resolution 720 \
+  --prompt "A robot arm interacting with objects." \
+  --input_path models/dreamgen/assets/sample_gr00t_dreams_droid/episode_000408.png \
+  --num_conditional_frames 1 \
+  --n_views 7 \
+  --fps 10 \
+  --disable_guardrail \
+  --save_path ./output/dreamgen_multiview/episode_000408_multiview.mp4
+
+
+### dreamgen - multiview
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
+export PYTHONPATH="./models/dreamgen"
+export CUDA_VISIBLE_DEVICES=0
+export NUM_GPUS=1
+
+python -m models.dreamgen.examples.multiview \
+  --model_size 2B \
+  --resolution 720 \
+  --prompt "A robot arm interacting with objects." \
+  --input_path models/dreamgen/assets/sample_gr00t_dreams_droid/episode_000408.png \
+  --num_conditional_frames 1 \
+  --n_views 7 \
+  --fps 10 \
+  --save_path ./output/dreamgen_multiview/episode_000408_multiview.mp4
+
