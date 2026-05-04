@@ -82,3 +82,6 @@ python -m models.DreamDojo.examples.action_conditioned \
   --dataset-path ./datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot \
   --data-split test \
   --deterministic-uniform-sampling
+
+
+  

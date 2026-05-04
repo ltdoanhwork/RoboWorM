@@ -54,3 +54,18 @@ torchrun --nproc_per_node=2 --master_port=12341 \
   --save_path output/generated_video_droid.mp4
   
 ```
+# Đảm bảo đang ở thư mục root: /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
+
+source models/DreamDojo/.venv/bin/activate
+export PYTHONPATH=$PYTHONPATH:$(pwd)/models/dreamgen
+
+torchrun --nproc_per_node=2 --master_port=12341 \
+  -m examples.video2world_gr00t \
+  --model_size 14B \
+  --gr00t_variant droid \
+  --prompt "A multi-view video shows that a robot picks up a pomegranate with its left hand and puts it in the storage box, then picks up a mango with its right hand and puts it in the storage box. The video is split into four views: top-left (front view), top-right (head view), bottom-left (wrist view), and bottom-right (black screen)." \
+  --input_path models/dreamgen/airbot_multiview_input.png \
+  --prompt_prefix "" \
+  --num_gpus 2 \
+  --disable_guardrail \
+  --save_path output/generated_video_airbot_droid.mp4

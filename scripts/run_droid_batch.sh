@@ -37,7 +37,7 @@ echo "Step 1: Preparing batch input JSON..."
 if [ -n "${PREPARE_ARGS:-}" ]; then
   python scripts/prepare_droid_batch.py ${PREPARE_ARGS}
 else
-  MAX_EPISODES="${MAX_EPISODES:-20}"
+  MAX_EPISODES="${MAX_EPISODES:-100}"
   if [ "${MAX_EPISODES}" -gt 0 ]; then
     echo "Preparing ${MAX_EPISODES} episode(s). Set MAX_EPISODES=0 for all local episodes."
     python scripts/prepare_droid_batch.py --max_episodes "${MAX_EPISODES}"
@@ -63,3 +63,4 @@ if [ "${NUM_GPUS}" -gt 1 ]; then
 else
   python "${INFERENCE_ARGS[@]}"
 fi
+

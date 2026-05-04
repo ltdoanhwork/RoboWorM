@@ -267,6 +267,7 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
     --worldcache-motion-sensitivity 4.0 \
     --worldcache-dynamic-decay
 --->>> Total inference time: 347.0921 seconds
+
 torchrun -m models.dreamgen.examples.video2world_gr00t \
     --model_size 14B \
     --gr00t_variant gr1 \
