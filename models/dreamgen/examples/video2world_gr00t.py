@@ -167,6 +167,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--prompt_prefix", type=str, default="The robot arm is performing a task. ", help="Prefix to add to all prompts"
     )
+    parser.add_argument(
+        "--fps", type=int, default=10, help="Frames per second for the generated video playback"
+    )
 
     # ---- Sparse Backend Integration ---
     add_pisa_args, add_svg_args, add_radial_args, add_sito_args, add_itm_args, add_cache_args, add_fastercache_args, apply_fastercache, build_cache_runtime_config = _import_sparse_backends()
@@ -299,6 +302,7 @@ def process_single_generation(
     guidance: float,
     seed: int,
     prompt_prefix: str,
+    fps: int = 16,
 ) -> bool:
     # Validate input file
     if not validate_input_file(input_path, num_conditional_frames):
@@ -326,7 +330,7 @@ def process_single_generation(
         if output_dir:
             os.makedirs(output_dir, exist_ok=True)
         log.info(f"Saving generated video to: {output_path}")
-        save_image_or_video(video, output_path, fps=16)
+        save_image_or_video(video, output_path, fps=fps)
         log.success(f"Successfully saved video to: {output_path}")
         # save the prompts used to generate the video
         output_prompt_path = os.path.splitext(output_path)[0] + ".txt"
@@ -371,6 +375,7 @@ def generate_video(args: argparse.Namespace, pipe: Video2WorldPipeline) -> None:
                 guidance=args.guidance,
                 seed=args.seed,
                 prompt_prefix=args.prompt_prefix,
+                fps=args.fps,
             )
     else:
         process_single_generation(
@@ -384,6 +389,7 @@ def generate_video(args: argparse.Namespace, pipe: Video2WorldPipeline) -> None:
             guidance=args.guidance,
             seed=args.seed,
             prompt_prefix=args.prompt_prefix,
+            fps=args.fps,
         )
 
     return

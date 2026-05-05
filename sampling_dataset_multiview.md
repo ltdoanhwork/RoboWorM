@@ -69,3 +69,10 @@ torchrun --nproc_per_node=2 --master_port=12341 \
   --num_gpus 2 \
   --disable_guardrail \
   --save_path output/generated_video_airbot_droid.mp4
+
+
+# Chạy tất cả 6 Airbot (5 episodes mỗi bộ, FPS=10)
+bash scripts/run_multiview_airbot_all.sh
+
+# Hoặc override
+MAX_EPISODES=3 FPS=8 bash scripts/run_multiview_airbot_all.sh

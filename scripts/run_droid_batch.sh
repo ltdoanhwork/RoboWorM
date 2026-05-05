@@ -11,6 +11,7 @@ source models/DreamDojo/.venv/bin/activate
 # Setup PYTHONPATH for DreamGen
 export PYTHONPATH="$(pwd)/models/dreamgen:${PYTHONPATH:-}"
 export MASTER_PORT="${MASTER_PORT:-12341}"
+FPS="${FPS:-16}"
 
 AVAILABLE_GPUS=$(python - <<'PY'
 import torch
@@ -30,7 +31,7 @@ if [ "${NUM_GPUS}" -gt "${AVAILABLE_GPUS}" ]; then
   exit 1
 fi
 
-echo "Using ${NUM_GPUS} CUDA GPU(s)."
+echo "Using ${NUM_GPUS} CUDA GPU(s). Playback FPS: ${FPS}"
 
 # 1. Prepare the batch input JSON (extract screenshots and prompts from DROID dataset)
 echo "Step 1: Preparing batch input JSON..."
@@ -56,6 +57,7 @@ INFERENCE_ARGS=(
   --batch_input_json ./sampling_dataset/droid_20p/batch_input.json
   --num_gpus "${NUM_GPUS}"
   --disable_guardrail
+  --fps "${FPS}"
 )
 
 if [ "${NUM_GPUS}" -gt 1 ]; then
