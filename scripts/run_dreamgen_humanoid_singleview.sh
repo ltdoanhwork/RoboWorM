@@ -9,7 +9,7 @@ set -euo pipefail
 ROOT=/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
 cd "$ROOT"
 
-source "$ROOT/models/DreamDojo/.venv/bin/activate"
+# source "$ROOT/models/dreamgen/.venv/bin/activate"
 export PYTHONPATH="./models/dreamgen"
 export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}
 export NUM_GPUS=${NUM_GPUS:-1}
