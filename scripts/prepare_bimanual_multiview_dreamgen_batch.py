@@ -62,12 +62,14 @@ PROMPT_3VIEW_RIGHT = (
 PROMPT_4VIEW = (
     "A multi-view video shows that a bimanual robot {task}. "
     "The video is split into four views: "
-    "The top-left view shows an overhead high camera view of the workspace, "
-    "the top-right view shows a lower camera perspective, "
+    "The top-left view shows a fixed high overhead camera above the workspace, "
+    "the top-right view shows a fixed lower camera view of the workspace, "
     "the bottom-left view shows a first-person perspective from the robot's "
-    "left end-effector (gripper), "
+    "left end-effector (left gripper camera), "
     "and the bottom-right view shows a first-person perspective from the robot's "
-    "right end-effector (gripper). "
+    "right end-effector (right gripper camera). "
+    "All four quadrants show live robot-mounted cameras; there is no black or "
+    "inactive panel. "
     "The robot {task}."
 )
 
