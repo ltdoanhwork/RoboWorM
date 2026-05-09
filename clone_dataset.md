@@ -11,3 +11,10 @@ git clone https://huggingface.co/datasets/lerobot/aloha_static_coffee
 git clone https://huggingface.co/datasets/lerobot/aloha_static_cups_open
 git clone https://huggingface.co/datasets/lerobot/aloha_static_vinh_cup
 https://aistairc.github.io/aist_bimanip_site/
+
+
+# Single Arm
+
+```bash
+python ./scripts/download_droid_dataset.py
+```
