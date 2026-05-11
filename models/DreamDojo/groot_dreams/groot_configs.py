@@ -102,6 +102,52 @@ def construct_modality_config_and_transforms(num_frames, embodiment, agibot_pad_
                 ],
             ),
         }
+    elif embodiment == "aloha":
+        timestep_interval = 2
+        delta_indices = list(range(0, num_frames * timestep_interval, timestep_interval))
+        video_key = "video.cam_high"
+        config = {
+            "video": ModalityConfig(
+                delta_indices=delta_indices,
+                modality_keys=[video_key],
+            ),
+            "state": ModalityConfig(
+                delta_indices=[0],
+                modality_keys=[
+                    "state.qpos",
+                ],
+            ),
+            "action": ModalityConfig(
+                delta_indices=delta_indices,
+                modality_keys=[
+                    "action.qpos",
+                ],
+            ),
+        }
+    elif embodiment == "droid":
+        timestep_interval = 1
+        delta_indices = list(range(0, num_frames * timestep_interval, timestep_interval))
+        video_key = "video.exterior_1_left"
+        config = {
+            "video": ModalityConfig(
+                delta_indices=delta_indices,
+                modality_keys=[video_key],
+            ),
+            "state": ModalityConfig(
+                delta_indices=[0],
+                modality_keys=[
+                    "state.cartesian_position",
+                    "state.gripper_position",
+                ],
+            ),
+            "action": ModalityConfig(
+                delta_indices=delta_indices,
+                modality_keys=[
+                    "action.cartesian_position",
+                    "action.gripper_position",
+                ],
+            ),
+        }
     elif embodiment == "agibot":
         timestep_interval = 4
         delta_indices = list(range(0, num_frames * timestep_interval, timestep_interval))

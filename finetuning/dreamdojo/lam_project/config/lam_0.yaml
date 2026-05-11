@@ -18,9 +18,10 @@ model:
       weight_decay: 1e-2
 
 data:
-  batch_size: 20
+  batch_size: 12
   dataset_paths:
-    - ../../datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot
+    - datasets/bimanual
+    - datasets/droid_1.0.1_20chunks/videos/chunk-000/observation.images.wrist_left
   padding: repeat
   randomize: true
   num_frames: 2
@@ -28,11 +29,14 @@ data:
   samples_per_epoch: 10000000
   sampling_strategy: dataset
 
+# Pretrained LAM; also restores optimizer/global_step from ckpt unless you override --ckpt_path.
+ckpt_path: ./checkpoints/dreamdojo/LAM_400k.ckpt
+
 trainer:
   max_epochs: 1000
   accelerator: gpu
   num_nodes: 1
-  devices: 0,1,2,3,4,5,6,7
+  devices: 0,1
   strategy: ddp_find_unused_parameters_false
   precision: 16-mixed
   log_every_n_steps: 1000

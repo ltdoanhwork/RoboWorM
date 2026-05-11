@@ -75,6 +75,7 @@ IS_PREPROCESSED_KEY = "is_preprocessed"
 def _resolve_lam_checkpoint_path() -> str:
     override_path = os.environ.get("DREAMDOJO_LAM_CKPT")
     if override_path:
+        log.info(f"Using LAM checkpoint from environment variable: {override_path}")
         return override_path
 
     file_dir = os.path.dirname(os.path.abspath(__file__))

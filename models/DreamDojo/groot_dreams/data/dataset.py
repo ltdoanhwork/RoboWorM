@@ -264,6 +264,12 @@ class LeRobotSingleDataset(Dataset):
             elif embodiment_tag == EmbodimentTag.YAM:
                 modality_meta_path = SHARED_META_DIR / "YAM_modality.json"
                 print(f"WARNING: Could not find modality.json in dataset path, falling back to {modality_meta_path}")
+            elif embodiment_tag == EmbodimentTag.ALOHA:
+                modality_meta_path = SHARED_META_DIR / "ALOHA_modality.json"
+                print(f"WARNING: Could not find modality.json in dataset path, falling back to {modality_meta_path}")
+            elif embodiment_tag == EmbodimentTag.DROID:
+                modality_meta_path = SHARED_META_DIR / "DROID_modality.json"
+                print(f"WARNING: Could not find modality.json in dataset path, falling back to {modality_meta_path}")
             else:
                 raise ValueError(f"Embodiment tag {embodiment_tag} not supported")
         assert (
@@ -344,6 +350,12 @@ class LeRobotSingleDataset(Dataset):
         elif embodiment_tag == EmbodimentTag.YAM:
             default_stats_path = SHARED_META_DIR / "YAM_stats.json"
             default_modality_meta_path = SHARED_META_DIR / "YAM_modality.json"
+        elif embodiment_tag == EmbodimentTag.ALOHA:
+            default_stats_path = SHARED_META_DIR / "ALOHA_stats.json"
+            default_modality_meta_path = SHARED_META_DIR / "ALOHA_modality.json"
+        elif embodiment_tag == EmbodimentTag.DROID:
+            default_stats_path = SHARED_META_DIR / "DROID_stats.json"
+            default_modality_meta_path = SHARED_META_DIR / "DROID_modality.json"
         else:
             raise ValueError(f"Embodiment tag {embodiment_tag} not supported")
         if has_default_meta:
@@ -480,6 +492,12 @@ class LeRobotSingleDataset(Dataset):
                 print(f"WARNING: Could not find modality.json in dataset path, falling back to {modality_meta_path}")
             elif self.tag == "yam":
                 modality_meta_path = SHARED_META_DIR / "YAM_modality.json"
+                print(f"WARNING: Could not find modality.json in dataset path, falling back to {modality_meta_path}")
+            elif self.tag == "aloha":
+                modality_meta_path = SHARED_META_DIR / "ALOHA_modality.json"
+                print(f"WARNING: Could not find modality.json in dataset path, falling back to {modality_meta_path}")
+            elif self.tag == "droid":
+                modality_meta_path = SHARED_META_DIR / "DROID_modality.json"
                 print(f"WARNING: Could not find modality.json in dataset path, falling back to {modality_meta_path}")
             else:
                 raise ValueError(f"Embodiment tag {self.tag} not supported")
@@ -1056,18 +1074,23 @@ class WrappedLeRobotSingleDataset(LeRobotSingleDataset):
             # latent_actions = torch.ones(self.num_frames - 1, 32, dtype=torch.float32)
             # latent_actions = latent_actions * torch.bernoulli(0.8 * torch.ones(1)).type_as(latent_actions)
             # action_seq = torch.cat([gt_actions, latent_actions], dim=-1)
-            if "inhouse_human" in str(self.dataset_path).lower():
+            _ds_path_lower = str(self.dataset_path).lower()
+            if "inhouse_human" in _ds_path_lower:
                 gt_actions = torch.zeros(self.num_frames - 1, 352, dtype=torch.float32)
                 latent_actions = torch.ones(self.num_frames - 1, 32, dtype=torch.float32)
                 action_seq = torch.cat([gt_actions, latent_actions], dim=-1)
                 # action_seq[:, 29:58] = delta_actions
-            elif "gr1" in str(self.dataset_path).lower():
+            elif "aloha" in _ds_path_lower or "/bimanual/" in _ds_path_lower:
+                action_seq[:, 169:183] = delta_actions
+            elif "droid" in _ds_path_lower or "/single_arm/" in _ds_path_lower:
+                action_seq[:, 183:190] = delta_actions
+            elif "gr1" in _ds_path_lower:
                 action_seq[:, :29] = delta_actions
-            elif "g1" in str(self.dataset_path).lower():
+            elif "g1" in _ds_path_lower:
                 action_seq[:, 58:101] = delta_actions
-            elif "yam" in str(self.dataset_path).lower():
+            elif "yam" in _ds_path_lower:
                 action_seq[:, 101:147] = delta_actions
-            elif "agibot" in str(self.dataset_path).lower():
+            elif "agibot" in _ds_path_lower:
                 action_seq[:, 147:169] = delta_actions
             
             text = ""

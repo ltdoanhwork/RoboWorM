@@ -4,8 +4,13 @@ from typing import Any, Callable, Dict, List
 from pathlib import Path
 
 import os
+import ctypes
+
 os.environ["OPENCV_FFMPEG_READ_ATTEMPTS"] = str(2 ** 13)
+os.environ["OPENCV_LOG_LEVEL"] = "SILENT"
+
 import cv2 as cv
+import av as pyav
 import torch
 import torch.nn.functional as F
 from einops import rearrange
@@ -16,6 +21,34 @@ from torch.utils.data import get_worker_info
 from tqdm import tqdm
 
 
+def _silence_ffmpeg() -> None:
+    """Set ffmpeg log level to ERROR (16) to suppress AV1 hw-decode warning spam.
+    Must be called inside each process (main + each DataLoader worker)."""
+    for lib_name in [
+        "libavutil.so.58", "libavutil.so.57", "libavutil.so.56", "libavutil.so",
+    ]:
+        try:
+            lib = ctypes.cdll.LoadLibrary(lib_name)
+            lib.av_log_set_level(16)  # AV_LOG_ERROR = 16
+            return
+        except OSError:
+            continue
+
+
+_silence_ffmpeg()  # silence in main process
+
+
+def _is_av1(video_path: str) -> bool:
+    """Return True if the video's first stream is encoded with AV1.
+    Uses PyAV to read only the container header — no frame decoding."""
+    try:
+        with pyav.open(str(video_path)) as container:
+            stream = container.streams.video[0]
+            return stream.codec_context.name in ("av1", "libaom-av1", "libdav1d")
+    except Exception:
+        return False
+
+
 def exists(var) -> bool:
     return var is not None
 
@@ -24,7 +57,27 @@ def default(var, val) -> Any:
     return var if exists(var) else val
 
 
+def _load_frames_with_av(video_path: str, num_frames: int, start_frame: int) -> list:
+    """PyAV fallback for codecs OpenCV can't decode (e.g. AV1)."""
+    frames = []
+    with pyav.open(str(video_path)) as container:
+        stream = container.streams.video[0]
+        stream.codec_context.thread_type = "AUTO"
+        if start_frame > 0:
+            avg_rate = float(stream.average_rate) if stream.average_rate else 30.0
+            timestamp = int(start_frame / avg_rate / float(stream.time_base))
+            container.seek(timestamp, stream=stream)
+        for frame in container.decode(stream):
+            if len(frames) >= num_frames:
+                break
+            frames.append(torch.from_numpy(frame.to_ndarray(format="rgb24")))
+    return frames
+
+
 def default_worker_init_fn(worker_id: int) -> None:
+    # Each forked worker process must silence its own ffmpeg instance.
+    _silence_ffmpeg()
+
     torch.manual_seed(torch.initial_seed() + worker_id)
     worker_info = get_worker_info()
 
@@ -44,13 +97,13 @@ def filter_video_files(file_names: List, xdof: bool = False) -> List:
     if xdof:
         return [
             f for f in file_names
-            if "left" not in str(f).lower() and "right" not in str(f).lower() and "resize" not in str(f).lower() and "pad" not in str(f).lower()
-            and "320_240" in str(f).lower()
+            if "left" not in Path(f).stem.lower() and "right" not in Path(f).stem.lower() and "resize" not in Path(f).stem.lower() and "pad" not in Path(f).stem.lower()
+            and "320_240" in Path(f).stem.lower()
         ]
     else:
         return [
             f for f in file_names
-            if "left" not in str(f).lower() and "right" not in str(f).lower() and "resize" not in str(f).lower() and "pad" not in str(f).lower()
+            if "left" not in Path(f).stem.lower() and "right" not in Path(f).stem.lower() and "resize" not in Path(f).stem.lower() and "pad" not in Path(f).stem.lower()
         ]
 
 
@@ -161,6 +214,8 @@ class VideoDataset(Dataset):
                 self.file_names = filter_video_files(mp4_list, xdof=True)
             else:
                 self.file_names = filter_video_files(mp4_list)
+            if len(self.file_names) == 0:
+                raise ValueError(f"All video files were filtered out in {subset_path}")
         else:
             raise ValueError(f"No video files found in {subset_path}")
 
@@ -188,35 +243,54 @@ class VideoDataset(Dataset):
         start_frame: int = None,
         frame_skip: int = 1
     ) -> Tensor:
-        cap = cv.VideoCapture(video_path)
-        total_frames = int(cap.get(cv.CAP_PROP_FRAME_COUNT))
         frame_skip = randint(1, 4)
         num_frames = num_frames * frame_skip
 
-        start_frame = start_frame if exists(start_frame) else randint(0, max(0, total_frames - num_frames))
-        cap.set(cv.CAP_PROP_POS_FRAMES, start_frame)
         frames = []
-        for _ in range(num_frames):
-            ret, frame = cap.read()
-            if ret:
-                # Frame was successfully read, parse it
-                frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
-                frame = torch.from_numpy(frame)
-                frames.append(frame)
-            else:
-                # Reach the end of video, deal with padding and return
-                if self.padding == "none":
-                    pass
-                elif self.padding == "repeat":
-                    frames.extend([frames[-1]] * (num_frames - len(frames)))
-                elif self.padding == "zero":
-                    frames.extend([torch.zeros_like(frames[-1])] * (num_frames - len(frames)))
-                elif self.padding == "random":
-                    frames.extend([torch.rand_like(frames[-1])] * (num_frames - len(frames)))
+
+        # Skip OpenCV entirely for AV1 — it always tries HW decode first and crashes workers.
+        if _is_av1(video_path):
+            start_frame = start_frame if exists(start_frame) else 0
+            frames = _load_frames_with_av(str(video_path), num_frames, start_frame)
+        else:
+            # 0 = VIDEO_ACCELERATION_NONE: force software decoding
+            cap = cv.VideoCapture(str(video_path), cv.CAP_FFMPEG, [int(cv.CAP_PROP_HW_ACCELERATION), 0])
+            total_frames = int(cap.get(cv.CAP_PROP_FRAME_COUNT))
+            start_frame = start_frame if exists(start_frame) else randint(0, max(0, total_frames - num_frames))
+            cap.set(cv.CAP_PROP_POS_FRAMES, start_frame)
+            for _ in range(num_frames):
+                ret, frame = cap.read()
+                if ret:
+                    frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
+                    frame = torch.from_numpy(frame)
+                    frames.append(frame)
                 else:
-                    raise ValueError(f"Invalid padding type: {self.padding}")
-                break
-        cap.release()
+                    if not frames:
+                        break
+                    if self.padding == "none":
+                        pass
+                    elif self.padding == "repeat":
+                        frames.extend([frames[-1]] * (num_frames - len(frames)))
+                    elif self.padding == "zero":
+                        frames.extend([torch.zeros_like(frames[-1])] * (num_frames - len(frames)))
+                    elif self.padding == "random":
+                        frames.extend([torch.rand_like(frames[-1])] * (num_frames - len(frames)))
+                    else:
+                        raise ValueError(f"Invalid padding type: {self.padding}")
+                    break
+            cap.release()
+            # If OpenCV returned nothing, fall back to PyAV
+            if not frames:
+                frames = _load_frames_with_av(str(video_path), num_frames, start_frame)
+        if not frames:
+            raise RuntimeError(f"Could not read any frames from {video_path}")
+
+        # Apply padding if PyAV returned fewer frames than requested
+        if len(frames) < num_frames and frames:
+            if self.padding == "repeat":
+                frames.extend([frames[-1]] * (num_frames - len(frames)))
+            elif self.padding == "zero":
+                frames.extend([torch.zeros_like(frames[-1])] * (num_frames - len(frames)))
 
         video = torch.stack(frames[::frame_skip]) / 255.0
 
@@ -302,36 +376,52 @@ class OriginalVideoDataset(Dataset):
         start_frame: int = None,
         frame_skip: int = 1
     ) -> Tensor:
-        cap = cv.VideoCapture(video_path)
-        total_frames = int(cap.get(cv.CAP_PROP_FRAME_COUNT))
         frame_skip = randint(1, 4)
         num_frames = num_frames * frame_skip
 
-        start_frame = start_frame if exists(start_frame) else randint(0, max(0, total_frames - num_frames))
-
-        cap.set(cv.CAP_PROP_POS_FRAMES, start_frame)
         frames = []
-        for _ in range(num_frames):
-            ret, frame = cap.read()
-            if ret:
-                # Frame was successfully read, parse it
-                frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
-                frame = torch.from_numpy(frame)
-                frames.append(frame)
-            else:
-                # Reach the end of video, deal with padding and return
-                if self.padding == "none":
-                    pass
-                elif self.padding == "repeat":
-                    frames.extend([frames[-1]] * (num_frames - len(frames)))
-                elif self.padding == "zero":
-                    frames.extend([torch.zeros_like(frames[-1])] * (num_frames - len(frames)))
-                elif self.padding == "random":
-                    frames.extend([torch.rand_like(frames[-1])] * (num_frames - len(frames)))
+
+        # Skip OpenCV entirely for AV1 — it always tries HW decode first and crashes workers.
+        if _is_av1(video_path):
+            start_frame = start_frame if exists(start_frame) else 0
+            frames = _load_frames_with_av(str(video_path), num_frames, start_frame)
+        else:
+            # 0 = VIDEO_ACCELERATION_NONE: force software decoding
+            cap = cv.VideoCapture(str(video_path), cv.CAP_FFMPEG, [int(cv.CAP_PROP_HW_ACCELERATION), 0])
+            total_frames = int(cap.get(cv.CAP_PROP_FRAME_COUNT))
+            start_frame = start_frame if exists(start_frame) else randint(0, max(0, total_frames - num_frames))
+            cap.set(cv.CAP_PROP_POS_FRAMES, start_frame)
+            for _ in range(num_frames):
+                ret, frame = cap.read()
+                if ret:
+                    frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
+                    frame = torch.from_numpy(frame)
+                    frames.append(frame)
                 else:
-                    raise ValueError(f"Invalid padding type: {self.padding}")
-                break
-        cap.release()
+                    if not frames:
+                        break
+                    if self.padding == "none":
+                        pass
+                    elif self.padding == "repeat":
+                        frames.extend([frames[-1]] * (num_frames - len(frames)))
+                    elif self.padding == "zero":
+                        frames.extend([torch.zeros_like(frames[-1])] * (num_frames - len(frames)))
+                    elif self.padding == "random":
+                        frames.extend([torch.rand_like(frames[-1])] * (num_frames - len(frames)))
+                    else:
+                        raise ValueError(f"Invalid padding type: {self.padding}")
+                    break
+            cap.release()
+            # If OpenCV returned nothing, fall back to PyAV
+            if not frames:
+                frames = _load_frames_with_av(str(video_path), num_frames, start_frame)
+
+        # Apply padding if PyAV returned fewer frames than requested
+        if len(frames) < num_frames and frames:
+            if self.padding == "repeat":
+                frames.extend([frames[-1]] * (num_frames - len(frames)))
+            elif self.padding == "zero":
+                frames.extend([torch.zeros_like(frames[-1])] * (num_frames - len(frames)))
 
         video = torch.stack(frames[::frame_skip]) / 255.0
 

@@ -91,9 +91,7 @@ _default_groot_config = LazyDict(
         ),
         checkpoint=dict(
             save_iter=10_000,
-            # pyrefly: ignore  # missing-attribute
-            load_path=DEFAULT_CHECKPOINT.s3.uri,
-            # load_path="/mnt/amlfs-01/shared/shenyuang/cosmos_logs/exp1201/pretrain/checkpoints/iter_000100000/",
+            load_path="/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/dreamdojo/2B_pretrain/iter_000140000/",
             load_training_state=False,
             strict_resume=False,
             load_from_object_store=dict(

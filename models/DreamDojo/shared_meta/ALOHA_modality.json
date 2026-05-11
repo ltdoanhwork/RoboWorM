@@ -1,0 +1,36 @@
+{
+    "state": {
+        "qpos": {
+            "original_key": "observation.state",
+            "start": 0,
+            "end": 14,
+            "rotation_type": null,
+            "absolute": true,
+            "dtype": "float32",
+            "range": null
+        }
+    },
+    "action": {
+        "qpos": {
+            "original_key": "action",
+            "start": 0,
+            "end": 14,
+            "rotation_type": null,
+            "absolute": true,
+            "dtype": "float32",
+            "range": null
+        }
+    },
+    "video": {
+        "cam_high": {
+            "original_key": "observation.images.cam_high"
+        }
+    },
+    "annotation": {
+        "human": {
+            "coarse_action": {
+                "original_key": "annotation.human.action.task_description"
+            }
+        }
+    }
+}
