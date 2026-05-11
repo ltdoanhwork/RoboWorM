@@ -1,0 +1,43 @@
+job:
+  project: dreamdojo
+  group: exp1201
+  name: pretrain_14b
+
+trainer:
+  grad_accum_iter: 2
+  callbacks:
+    every_n_sample_reg:
+      every_n: 1000
+      fps: 5
+    every_n_sample_ema:
+      every_n: 1000
+      fps: 5
+
+model_parallel:
+  context_parallel_size: 1
+
+model:
+  config:
+    state_t: 4  # 1 + 12 // 4
+    net:
+      action_dim: 384
+      temporal_compression_ratio: 4
+      num_action_per_chunk: 12
+      zero_init_action_embedder: true
+
+dataloader_train:
+  batch_size: 2
+  
+  dataset:
+    num_frames: 13
+    dataset_path:
+      - /mnt/amlfs-03/shared/datasets/gear_humanoid/joelj/0911/gr1_unified.inhouse_human_only
+      - /mnt/amlfs-03/shared/datasets/egodex_21
+      - /mnt/amlfs-02/shared/datasets/dreamdojo_hv_lerobot_20s_final
+    dataset_mixing_weights:
+      - 1
+      - 2
+      - 10
+    data_split: full
+    single_base_index: false
+    deterministic_uniform_sampling: false

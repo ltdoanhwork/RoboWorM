@@ -1,0 +1,462 @@
+[
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/62.mp4",
+        "prompt": "Use the left hand to pick up green cucumber from from the beige place mat to to the small cyan plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/62.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/3.mp4",
+        "prompt": "Use the right hand to pick up banana from teal plate to wooden table.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/3.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/67.mp4",
+        "prompt": "Use the right hand to pick up green apple from bottom shelf to top shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/67.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/27.mp4",
+        "prompt": "Use the right hand to pick up bread slice from blue plate to toaster.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/27.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/33.mp4",
+        "prompt": "Use the right hand to pick up rubik's cube from light blue plate to teal plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/33.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/74.mp4",
+        "prompt": "Use the right hand to pick up rubik's cube from bottom level of the wooden shelf to top level of the wooden shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/74.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/80.mp4",
+        "prompt": "Use the right hand to pick up ruik's cube from bottom dark wooden three tier shelf to top dark wooden three tier shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/80.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/4.mp4",
+        "prompt": "Use the left hand to pick up dragonfruit from pink plate to teal plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/4.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/34.mp4",
+        "prompt": "Use the right hand to pick up red milk carton from right side of tan table to center of yellow bin.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/34.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/40.mp4",
+        "prompt": "Use the left hand to pick up orange from blue plate to pale turquoise plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/40.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/81.mp4",
+        "prompt": "Use the right hand to pick up corn from from the right side of the table to to the top of the two-tiered wooden shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/81.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/39.mp4",
+        "prompt": "Use the left hand to pick up yellow mustard bottle from tan table to middle level of white shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/39.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/86.mp4",
+        "prompt": "Use the right hand to pick up red apple from right side of table to lower level of black fruit basket.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/86.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/46.mp4",
+        "prompt": "Use the right hand to pick up rubik's cube from pink plate to teal plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/46.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/52.mp4",
+        "prompt": "Use the right hand to pick up pink peach from right side of white table to bottom level of the shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/52.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/12.mp4",
+        "prompt": "Use the left hand to pick up brown potato from dark blue plate to the left to yellow plate to the right.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/12.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/93.mp4",
+        "prompt": "Use the left hand to pick up white clock from middle of table to bottom of wooden shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/93.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/53.mp4",
+        "prompt": "Use the right hand to pick up clear red cup from tan table to light blue plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/53.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/100.mp4",
+        "prompt": "Use the right hand to pick up rubik's cube from top level of the wooden shelf to bottom level of the wooden shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/100.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/6.mp4",
+        "prompt": "Use the right hand to pick up orange from middle of table to bottom white shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/6.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/58.mp4",
+        "prompt": "Use the right hand to pick up red glass from blue plate to teal plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/58.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/18.mp4",
+        "prompt": "Use the right hand to pick up orange juice carton from pink plate to cyan bowl.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/18.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/24.mp4",
+        "prompt": "Use the right hand to pick up red glass from right side of table to blue plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/24.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/99.mp4",
+        "prompt": "Use the right hand to pick up orange glass from pink plate to pale turquoise plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/99.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/65.mp4",
+        "prompt": "Use the right hand to pick up dark blue clock from light red plate to light green plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/65.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/71.mp4",
+        "prompt": "Use the right hand to pick up tan potato from center of table to lower white tray of plastic shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/71.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/25.mp4",
+        "prompt": "Use the right hand to pick up pink peach from center of table to lower white tray of plastic shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/25.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/31.mp4",
+        "prompt": "Use the right hand to pick up tall red glass from center of tan table to center of bright blue plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/31.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/72.mp4",
+        "prompt": "Use the left hand to pick up clock from lower level shelf on the left side of the table to center of the table.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/72.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/77.mp4",
+        "prompt": "Use the left hand to pick up red glass from baby blue plate to pale turquoise plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/77.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/37.mp4",
+        "prompt": "Use the right hand to pick up green cup from tan table to blue plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/37.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/43.mp4",
+        "prompt": "Use the right hand to pick up red apple from pink plate to teal plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/43.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/84.mp4",
+        "prompt": "Use the right hand to pick up yellow mango from right side of table to lower white tray of plastic shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/84.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/90.mp4",
+        "prompt": "Use the right hand to pick up rubik's cube from circular gray mat to black rack.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/90.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/50.mp4",
+        "prompt": "Use the right hand to pick up rubik's cube from top wooden shelf to bottom wooden shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/50.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/10.mp4",
+        "prompt": "Use the right hand to pick up green grapes from black tray at the center of the table to white circular mat at the right side of the table.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/10.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/91.mp4",
+        "prompt": "Use the right hand to pick up orange juice carton from center of table to gray basket.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/91.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/49.mp4",
+        "prompt": "Use the left hand to pick up potato from from the blue plate on the left side of the table to to the yellow bowl.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/49.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/9.mp4",
+        "prompt": "Use the left hand to pick up tall purple glass from center of blue plate to center of teal plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/9.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/96.mp4",
+        "prompt": "Use the right hand to pick up peach from top black shelf to inside brown paper bag.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/96.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/56.mp4",
+        "prompt": "Use the right hand to pick up pink peach from black shelf to inside brown paper bag.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/56.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/16.mp4",
+        "prompt": "Use the right hand to pick up red tomato from upper black tray of plastic shelf to inside of brown paper bag.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/16.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/63.mp4",
+        "prompt": "Use the left hand to pick up yellow mustard bottle from baby blue plate to pale turquoise plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/63.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/68.mp4",
+        "prompt": "Use the right hand to pick up orange juice carton from center of pink plate to center of pink bowl.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/68.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/75.mp4",
+        "prompt": "Use the right hand to pick up the tangerine from from the large pink plate to to the small teal plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/75.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/35.mp4",
+        "prompt": "Use the right hand to pick up yellow mango from right side of table to white shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/35.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/41.mp4",
+        "prompt": "Use the right hand to pick up rubik's cube from bottom level of the wooden shelf to top level of the wooden shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/41.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/82.mp4",
+        "prompt": "Use the right hand to pick up rubik's cube from bottom wooden shelf to top wooden shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/82.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/47.mp4",
+        "prompt": "Use the right hand to pick up green cup from tan table to teal plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/47.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/13.mp4",
+        "prompt": "Use the right hand to pick up pink mug from top level of the shelf to tan table.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/13.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/94.mp4",
+        "prompt": "Use the right hand to pick up purple grapes from center of table to lower white plastic tray.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/94.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/54.mp4",
+        "prompt": "Use the right hand to pick up rubik's cube from bottom wooden shelf to top wooden shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/54.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/60.mp4",
+        "prompt": "Use the right hand to pick up rubik's cube from bottom level of the shelf to top level of the shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/60.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/20.mp4",
+        "prompt": "Use the right hand to pick up rubik's cube from bottom tier of wooden shelf to top level of wooden shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/20.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/59.mp4",
+        "prompt": "Use the left hand to pick up white clock from middle of tan table to top of the wooden shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/59.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/19.mp4",
+        "prompt": "Use the right hand to pick up green apple from bottom shelf to top shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/19.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/66.mp4",
+        "prompt": "Use the right hand to pick up rubik's cube from bottom level of brown wooden shelf to top level of brown wooden shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/66.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/26.mp4",
+        "prompt": "Use the left hand to pick up zucchini from inside white mug to blue plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/26.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/32.mp4",
+        "prompt": "Use the right hand to pick up rubik's cube from from the top of the three-tiered wooden shelf to to the bottom of the brown three-tiered wooden shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/32.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/73.mp4",
+        "prompt": "Use the left hand to pick up blue clock from bottom wooden shelf to center of teal plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/73.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/78.mp4",
+        "prompt": "Use the left hand to pick up green leafy vegetable from basket on the left side of the table to circular mat at the center of the table.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/78.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/38.mp4",
+        "prompt": "Use the right hand to pick up tall red glass from center of tan table to center of bright blue plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/38.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/79.mp4",
+        "prompt": "Use the right hand to pick up red pepper from black top shelf to bottom white shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/79.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/85.mp4",
+        "prompt": "Use the right hand to pick up green cucumber from white cirlce to lower level of black basket.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/85.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/45.mp4",
+        "prompt": "Use the right hand to pick up green apple from top tier of wooden shelf to bottom tier of wooden shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/45.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/51.mp4",
+        "prompt": "Use the left hand to pick up clear blue glass from blue plate to teal plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/51.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/92.mp4",
+        "prompt": "Use the right hand to pick up rubik's cube from bottom level of brown wooden shelf to top level of brown wooden shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/92.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/97.mp4",
+        "prompt": "Use the right hand to pick up green avocado from right side of table to lower level of wire fruit basket.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/97.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/57.mp4",
+        "prompt": "Use the right hand to pick up blue mug from table mat to blue box.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/57.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/17.mp4",
+        "prompt": "Use the left hand to pick up milk bottle from pink bowl to light blue plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/17.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/23.mp4",
+        "prompt": "Use the right hand to pick up red glass from blue plate to teal plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/23.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/98.mp4",
+        "prompt": "Use the left hand to pick up yellow mustard bottle from tan table to middle level of white shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/98.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/64.mp4",
+        "prompt": "Use the right hand to pick up dark red apple from center of table to bottom level black wire tray.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/64.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/70.mp4",
+        "prompt": "Use the right hand to pick up red cup from right side of table to blue plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/70.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/30.mp4",
+        "prompt": "Use the right hand to pick up rubiks cube from top level of the wooden shelf to bottom level of the wooden shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/30.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/69.mp4",
+        "prompt": "Use the right hand to pick up tall grey glass from right of tan table to turquoise plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/69.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/29.mp4",
+        "prompt": "Use the right hand to pick up white mug from green plate to gray plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/29.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/76.mp4",
+        "prompt": "Use the right hand to pick up rubik's cube from top level of brown wooden shelf to bottom level of brown wooden shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/76.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/36.mp4",
+        "prompt": "Use the left hand to pick up orange from circular gray mat to light blue box.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/36.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/42.mp4",
+        "prompt": "Use the right hand to pick up blue glass from pink plate to light blue plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/42.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/1.mp4",
+        "prompt": "Use the right hand to pick up green bok choy from tan table right side to bottom level of wire basket.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/1.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/83.mp4",
+        "prompt": "Use the right hand to pick up rubik's cube from from the pink plate on the right side of the table to to the small cyan plate on the right side of the table above the pink plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/83.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/88.mp4",
+        "prompt": "Use the right hand to pick up purple grapes from right side of table to white shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/88.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/48.mp4",
+        "prompt": "Use the right hand to pick up pink dragon fruit from pink plate to teal plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/48.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/2.mp4",
+        "prompt": "Use the right hand to pick up rubik's cube from top level of the shelf to bottom level of the shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/2.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/14.mp4",
+        "prompt": "Use the right hand to pick up red apple from yellow plate to tan bowl.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/14.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/89.mp4",
+        "prompt": "Use the right hand to pick up pink peach from top level of the shelf to bottom level of the shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/89.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/95.mp4",
+        "prompt": "Use the left hand to pick up rubiks cube from yellow plate to grey plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/95.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/55.mp4",
+        "prompt": "Use the right hand to pick up grapes from white table left side to bottom level of shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/55.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/61.mp4",
+        "prompt": "Use the right hand to pick up green glass from tan table to light blue plate.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/61.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/15.mp4",
+        "prompt": "Use the right hand to pick up clear orange cup from top level of the shelf to bottom level of the shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/15.mp4"
+    },
+    {
+        "input_video": "./datasets/PhysicalAI-Robotics-GR00T-GR1/gr1/21.mp4",
+        "prompt": "Use the right hand to pick up rubik's cube from top level of brown wooden shelf to bottom level of brown wooden shelf.",
+        "output_video": "./sampling_dataset/PhysicalAI-Robotics-GR00T-GR1/gr1/dense/21.mp4"
+    }
+]
