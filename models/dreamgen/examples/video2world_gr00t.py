@@ -162,13 +162,18 @@ def parse_args() -> argparse.Namespace:
         help="Disable guardrail checks on prompts",
     )
     parser.add_argument(
+        "--enable_prompt_refiner",
+        action="store_true",
+        help="Enable prompt refinement before generation (default: disabled for GR00T).",
+    )
+    parser.add_argument(
         "--gr00t_variant", type=str, required=True, help="GR00T variant to use", choices=["gr1", "droid"]
     )
     parser.add_argument(
         "--prompt_prefix", type=str, default="The robot arm is performing a task. ", help="Prefix to add to all prompts"
     )
     parser.add_argument(
-        "--fps", type=int, default=10, help="Frames per second for the generated video playback"
+        "--fps", type=int, default=16, help="Frames per second for the generated video playback"
     )
 
     # ---- Sparse Backend Integration ---
@@ -240,7 +245,12 @@ def setup_pipeline(args: argparse.Namespace):
         fastercache_block_interval=getattr(args, "fastercache_block_interval", 3),
         fastercache_debug=getattr(args, "fastercache_debug", False),
     )
-    config.prompt_refiner_config.enabled = False
+    # Keep existing GR00T behavior by default, but allow opt-in refinement.
+    config.prompt_refiner_config.enabled = bool(args.enable_prompt_refiner)
+    if config.prompt_refiner_config.enabled:
+        log.info("Prompt refiner is enabled")
+    else:
+        log.info("Prompt refiner is disabled")
     if args.dit_path:
         dit_path = args.dit_path
     else:

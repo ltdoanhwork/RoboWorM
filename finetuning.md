@@ -61,7 +61,22 @@ bash finetuning/dreamdojo/infer.sh \
 bash finetuning/dreamdojo/infer.sh \
   --dataset_path /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/datasets/bimanual/singleview/makovian/close_cardboard_box \
   --episode_idx 0 \
-  --ckpt_path exp_logs/dreamdojo_logs/dreamdojo/exp_aloha/aloha_bimanual_singleview/checkpoints/iter_000010000
+  --ckpt_path /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/exp_logs/dreamdojo_logs/dreamdojo/exp_aloha/aloha_bimanual_singleview/checkpoints/iter_000010000/model
+
+# 2) Action-conditioned batch infer (num-samples nhiều hơn)
+export PYTHONPATH="./models/DreamDojo:${PYTHONPATH}"
+source ./models/DreamDojo/.venv/bin/activate
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/dreamdojo_svg1_eval_finetuned \
+  --checkpoints-dir ./exp_logs/dreamdojo_logs/dreamdojo/exp_aloha/aloha_bimanual_singleview/checkpoints \
+  --experiment dreamdojo_2b_480_640_aloha \
+  --save-dir ./output/dreamdojo_results/results_finetuned_30k \
+  --num-frames 97 \
+  --num-samples 130 \
+  --dataset-path "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/datasets/bimanual/singleview/makovian/close_cardboard_box" \
+  --data-split test \
+  --deterministic-uniform-sampling 
+  
 
 # DROID dataset
 bash finetuning/dreamdojo/infer.sh \

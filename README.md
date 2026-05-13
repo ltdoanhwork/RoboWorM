@@ -146,13 +146,7 @@ source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_g
 export PYTHONPATH="./models/dreamgen"
 export CUDA_VISIBLE_DEVICES=0 
 export NUM_GPUS=1
-<!-- # Download đúng checkpoint nhẹ: 14B Video2World 480p-16fps
-python ./models/dreamgen/scripts/download_checkpoints.py \
-  --checkpoint_dir ./checkpoints \
-  --model_sizes 14B \
-  --model_types video2world \
-  --resolution 480 \
-  --fps 16 -->
+
 torchrun -m models.dreamgen.examples.video2world \
   --model_size 14B \
   --resolution 480 \
@@ -161,6 +155,42 @@ torchrun -m models.dreamgen.examples.video2world \
   --batch_input_json /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/sampling_dataset/humanoid/singleview/input/PhysicalAI-Robotics-GR00T-GR1/dense/batch_input.json \
   --disable_guardrail \
   --num_gpus ${NUM_GPUS}
+
+# 14B Video2World 720p-16fps: ghi ra thư mục riêng (mặc định `720p_16fps/`), không đè `dense/`
+# (script tự clone batch_input.json và đổi `output_video`)
+bash ./scripts/run_humanoid_gr1_video2world_720p16fps.sh
+# Tuỳ chọn: OUT_TAG=my_run để tách từng lần chạy
+
+
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
+export PYTHONPATH="./models/dreamgen"
+export CUDA_VISIBLE_DEVICES=0
+export NUM_GPUS=1
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+  --model_size 14B \
+  --gr00t_variant gr1 \
+  --batch_input_json /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/sampling_dataset/humanoid/singleview/input/PhysicalAI-Robotics-GR00T-GR1/dense/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS}
+
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
+export PYTHONPATH="./models/dreamgen"
+export CUDA_VISIBLE_DEVICES=0
+export NUM_GPUS=1
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+  --model_size 14B \
+  --gr00t_variant gr1 \
+  --batch_input_json /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/sampling_dataset/humanoid/singleview/input/PhysicalAI-Robotics-GR00T-GR1/dense/batch_input.json \
+  --enable_prompt_refiner \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS}
+
+
+2B - 720P - prompt refinement
+
+14B - 480B - no prompt refinement
+
+
 
 ### dreamgen base - 4 gpu
 source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
