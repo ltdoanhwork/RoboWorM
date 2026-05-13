@@ -39,11 +39,18 @@ NPROC=2 bash finetuning/dreamdojo/launch.sh dreamdojo_2b_480_640_droid_sv
 
 # Single GPU debug
 NPROC=1 bash finetuning/dreamdojo/launch.sh dreamdojo_2b_480_640_aloha
+
+# Resume from iter_40k, train on all LeRobot roots under datasets/bimanual/singleview (54 tasks),
+# save to a new job folder (not exp_aloha/aloha_bimanual_singleview)
+NPROC=2 bash finetuning/dreamdojo/launch.sh dreamdojo_2b_480_640_aloha_resume40k_bimanual_sv
 ```
 
-Configs: `models/DreamDojo/configs/2b_480_640_aloha.yaml`, `2b_480_640_droid_sv.yaml`
+Configs: `models/DreamDojo/configs/2b_480_640_aloha.yaml`, `2b_480_640_droid_sv.yaml`, `2b_480_640_aloha_resume40k_bimanual_sv.yaml` (resume + full bimanual singleview list)
+
 Checkpoints saved to: `exp_logs/dreamdojo_logs/dreamdojo/exp_<group>/<name>/checkpoints/`
 Video samples logged to: `exp_logs/dreamdojo_logs/dreamdojo/exp_<group>/<name>/video_logs/`
+
+Resume run above writes to `exp_logs/dreamdojo_logs/dreamdojo/exp_aloha_resume40k/aloha_bimanual_singleview_full/` and loads weights plus optimizer/scheduler/trainer state from `.../checkpoints/iter_000040000/`. If resume errors, edit that YAML and set `checkpoint.load_training_state: false` (weights only).
 
 ### Inference (test on dataset samples)
 
@@ -70,10 +77,10 @@ python -m models.DreamDojo.examples.action_conditioned \
   -o ./output/dreamdojo_svg1_eval_finetuned \
   --checkpoints-dir ./exp_logs/dreamdojo_logs/dreamdojo/exp_aloha/aloha_bimanual_singleview/checkpoints \
   --experiment dreamdojo_2b_480_640_aloha \
-  --save-dir ./output/dreamdojo_results/results_finetuned_30k \
+  --save-dir ./output/dreamdojo_results/results_finetuned_40k \
   --num-frames 97 \
-  --num-samples 130 \
-  --dataset-path "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/datasets/bimanual/singleview/makovian/close_cardboard_box" \
+  --num-samples 5 \
+  --dataset-path "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/datasets/bimanual/singleview/makovian/close_toolbox" \
   --data-split test \
   --deterministic-uniform-sampling 
   

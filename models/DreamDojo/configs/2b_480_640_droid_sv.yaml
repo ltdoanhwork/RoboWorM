@@ -31,7 +31,8 @@ dataloader_train:
   dataset:
     num_frames: 13
     dataset_path:
-      - /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/datasets/single_arm/singleview/
+      - /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/datasets/single_arm/singleview/makovian/
+      - /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/datasets/single_arm/singleview/non_makovian/
     data_split: train
     single_base_index: false
     deterministic_uniform_sampling: false
