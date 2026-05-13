@@ -44,8 +44,10 @@ from pathlib import Path
 
 import requests
 import pandas as pd
-from PIL import Image
+from PIL import Image, ImageFile
 from tqdm import tqdm
+
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 # ---------------------------------------------------------------------------
 # Prompt
@@ -99,21 +101,22 @@ def build_vision_user_content(batch: list[dict], max_px: int) -> list[dict]:
     content = []
     for i, row in enumerate(batch):
         img_path = Path(row["input_image"])
+        img_ok = False
         if img_path.exists():
-            b64 = encode_image_b64(img_path, max_px)
-            content.append({
-                "type": "image_url",
-                "image_url": {"url": f"data:image/png;base64,{b64}"},
-            })
-            content.append({
-                "type": "text",
-                "text": f'Episode {i+1} (id="{row["id"]}"): {row["prompt"]}',
-            })
-        else:
-            content.append({
-                "type": "text",
-                "text": f'Episode {i+1} (id="{row["id"]}"): {row["prompt"]} [image not found]',
-            })
+            try:
+                b64 = encode_image_b64(img_path, max_px)
+                content.append({
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/png;base64,{b64}"},
+                })
+                img_ok = True
+            except Exception as e:
+                print(f"  [warn] Could not load image {img_path.name}: {e}", file=sys.stderr)
+        suffix = "" if img_ok else " [image unavailable]"
+        content.append({
+            "type": "text",
+            "text": f'Episode {i+1} (id="{row["id"]}"): {row["prompt"]}{suffix}',
+        })
     content.append({
         "type": "text",
         "text": "\nNow classify all episodes above. Reply with only the JSON array.",
