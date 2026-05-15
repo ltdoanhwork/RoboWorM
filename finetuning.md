@@ -83,7 +83,34 @@ python -m models.DreamDojo.examples.action_conditioned \
   --dataset-path "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/datasets/bimanual/singleview/makovian/close_toolbox" \
   --data-split test \
   --deterministic-uniform-sampling 
+
+# 3) Action-conditioned batch infer (num-samples nhiều hơn)
+export PYTHONPATH="./models/DreamDojo:${PYTHONPATH}"
+source ./models/DreamDojo/.venv/bin/activate
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/dreamdojo_svg1_eval_finetuned \
+  --checkpoints-dir ./exp_logs/dreamdojo_logs/dreamdojo/exp_aloha_resume40k/aloha_bimanual_singleview_full/checkpoints \
+  --experiment dreamdojo_2b_480_640_aloha \
+  --save-dir ./output/dreamdojo_results/results_finetuned_resume40k \
+  --num-frames 97 \
+  --num-samples 5 \
+  --dataset-path "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/datasets/bimanual/singleview/makovian/close_toolbox" \
+  --data-split test \
+  --deterministic-uniform-sampling 
   
+# DROID single-arm batch infer
+export PYTHONPATH="./models/DreamDojo:${PYTHONPATH}"
+source ./models/DreamDojo/.venv/bin/activate
+python -m models.DreamDojo.examples.action_conditioned \
+  -o ./output/dreamdojo_droid_sv_eval_finetuned \
+  --checkpoints-dir ./exp_logs/dreamdojo_logs/dreamdojo/exp_droid_sv/droid_singlearm_singleview/checkpoints \
+  --experiment dreamdojo_2b_480_640_droid_sv \
+  --save-dir ./output/dreamdojo_results/results_droid_finetuned_10k \
+  --num-frames 97 \
+  --num-samples 5 \
+  --dataset-path "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/datasets/single_arm/singleview/makovian" \
+  --data-split test \
+  --deterministic-uniform-sampling
 
 # DROID dataset
 bash finetuning/dreamdojo/infer.sh \
