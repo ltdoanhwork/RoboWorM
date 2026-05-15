@@ -1100,7 +1100,7 @@ class WrappedLeRobotSingleDataset(LeRobotSingleDataset):
             action_seq[:, 169:183] = delta_actions
         elif "droid" in _ds_path_lower or "/single_arm/" in _ds_path_lower:
             action_seq[:, 183:190] = delta_actions
-        elif "gr1" in _ds_path_lower:
+        elif "gr1" in _ds_path_lower or "/humanoid/" in _ds_path_lower:
             action_seq[:, :29] = delta_actions
         elif "g1" in _ds_path_lower:
             action_seq[:, 58:101] = delta_actions

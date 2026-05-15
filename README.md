@@ -464,6 +464,16 @@ python -m models.DreamDojo.examples.action_conditioned \
   --checkpoint-interval 5000 \
   --infinite
 
+### dreamdojo — humanoid singleview dense (full makovian + non_makovian)
+
+Dense = default action-conditioned diffusion (no `--use_svg` / SiTo). Outputs default to `sampling_dataset/dense/humanoid/output/singleview/dreamdojo/{makovian,non_makovian}/` (videos under `.../<iter_*>/`). The script runs `repair_humanoid_singleview_split_meta.py` first so `meta/episodes.jsonl` matches parquets when the split mixes DreamDojo-HV indices with GR1_robot (`SKIP_META_REPAIR=1` to skip).
+
+```bash
+cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
+bash ./scripts/run_humanoid_singleview_dreamdojo_dense.sh
+# Tuỳ chọn: CHECKPOINTS_DIR=... SAVE_ROOT=/abs/path/to/out/root CUDA_VISIBLE_DEVICES=0 bash ...
+```
+
 ### dreamdojo svg 1
 python -m models.DreamDojo.examples.action_conditioned \
   -o ./output/dreamdojo_svg1_eval \
@@ -692,3 +702,9 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
   --itm_keep_last_n_dense 2 \
   --itm_prune_from_step 1 \
   --itm_merge_from_step 2
+
+
+TMP_OUT=/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/tmp \
+NUM_GPUS=1 \
+BATCH_JSON=./sampling_dataset/dense/single_arm/input/multiview/dreamgen/makovian/batch_input.json \
+bash scripts/run_single_arm_multiview_video2world_2b_tmp.sh

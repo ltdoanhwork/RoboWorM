@@ -27,8 +27,8 @@ Scripts: `prepare_single_arm_multiview_dreamgen_batch.py`, `run_single_arm_multi
 
 These follow long-standing paths in this repo; only change if the user asks:
 
-- Humanoid multiview: `sampling_dataset/humanoid/multiview/…`
-- Humanoid singleview / GR1 batches: `sampling_dataset/humanoid/singleview/input/…` (often with a `dense/` **subset** tag inside the model folder, distinct from top-level `sampling_dataset/dense/`)
+- Humanoid singleview — DreamGen-style batches / legacy: `sampling_dataset/humanoid/singleview/input/…` (often `dense/` under a model bucket)
+- Humanoid singleview — DreamDojo dense action-conditioned saves (default shell output): `sampling_dataset/dense/humanoid/output/singleview/dreamdojo/{makovian|non_makovian}/`
 - Bimanual: `sampling_dataset/bimanual/input|output/multiview/dreamgen/…`
 
 When adding a new pipeline, mirror the pattern: **`input/…` for artifacts fed to inference**, **`output/…` for mp4 and logs**, and use **`dense/`** (or a clearly named variant folder) at the appropriate level so accelerated runs can sit beside it later.

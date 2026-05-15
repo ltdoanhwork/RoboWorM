@@ -7,9 +7,10 @@ Sources (in priority order):
 
 Target structure (mirrors source LeRobot layout):
   datasets/humanoid/singleview/makovian/
-    data/chunk-XXX/episode_XXXXXX.parquet   → symlink
-    videos/chunk-XXX/observation.images.ego_view_freq20/episode_XXXXXX.mp4 → symlink
-    meta/  → symlink to source meta/
+    data/chunk-XXX/episode_XXXXXX.parquet   → symlink or copy
+    videos/chunk-XXX/observation.images.ego_view_freq20/episode_XXXXXX.mp4 → symlink or copy
+    meta/  → copied from DreamDojo-HV_Eval/meta, then `repair_humanoid_singleview_split_meta.py`
+             rewrites episodes.jsonl / info.json to match on-disk episodes (mixed GR1 + DreamDojo).
 
 Usage:
     python scripts/split_humanoid_singleview.py
@@ -20,6 +21,8 @@ import argparse
 import json
 import random
 import shutil
+import subprocess
+import sys
 from collections import defaultdict
 from pathlib import Path
 
@@ -193,10 +196,14 @@ def main():
                 if vid.exists():
                     stats[lbl]["video"] += 1
 
-        # symlink meta from DreamDojo (same schema) 
-        meta_link = dst / "meta"
-        if not meta_link.exists():
-            meta_link.symlink_to((GR1_BASE / "DreamDojo-HV_Eval/meta").resolve())
+        # Copy meta from DreamDojo as a template; episodes.jsonl/info.json are fixed by repair script.
+        meta_dst = dst / "meta"
+        if meta_dst.exists():
+            shutil.rmtree(meta_dst)
+        shutil.copytree(GR1_BASE / "DreamDojo-HV_Eval" / "meta", meta_dst)
+
+    repair = ws / "scripts" / "repair_humanoid_singleview_split_meta.py"
+    subprocess.run([sys.executable, str(repair), "--workspace", str(ws)], check=True)
 
     # -----------------------------------------------------------------------
     # 5. Report

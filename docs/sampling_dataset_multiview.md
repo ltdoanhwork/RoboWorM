@@ -97,10 +97,21 @@ DATASET_PATH=datasets/single_arm/multiview/makovian NUM_GPUS=2 \
   bash scripts/run_single_arm_multiview_dreamgen_batch.sh
 ```
 
+Pipeline chính (`scripts/run_single_arm_multiview_dreamgen_batch.sh`) gọi **`examples.video2world_gr00t`** và checkpoint **`Cosmos-Predict2-14B-Sample-GR00T-Dreams-DROID`** (resolve từ `CHECKPOINTS_DIR` trong `imaginaire/constants.py`). Để baseline **Video2World 2B** (không GR00T), ghi **`tmp/`** — script mặc định **`USE_LVG=1`** + **`NUM_CHUNKS=4`** (`examples.video2world_lvg`, 480p/16fps khớp `model-480p-16fps.pt`; xem `--resolution` / `--fps` trong `video2world_lvg.py`):
+
+```bash
+TMP_OUT=./tmp NUM_GPUS=2 \
+  BATCH_JSON=./sampling_dataset/dense/single_arm/input/multiview/dreamgen/makovian/batch_input.json \
+  bash scripts/run_single_arm_multiview_video2world_2b_tmp.sh
+```
+NUM_CHUNKS=3 NUM_GPUS=1 bash scripts/run_single_arm_multiview_video2world_2b_tmp.sh
+Một clip ngắn (không nối chunk): `USE_LVG=0`. Ghi đè checkpoint: `DIT_PATH=...`. Đây là **`video2world_lvg` / `video2world`**, không phải `video2world_gr00t`.
+
+
 **Độ dài video (số frame thật):** `examples.video2world_gr00t` **không** có cờ `--num_frames`; độ dài mỗi lần sinh do checkpoint / `state_t` cố định (tài liệu multiview: khoảng **29** frame @ 16fps training). Để **video dài hơn**, dùng **LVG** (nối nhiều chunk):
 
 ```bash
-USE_LVG=1 NUM_CHUNKS=4 NUM_GPUS=1 \
+USE_LVG=1 NUM_CHUNKS=3 NUM_GPUS=1 \
   DATASET_PATH=datasets/single_arm/multiview/makovian \
   bash scripts/run_single_arm_multiview_dreamgen_batch.sh
 ```

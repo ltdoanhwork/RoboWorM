@@ -34,7 +34,9 @@ from cosmos_predict2.configs.base.config_video2world import (
 from cosmos_predict2.pipelines.video2world import _IMAGE_EXTENSIONS, _VIDEO_EXTENSIONS, Video2WorldPipeline
 from imaginaire.constants import (
     CosmosPredict2Video2WorldAspectRatio,
+    CosmosPredict2Video2WorldFPS,
     CosmosPredict2Video2WorldModelSize,
+    CosmosPredict2Video2WorldResolution,
     get_cosmos_predict2_video2world_checkpoint,
 )
 from imaginaire.utils import distributed, log, misc
@@ -99,6 +101,20 @@ def parse_args() -> argparse.Namespace:
         choices=CosmosPredict2Video2WorldModelSize.__args__,
         default="2B",
         help="Size of the model to use for video-to-world generation",
+    )
+    parser.add_argument(
+        "--resolution",
+        choices=CosmosPredict2Video2WorldResolution.__args__,
+        default="720",
+        type=str,
+        help="Pipeline/checkpoint resolution bucket (must match --dit_path when set)",
+    )
+    parser.add_argument(
+        "--fps",
+        choices=CosmosPredict2Video2WorldFPS.__args__,
+        default=16,
+        type=int,
+        help="Pipeline/checkpoint FPS bucket (must match --dit_path when set)",
     )
     parser.add_argument(
         "--dit_path",
@@ -187,8 +203,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def setup_pipeline(args: argparse.Namespace):
-    resolution = "720"
-    fps = 16
+    resolution: str = args.resolution
+    fps: int = args.fps
     config = get_cosmos_predict2_video2world_pipeline(
         model_size=args.model_size,
         resolution=resolution,
@@ -291,6 +307,7 @@ def process_single_generation(
     num_chunks: int,
     guidance: float,
     seed: int,
+    output_fps: int = 16,
 ) -> bool:
     # Validate input file
     if not validate_input_file(input_path, num_conditional_frames):
