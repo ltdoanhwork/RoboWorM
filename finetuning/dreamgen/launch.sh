@@ -15,6 +15,7 @@
 #   predict2_video2world_training_2b_bimanual_singleview
 #   predict2_video2world_training_2b_single_arm_singleview
 #   predict2_video2world_training_2b_humanoid_singleview
+#   predict2_video2world_training_2b_all_singleview        ← all 3 combined (ConcatDataset)
 #
 # Prerequisites:
 #   1. Run data preparation scripts in finetuning/dreamgen/scripts/
@@ -43,11 +44,15 @@ export LD_PRELOAD=""
 echo "Running on $NNODES nodes with $NPROC processes per node. Node rank: $NODE_RANK."
 
 PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+export PROJECT_ROOT
 DREAMGEN_ROOT="${PROJECT_ROOT}/models/dreamgen"
 
 export PYTHONPATH="${DREAMGEN_ROOT}:${PROJECT_ROOT}:${PYTHONPATH}"
 export OMP_NUM_THREADS=8
 export IMAGINAIRE_OUTPUT_ROOT="${PROJECT_ROOT}/exp_logs/dreamgen_logs"
+
+# Point constants.py to local checkpoints dir (contains nvidia/Cosmos-Predict2-*, google-t5/t5-11b, etc.)
+export COSMOS_PREDICT2_ARGS="--checkpoints ${PROJECT_ROOT}/checkpoints"
 
 source "${DREAMGEN_ROOT}/.venv/bin/activate"
 

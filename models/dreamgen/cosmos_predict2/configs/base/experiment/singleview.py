@@ -34,12 +34,21 @@ Checkpoints saved to:
     checkpoints/posttraining/singleview/{bimanual,single_arm,humanoid}_singleview/
 """
 
+import os
+
 from hydra.core.config_store import ConfigStore
 from megatron.core import parallel_state
-from torch.utils.data import DataLoader, DistributedSampler
+from torch.utils.data import ConcatDataset, DataLoader, DistributedSampler
 
 from cosmos_predict2.data.dataset_video import Dataset
 from imaginaire.lazy_config import LazyCall as L
+
+# Resolve dataset root absolutely so it works regardless of CWD.
+# singleview.py lives at: <project>/models/dreamgen/cosmos_predict2/configs/base/experiment/
+# Project root is 6 levels up from that directory.
+_SINGLEVIEW_DIR = os.path.dirname(os.path.abspath(__file__))
+_PROJECT_ROOT = os.path.abspath(os.path.join(_SINGLEVIEW_DIR, *[".."] * 6))
+_DATASETS_ROOT = os.path.join(_PROJECT_ROOT, "datasets")
 
 cs = ConfigStore.instance()
 
@@ -94,7 +103,7 @@ _MODEL_PARALLEL = dict(context_parallel_size=1)
 # ---------------------------------------------------------------------------
 
 _dataset_bimanual = L(Dataset)(
-    dataset_dir="datasets/bimanual_dreamgen",
+    dataset_dir=os.path.join(_DATASETS_ROOT, "bimanual_dreamgen"),
     num_frames=93,
     video_size=(480, 640),
 )
@@ -118,7 +127,7 @@ cs.store(
 predict2_video2world_training_2b_bimanual_singleview = dict(
     defaults=[
         {"override /model": "predict2_video2world_fsdp_2b"},
-        {"override /optimizer": "fusedadamw"},
+        {"override /optimizer": "adamw"},
         {"override /ckpt_type": "standard"},
         {"override /dataloader_val": "mock"},
         {"override /dataloader_train": "bimanual_singleview"},
@@ -143,7 +152,7 @@ predict2_video2world_training_2b_bimanual_singleview = dict(
 # ---------------------------------------------------------------------------
 
 _dataset_single_arm = L(Dataset)(
-    dataset_dir="datasets/single_arm_dreamgen",
+    dataset_dir=os.path.join(_DATASETS_ROOT, "single_arm_dreamgen"),
     num_frames=93,
     video_size=(480, 640),
 )
@@ -167,7 +176,7 @@ cs.store(
 predict2_video2world_training_2b_single_arm_singleview = dict(
     defaults=[
         {"override /model": "predict2_video2world_fsdp_2b"},
-        {"override /optimizer": "fusedadamw"},
+        {"override /optimizer": "adamw"},
         {"override /ckpt_type": "standard"},
         {"override /dataloader_val": "mock"},
         {"override /dataloader_train": "single_arm_singleview"},
@@ -192,7 +201,7 @@ predict2_video2world_training_2b_single_arm_singleview = dict(
 # ---------------------------------------------------------------------------
 
 _dataset_humanoid = L(Dataset)(
-    dataset_dir="datasets/humanoid_dreamgen",
+    dataset_dir=os.path.join(_DATASETS_ROOT, "humanoid_dreamgen"),
     num_frames=93,
     video_size=(480, 640),
 )
@@ -216,7 +225,7 @@ cs.store(
 predict2_video2world_training_2b_humanoid_singleview = dict(
     defaults=[
         {"override /model": "predict2_video2world_fsdp_2b"},
-        {"override /optimizer": "fusedadamw"},
+        {"override /optimizer": "adamw"},
         {"override /ckpt_type": "standard"},
         {"override /dataloader_val": "mock"},
         {"override /dataloader_train": "humanoid_singleview"},
@@ -237,6 +246,54 @@ predict2_video2world_training_2b_humanoid_singleview = dict(
 )
 
 # ---------------------------------------------------------------------------
+# All singleview combined  (bimanual + single_arm + humanoid, 480x640)
+# Uses ConcatDataset so the model sees all three embodiments in one run.
+# ---------------------------------------------------------------------------
+
+_dataset_all = L(ConcatDataset)(
+    datasets=[_dataset_bimanual, _dataset_single_arm, _dataset_humanoid]
+)
+
+_dataloader_all = L(DataLoader)(
+    dataset=_dataset_all,
+    sampler=L(get_sampler)(dataset=_dataset_all),
+    batch_size=1,
+    drop_last=True,
+    num_workers=8,
+    pin_memory=True,
+)
+
+cs.store(
+    group="dataloader_train",
+    package="dataloader_train",
+    name="all_singleview",
+    node=_dataloader_all,
+)
+
+predict2_video2world_training_2b_all_singleview = dict(
+    defaults=[
+        {"override /model": "predict2_video2world_fsdp_2b"},
+        {"override /optimizer": "adamw"},
+        {"override /ckpt_type": "standard"},
+        {"override /dataloader_val": "mock"},
+        {"override /dataloader_train": "all_singleview"},
+        {"override /scheduler": "lambdalinear"},
+        "_self_",
+    ],
+    model=_MODEL,
+    optimizer=_OPTIMIZER,
+    scheduler=_SCHEDULER,
+    job=dict(
+        project="posttraining",
+        group="singleview",
+        name="all_singleview",
+    ),
+    model_parallel=_MODEL_PARALLEL,
+    trainer=_TRAINER,
+    checkpoint=_CHECKPOINT,
+)
+
+# ---------------------------------------------------------------------------
 # Register all experiments with ConfigStore
 # ---------------------------------------------------------------------------
 
@@ -244,6 +301,7 @@ for _item in [
     predict2_video2world_training_2b_bimanual_singleview,
     predict2_video2world_training_2b_single_arm_singleview,
     predict2_video2world_training_2b_humanoid_singleview,
+    predict2_video2world_training_2b_all_singleview,
 ]:
     experiment_name = [name.lower() for name, value in globals().items() if value is _item][0]  # noqa: RUF015
     cs.store(

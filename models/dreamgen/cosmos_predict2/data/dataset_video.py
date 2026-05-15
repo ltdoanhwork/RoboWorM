@@ -55,7 +55,7 @@ class Dataset(Dataset):
         """
 
         super().__init__()
-        self.dataset_dir = dataset_dir
+        self.dataset_dir = os.path.abspath(dataset_dir)
         self.sequence_length = num_frames
 
         video_dir = os.path.join(self.dataset_dir, "videos")

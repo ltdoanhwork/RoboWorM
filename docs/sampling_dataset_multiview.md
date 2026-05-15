@@ -79,6 +79,47 @@ NUM_GPUS=1 MAX_EPISODES=0 bash scripts/run_multiview_airbot_all.sh
 MAX_EPISODES=3 FPS=8 bash scripts/run_multiview_airbot_all.sh
 
 
+# Single-arm (datasets/single_arm/multiview)
+
+Full-batch prep + DreamGen (`2×2` grid: `exterior_1_left`, `exterior_2_left`, `wrist_left`, black quadrant):
+
+```bash
+source models/dreamgen/.venv/bin/activate
+export PYTHONPATH=$PYTHONPATH:$(pwd)/models/dreamgen
+
+NUM_GPUS=2 bash scripts/run_single_arm_multiview_dreamgen_all.sh
+```
+
+One branch only (`makovian` or `non_makovian`):
+
+```bash
+DATASET_PATH=datasets/single_arm/multiview/makovian NUM_GPUS=2 \
+  bash scripts/run_single_arm_multiview_dreamgen_batch.sh
+```
+
+**Độ dài video (số frame thật):** `examples.video2world_gr00t` **không** có cờ `--num_frames`; độ dài mỗi lần sinh do checkpoint / `state_t` cố định (tài liệu multiview: khoảng **29** frame @ 16fps training). Để **video dài hơn**, dùng **LVG** (nối nhiều chunk):
+
+```bash
+USE_LVG=1 NUM_CHUNKS=4 NUM_GPUS=1 \
+  DATASET_PATH=datasets/single_arm/multiview/makovian \
+  bash scripts/run_single_arm_multiview_dreamgen_batch.sh
+```
+
+`NUM_CHUNKS` càng lớn → clip càng dài (tốn GPU/time hơn). `--fps` trên bản **không**-LVG chỉ đổi tốc độ phát khi encode MP4; bản LVG hiện encode nội bộ **16 fps**.
+
+**Tại sao trước đây có hàng loạt `[WARN] … missing video for exterior_1_left`?** Script cũ đi theo **toàn bộ** `episode_index` trong `meta/episodes.jsonl` (có thể hàng chục nghìn dòng), trong khi trên đĩa bạn chỉ có **một subset** file `episode_XXXXXX.mp4` (dataset chưa tải đủ / chỉ giữ shard). Index kiểu `005698` nằm trong meta nhưng **không có file** ⇒ cảnh báo. **Mặc định mới:** prepare dùng **`--episode_source disk`**: chỉ lấy các episode mà **đủ cả 3 camera** đều có mp4 dưới `videos/chunk-*/…` (khoảng 128 episode trong ví dụ makovian của bạn). Prompt vẫn lấy từ meta khi trùng index; thiếu dòng meta thì fallback câu generic. Nếu cố tình muốn đi theo đúng meta và chấp nhận skip + warn: `EPISODE_SOURCE=meta`.
+
+**Gợi ý cũ (`MIN_EPISODE_INDEX`)** vẫn dùng được để giới hạn dải index sau khi đã lọc theo disk:
+
+```bash
+MAX_EPISODES=50 MIN_EPISODE_INDEX=1000 NUM_GPUS=2 \
+  DATASET_PATH=datasets/single_arm/multiview/makovian \
+  bash scripts/run_single_arm_multiview_dreamgen_batch.sh
+```
+
+Output mặc định: `sampling_dataset/dense/single_arm/input/multiview/dreamgen/<category>/` (grid PNG + `batch_input.json`) và `sampling_dataset/dense/single_arm/output/multiview/dreamgen/<category>/` (mp4). Thư mục `dense/` là tuyến video chuẩn (full steps); sau này có thể thêm các tuyến khác (vd. video tăng tốc / sparse) cạnh `dense/` — xem skill `sampling-dataset-structure`.
+
+
 # Bimanual
 ## Aloha_robot
 
@@ -256,3 +297,5 @@ https://www.dropbox.com/scl/fo/zumqdjhk47uk2k8kcefmu/AJQO0XN02iDKRzz-Qf_Sg4Y/dat
 https://www.dropbox.com/scl/fo/zumqdjhk47uk2k8kcefmu/AK4Fz8EnnTiplbXtuVassz0/data/gr00t/put_cup_moved_red_handle_holder?rlkey=bhkxfigxkt8fmbxb88qnq1og7&dl=0
 
 https://www.dropbox.com/scl/fo/zumqdjhk47uk2k8kcefmu/AFGVgKQpj3R8NP98F8qFoJ0/data/gr00t/place_the_chinese_spoons_on_the_cloth?rlkey=bhkxfigxkt8fmbxb88qnq1og7&dl=0
+
+

@@ -14,7 +14,13 @@
 # limitations under the License.
 
 import torch
-from apex.multi_tensor_apply import multi_tensor_applier
+
+try:
+    from apex.multi_tensor_apply import multi_tensor_applier
+    _APEX_AVAILABLE = True
+except ImportError:
+    multi_tensor_applier = None
+    _APEX_AVAILABLE = False
 
 from imaginaire.utils import distributed, log
 

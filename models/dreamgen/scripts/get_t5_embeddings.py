@@ -18,7 +18,7 @@ import os
 import pickle
 import sys 
 
-sys.path.append("/mnt/data/sftp/data/vla_intern/workspace/binh/dreamgen/dreamgen")
+pass  # sys.path managed externally via PYTHONPATH
 
 import numpy as np
 
@@ -37,8 +37,7 @@ def parse_args() -> argparse.ArgumentParser:
         type=int,
         help="Maximum length of the text embedding",
     )
-    # parser.add_argument("--cache_dir", type=str, default=T5_MODEL_DIR, help="Directory to cache the T5 model")
-    parser.add_argument("--cache_dir", type=str, default="/mnt/data/sftp/data/vla_intern/workspace/binh/dreamgen/cpkt/t5-11b", help="Directory to cache the T5 model")
+    parser.add_argument("--cache_dir", type=str, default=T5_MODEL_DIR, help="Directory to cache the T5 model")
     return parser.parse_args()
 
 

@@ -97,7 +97,7 @@ python -m models.DreamDojo.examples.action_conditioned \
   --dataset-path "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/datasets/bimanual/singleview/makovian/close_toolbox" \
   --data-split test \
   --deterministic-uniform-sampling 
-  
+
 # DROID single-arm batch infer
 export PYTHONPATH="./models/DreamDojo:${PYTHONPATH}"
 source ./models/DreamDojo/.venv/bin/activate
@@ -105,7 +105,7 @@ python -m models.DreamDojo.examples.action_conditioned \
   -o ./output/dreamdojo_droid_sv_eval_finetuned \
   --checkpoints-dir ./exp_logs/dreamdojo_logs/dreamdojo/exp_droid_sv/droid_singlearm_singleview/checkpoints \
   --experiment dreamdojo_2b_480_640_droid_sv \
-  --save-dir ./output/dreamdojo_results/results_droid_finetuned_10k \
+  --save-dir ./output/dreamdojo_results/results_droid_finetuned_20k \
   --num-frames 97 \
   --num-samples 5 \
   --dataset-path "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/datasets/single_arm/singleview/makovian" \
@@ -143,3 +143,60 @@ Output: `infer_outputs/<dataset_name>_ep<N>_g<guidance>_s<seed>_{gt,pred,compari
 | Reserved  | [190, 220)  | 30  |
 | MANO      | [220, 352)  | 132 |
 | Latent    | [352, 384)  | 32  |
+
+
+
+
+## DreamGen (Cosmos-Predict2 Video2World)
+
+### Step 1: Prepare datasets
+
+```bash
+# Bimanual ALOHA
+python finetuning/dreamgen/scripts/prepare_bimanual_dreamgen.py
+
+# Single-arm DROID
+python finetuning/dreamgen/scripts/prepare_single_arm_dreamgen.py
+
+# Humanoid GR1 — generate LLM captions first, then write humanoid_dreamgen/
+bash scripts/run_caption_humanoid_singleview.sh
+```
+
+### Step 2: Pre-compute T5-XXL embeddings (all 3 at once)
+
+```bash
+# All three datasets in one command
+bash finetuning/dreamgen/scripts/compute_t5_embeddings.sh
+
+# Or a single dataset
+DATASETS=humanoid bash finetuning/dreamgen/scripts/compute_t5_embeddings.sh
+```
+
+### Step 3: Train
+
+```bash
+source models/dreamgen/.venv/bin/activate
+
+# All 3 datasets combined (bimanual + single_arm + humanoid) — recommended
+NPROC=8 bash finetuning/dreamgen/launch.sh predict2_video2world_training_2b_all_singleview
+
+# Or train each embodiment separately
+NPROC=8 bash finetuning/dreamgen/launch.sh predict2_video2world_training_2b_bimanual_singleview
+NPROC=8 bash finetuning/dreamgen/launch.sh predict2_video2world_training_2b_single_arm_singleview
+NPROC=8 bash finetuning/dreamgen/launch.sh predict2_video2world_training_2b_humanoid_singleview
+
+# Single GPU debug
+NPROC=1 bash finetuning/dreamgen/launch.sh predict2_video2world_training_2b_all_singleview
+```
+
+Checkpoints saved to: `exp_logs/dreamgen_logs/posttraining/singleview/all_singleview/`
+
+### Step 4: Inference
+
+```bash
+bash finetuning/dreamgen/infer.sh \
+    --ckpt_path exp_logs/dreamgen_logs/posttraining/singleview/all_singleview/checkpoints/model/iter_000005000.pt \
+    --input_path /path/to/first_frame.png \
+    --prompt "A GR-1 humanoid robot picks up a corn cob and places it on the plate." \
+    --save_path output/dreamgen_all_infer.mp4
+```
