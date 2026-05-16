@@ -47,6 +47,7 @@ try:
         data_split="full",
         restrict_len=None,
         deterministic_uniform_sampling=False,
+        single_base_index=True,
     )
     n = len(d)
 finally:
@@ -73,5 +74,6 @@ for split in makovian non_makovian; do
     --num-frames "${NUM_FRAMES}" \
     --num-samples "${n}" \
     --dataset-path "${ROOT}/datasets/humanoid/singleview/${split}" \
-    --data-split full
+    --data-split full \
+    --single-base-index
 done

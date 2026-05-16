@@ -222,3 +222,4 @@ exp_imgs/*
 lam_infer_outputs/*
 tmp/*
 tmp_2/*
+models/Ctrl-World/dataset_example/*

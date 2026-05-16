@@ -31,6 +31,24 @@ LE_ROBOT_DATA_FILENAME = "data/*/*.parquet"
 
 SHARED_META_DIR = Path(__file__).resolve().parents[2] / "shared_meta"
 
+# GR1_robot parquets use compact 44-dim `action`; DreamDojo-style modality.json slices up to 52-d.
+_GR1_UNIFIED_ACTION_SLICES: dict[str, tuple[int, int]] | None = None
+
+
+def _gr1_unified_action_slice_range(subkey: str) -> tuple[int, int]:
+    global _GR1_UNIFIED_ACTION_SLICES
+    if _GR1_UNIFIED_ACTION_SLICES is None:
+        with open(SHARED_META_DIR / "GR1_unified_modality.json") as f:
+            uni = json.load(f)["action"]
+        _GR1_UNIFIED_ACTION_SLICES = {
+            part: (block["start"], block["end"]) for part, block in uni.items()
+        }
+    if subkey not in _GR1_UNIFIED_ACTION_SLICES:
+        raise KeyError(
+            f"No GR1_unified slice for action.{subkey}; update GR1_unified_modality.json or loader."
+        )
+    return _GR1_UNIFIED_ACTION_SLICES[subkey]
+
 
 def calculate_dataset_statistics(parquet_paths: list[Path]) -> dict:
     """Calculate the dataset statistics of all columns for a list of parquet files."""
@@ -840,10 +858,11 @@ class LeRobotSingleDataset(Dataset):
         if data_array.ndim == 1:
             data_array = data_array[:, np.newaxis]
         assert data_array.ndim == 2, f"Expected 2D array, got {data_array.shape} array"
-        le_indices = np.arange(
-            le_state_or_action_cfg[key].start,
-            le_state_or_action_cfg[key].end,
-        )
+        cfg_meta = le_state_or_action_cfg[key]
+        start, end = cfg_meta.start, cfg_meta.end
+        if modality == "action" and self.tag == "gr1" and data_array.shape[1] == 44:
+            start, end = _gr1_unified_action_slice_range(key)
+        le_indices = np.arange(start, end)
         data_array = data_array[:, le_indices]
         # Get the state or action configuration
         state_or_action_cfg = getattr(self.metadata.modalities, modality)[key]

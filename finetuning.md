@@ -178,7 +178,7 @@ DATASETS=humanoid bash finetuning/dreamgen/scripts/compute_t5_embeddings.sh
 source models/dreamgen/.venv/bin/activate
 
 # All 3 datasets combined (bimanual + single_arm + humanoid) — recommended
-NPROC=8 bash finetuning/dreamgen/launch.sh predict2_video2world_training_2b_all_singleview
+NPROC=4 bash finetuning/dreamgen/launch.sh predict2_video2world_training_2b_all_singleview
 
 # Or train each embodiment separately
 NPROC=8 bash finetuning/dreamgen/launch.sh predict2_video2world_training_2b_bimanual_singleview
@@ -200,3 +200,8 @@ bash finetuning/dreamgen/infer.sh \
     --prompt "A GR-1 humanoid robot picks up a corn cob and places it on the plate." \
     --save_path output/dreamgen_all_infer.mp4
 ```
+
+
+# ctrl world
+
+bash scripts/run_single_arm_multiview_ctrlworld.sh both

@@ -1,12 +1,12 @@
 """Prepare bimanual singleview dataset in DreamGen flat format.
 
 Reads from:
-    datasets/bimanual/singleview/{makovian,non_makovian}/{task}/videos/chunk-*/cam_high/*.mp4
+    datasets/bimanual/singleview/{makovian,non_makovian}/{task}/videos/chunk-*/observation.images.cam_high/*.mp4
 
 Writes to:
     datasets/bimanual_dreamgen/
-    ├── videos/{task}__ep{episode_id:06d}.mp4  (symlink)
-    └── metas/{task}__ep{episode_id:06d}.txt   (text caption)
+    ├── videos/{split}__{task}__ep{episode_id:06d}.mp4  (copy)
+    └── metas/{split}__{task}__ep{episode_id:06d}.txt   (text caption)
 
 After running this script, pre-compute T5-XXL embeddings:
     cd models/dreamgen
@@ -23,6 +23,7 @@ Usage:
 import argparse
 import os
 import re
+import shutil
 from pathlib import Path
 
 
@@ -61,10 +62,9 @@ def prepare(source: Path, target: Path) -> None:
                 print(f"  WARNING: no videos/ dir in {task_dir}, skipping")
                 continue
 
-            # Collect all cam_high mp4 files across all chunks
-            mp4_files = sorted(videos_root.glob("chunk-*/cam_high/*.mp4"))
+            # Collect all observation.images.cam_high mp4 files across all chunks
+            mp4_files = sorted(videos_root.glob("chunk-*/observation.images.cam_high/*.mp4"))
             if not mp4_files:
-                # Fallback: try any video subdir
                 mp4_files = sorted(videos_root.glob("chunk-*/*/*.mp4"))
 
             for mp4 in mp4_files:
@@ -83,7 +83,7 @@ def prepare(source: Path, target: Path) -> None:
                     continue
 
                 if not dst_mp4.exists():
-                    os.symlink(mp4.resolve(), dst_mp4)
+                    shutil.copy2(mp4, dst_mp4)
                 if not dst_txt.exists():
                     dst_txt.write_text(caption)
 

@@ -83,7 +83,7 @@ _TRAINER = dict(
     ),
 )
 
-_CHECKPOINT = dict(save_iter=500)
+_CHECKPOINT = dict(save_iter=1000)
 
 _MODEL = dict(
     config=dict(
@@ -126,7 +126,7 @@ cs.store(
 
 predict2_video2world_training_2b_bimanual_singleview = dict(
     defaults=[
-        {"override /model": "predict2_video2world_fsdp_2b"},
+        {"override /model": "predict2_video2world_fsdp_2b_480p_16fps"},
         {"override /optimizer": "adamw"},
         {"override /ckpt_type": "standard"},
         {"override /dataloader_val": "mock"},
@@ -175,7 +175,7 @@ cs.store(
 
 predict2_video2world_training_2b_single_arm_singleview = dict(
     defaults=[
-        {"override /model": "predict2_video2world_fsdp_2b"},
+        {"override /model": "predict2_video2world_fsdp_2b_480p_16fps"},
         {"override /optimizer": "adamw"},
         {"override /ckpt_type": "standard"},
         {"override /dataloader_val": "mock"},
@@ -224,7 +224,7 @@ cs.store(
 
 predict2_video2world_training_2b_humanoid_singleview = dict(
     defaults=[
-        {"override /model": "predict2_video2world_fsdp_2b"},
+        {"override /model": "predict2_video2world_fsdp_2b_480p_16fps"},
         {"override /optimizer": "adamw"},
         {"override /ckpt_type": "standard"},
         {"override /dataloader_val": "mock"},
@@ -272,7 +272,7 @@ cs.store(
 
 predict2_video2world_training_2b_all_singleview = dict(
     defaults=[
-        {"override /model": "predict2_video2world_fsdp_2b"},
+        {"override /model": "predict2_video2world_fsdp_2b_480p_16fps"},
         {"override /optimizer": "adamw"},
         {"override /ckpt_type": "standard"},
         {"override /dataloader_val": "mock"},
