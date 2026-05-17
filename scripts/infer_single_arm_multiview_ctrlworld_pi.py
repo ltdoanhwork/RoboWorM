@@ -24,9 +24,11 @@ ctrl_world_dir = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "models", "Ctrl-World"
 )
-sys.path.insert(0, ctrl_world_dir)
-sys.path.insert(0, os.path.join(ctrl_world_dir, "openpi", "src"))
+# Ctrl-World must be first to resolve its internal 'models' package before project root
+sys.path.insert(0, os.path.join(ctrl_world_dir, "scripts"))
 sys.path.insert(0, os.path.join(ctrl_world_dir, "openpi", "packages", "openpi-client", "src"))
+sys.path.insert(0, os.path.join(ctrl_world_dir, "openpi", "src"))
+sys.path.insert(0, ctrl_world_dir)
 
 from models.pipeline_ctrl_world import CtrlWorldDiffusionPipeline
 from models.ctrl_world import CrtlWorld
@@ -251,9 +253,18 @@ def main():
     model_args.val_dataset_dir = val_dataset_dir
 
     # Import and create the policy-enabled agent from rollout_interact_pi
-    sys.path.insert(0, os.path.join(ctrl_world_dir, "scripts"))
     from rollout_interact_pi import agent as PolicyAgent
+
+    # Patch torch.load to handle CUDA map_location gracefully
+    _original_torch_load = torch.load
+    def _patched_torch_load(f, *a, **kw):
+        if "map_location" not in kw:
+            kw["map_location"] = "cuda" if torch.cuda.is_available() else "cpu"
+        return _original_torch_load(f, *a, **kw)
+    torch.load = _patched_torch_load
+
     Agent = PolicyAgent(model_args)
+    torch.load = _original_torch_load
 
     # Find all episodes
     anno_dir = Path(val_dataset_dir) / "annotation" / "val"
