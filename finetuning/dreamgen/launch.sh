@@ -17,6 +17,11 @@
 #   predict2_video2world_training_2b_humanoid_singleview
 #   predict2_video2world_training_2b_all_singleview        ← all 3 combined (ConcatDataset)
 #
+# Available multi-view experiments (4 cameras as independent samples):
+#   predict2_video2world_training_2b_humanoid_multiview
+#   predict2_video2world_training_2b_bimanual_multiview
+#   predict2_video2world_training_2b_all_multiview         ← humanoid + bimanual combined
+#
 # Prerequisites:
 #   1. Run data preparation scripts in finetuning/dreamgen/scripts/
 #   2. Run bash finetuning/dreamgen/scripts/compute_t5_embeddings.sh
@@ -65,6 +70,11 @@ if [ -z "$experiment_name" ]; then
     echo "  predict2_video2world_training_2b_bimanual_singleview"
     echo "  predict2_video2world_training_2b_single_arm_singleview"
     echo "  predict2_video2world_training_2b_humanoid_singleview"
+    echo ""
+    echo "Available multiview experiments:"
+    echo "  predict2_video2world_training_2b_humanoid_multiview"
+    echo "  predict2_video2world_training_2b_bimanual_multiview"
+    echo "  predict2_video2world_training_2b_all_multiview"
     exit 1
 fi
 

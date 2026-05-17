@@ -27,16 +27,18 @@ export COSMOS_PREDICT2_ARGS="--checkpoints ${PROJECT_ROOT}/checkpoints"
 
 cd "${DREAMGEN_ROOT}"
 
-DATASETS=${DATASETS:-"bimanual single_arm humanoid"}
+DATASETS=${DATASETS:-"bimanual single_arm humanoid humanoid_multiview bimanual_multiview"}
 
 for DATASET in ${DATASETS}; do
     DATASET_PATH="${PROJECT_ROOT}/datasets/${DATASET}_dreamgen"
     if [ ! -d "${DATASET_PATH}" ]; then
         echo "WARNING: ${DATASET_PATH} not found, skipping."
         case "${DATASET}" in
-            bimanual)   echo "  → Run: python finetuning/dreamgen/scripts/prepare_bimanual_dreamgen.py" ;;
-            single_arm) echo "  → Run: python finetuning/dreamgen/scripts/prepare_single_arm_dreamgen.py" ;;
-            humanoid)   echo "  → Run: bash scripts/run_caption_humanoid_singleview.sh" ;;
+            bimanual)            echo "  → Run: python finetuning/dreamgen/scripts/prepare_bimanual_dreamgen.py" ;;
+            single_arm)          echo "  → Run: python finetuning/dreamgen/scripts/prepare_single_arm_dreamgen.py" ;;
+            humanoid)            echo "  → Run: bash scripts/run_caption_humanoid_singleview.sh" ;;
+            humanoid_multiview)  echo "  → Run: python finetuning/dreamgen/scripts/prepare_humanoid_multiview_dreamgen.py" ;;
+            bimanual_multiview)  echo "  → Run: python finetuning/dreamgen/scripts/prepare_bimanual_multiview_dreamgen.py" ;;
         esac
         continue
     fi

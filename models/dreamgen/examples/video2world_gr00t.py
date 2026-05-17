@@ -175,6 +175,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--fps", type=int, default=16, help="Frames per second for the generated video playback"
     )
+    parser.add_argument(
+        "--no_skip_existing",
+        action="store_true",
+        help="When using --batch_input_json, regenerate even if output files already exist.",
+    )
 
     # ---- Sparse Backend Integration ---
     add_pisa_args, add_svg_args, add_radial_args, add_sito_args, add_itm_args, add_cache_args, add_fastercache_args, apply_fastercache, build_cache_runtime_config = _import_sparse_backends()
@@ -301,6 +306,16 @@ def setup_pipeline(args: argparse.Namespace):
     return pipe
 
 
+def _batch_output_complete(output_path: str) -> bool:
+    """True if a prior successful run left both video and prompt sidecar (same completion order as save)."""
+    if not output_path or not os.path.isfile(output_path):
+        return False
+    if os.path.getsize(output_path) <= 0:
+        return False
+    prompt_path = os.path.splitext(output_path)[0] + ".txt"
+    return os.path.isfile(prompt_path) and os.path.getsize(prompt_path) > 0
+
+
 def process_single_generation(
     pipe: Video2WorldPipeline,
     input_path: str,
@@ -372,6 +387,10 @@ def generate_video(args: argparse.Namespace, pipe: Video2WorldPipeline) -> None:
 
             if not input_video or not prompt:
                 log.warning(f"Skipping item {idx}: Missing input_video or prompt")
+                continue
+
+            if not args.no_skip_existing and _batch_output_complete(output_video):
+                log.info(f"Skipping item {idx}: output already exists at {output_video}")
                 continue
 
             process_single_generation(

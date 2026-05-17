@@ -708,3 +708,5 @@ TMP_OUT=/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_
 NUM_GPUS=1 \
 BATCH_JSON=./sampling_dataset/dense/single_arm/input/multiview/dreamgen/makovian/batch_input.json \
 bash scripts/run_single_arm_multiview_video2world_2b_tmp.sh
+
+Successfully saved prompt file to: /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/sampling_dataset/humanoid/multiview/non_makovian/dreamgen/Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate/episode_000002.txt

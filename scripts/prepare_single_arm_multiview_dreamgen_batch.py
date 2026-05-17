@@ -187,6 +187,14 @@ def episode_indices_with_all_cameras(dataset_path: Path) -> list[int]:
     return sorted(common)
 
 
+def output_video_is_done(path: Path) -> bool:
+    """Non-empty mp4 on disk counts as already generated."""
+    try:
+        return path.is_file() and path.stat().st_size > 0
+    except OSError:
+        return False
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -239,6 +247,11 @@ def parse_args():
         action="store_true",
         default=True,
         help="Reuse existing grid PNGs without regenerating.",
+    )
+    parser.add_argument(
+        "--force_regenerate_outputs",
+        action="store_true",
+        help="Include episodes in batch_input.json even when output mp4 already exists.",
     )
     return parser.parse_args()
 
@@ -319,6 +332,8 @@ def main():
 
     batch_input: list[dict] = []
     skipped = 0
+    skipped_existing_output = 0
+    skip_outputs = not args.force_regenerate_outputs
     prompt_template = PROMPT_TEMPLATE
 
     for ep_idx in episode_indices:
@@ -329,7 +344,13 @@ def main():
         task_clean = task_desc.rstrip(".,;").strip() or "performing a manipulation task"
         prompt = prompt_template.format(task=task_clean)
         output_video = str(output_dir / f"episode_{ep_idx:06d}.mp4")
+        out_path = Path(output_video)
         grid_png = input_dir / f"episode_{ep_idx:06d}.png"
+
+        if skip_outputs and output_video_is_done(out_path):
+            print(f"[SKIP] episode_{ep_idx:06d} (output already exists: {out_path.name})")
+            skipped_existing_output += 1
+            continue
 
         if args.skip_existing and grid_png.exists():
             batch_input.append(
@@ -376,6 +397,16 @@ def main():
         tmp_file.unlink(missing_ok=True)
 
     if not batch_input:
+        if skipped_existing_output > 0 and skipped == 0:
+            print(
+                f"\n[INFO] All {skipped_existing_output} episode(s) already have output video; "
+                "nothing to generate.",
+                flush=True,
+            )
+            with open(batch_json, "w", encoding="utf-8") as f:
+                json.dump([], f, indent=2, ensure_ascii=False)
+            print(f"Wrote empty batch: {batch_json}")
+            return
         print("\n[ERROR] No batch inputs created.", file=sys.stderr)
         sys.exit(1)
 
@@ -384,7 +415,9 @@ def main():
 
     print(f"\nDone! {len(batch_input)} episodes in batch.")
     if skipped:
-        print(f"      {skipped} episodes skipped.")
+        print(f"      {skipped} episodes skipped (input/grid issues).")
+    if skipped_existing_output:
+        print(f"      {skipped_existing_output} episodes skipped (output already exists).")
     print(f"Batch: {batch_json}")
 
 

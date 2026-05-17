@@ -87,16 +87,15 @@ _CHECKPOINT = dict(save_iter=1000)
 
 _MODEL = dict(
     config=dict(
-        fsdp_shard_size=8,
+        fsdp_shard_size=-1,
         pipe_config=dict(
-            state_t=93,
             guardrail_config=dict(enabled=False),
             prompt_refiner_config=dict(enabled=False),
         ),
     )
 )
 
-_MODEL_PARALLEL = dict(context_parallel_size=1)
+_MODEL_PARALLEL = dict(context_parallel_size=2)
 
 # ---------------------------------------------------------------------------
 # Bimanual ALOHA singleview  (480x640)
@@ -105,7 +104,7 @@ _MODEL_PARALLEL = dict(context_parallel_size=1)
 _dataset_bimanual = L(Dataset)(
     dataset_dir=os.path.join(_DATASETS_ROOT, "bimanual_dreamgen"),
     num_frames=93,
-    video_size=(480, 640),
+    video_size=(432, 768),
 )
 
 _dataloader_bimanual = L(DataLoader)(
@@ -154,7 +153,7 @@ predict2_video2world_training_2b_bimanual_singleview = dict(
 _dataset_single_arm = L(Dataset)(
     dataset_dir=os.path.join(_DATASETS_ROOT, "single_arm_dreamgen"),
     num_frames=93,
-    video_size=(480, 640),
+    video_size=(432, 768),
 )
 
 _dataloader_single_arm = L(DataLoader)(
@@ -203,7 +202,7 @@ predict2_video2world_training_2b_single_arm_singleview = dict(
 _dataset_humanoid = L(Dataset)(
     dataset_dir=os.path.join(_DATASETS_ROOT, "humanoid_dreamgen"),
     num_frames=93,
-    video_size=(480, 640),
+    video_size=(432, 768),
 )
 
 _dataloader_humanoid = L(DataLoader)(
@@ -294,6 +293,151 @@ predict2_video2world_training_2b_all_singleview = dict(
 )
 
 # ---------------------------------------------------------------------------
+# Humanoid multiview  (4 cameras × episodes, 480x640)
+# ---------------------------------------------------------------------------
+
+_dataset_humanoid_multiview = L(Dataset)(
+    dataset_dir=os.path.join(_DATASETS_ROOT, "humanoid_multiview_dreamgen"),
+    num_frames=93,
+    video_size=(432, 768),
+)
+
+_dataloader_humanoid_multiview = L(DataLoader)(
+    dataset=_dataset_humanoid_multiview,
+    sampler=L(get_sampler)(dataset=_dataset_humanoid_multiview),
+    batch_size=1,
+    drop_last=True,
+    num_workers=8,
+    pin_memory=True,
+)
+
+cs.store(
+    group="dataloader_train",
+    package="dataloader_train",
+    name="humanoid_multiview",
+    node=_dataloader_humanoid_multiview,
+)
+
+predict2_video2world_training_2b_humanoid_multiview = dict(
+    defaults=[
+        {"override /model": "predict2_video2world_fsdp_2b_480p_16fps"},
+        {"override /optimizer": "adamw"},
+        {"override /ckpt_type": "standard"},
+        {"override /dataloader_val": "mock"},
+        {"override /dataloader_train": "humanoid_multiview"},
+        {"override /scheduler": "lambdalinear"},
+        "_self_",
+    ],
+    model=_MODEL,
+    optimizer=_OPTIMIZER,
+    scheduler=_SCHEDULER,
+    job=dict(
+        project="posttraining",
+        group="multiview",
+        name="humanoid_multiview",
+    ),
+    model_parallel=_MODEL_PARALLEL,
+    trainer=_TRAINER,
+    checkpoint=_CHECKPOINT,
+)
+
+# ---------------------------------------------------------------------------
+# Bimanual multiview  (4 cameras × episodes, 480x640)
+# ---------------------------------------------------------------------------
+
+_dataset_bimanual_multiview = L(Dataset)(
+    dataset_dir=os.path.join(_DATASETS_ROOT, "bimanual_multiview_dreamgen"),
+    num_frames=93,
+    video_size=(432, 768),
+)
+
+_dataloader_bimanual_multiview = L(DataLoader)(
+    dataset=_dataset_bimanual_multiview,
+    sampler=L(get_sampler)(dataset=_dataset_bimanual_multiview),
+    batch_size=1,
+    drop_last=True,
+    num_workers=8,
+    pin_memory=True,
+)
+
+cs.store(
+    group="dataloader_train",
+    package="dataloader_train",
+    name="bimanual_multiview",
+    node=_dataloader_bimanual_multiview,
+)
+
+predict2_video2world_training_2b_bimanual_multiview = dict(
+    defaults=[
+        {"override /model": "predict2_video2world_fsdp_2b_480p_16fps"},
+        {"override /optimizer": "adamw"},
+        {"override /ckpt_type": "standard"},
+        {"override /dataloader_val": "mock"},
+        {"override /dataloader_train": "bimanual_multiview"},
+        {"override /scheduler": "lambdalinear"},
+        "_self_",
+    ],
+    model=_MODEL,
+    optimizer=_OPTIMIZER,
+    scheduler=_SCHEDULER,
+    job=dict(
+        project="posttraining",
+        group="multiview",
+        name="bimanual_multiview",
+    ),
+    model_parallel=_MODEL_PARALLEL,
+    trainer=_TRAINER,
+    checkpoint=_CHECKPOINT,
+)
+
+# ---------------------------------------------------------------------------
+# All multiview combined  (humanoid + bimanual, 480x640)
+# ---------------------------------------------------------------------------
+
+_dataset_all_multiview = L(ConcatDataset)(
+    datasets=[_dataset_humanoid_multiview, _dataset_bimanual_multiview]
+)
+
+_dataloader_all_multiview = L(DataLoader)(
+    dataset=_dataset_all_multiview,
+    sampler=L(get_sampler)(dataset=_dataset_all_multiview),
+    batch_size=1,
+    drop_last=True,
+    num_workers=8,
+    pin_memory=True,
+)
+
+cs.store(
+    group="dataloader_train",
+    package="dataloader_train",
+    name="all_multiview",
+    node=_dataloader_all_multiview,
+)
+
+predict2_video2world_training_2b_all_multiview = dict(
+    defaults=[
+        {"override /model": "predict2_video2world_fsdp_2b_480p_16fps"},
+        {"override /optimizer": "adamw"},
+        {"override /ckpt_type": "standard"},
+        {"override /dataloader_val": "mock"},
+        {"override /dataloader_train": "all_multiview"},
+        {"override /scheduler": "lambdalinear"},
+        "_self_",
+    ],
+    model=_MODEL,
+    optimizer=_OPTIMIZER,
+    scheduler=_SCHEDULER,
+    job=dict(
+        project="posttraining",
+        group="multiview",
+        name="all_multiview",
+    ),
+    model_parallel=_MODEL_PARALLEL,
+    trainer=_TRAINER,
+    checkpoint=_CHECKPOINT,
+)
+
+# ---------------------------------------------------------------------------
 # Register all experiments with ConfigStore
 # ---------------------------------------------------------------------------
 
@@ -302,6 +446,9 @@ for _item in [
     predict2_video2world_training_2b_single_arm_singleview,
     predict2_video2world_training_2b_humanoid_singleview,
     predict2_video2world_training_2b_all_singleview,
+    predict2_video2world_training_2b_humanoid_multiview,
+    predict2_video2world_training_2b_bimanual_multiview,
+    predict2_video2world_training_2b_all_multiview,
 ]:
     experiment_name = [name.lower() for name, value in globals().items() if value is _item][0]  # noqa: RUF015
     cs.store(

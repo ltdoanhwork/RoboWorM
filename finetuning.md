@@ -105,7 +105,7 @@ python -m models.DreamDojo.examples.action_conditioned \
   -o ./output/dreamdojo_droid_sv_eval_finetuned \
   --checkpoints-dir ./exp_logs/dreamdojo_logs/dreamdojo/exp_droid_sv/droid_singlearm_singleview/checkpoints \
   --experiment dreamdojo_2b_480_640_droid_sv \
-  --save-dir ./output/dreamdojo_results/results_droid_finetuned_20k \
+  --save-dir ./output/dreamdojo_results/results_droid_finetuned_40k \
   --num-frames 97 \
   --num-samples 5 \
   --dataset-path "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/datasets/single_arm/singleview/makovian" \
@@ -200,6 +200,8 @@ bash finetuning/dreamgen/infer.sh \
     --prompt "A GR-1 humanoid robot picks up a corn cob and places it on the plate." \
     --save_path output/dreamgen_all_infer.mp4
 ```
+
+NPROC=4 bash finetuning/dreamgen/launch.sh predict2_video2world_training_2b_all_multiview
 
 
 # ctrl world

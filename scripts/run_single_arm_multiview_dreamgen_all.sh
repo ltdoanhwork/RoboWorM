@@ -13,6 +13,7 @@
 #   CATEGORY       empty = both; or makovian | non_makovian only
 #   MAX_EPISODES, MIN_EPISODE_INDEX, EPISODE_SOURCE (meta|disk, default disk in Python)
 #   USE_LVG, NUM_CHUNKS   (longer temporal output via gr00t_lvg)
+#   FORCE_REGENERATE_OUTPUTS=1  include episodes whose output mp4 already exists
 #   PREPARE_ONLY=1 / SKIP_PREPARE=1  same semantics as bimanual all-runner
 # =============================================================================
 set -euo pipefail
@@ -31,6 +32,7 @@ USE_LVG="${USE_LVG:-0}"
 NUM_CHUNKS="${NUM_CHUNKS:-6}"
 PREPARE_ONLY="${PREPARE_ONLY:-0}"
 SKIP_PREPARE="${SKIP_PREPARE:-0}"
+FORCE_REGENERATE_OUTPUTS="${FORCE_REGENERATE_OUTPUTS:-0}"
 MAX_EPISODES="${MAX_EPISODES:-}"
 MIN_EPISODE_INDEX="${MIN_EPISODE_INDEX:-}"
 EPISODE_SOURCE="${EPISODE_SOURCE:-}"
@@ -86,7 +88,7 @@ for CAT in "${CATEGORIES[@]}"; do
   export DATASET_PATH="${DS_PATH}"
   export CATEGORY="${CAT}"
   export INPUT_DIR
-  export MODEL_SIZE NUM_GPUS MASTER_PORT FPS USE_LVG NUM_CHUNKS SKIP_PREPARE
+  export MODEL_SIZE NUM_GPUS MASTER_PORT FPS USE_LVG NUM_CHUNKS SKIP_PREPARE FORCE_REGENERATE_OUTPUTS
   if [[ -n "${MAX_EPISODES}" ]]; then
     export MAX_EPISODES
   else
@@ -120,6 +122,9 @@ for CAT in "${CATEGORIES[@]}"; do
     fi
     if [[ -n "${EPISODE_SOURCE:-}" ]]; then
       PREPARE_ARGS+=(--episode_source "${EPISODE_SOURCE}")
+    fi
+    if [[ "${FORCE_REGENERATE_OUTPUTS}" == "1" ]]; then
+      PREPARE_ARGS+=(--force_regenerate_outputs)
     fi
     python "${REPO_ROOT}/scripts/prepare_single_arm_multiview_dreamgen_batch.py" "${PREPARE_ARGS[@]}"
     continue

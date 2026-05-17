@@ -21,6 +21,7 @@
 #   USE_LVG        set to 1 for examples.video2world_gr00t_lvg + NUM_CHUNKS
 #   NUM_CHUNKS     only when USE_LVG=1 (default 6)
 #   SKIP_PREPARE   set to 1 to only run inference
+#   FORCE_REGENERATE_OUTPUTS  set to 1 to re-run DreamGen even when episode mp4 exists
 # =============================================================================
 set -euo pipefail
 
@@ -41,6 +42,7 @@ FPS="${FPS:-10}"
 USE_LVG="${USE_LVG:-0}"
 NUM_CHUNKS="${NUM_CHUNKS:-6}"
 SKIP_PREPARE="${SKIP_PREPARE:-0}"
+FORCE_REGENERATE_OUTPUTS="${FORCE_REGENERATE_OUTPUTS:-0}"
 
 infer_category_from_path() {
   if [[ "${DATASET_PATH}" == *"/non_makovian"* ]]; then
@@ -68,6 +70,7 @@ echo " Category   : ${CATEGORY_EFFECTIVE}"
 echo " Batch JSON : ${BATCH_JSON_RESOLVED}"
 echo " Model      : ${MODEL_SIZE}  GPUs: ${NUM_GPUS}  FPS: ${FPS}"
 echo " USE_LVG    : ${USE_LVG}  NUM_CHUNKS: ${NUM_CHUNKS}"
+echo " Skip done  : outputs with non-empty mp4 excluded (set FORCE_REGENERATE_OUTPUTS=1 to redo)"
 echo "============================================================"
 echo ""
 
@@ -93,6 +96,9 @@ if [[ "${SKIP_PREPARE}" != "1" ]]; then
   if [[ -n "${EPISODE_SOURCE:-}" ]]; then
     PREPARE_ARGS+=(--episode_source "${EPISODE_SOURCE}")
   fi
+  if [[ "${FORCE_REGENERATE_OUTPUTS}" == "1" ]]; then
+    PREPARE_ARGS+=(--force_regenerate_outputs)
+  fi
   PREPARE_ARGS+=(--skip_existing)
 
   python "${REPO_ROOT}/scripts/prepare_single_arm_multiview_dreamgen_batch.py" "${PREPARE_ARGS[@]}"
@@ -102,6 +108,39 @@ if [[ ! -f "${BATCH_JSON_RESOLVED}" ]]; then
   echo "[ERROR] Missing ${BATCH_JSON_RESOLVED}" >&2
   exit 1
 fi
+
+BATCH_FOR_INFER="${BATCH_JSON_RESOLVED}"
+if [[ "${FORCE_REGENERATE_OUTPUTS}" != "1" ]]; then
+  BATCH_TMP="$(mktemp --suffix=_dreamgen_batch.json)"
+  cleanup_batch_tmp() { rm -f "${BATCH_TMP}"; }
+  trap cleanup_batch_tmp EXIT
+  ITEM_COUNT="$(python - "${BATCH_JSON_RESOLVED}" "${BATCH_TMP}" <<'PY'
+import json, sys
+from pathlib import Path
+
+def output_done(path: Path) -> bool:
+    try:
+        return path.is_file() and path.stat().st_size > 0
+    except OSError:
+        return False
+
+src, dst = Path(sys.argv[1]), Path(sys.argv[2])
+items = json.loads(src.read_text(encoding="utf-8"))
+pending = [x for x in items if not output_done(Path(x["output_video"]))]
+dst.write_text(json.dumps(pending, indent=2, ensure_ascii=False), encoding="utf-8")
+print(len(pending))
+PY
+  )"
+  BATCH_FOR_INFER="${BATCH_TMP}"
+else
+  ITEM_COUNT="$(python -c "import json; print(len(json.load(open(r'''${BATCH_JSON_RESOLVED}''', encoding='utf-8'))))")"
+fi
+
+if [[ "${ITEM_COUNT}" -eq 0 ]]; then
+  echo "[INFO] No pending episodes (all outputs exist or batch empty) — skipping inference."
+  exit 0
+fi
+echo "[INFO] Inference items: ${ITEM_COUNT} (from ${BATCH_JSON_RESOLVED})"
 
 AVAILABLE_GPUS=$(python - <<'PY'
 import torch
@@ -124,7 +163,7 @@ if [[ "${USE_LVG}" == "1" ]]; then
     -m "${MODULE}"
     --model_size       "${MODEL_SIZE}"
     --gr00t_variant    droid
-    --batch_input_json "${BATCH_JSON_RESOLVED}"
+    --batch_input_json "${BATCH_FOR_INFER}"
     --prompt_prefix    ""
     --num_gpus         "${NUM_GPUS}"
     --disable_guardrail
@@ -136,7 +175,7 @@ else
     -m "${MODULE}"
     --model_size       "${MODEL_SIZE}"
     --gr00t_variant    droid
-    --batch_input_json "${BATCH_JSON_RESOLVED}"
+    --batch_input_json "${BATCH_FOR_INFER}"
     --prompt_prefix    ""
     --num_gpus         "${NUM_GPUS}"
     --disable_guardrail
@@ -154,4 +193,4 @@ else
 fi
 
 echo ""
-echo "[Done] Used batch: ${BATCH_JSON_RESOLVED}"
+echo "[Done] Inference batch: ${BATCH_FOR_INFER} (manifest: ${BATCH_JSON_RESOLVED})"
