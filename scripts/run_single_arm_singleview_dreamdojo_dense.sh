@@ -18,8 +18,8 @@ cd "$ROOT"
 source "${ROOT}/models/DreamDojo/.venv/bin/activate"
 export PYTHONPATH="${ROOT}/models/DreamDojo:${PYTHONPATH:-}"
 
-CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/exp_logs/dreamdojo_logs/dreamdojo/exp_aloha_resume40k/aloha_bimanual_singleview_full/checkpoints}"
-EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_480_640_aloha}"
+CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/exp_logs/dreamdojo_logs/dreamdojo/exp_droid_sv/droid_singlearm_singleview/checkpoints}"
+EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_480_640_droid_sv}"
 NUM_FRAMES="${NUM_FRAMES:-97}"
 SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/dense/single_arm/output/singleview/dreamdojo}"
 # Match finetuning.md batch examples; set to false to match humanoid dense script.

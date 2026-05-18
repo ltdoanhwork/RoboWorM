@@ -21,7 +21,7 @@
 #   USE_LVG        set to 1 for examples.video2world_gr00t_lvg + NUM_CHUNKS
 #   NUM_CHUNKS     only when USE_LVG=1 (default 6)
 #   SKIP_PREPARE   set to 1 to only run inference
-#   FORCE_REGENERATE_OUTPUTS  set to 1 to re-run DreamGen even when episode mp4 exists
+#   FORCE_REGENERATE_OUTPUTS  set to 1 to re-run DreamGen even when episode mp4 + .txt exist
 # =============================================================================
 set -euo pipefail
 
@@ -70,7 +70,7 @@ echo " Category   : ${CATEGORY_EFFECTIVE}"
 echo " Batch JSON : ${BATCH_JSON_RESOLVED}"
 echo " Model      : ${MODEL_SIZE}  GPUs: ${NUM_GPUS}  FPS: ${FPS}"
 echo " USE_LVG    : ${USE_LVG}  NUM_CHUNKS: ${NUM_CHUNKS}"
-echo " Skip done  : outputs with non-empty mp4 excluded (set FORCE_REGENERATE_OUTPUTS=1 to redo)"
+echo " Skip done  : outputs with complete mp4 + .txt excluded (set FORCE_REGENERATE_OUTPUTS=1 to redo)"
 echo "============================================================"
 echo ""
 
@@ -120,7 +120,10 @@ from pathlib import Path
 
 def output_done(path: Path) -> bool:
     try:
-        return path.is_file() and path.stat().st_size > 0
+        if not path.is_file() or path.stat().st_size <= 0:
+            return False
+        txt = path.with_suffix(".txt")
+        return txt.is_file() and txt.stat().st_size > 0
     except OSError:
         return False
 

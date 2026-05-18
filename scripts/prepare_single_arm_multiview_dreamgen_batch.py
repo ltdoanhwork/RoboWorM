@@ -188,9 +188,12 @@ def episode_indices_with_all_cameras(dataset_path: Path) -> list[int]:
 
 
 def output_video_is_done(path: Path) -> bool:
-    """Non-empty mp4 on disk counts as already generated."""
+    """Non-empty mp4 plus prompt sidecar (same criterion as video2world_gr00t batch skip)."""
     try:
-        return path.is_file() and path.stat().st_size > 0
+        if not path.is_file() or path.stat().st_size <= 0:
+            return False
+        prompt_path = path.with_suffix(".txt")
+        return prompt_path.is_file() and prompt_path.stat().st_size > 0
     except OSError:
         return False
 

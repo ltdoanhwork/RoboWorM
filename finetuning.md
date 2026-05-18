@@ -207,3 +207,5 @@ NPROC=4 bash finetuning/dreamgen/launch.sh predict2_video2world_training_2b_all_
 # ctrl world
 
 bash scripts/run_single_arm_multiview_ctrlworld.sh both
+
+CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_singleview_dreamdojo_dense.sh
