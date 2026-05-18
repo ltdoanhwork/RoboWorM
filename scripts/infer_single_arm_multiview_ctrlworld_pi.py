@@ -10,6 +10,7 @@ Requires: prepare_ctrlworld_single_arm_multiview.py to be run first.
 import sys
 import os
 import json
+import math
 import datetime
 from pathlib import Path
 from argparse import ArgumentParser
@@ -60,17 +61,18 @@ def run_episode_with_policy(agent, episode_id, save_dir, input_save_dir=None):
         anno = json.load(f)
     episode_length = anno["video_length"]
 
-    interact_num = (episode_length - 1) // (pred_step - 1)
+    interact_num = math.ceil((episode_length - 1) / (pred_step - 1))
     if interact_num < 1:
         print(f"  Episode {episode_id} too short ({episode_length} frames), skipping")
         return None
 
-    total_steps_needed = (interact_num - 1) * (pred_step - 1) + pred_step
+    # Request enough steps to cover the full episode (get_traj_info clamps to max available)
+    total_steps_needed = pred_step * interact_num + 8
     instruction = anno["texts"][0]
 
     # Load GT trajectory for comparison (we still need it for metrics)
     eef_gt, joint_pos_gt, video_dict, video_latents, _ = agent.get_traj_info(
-        episode_id, start_idx=0, steps=min(total_steps_needed, episode_length)
+        episode_id, start_idx=0, steps=total_steps_needed
     )
 
     # Initialize history buffers
@@ -83,17 +85,15 @@ def run_episode_with_policy(agent, episode_id, save_dir, input_save_dir=None):
         his_joint.append(joint_pos_gt[0:1])
         his_eef.append(eef_gt[0:1])
 
+    num_views = 3
     video_dict_pred = [v[0:1] for v in video_dict]
-    video_to_save_pred = []
-    video_to_save_gt = []
+    # videos_cat from forward_wm: (frames, 2*H, 3*W, 3) — 3 views horizontally, GT on top + Pred below
+    video_to_save = []
     history_idx = args.history_idx
 
     for i in range(interact_num):
         start_id = int(i * (pred_step - 1))
         end_id = start_id + pred_step
-
-        if end_id > len(eef_gt):
-            break
 
         video_latent_true = [v[start_id:end_id] for v in video_latents]
 
@@ -112,8 +112,9 @@ def run_episode_with_policy(agent, episode_id, save_dir, input_save_dir=None):
         current_latent = his_cond[-1]
 
         # forward_wm returns: (videos_cat, true_videos, pred_videos, latents)
-        # true_videos/pred_videos shape: (3_views, frames, H, W, 3)
-        # latents shape: (3_views, frames, C, h, w)
+        # videos_cat: (frames, 2*H, 3*W, 3) — all 3 views side-by-side, GT top + Pred bottom
+        # true_videos/pred_videos: (3_views, frames, H, W, 3)
+        # latents: (3_views, frames, C, h, w)
         videos_cat, true_videos, pred_videos, predict_latents = agent.forward_wm(
             action_cond, video_latent_true, current_latent,
             his_cond=his_latent,
@@ -130,40 +131,49 @@ def run_episode_with_policy(agent, episode_id, save_dir, input_save_dir=None):
         # Update observation buffer with predicted frames (3 views)
         video_dict_pred = [pred_videos[view_i] for view_i in range(pred_videos.shape[0])]
 
-        # Collect frames (view 0 = exterior_1_left for metrics)
-        if i == interact_num - 1:
-            video_to_save_pred.append(pred_videos[0])
-            video_to_save_gt.append(true_videos[0])
-        else:
-            video_to_save_pred.append(pred_videos[0][:pred_step - 1])
-            video_to_save_gt.append(true_videos[0][:pred_step - 1])
+        # Collect combined frames (all 3 views in one frame)
+        video_to_save.append(videos_cat[:pred_step - 1])
 
         if (i + 1) % 10 == 0:
             print(f"    Step {i+1}/{interact_num}")
 
-    if not video_to_save_pred:
+    if not video_to_save:
         return None
 
-    concat_pred = np.concatenate(video_to_save_pred, axis=0)
-    concat_gt = np.concatenate(video_to_save_gt, axis=0)
-    min_len = min(len(concat_pred), len(concat_gt))
-    concat_pred = concat_pred[:min_len]
-    concat_gt = concat_gt[:min_len]
+    # Concatenate all steps → single video with all 3 views + GT/Pred
+    concat_video = np.concatenate(video_to_save, axis=0)
+    # Trim to actual episode length (minus initial frame which is frame 0)
+    # Generated frames cover indices 1..N, so max useful frames = episode_length - 1
+    max_useful = episode_length - 1
+    if len(concat_video) > max_useful:
+        concat_video = concat_video[:max_useful]
+    min_len = len(concat_video)
 
-    # Save output (predictions)
+    # Also extract per-view pred/gt for metrics (split from pred_videos/true_videos)
+    # Re-collect per-view for metrics computation from the last pass isn't efficient
+    # Instead, split concat_video: shape is (frames, 2*H, 3*W, 3)
+    # Top half = GT, bottom half = Pred; each third horizontally = one view
+    h2 = concat_video.shape[1] // 2  # H per row (GT or Pred)
+    w3 = concat_video.shape[2] // 3  # W per view
+    gt_strip = concat_video[:, :h2, :, :]    # (frames, H, 3*W, 3)
+    pred_strip = concat_video[:, h2:, :, :]  # (frames, H, 3*W, 3)
+
+    # Save output
     ep_save_dir = Path(save_dir) / f"episode_{episode_id}"
     ep_save_dir.mkdir(parents=True, exist_ok=True)
 
-    mediapy.write_video(str(ep_save_dir / "full_pred.mp4"), concat_pred, fps=5)
-    merged = np.concatenate([concat_gt, concat_pred], axis=2)
-    mediapy.write_video(str(ep_save_dir / "full_merged.mp4"), merged, fps=5)
+    # Full video: all 3 views, GT top + Pred bottom
+    mediapy.write_video(str(ep_save_dir / "full_pred.mp4"), concat_video, fps=5)
+    # Also save pred-only (bottom half) and gt-only (top half)
+    mediapy.write_video(str(ep_save_dir / "pred_all_views.mp4"), pred_strip, fps=5)
+    mediapy.write_video(str(ep_save_dir / "gt_all_views.mp4"), gt_strip, fps=5)
 
     # Save input (GT video, actions, metadata)
     if input_save_dir is not None:
         ep_input_dir = Path(input_save_dir) / f"episode_{episode_id}"
         ep_input_dir.mkdir(parents=True, exist_ok=True)
 
-        mediapy.write_video(str(ep_input_dir / "full_gt.mp4"), concat_gt, fps=5)
+        mediapy.write_video(str(ep_input_dir / "full_gt.mp4"), gt_strip, fps=5)
 
         for vid_idx, vid_info in enumerate(anno["videos"]):
             src_video = Path(args.val_dataset_dir) / vid_info["video_path"]
@@ -175,25 +185,35 @@ def run_episode_with_policy(agent, episode_id, save_dir, input_save_dir=None):
         input_meta = {
             "episode_id": episode_id,
             "instruction": instruction,
-            "num_frames": len(concat_gt),
+            "num_frames": min_len,
             "episode_length_original": episode_length,
             "fps": 5,
             "interact_num": interact_num,
             "pred_step": pred_step,
             "mode": "policy_predicted",
             "policy_type": args.policy_type,
-            "states": anno["states"][:len(concat_gt)],
-            "joints": anno["joints"][:len(concat_gt)],
+            "states": anno["states"][:min_len],
+            "joints": anno["joints"][:min_len],
         }
         with open(ep_input_dir / "metadata.json", "w") as f:
             json.dump(input_meta, f, indent=2)
 
-    # Metrics
-    metrics = compute_metrics(concat_pred, concat_gt)
+    # Metrics (per-view: split pred/gt strips into 3 views)
+    view_names = ["exterior_1_left", "exterior_2_left", "wrist_left"]
+    per_view_metrics = {}
+    for v_i in range(num_views):
+        pred_view = pred_strip[:, :, v_i * w3:(v_i + 1) * w3, :]
+        gt_view = gt_strip[:, :, v_i * w3:(v_i + 1) * w3, :]
+        per_view_metrics[view_names[v_i]] = compute_metrics(pred_view, gt_view)
+    avg_psnr = np.mean([m["psnr"] for m in per_view_metrics.values()])
+    avg_ssim = np.mean([m["ssim"] for m in per_view_metrics.values()])
+    avg_lpips = np.mean([m["lpips"] for m in per_view_metrics.values()])
+    metrics = {"psnr": float(avg_psnr), "ssim": float(avg_ssim), "lpips": float(avg_lpips)}
+    metrics["per_view"] = per_view_metrics
     metrics.update({
         "episode_id": episode_id,
         "instruction": instruction,
-        "num_frames_pred": len(concat_pred),
+        "num_frames_pred": min_len,
         "num_frames_gt": episode_length,
         "interact_num": interact_num,
         "mode": "policy_predicted",

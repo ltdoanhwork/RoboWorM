@@ -204,7 +204,7 @@ class Checkpointer:
             for key, checkpoint_path in state_dicts_paths.items():
                 self._check_checkpoint_exists(checkpoint_path)
                 log.info(f"Loading checkpoint (local): {checkpoint_path}")
-                state_dicts_to_load[key] = torch.load(checkpoint_path, map_location=lambda storage, loc: storage)
+                state_dicts_to_load[key] = torch.load(checkpoint_path, map_location=lambda storage, loc: storage, weights_only=False, mmap=True)
                 log.success(f"Complete loading checkpoint (local): {checkpoint_path}")
             self.callbacks.on_load_checkpoint(model, state_dict=state_dicts_to_load)
 

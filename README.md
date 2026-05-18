@@ -1,8 +1,8 @@
 
 # video_gen_physics
 export PATH="$HOME/VLA/doanh:$PATH"
-claude
-
+gsutil -m cp -r gs://openpi-assets/checkpoints/pi05_droid/* /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/pi05_droid
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_multiview_ctrlworld_pi.sh both
 ## Ctrl world
 
 export CUDA_VISIBLE_DEVICES=0 

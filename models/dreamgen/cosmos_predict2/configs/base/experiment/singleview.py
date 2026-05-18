@@ -73,7 +73,7 @@ _SCHEDULER = dict(
     f_max=[0.2],
     f_min=[0.1],
     warm_up_steps=[1_000],
-    cycle_lengths=[10_000],
+    cycle_lengths=[200_000],
 )
 
 _TRAINER = dict(

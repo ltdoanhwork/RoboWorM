@@ -18,7 +18,8 @@ SUBSET=${1:-both}
 PROJECT_ROOT="/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics"
 cd "${PROJECT_ROOT}"
 
-# Activate Ctrl-World venv (has all deps including openpi's)
+# Deactivate any active conda env to avoid conflicts, then activate Ctrl-World venv
+conda deactivate 2>/dev/null || true
 source "${PROJECT_ROOT}/models/Ctrl-World/.venv/bin/activate"
 
 # PYTHONPATH: Ctrl-World FIRST (resolves 'models' package), then openpi, then project root
@@ -34,7 +35,7 @@ DATASET_META_INFO="./models/Ctrl-World/dataset_meta_info"
 DATASET_EXAMPLE_DIR="./models/Ctrl-World/dataset_example"
 
 # Policy checkpoint
-PI_CKPT="${PI_CKPT:-/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/.cache/openpi/openpi-assets/checkpoints/pi05_droid}"
+PI_CKPT="${PI_CKPT:-/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/pi05_droid}"
 POLICY_TYPE="${POLICY_TYPE:-pi05}"
 
 OUTPUT_BASE="${PROJECT_ROOT}/sampling_dataset/dense/single_arm/output/multiview/ctrlworld"
