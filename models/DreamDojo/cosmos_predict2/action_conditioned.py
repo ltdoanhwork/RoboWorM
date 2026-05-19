@@ -19,6 +19,7 @@ Action-conditioned video generation inference.
 
 import json
 import os
+import time
 from glob import glob
 import piq
 from pathlib import Path
@@ -423,6 +424,7 @@ def inference(
     all_psnr = []
     all_ssim = []
     all_lpips = []
+    all_gen_times = []
 
     # Process each file in the input directory
     for data_id, custom_output_video in items_to_run:
@@ -478,6 +480,7 @@ def inference(
                 )
             continue
 
+        gen_start_time = time.time()
         first_round = True
         for i in range(inference_args.start_frame_idx, len(actions), inference_args.chunk_size):
             # Handle incomplete chunks
@@ -535,6 +538,10 @@ def inference(
             if inference_args.single_chunk:
                 break
 
+        gen_elapsed = time.time() - gen_start_time
+        all_gen_times.append(gen_elapsed)
+        log.info(f"[Timing] Video {data_id}: generation took {gen_elapsed:.2f}s")
+
         chunk_list = [chunk_video[0]] + [
             chunk_video[i][: inference_args.chunk_size] for i in range(1, len(chunk_video))
         ]
@@ -570,13 +577,25 @@ def inference(
                     log.warning(f"Metrics failed for {chunk_video_name}: {e}")
                     psnr = ssim = lpips = None
             with open(metrics_name, "w") as f:
-                json.dump({"psnr": psnr, "ssim": ssim, "lpips": lpips}, f)
+                json.dump({"psnr": psnr, "ssim": ssim, "lpips": lpips, "gen_time_s": round(gen_elapsed, 2)}, f)
             if psnr is not None:
                 all_psnr.append(psnr)
                 all_ssim.append(ssim)
                 all_lpips.append(lpips)
 
     if rank0:
+        timing_summary = {}
+        if all_gen_times:
+            mean_gen_time = sum(all_gen_times) / len(all_gen_times)
+            total_gen_time = sum(all_gen_times)
+            print(f"[Timing] Generated {len(all_gen_times)} videos in {total_gen_time:.2f}s total")
+            print(f"[Timing] Average generation time per video: {mean_gen_time:.2f}s")
+            timing_summary = {
+                "num_videos_generated": len(all_gen_times),
+                "total_gen_time_s": f"{total_gen_time:.2f}",
+                "avg_gen_time_s": f"{mean_gen_time:.2f}",
+            }
+
         if all_psnr:
             mean_psnr = sum(all_psnr) / len(all_psnr)
             mean_ssim = sum(all_ssim) / len(all_ssim)
@@ -590,6 +609,7 @@ def inference(
                         "psnr": f"{mean_psnr:.3f}",
                         "ssim": f"{mean_ssim:.3f}",
                         "lpips": f"{mean_lpips:.3f}",
+                        **timing_summary,
                     },
                     f,
                 )
@@ -598,7 +618,7 @@ def inference(
                 "No per-episode metrics collected (empty run or all episodes skipped without *_metrics.json)."
             )
             with open(inference_args.save_root / "all_summary.json", "w") as f:
-                json.dump({"psnr": None, "ssim": None, "lpips": None}, f)
+                json.dump({"psnr": None, "ssim": None, "lpips": None, **timing_summary}, f)
 
     # Synchronize all processes before cleanup
     # pyrefly: ignore  # unsupported-operation

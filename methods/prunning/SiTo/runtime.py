@@ -266,7 +266,6 @@ class SiToTokenPruner:
         prune_order = best_similarity.argsort(descending=True)
         source_prune_positions = prune_order[:target_prune]
         pruned_indices = source_indices.index_select(0, source_prune_positions)
-        pruned_anchor_indices = anchor_indices.index_select(0, best_anchor_idx.index_select(0, source_prune_positions))
 
         keep_mask = torch.ones(tokens_per_group, dtype=torch.bool, device=device)
         keep_mask[pruned_indices] = False
@@ -275,9 +274,12 @@ class SiToTokenPruner:
         if remainder_indices.numel() > 0:
             keep_indices = torch.cat((keep_indices, remainder_indices), dim=0).unique(sorted=True)
 
-        orig_to_keep = torch.full((tokens_per_group,), -1, device=device, dtype=torch.long)
-        orig_to_keep[keep_indices] = torch.arange(keep_indices.numel(), device=device, dtype=torch.long)
-        replacement_keep_positions = orig_to_keep.index_select(0, pruned_anchor_indices)
+        # For each pruned token, find the most similar token in the FULL kept set
+        # (anchors + unmerged sources), matching the original SiTo recovery logic.
+        kept_features = token_summary.index_select(0, keep_indices)
+        pruned_features = token_summary.index_select(0, pruned_indices)
+        sim_to_kept = torch.matmul(pruned_features, kept_features.transpose(0, 1))
+        replacement_keep_positions = sim_to_kept.argmax(dim=1)
 
         return SiToRuntimePlan(
             keep_indices=keep_indices,

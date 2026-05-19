@@ -62,8 +62,8 @@ elif [ "${MODE}" = "itm" ]; then
   OUT_CACHE="${ROOT}/output/observe_itm_ultralight_${SPLIT}"
   mkdir -p "${SAVE_DIR}" "${OUT_CACHE}"
 
-  echo "=== ITM minimal (guidance=1.5) | GPU ${CUDA_VISIBLE_DEVICES} | ${NUM_SAMPLES} samples ==="
-  echo "  Config: start=26, keep=0, compress=0.03, prune_from=20, merge_from=25"
+  echo "=== ITM aggressive (guidance=1.5) | GPU ${CUDA_VISIBLE_DEVICES} | ${NUM_SAMPLES} samples ==="
+  echo "  Config: start=4, keep=2, compress=0.25, prune_from=0, merge_from=0"
   time python -m models.DreamDojo.examples.action_conditioned \
     -o "${OUT_CACHE}" \
     --checkpoints-dir "${CHECKPOINTS_DIR}" \
@@ -75,11 +75,11 @@ elif [ "${MODE}" = "itm" ]; then
     --data-split full \
     --single-base-index \
     --use-itm \
-    --itm-start-layer-idx 26 \
-    --itm-keep-last-n-dense 0 \
-    --itm-prune-from-step 20 \
-    --itm-merge-from-step 25 \
-    --itm-compress-ratio 0.03 \
+    --itm-start-layer-idx 4 \
+    --itm-keep-last-n-dense 2 \
+    --itm-prune-from-step 0 \
+    --itm-merge-from-step 0 \
+    --itm-compress-ratio 0.25 \
     --deterministic-uniform-sampling
 
 else

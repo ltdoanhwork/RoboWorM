@@ -209,3 +209,11 @@ NPROC=4 bash finetuning/dreamgen/launch.sh predict2_video2world_training_2b_all_
 bash scripts/run_single_arm_multiview_ctrlworld.sh both
 
 CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_singleview_dreamdojo_dense.sh
+
+WORLDCACHE_REL_L1_THRESH=0.05 WORLDCACHE_PROBE_DEPTH=3 bash scripts/run_humanoid_singleview_dreamdojo_worldcache.sh
+
+
+FASTERCACHE_MODEL_INTERVAL=3 FASTERCACHE_BLOCK_INTERVAL=2 bash scripts/run_humanoid_singleview_dreamdojo_fastercache.sh
+
+
+CUDA_VISIBLE_DEVICES=1 bash /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/scripts/run_humanoid_singleview_dreamdojo_dicache.sh

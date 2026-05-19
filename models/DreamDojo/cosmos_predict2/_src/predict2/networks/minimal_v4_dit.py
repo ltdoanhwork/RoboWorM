@@ -1461,11 +1461,16 @@ class Block(nn.Module):
                 raise ValueError("[ITM] DreamDojo ITM v1 is single-GPU only; set context_parallel_size=1.")
             if itm_context is not None:
                 itm_merge_mode = itm_context.get("merge_mode", "mean")
-                itm_plan = self.itm_runtime.prepare(
-                    self_attn_input,
-                    heat_map=itm_context.get("heat_map"),
-                    video_size=VideoSize(T=T, H=H, W=W),
-                )
+                cached_plan = itm_context.get("_cached_plan", None)
+                if cached_plan is not None:
+                    itm_plan = cached_plan
+                else:
+                    itm_plan = self.itm_runtime.prepare(
+                        self_attn_input,
+                        heat_map=itm_context.get("heat_map"),
+                        video_size=VideoSize(T=T, H=H, W=W),
+                    )
+                    itm_context["_cached_plan"] = itm_plan
                 if itm_plan is not None and self.itm_runtime.merge_attn:
                     self_attn_input = self.itm_runtime.merge(self_attn_input, itm_plan, mode=itm_merge_mode)
                     self_attn_rope = self.itm_runtime.merge_rope(self_attn_rope, itm_plan)

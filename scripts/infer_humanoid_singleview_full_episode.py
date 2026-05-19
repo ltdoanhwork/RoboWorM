@@ -13,6 +13,7 @@ Episodes shorter than num_frames are skipped.
 import argparse
 import json
 import sys
+import time
 from pathlib import Path
 
 import mediapy
@@ -37,7 +38,58 @@ def parse_args():
     parser.add_argument("--num-episodes", type=int, default=None)
     parser.add_argument("--save-fps", type=int, default=10)
     parser.add_argument("--output-dir", type=str, default=None)
+    parser.add_argument("--guidance", type=float, default=0)
+
+    # WorldCache
+    parser.add_argument("--worldcache-enabled", action="store_true")
+    parser.add_argument("--worldcache-num-steps", type=int, default=35)
+    parser.add_argument("--worldcache-rel-l1-thresh", type=float, default=0.03)
+    parser.add_argument("--worldcache-ret-ratio", type=float, default=0.4)
+    parser.add_argument("--worldcache-probe-depth", type=int, default=4)
+    parser.add_argument("--worldcache-motion-sensitivity", type=float, default=5.0)
+
+    # FasterCache
+    parser.add_argument("--fastercache-enabled", action="store_true")
+    parser.add_argument("--fastercache-start-step", type=int, default=0)
+    parser.add_argument("--fastercache-model-interval", type=int, default=5)
+    parser.add_argument("--fastercache-block-interval", type=int, default=3)
+
+    # DiCache
+    parser.add_argument("--dicache-enabled", action="store_true")
+    parser.add_argument("--dicache-num-steps", type=int, default=35)
+    parser.add_argument("--dicache-rel-l1-thresh", type=float, default=0.08)
+    parser.add_argument("--dicache-ret-ratio", type=float, default=0.2)
+    parser.add_argument("--dicache-probe-depth", type=int, default=2)
+
     return parser.parse_args()
+
+
+def build_cache_config_from_args(args):
+    """Build cache config from CLI args."""
+    from methods.cache_strategy.common import WorldCacheConfig, DiCacheConfig, FasterCacheConfig
+
+    if getattr(args, "worldcache_enabled", False):
+        return WorldCacheConfig(
+            num_steps=args.worldcache_num_steps,
+            rel_l1_thresh=args.worldcache_rel_l1_thresh,
+            ret_ratio=args.worldcache_ret_ratio,
+            probe_depth=args.worldcache_probe_depth,
+            motion_sensitivity=args.worldcache_motion_sensitivity,
+        )
+    if getattr(args, "fastercache_enabled", False):
+        return FasterCacheConfig(
+            start_step=args.fastercache_start_step,
+            model_interval=args.fastercache_model_interval,
+            block_interval=args.fastercache_block_interval,
+        )
+    if getattr(args, "dicache_enabled", False):
+        return DiCacheConfig(
+            num_steps=args.dicache_num_steps,
+            rel_l1_thresh=args.dicache_rel_l1_thresh,
+            ret_ratio=args.dicache_ret_ratio,
+            probe_depth=args.dicache_probe_depth,
+        )
+    return None
 
 
 def build_model(args):
@@ -45,7 +97,6 @@ def build_model(args):
     from cosmos_predict2.action_conditioned_config import ActionConditionedSetupArguments
     from cosmos_predict2.config import MODEL_CHECKPOINTS
     from cosmos_predict2._src.predict2.inference.video2world import Video2WorldInference
-    from cosmos_predict2.cache_runtime import build_cache_runtime_config
 
     setup_args = ActionConditionedSetupArguments(
         model="2B/robot/action-cond",
@@ -82,7 +133,7 @@ def build_model(args):
 
     checkpoint = MODEL_CHECKPOINTS[setup_args.model_key]
     experiment = setup_args.experiment or checkpoint.experiment
-    cache_config = build_cache_runtime_config(setup_args)
+    cache_config = build_cache_config_from_args(args)
 
     video2world_cli = Video2WorldInference(
         experiment_name=experiment,
@@ -159,7 +210,7 @@ def get_episode_plan(dataset, num_frames):
     return plan
 
 
-def generate_segment(video2world_cli, img_array, actions, chunk_size, lam_video=None):
+def generate_segment(video2world_cli, img_array, actions, chunk_size, lam_video=None, guidance=0):
     """Generate one segment: initial GT frame + actions -> generated video frames."""
     chunk_video = []
     first_round = True
@@ -192,7 +243,7 @@ def generate_segment(video2world_cli, img_array, actions, chunk_size, lam_video=
             action=torch.from_numpy(actions_chunk).float()
             if isinstance(actions_chunk, np.ndarray)
             else actions_chunk,
-            guidance=0,
+            guidance=guidance,
             num_video_frames=num_video_frames,
             num_latent_conditional_frames=1,
             resolution="480,640",
@@ -239,7 +290,9 @@ def main():
     save_root = Path(args.save_dir) / iter_name
     save_root.mkdir(parents=True, exist_ok=True)
 
+    guidance = args.guidance
     all_psnr, all_ssim, all_lpips = [], [], []
+    all_gen_times = []
 
     for ep_idx in range(num_episodes):
         ep_info = plan[ep_idx]
@@ -257,11 +310,10 @@ def main():
         segment_videos = []
         gt_segment_videos = []
 
+        gen_start_time = time.time()
         for seg_idx, data_id in enumerate(ep_info["segment_data_ids"]):
-            # Access data through the normal dataset pipeline (properly processed tensors)
             sample = dataset[data_id]
 
-            # video: (C, T, H, W) uint8 tensor from VideoActionDataset
             video_tensor = sample["video"]
             gt_video = video_tensor.permute(1, 2, 3, 0).numpy()  # (T, H, W, C)
             img_array = video_tensor.transpose(0, 1)[:1]  # (1, C, H, W)
@@ -271,7 +323,8 @@ def main():
             lam_video = sample.get("lam_video", None)
 
             segment = generate_segment(
-                video2world_cli, img_array, actions, args.chunk_size, lam_video
+                video2world_cli, img_array, actions, args.chunk_size, lam_video,
+                guidance=guidance,
             )
 
             if segment is None:
@@ -281,8 +334,13 @@ def main():
             segment_videos.append(segment)
             gt_segment_videos.append(gt_video)
 
+        gen_elapsed = time.time() - gen_start_time
+
         if not segment_videos:
             continue
+
+        all_gen_times.append(gen_elapsed)
+        print(f"  [Timing] Episode {ep_idx}: generation took {gen_elapsed:.2f}s")
 
         # Concatenate all segments
         concat_pred = np.concatenate(segment_videos, axis=0)
@@ -308,6 +366,7 @@ def main():
         with open(ep_save_dir / "metrics.json", "w") as f:
             json.dump({
                 "psnr": psnr_val, "ssim": ssim_val, "lpips": lpips_val,
+                "gen_time_s": round(gen_elapsed, 2),
                 "num_segments": len(segment_videos),
                 "total_frames_pred": len(concat_pred),
                 "total_frames_gt": ep_info["traj_length"],
@@ -320,12 +379,25 @@ def main():
         print(f"  -> {len(concat_pred)} frames, PSNR={psnr_val:.2f}, SSIM={ssim_val:.4f}, LPIPS={lpips_val:.4f}")
 
     # Summary
+    timing_summary = {}
+    if all_gen_times:
+        mean_gen_time = sum(all_gen_times) / len(all_gen_times)
+        total_gen_time = sum(all_gen_times)
+        print(f"\n[Timing] Generated {len(all_gen_times)} episodes in {total_gen_time:.2f}s total")
+        print(f"[Timing] Average generation time per episode: {mean_gen_time:.2f}s")
+        timing_summary = {
+            "num_episodes_generated": len(all_gen_times),
+            "total_gen_time_s": round(total_gen_time, 2),
+            "avg_gen_time_s": round(mean_gen_time, 2),
+        }
+
     if all_psnr:
         summary = {
             "mean_psnr": sum(all_psnr) / len(all_psnr),
             "mean_ssim": sum(all_ssim) / len(all_ssim),
             "mean_lpips": sum(all_lpips) / len(all_lpips),
             "num_episodes_processed": len(all_psnr),
+            **timing_summary,
         }
         with open(save_root / "all_summary.json", "w") as f:
             json.dump(summary, f, indent=2)
@@ -333,6 +405,9 @@ def main():
         print(f"PSNR: {summary['mean_psnr']:.3f}")
         print(f"SSIM: {summary['mean_ssim']:.4f}")
         print(f"LPIPS: {summary['mean_lpips']:.4f}")
+    else:
+        with open(save_root / "all_summary.json", "w") as f:
+            json.dump({"psnr": None, "ssim": None, "lpips": None, **timing_summary}, f, indent=2)
 
     cleanup_environment()
 
