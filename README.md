@@ -40,13 +40,29 @@ The code uses the intersection of frame indices across views.
 python -m multiview_consistency.model_service --host 127.0.0.1 --port 6111 --dtype float16
 ```
 
-### 2) Compute metrics for one episode/video
+### 2) Compute metrics for one episode/video or a folder containing multiple episodes
 
+An episode
 ```bash
 python -m multiview_consistency.run_video_metrics \
-  --episode_dir "/path/to/episode_000003_generated" \
+  --episode_dir "/path/to/episode" \
   --views "view1,view2" \
   --stride 1 \
   --host 127.0.0.1 \
   --port 6111
 ```
+
+A folder
+```bash
+python -m multiview_consistency.run_video_metrics \
+  --episodes_root /path/to/folder \
+  --out_csv /path/result.csv \
+  --views "view1,view2" \
+  --stride 1 \
+  --host 127.0.0.1 \
+  --port 6111
+  --frame_batch_size 4
+
+```
+
+
