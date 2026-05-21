@@ -1,5 +1,6 @@
 import os
 from collections.abc import Iterator, Sequence
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Iterable
 
@@ -19,7 +20,6 @@ from .geometric_consistency import (
     multiview_disjoint_bbox,
 )
 from .utils import intersect_frames
-
 
 @dataclass(frozen=True)
 class ModelContext:
@@ -62,19 +62,67 @@ def _chunk_list(items: list[int], chunk_size: int) -> list[list[int]]:
     return [items[i : i + size] for i in range(0, len(items), size)]
 
 
+def _load_images_chunk_cpu(
+    episode_dir: str,
+    views: list[str],
+    frame_ids: list[int],
+    *,
+    parallel_frames: bool = True,
+    load_workers: int = 4,
+) -> torch.Tensor:
+    """
+    Load a chunk on CPU as (B, S, 3, H, W). Uses ``load_and_preprocess_images`` unchanged.
+
+    With ``parallel_frames``, each timestep calls ``load_and_preprocess_images`` on its
+    view paths in a thread pool (helps NFS). Otherwise one batched call for all paths.
+    """
+    if not frame_ids:
+        raise ValueError("frame_ids must not be empty")
+
+    s = len(views)
+    if parallel_frames and len(frame_ids) > 1:
+        workers = max(1, min(int(load_workers), len(frame_ids)))
+
+        def _load_one_frame(fi: int) -> torch.Tensor:
+            paths = _frame_image_paths(episode_dir, views, fi)
+            return load_and_preprocess_images(paths)
+
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            frame_tensors = list(pool.map(_load_one_frame, frame_ids))
+        return torch.stack(frame_tensors, dim=0)
+
+    paths: list[str] = []
+    for fi in frame_ids:
+        paths.extend(_frame_image_paths(episode_dir, views, fi))
+    flat = load_and_preprocess_images(paths)
+    b = len(frame_ids)
+    return flat.view(b, s, *flat.shape[1:])
+
+
+def _images_cpu_to_device(images_cpu: torch.Tensor, device: str) -> torch.Tensor:
+    if device == "cuda" and torch.cuda.is_available():
+        return images_cpu.pin_memory().to(device, non_blocking=True)
+    return images_cpu.to(device)
+
+
 def _load_images_batched(
     ctx: ModelContext,
     episode_dir: str,
     views: list[str],
     frame_ids: list[int],
+    *,
+    parallel_frames: bool = True,
+    load_workers: int = 4,
 ) -> torch.Tensor:
-    """Load frames as (B, S, 3, H, W) where B=len(frame_ids), S=len(views)."""
-    paths: list[str] = []
-    for fi in frame_ids:
-        paths.extend(_frame_image_paths(episode_dir, views, fi))
-    flat = load_and_preprocess_images(paths).to(ctx.device)
-    b, s = len(frame_ids), len(views)
-    return flat.view(b, s, *flat.shape[1:])
+    """Load frames as (B, S, 3, H, W) on ``ctx.device``."""
+    images_cpu = _load_images_chunk_cpu(
+        episode_dir,
+        views,
+        frame_ids,
+        parallel_frames=parallel_frames,
+        load_workers=load_workers,
+    )
+    return _images_cpu_to_device(images_cpu, ctx.device)
 
 
 @torch.no_grad()
@@ -117,7 +165,10 @@ def _run_vggt(
     """
     Single timestep (B=1). Returns (1,S,...) tensors.
     """
-    images = load_and_preprocess_images(list(image_paths)).to(ctx.device).unsqueeze(0)
+    images = _images_cpu_to_device(
+        load_and_preprocess_images(list(image_paths)).unsqueeze(0),
+        ctx.device,
+    )
     extrinsic, intrinsic, depth_map, depth_conf = _forward_vggt(ctx, images)
     return extrinsic, intrinsic, depth_map, depth_conf
 
@@ -130,23 +181,74 @@ def _iter_vggt_frames(
     views: list[str],
     frame_ids: list[int],
     frame_batch_size: int = 4,
+    prefetch_chunks: bool = True,
+    parallel_frame_load: bool = True,
+    load_workers: int = 4,
 ) -> Iterator[tuple[int, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]]:
     """
     Yield per-frame VGGT outputs using batch dimension B for multiple timesteps.
 
     Each yielded tensor has batch dim 1: (1,S,...).
+
+    When ``prefetch_chunks`` is True, the next chunk is loaded on a background thread
+    while the current chunk is forwarded on GPU (overlaps I/O with compute).
     """
-    for chunk in _chunk_list(frame_ids, frame_batch_size):
-        images = _load_images_batched(ctx, episode_dir, views, chunk)
-        extrinsic, intrinsic, depth_map, depth_conf = _forward_vggt(ctx, images)
-        for b, fi in enumerate(chunk):
-            yield (
-                int(fi),
-                extrinsic[b : b + 1],
-                intrinsic[b : b + 1],
-                depth_map[b : b + 1],
-                depth_conf[b : b + 1],
+    chunks = _chunk_list(frame_ids, frame_batch_size)
+    if not chunks:
+        return
+
+    load_executor: ThreadPoolExecutor | None = None
+    pending_load: Future[torch.Tensor] | None = None
+
+    try:
+        if prefetch_chunks:
+            load_executor = ThreadPoolExecutor(max_workers=1)
+            pending_load = load_executor.submit(
+                _load_images_chunk_cpu,
+                episode_dir,
+                views,
+                chunks[0],
+                parallel_frames=parallel_frame_load,
+                load_workers=load_workers,
             )
+
+        for chunk_idx, chunk in enumerate(chunks):
+            if prefetch_chunks and pending_load is not None:
+                images_cpu = pending_load.result()
+                if chunk_idx + 1 < len(chunks):
+                    pending_load = load_executor.submit(  # type: ignore[union-attr]
+                        _load_images_chunk_cpu,
+                        episode_dir,
+                        views,
+                        chunks[chunk_idx + 1],
+                        parallel_frames=parallel_frame_load,
+                        load_workers=load_workers,
+                    )
+                else:
+                    pending_load = None
+            else:
+                images_cpu = _load_images_chunk_cpu(
+                    episode_dir,
+                    views,
+                    chunk,
+                    parallel_frames=parallel_frame_load,
+                    load_workers=load_workers,
+                )
+
+            images = _images_cpu_to_device(images_cpu, ctx.device)
+            extrinsic, intrinsic, depth_map, depth_conf = _forward_vggt(ctx, images)
+
+            for b, fi in enumerate(chunk):
+                yield (
+                    int(fi),
+                    extrinsic[b : b + 1],
+                    intrinsic[b : b + 1],
+                    depth_map[b : b + 1],
+                    depth_conf[b : b + 1],
+                )
+    finally:
+        if load_executor is not None:
+            load_executor.shutdown(wait=True)
 
 
 def _select_frame_ids(
@@ -330,6 +432,9 @@ def compute_pose_stability_for_episode(
     max_frames: int | None = None,
     exclude_frame_ids: Sequence[int] | None = None,
     frame_batch_size: int = 4,
+    prefetch_chunks: bool = True,
+    parallel_frame_load: bool = True,
+    load_workers: int = 4,
 ) -> dict:
     frame_ids = _select_frame_ids(episode_dir, views, stride=stride, max_frames=max_frames)
     exclude = set(int(fi) for fi in (exclude_frame_ids or ()))
@@ -345,6 +450,9 @@ def compute_pose_stability_for_episode(
         views=views,
         frame_ids=pose_frame_ids,
         frame_batch_size=frame_batch_size,
+        prefetch_chunks=prefetch_chunks,
+        parallel_frame_load=parallel_frame_load,
+        load_workers=load_workers,
     ):
         extrinsics_all.append(extrinsic.detach().float().cpu())
         intrinsics_all.append(intrinsic.detach().float().cpu())
@@ -374,6 +482,9 @@ def compute_geometric_consistency_for_episode(
     depth_pair_dissimilar_fraction_min: float = 0.5,
     depth_pair_relative_diff_threshold: float = 0.25,
     frame_batch_size: int = 4,
+    prefetch_chunks: bool = True,
+    parallel_frame_load: bool = True,
+    load_workers: int = 4,
 ) -> dict:
     frame_ids = _select_frame_ids(episode_dir, views, stride=stride, max_frames=max_frames)
     frame_ids = [fi for fi in frame_ids if fi > 0]
@@ -386,6 +497,9 @@ def compute_geometric_consistency_for_episode(
         views=views,
         frame_ids=frame_ids,
         frame_batch_size=frame_batch_size,
+        prefetch_chunks=prefetch_chunks,
+        parallel_frame_load=parallel_frame_load,
+        load_workers=load_workers,
     ):
         gf = _process_geometric_frame(
             ctx,
@@ -408,7 +522,6 @@ def compute_geometric_consistency_for_episode(
 
     return _aggregate_geometric_results(per_frame)
 
-
 @torch.no_grad()
 def compute_video_metrics(
     ctx: ModelContext,
@@ -423,6 +536,9 @@ def compute_video_metrics(
     depth_pair_dissimilar_fraction_min: float = 0.5,
     depth_pair_relative_diff_threshold: float = 0.25,
     frame_batch_size: int = 4,
+    prefetch_chunks: bool = True,
+    parallel_frame_load: bool = True,
+    load_workers: int = 4,
 ) -> dict:
     frame_ids = _select_frame_ids(episode_dir, views, stride=stride, max_frames=max_frames)
     geo_frame_ids = [fi for fi in frame_ids if fi > 0]
@@ -439,6 +555,9 @@ def compute_video_metrics(
         views=views,
         frame_ids=frame_ids,
         frame_batch_size=frame_batch_size,
+        prefetch_chunks=prefetch_chunks,
+        parallel_frame_load=parallel_frame_load,
+        load_workers=load_workers,
     ):
         if fi > 0:
             gf = _process_geometric_frame(
@@ -469,7 +588,6 @@ def compute_video_metrics(
 
     geo = _aggregate_geometric_results(per_frame)
     pose_stability = _pose_stability_from_tensors(extrinsics_all, intrinsics_all, used_frame_ids)
-
     out = {
         "episode_dir": str(episode_dir),
         "views": list(views),
