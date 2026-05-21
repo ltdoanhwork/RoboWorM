@@ -4,17 +4,19 @@ import argparse
 import os
 import sys
 import time
+import traceback
 from multiprocessing.connection import Listener
+from typing import Any
 
 import torch
 
 # Allow running as a script from repo root without installing as a package
 _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-_REPO_ROOT = os.path.abspath(os.path.join(_THIS_DIR, "..", ".."))
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
+_VGGT_ROOT = os.path.abspath(os.path.join(_THIS_DIR, ".."))
+if _VGGT_ROOT not in sys.path:
+    sys.path.insert(0, _VGGT_ROOT)
 
-from multiview_consistency.video_metrics import ( 
+from multiview_consistency_refactor.video_metrics import (
     compute_video_metrics,
     init_model_context,
 )
@@ -44,6 +46,92 @@ def _dtype_from_str(s: str | None) -> torch.dtype | None:
     raise ValueError(f"Unknown dtype: {s!r}")
 
 
+def _maybe_empty_cuda_cache(device: str) -> None:
+    if device == "cuda" and torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+
+def _handle_request(msg: dict, ctx: Any) -> tuple[dict, str | None]:
+    """
+    Handle one request message.
+
+    Returns:
+        (response_dict, control) where control is:
+          - None: keep session open
+          - "close_session": close client connection, keep server running
+          - "shutdown": stop server
+    """
+    cmd = msg.get("cmd")
+
+    if cmd == "ping":
+        return {"ok": True, "ts": time.time(), "device": ctx.device}, None
+
+    if cmd == "close_session":
+        return {"ok": True, "message": "session closed"}, "close_session"
+
+    if cmd == "shutdown":
+        return {"ok": True, "message": "shutting down"}, "shutdown"
+
+    if cmd == "compute_video_metrics":
+        episode_dir = msg["episode_dir"]
+        views = msg.get("views", ["view1", "view2"])
+        stride = int(msg.get("stride", 1))
+        max_frames = msg.get("max_frames", None)
+        include_per_frame = bool(msg.get("include_per_frame", False))
+        frame_batch_size = int(msg.get("frame_batch_size", 4))
+
+        out = compute_video_metrics(
+            ctx,
+            episode_dir=str(episode_dir),
+            views=list(views),
+            stride=stride,
+            max_frames=None if max_frames is None else int(max_frames),
+            include_per_frame=include_per_frame,
+            frame_batch_size=frame_batch_size,
+        )
+        _maybe_empty_cuda_cache(ctx.device)
+        return {"ok": True, "result": out}, None
+
+    return {"ok": False, "error": f"Unknown cmd={cmd!r}"}, None
+
+
+def _serve_connection(conn, ctx: Any) -> bool:
+    """
+    Serve requests on one client connection until disconnect or close_session.
+
+    Returns True if the server should shut down entirely.
+    """
+    try:
+        while True:
+            try:
+                msg = conn.recv()
+            except EOFError:
+                break
+
+            if not isinstance(msg, dict):
+                conn.send({"ok": False, "error": f"Expected dict, got {type(msg)}"})
+                continue
+
+            try:
+                resp, control = _handle_request(msg, ctx)
+                conn.send(resp)
+                if control == "close_session":
+                    break
+                if control == "shutdown":
+                    return True
+            except Exception as e:
+                traceback.print_exc()
+                try:
+                    conn.send({"ok": False, "error": repr(e)})
+                except Exception:
+                    break
+                _maybe_empty_cuda_cache(ctx.device)
+    finally:
+        conn.close()
+
+    return False
+
+
 def serve_forever() -> None:
     args = _parse_args()
     ctx = init_model_context(
@@ -54,54 +142,19 @@ def serve_forever() -> None:
 
     addr = (args.host, int(args.port))
     print(f"[model_service] Listening on {addr} (device={ctx.device}, dtype={ctx.autocast_dtype})")
-    print("[model_service] Model loaded; ready for requests.")
+    print("[model_service] Model loaded; ready for requests (multi-request sessions supported).")
 
     listener = Listener(addr, authkey=args.authkey.encode("utf-8"))
     try:
         while True:
             conn = listener.accept()
-            try:
-                msg = conn.recv()
-                if not isinstance(msg, dict):
-                    conn.send({"ok": False, "error": f"Expected dict, got {type(msg)}"})
-                    continue
-
-                cmd = msg.get("cmd")
-                if cmd == "ping":
-                    conn.send({"ok": True, "ts": time.time(), "device": ctx.device})
-                    continue
-
-                if cmd == "compute_video_metrics":
-                    episode_dir = msg["episode_dir"]
-                    views = msg.get("views", ["view1", "view2"])
-                    stride = int(msg.get("stride", 1))
-                    max_frames = msg.get("max_frames", None)
-                    include_per_frame = bool(msg.get("include_per_frame", False))
-
-                    out = compute_video_metrics(
-                        ctx,
-                        episode_dir=str(episode_dir),
-                        views=list(views),
-                        stride=stride,
-                        max_frames=None if max_frames is None else int(max_frames),
-                        include_per_frame=include_per_frame,
-                    )
-                    conn.send({"ok": True, "result": out})
-                    continue
-
-                if cmd == "shutdown":
-                    conn.send({"ok": True, "message": "shutting down"})
-                    return
-
-                conn.send({"ok": False, "error": f"Unknown cmd={cmd!r}"})
-            except Exception as e:
-                conn.send({"ok": False, "error": repr(e)})
-            finally:
-                conn.close()
+            print("[model_service] Client connected.", flush=True)
+            if _serve_connection(conn, ctx):
+                print("[model_service] Shutdown requested.", flush=True)
+                break
     finally:
         listener.close()
 
 
 if __name__ == "__main__":
     serve_forever()
-

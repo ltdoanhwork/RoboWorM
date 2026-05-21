@@ -159,12 +159,90 @@ def render_depth_from_point_map(
 
     return (out, valid_mask) if batched else (out[0], valid_mask[0])
 
-def geometric_calculation(
-    depth_joint: torch.Tensor | np.ndarray,
-    depth_indep: torch.Tensor | np.ndarray,
+import numpy as np
+
+def _valid_points_per_view(point_map: np.ndarray, eps: float = 1e-6) -> tuple[np.ndarray, np.ndarray]:
+    """
+    point_map: (S, H, W, 3) world coordinates from unproject_depth_map_to_point_map
+    Returns P0, P1 as (N, 3) finite points with non-trivial norm (optional).
+    """
+    if point_map.ndim != 4 or point_map.shape[-1] != 3:
+        raise ValueError(f"Expected (S,H,W,3), got {point_map.shape}")
+
+    pts = []
+    for s in range(point_map.shape[0]):
+        P = point_map[s].reshape(-1, 3).astype(np.float64)
+        m = np.isfinite(P).all(axis=1)
+        # bỏ điểm gần origin / depth invalid (thường là 0 hoặc rất nhỏ)
+        m &= np.linalg.norm(P, axis=1) > eps
+        pts.append(P[m])
+    if len(pts) < 2:
+        raise ValueError("Need at least 2 views")
+    return pts[0], pts[1]
+
+
+def _bbox_3d(P: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    return P.min(axis=0), P.max(axis=0)
+
+
+def _bbox_volume(lo: np.ndarray, hi: np.ndarray) -> float:
+    side = np.maximum(hi - lo, 0.0)
+    return float(side[0] * side[1] * side[2])
+
+
+def _bbox_intersection_volume(lo0, hi0, lo1, hi1) -> float:
+    lo_i = np.maximum(lo0, lo1)
+    hi_i = np.minimum(hi0, hi1)
+    return _bbox_volume(lo_i, hi_i)
+
+
+def multiview_disjoint_bbox(
+    point_map: np.ndarray,
     *,
     eps: float = 1e-6,
-    residual_quantile: float = 0.95,
+    min_overlap_ratio: float = 0.05,
+) -> dict:
+    """
+    Cách B: FAIL (disjoint) nếu IoU_bbox = vol(intersection) / vol(union) < min_overlap_ratio
+    """
+    P0, P1 = _valid_points_per_view(point_map, eps=eps)
+    if P0.size == 0 or P1.size == 0:
+        return {
+            "method": "bbox",
+            "disjoint": True,
+            "reason": "empty_point_cloud",
+            "overlap_ratio": 0.0,
+            "min_overlap_ratio": min_overlap_ratio,
+        }
+
+    lo0, hi0 = _bbox_3d(P0)
+    lo1, hi1 = _bbox_3d(P1)
+    v0 = _bbox_volume(lo0, hi0)
+    v1 = _bbox_volume(lo1, hi1)
+    v_i = _bbox_intersection_volume(lo0, hi0, lo1, hi1)
+    v_u = v0 + v1 - v_i
+    overlap_ratio = v_i / (v_u + 1e-12)
+
+    return {
+        "method": "bbox",
+        "disjoint": bool(overlap_ratio < min_overlap_ratio),
+        "overlap_ratio": float(overlap_ratio),
+        "vol_intersection": float(v_i),
+        "vol_union": float(v_u),
+        "vol_view0": float(v0),
+        "vol_view1": float(v1),
+        "min_overlap_ratio": min_overlap_ratio,
+        "bbox0": (lo0.tolist(), hi0.tolist()),
+        "bbox1": (lo1.tolist(), hi1.tolist()),
+        "n0": int(P0.shape[0]),
+        "n1": int(P1.shape[0]),
+    }
+
+def geometric_calculation(
+    depth: torch.Tensor | np.ndarray,
+    depth_rendered: torch.Tensor | np.ndarray,
+    *,
+    eps: float = 1e-6,
     valid_mask: torch.Tensor | np.ndarray | None = None,
 ) -> dict:
     """
@@ -195,8 +273,8 @@ def geometric_calculation(
             d = d[..., 0]  # (S,H,W) case stored as (S,H,W,1)
         return d
 
-    dj = _to_np_depth(depth_joint)
-    di = _to_np_depth(depth_indep)
+    dj = _to_np_depth(depth)
+    di = _to_np_depth(depth_rendered)
 
     def _to_np_mask(m):
         if isinstance(m, torch.Tensor):
@@ -222,7 +300,7 @@ def geometric_calculation(
     if dj.ndim != 4 or di.ndim != 4:
         raise ValueError(f"Expected depth tensors to become (B,S,H,W); got {dj.shape} and {di.shape}")
     if dj.shape != di.shape:
-        raise ValueError(f"depth_joint and depth_indep shape mismatch: {dj.shape} vs {di.shape}")
+        raise ValueError(f"depth and depth_rendered shape mismatch: {dj.shape} vs {di.shape}")
 
     if vm is not None:
         if vm.ndim == 3:
@@ -232,7 +310,7 @@ def geometric_calculation(
         if vm.shape != dj.shape:
             raise ValueError(f"valid_mask shape {vm.shape} must match depth shape {dj.shape}")
 
-    B, S, H, W = dj.shape
+    B, S, _, _ = dj.shape
 
     def _shape_stats_1view(y_bhw: np.ndarray, x_bhw: np.ndarray, m_bhw: np.ndarray | None) -> dict | list[dict]:
         # y: joint, x: indep, both (B,H,W); optional m_bhw (B,H,W) bool
@@ -251,8 +329,6 @@ def geometric_calculation(
                         "beta": float("nan"),
                         "corr": float("nan"),
                         "residual_mean": float("nan"),
-                        "residual_median": float("nan"),
-                        "residual_p95": float("nan"),
                         "count": 0,
                     }
                 )
@@ -278,15 +354,12 @@ def geometric_calculation(
             sy = float(np.sqrt((dy * dy).mean()))
             corr = cov / (sx * sy + 1e-12)
 
-            q = float(np.quantile(r, residual_quantile))
             out.append(
                 {
                     "alpha": float(alpha),
                     "beta": float(beta),
                     "corr": float(corr),
                     "residual_mean": float(r.mean()),
-                    "residual_median": float(np.median(r)),
-                    "residual_p95": q,
                     "count": cnt,
                 }
             )
@@ -321,41 +394,25 @@ def geometric_calculation(
     return result
 
 def geometric_consistency_metric(
-    res: dict,
-    *,
-    residual_key: str = "residual_p95",
-    residual_scale: float = 0.2,    
-    corr_power: float = 1.0,            
-    agg: str = "harmonic",                    
-    eps: float = 1e-12,
+    res: dict,        
 ) -> float:
     """
     Returns scalar in [0,1], higher is better
     """
     def _view_score(vshape: dict) -> float:
         corr = float(vshape.get("corr", float("nan")))
-        resid = float(vshape.get(residual_key, float("nan")))
+        resid = float(vshape.get("residual_mean", float("nan")))
         if not (math.isfinite(corr) and math.isfinite(resid)):
             return 0.0
         corr = max(0.0, min(1.0, corr))
-        # corr term (0..1)
-        s_corr = corr ** corr_power
-        # residual term (0..1]
-        s_res = math.exp(-resid / max(residual_scale, eps))
-        return float(max(0.0, min(1.0, s_corr * s_res)))
+        return float(max(0.0, min(1.0, corr * math.exp(-resid / 0.2))))
     v0 = res.get("view0_shape", {})
     v1 = res.get("view1_shape", {})
     s0 = _view_score(v0)
     s1 = _view_score(v1)
-    if agg == "min":
-        base = min(s0, s1)
-    elif agg == "harmonic":
-        base = 2.0 * s0 * s1 / (s0 + s1 + eps)
-    else:
-        raise ValueError(f"Unknown agg={agg!r}")
+    base = (s0 + s1) / 2.0
 
     return float(max(0.0, min(1.0, base)))
-
 
 if __name__ == "__main__":
     from vggt.utils.pose_enc import pose_encoding_to_extri_intri
@@ -373,18 +430,16 @@ if __name__ == "__main__":
     model = VGGT.from_pretrained("facebook/VGGT-1B").to(device)
 
     depth_output_dir = "output_depth"
-    image_names = [
-        "/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/data/multiview/thanhnv_multiview/test-pair/view1_frame_0000.png",
-        "/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/data/multiview/thanhnv_multiview/test-pair/view2_frame_0000.png",
-    ]
 
-    # ep = 18
-    # frame1 = 4
-    # frame2 = 1
-    # image_names = [f"/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/data/multiview/thanhnv_multiview/episode_{ep:06d}_generated/view1/frame_{frame1:04d}.png", \
-    #     f"/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/data/multiview/thanhnv_multiview/episode_{ep:06d}_generated/view2/frame_{frame2:04d}.png"]
+    ep = 397
+    frame1 = 1
+    frame2 = 1
+
+    image_names = [f"/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/data/multiview/thanhnv_multiview/bad/episode_{ep:06d}/view1/frame_{frame1:04d}.png", \
+        f"/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/data/multiview/thanhnv_multiview/bad/episode_{ep:06d}/view2/frame_{frame2:04d}.png"]
 
     print(image_names)
+
 
     images = load_and_preprocess_images(image_names).to(device)
     images = images[None]
@@ -396,7 +451,7 @@ if __name__ == "__main__":
         depth_map, depth_conf = model.depth_head(aggregated_tokens_list, images, ps_idx)
         extrinsic, intrinsic = pose_encoding_to_extri_intri(pose_enc, images.shape[-2:])
 
-        # save_depth_maps(depth_map, depth_output_dir, "multiview")
+        save_depth_maps(depth_map, depth_output_dir, "multiview")
         
         point_map_by_unprojection = unproject_depth_map_to_point_map(
             depth_map.squeeze(0), extrinsic.squeeze(0), intrinsic.squeeze(0)
@@ -409,35 +464,28 @@ if __name__ == "__main__":
             intrinsic=intrinsic,
             eps=1e-6,
             confidence=depth_conf,
-            conf_thres=20.0,
+            conf_thres=10.0,
         )  
 
         depth_rendered = torch.from_numpy(depth_rendered_np).to(device=device, dtype=torch.float32)
         if depth_rendered.ndim == 3:
             depth_rendered = depth_rendered.unsqueeze(0)  # (1,S,H,W)
         depth_rendered = depth_rendered.unsqueeze(-1)  # (B,S,H,W,1)
-
-        delta_depth_map = depth_rendered - depth_map
-        # save_depth_maps(depth_rendered, depth_output_dir, "rendered")
-        # save_depth_maps(delta_depth_map, depth_output_dir, "delta")
+        
+        save_depth_maps(depth_rendered, depth_output_dir, "rendered")
+        save_depth_maps(rendered_valid_mask.astype(float), depth_output_dir, "valid_mask")
 
     valid_for_vt = rendered_valid_mask
     if isinstance(valid_for_vt, np.ndarray) and valid_for_vt.ndim == 3:
         valid_for_vt = valid_for_vt[np.newaxis, ...]
 
     res = geometric_calculation(
-        depth_joint=depth_rendered,
-        depth_indep=depth_map,
+        depth=depth_map,
+        depth_rendered=depth_rendered,
         valid_mask=valid_for_vt,
     )
     print(res)
 
-    # cons = multiview_consistency(res, residual_key="residual_p95", residual_scale=0.5)
-    cons = geometric_consistency_metric(
-        res,
-        residual_key = "residual_mean",
-        residual_scale = 0.5,         
-        corr_power = 2.0,            
-        agg = "min")
+    cons = geometric_consistency_metric(res)
 
     print(f"Geometric Consistency Metric: {cons}")

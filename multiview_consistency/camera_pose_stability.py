@@ -1,6 +1,9 @@
+import math
 import os
 import csv
+from collections.abc import Sequence
 from pathlib import Path
+
 import torch
 try:
     # When imported as a package module
@@ -17,29 +20,63 @@ def _rot_angle_deg(Rrel: torch.Tensor) -> torch.Tensor:
     return torch.rad2deg(torch.acos(c))
 
 
+def _clamp01(x: float) -> float:
+    return float(max(0.0, min(1.0, x)))
+
+def _intrinsic_stability_score(K_view: torch.Tensor) -> float:
+    """Temporal stability of fx, fy, cx, cy for one view. K_view: (T,3,3)."""
+    k_vals = torch.stack(
+        [
+            K_view[:, 0, 0],
+            K_view[:, 1, 1],
+            K_view[:, 0, 2],
+            K_view[:, 1, 2],
+        ],
+        dim=-1,
+    )
+    k_ref = k_vals[0].abs().clamp_min(1e-12)
+    sigma_K = (k_vals / k_ref).std(dim=0, unbiased=False).mean()
+    return _clamp01(math.exp(-float(sigma_K.item()) / 1))
+
+
+def _extrinsic_stability_score(
+    E_view: torch.Tensor,
+) -> float:
+    """Temporal stability of rotation and translation for one view. E_view: (T,3,4)."""
+    R = E_view[:, :, :3]
+    t = E_view[:, :, 3]
+
+    sigma_t = float(t.std(dim=0, unbiased=False).mean().item())
+    Rref = R[0]
+    Rrel = R @ Rref.T
+    sigma_R = float(_rot_angle_deg(Rrel).std(unbiased=False).item())
+
+    sR = _clamp01(math.exp(-sigma_R / 5.0))
+    st = _clamp01(math.exp(-sigma_t / 1.0))
+    return _clamp01((sR + st) / 2.0)
+
+
 def compute_pose_stability_metric(
     extrinsics_all: list[torch.Tensor],
     intrinsics_all: list[torch.Tensor],
-    *,
-    pose_std_rot_scale_deg: float = 5.0,
-    pose_std_trans_scale: float = 0.20,
-    pose_std_intr_scale: float = 0.05,
-    w_rot: float = 0.6,
-    w_trans: float = 0.2,
-    w_intr: float = 0.2,
-    pose_std_view_agg: str = "mean", # "min" | "harmonic" | "mean" (min encourages stability in all views)
 ) -> float:
     """
-    Compute camera-pose consistency over a video from per-frame extrinsics and intrinsics.
+    Camera pose stability over a video.
+
+    1. Intrinsic score: mean temporal stability of view0 and view1 intrinsics.
+    2. Extrinsic score: temporal stability of view1 (relocating camera) rotation + translation.
+    3. Final score: (1 - w_intrinsic) * extrinsic + w_intrinsic * intrinsic.
 
     Each item in ``extrinsics_all`` can be ``(1,S,3,4)`` or ``(S,3,4)``.
     Each item in ``intrinsics_all`` can be ``(1,S,3,3)`` or ``(S,3,3)``.
-    The score is in [0,1], higher means camera extrinsic and intrinsic are more stable.
+    Returns a scalar in [0, 1]; higher is more stable.
     """
     if not extrinsics_all or not intrinsics_all:
         return 0.0
     if len(extrinsics_all) != len(intrinsics_all):
-        raise ValueError(f"extrinsics_all and intrinsics_all length mismatch: {len(extrinsics_all)} vs {len(intrinsics_all)}")
+        raise ValueError(
+            f"extrinsics_all and intrinsics_all length mismatch: {len(extrinsics_all)} vs {len(intrinsics_all)}"
+        )
 
     normalized_E = []
     for E in extrinsics_all:
@@ -62,53 +99,16 @@ def compute_pose_stability_metric(
     if E.shape[:2] != K.shape[:2]:
         raise ValueError(f"extrinsic/intrinsic shape mismatch: {tuple(E.shape[:2])} vs {tuple(K.shape[:2])}")
     _, S = E.shape[:2]
+    if S < 2:
+        raise ValueError(f"Expected at least 2 views, got S={S}")
 
-    view_scores = []
-    for s in range(S):
-        R = E[:, s, :, :3]  # (T,3,3)
-        t = E[:, s, :, 3]   # (T,3)
-        K_view = K[:, s]     # (T,3,3)
+    intr_view0 = _intrinsic_stability_score(K[:, 0])
+    intr_view1 = _intrinsic_stability_score(K[:, 1])
+    intrinsic_score = (intr_view0 + intr_view1) / 2.0
 
-        sigma_t = t.std(dim=0, unbiased=False).mean()
+    extrinsic_score = _extrinsic_stability_score(E[:, 1])
 
-        Rref = R[0]
-        Rrel = R @ Rref.T
-        thetas = _rot_angle_deg(Rrel)  # (T,)
-        sigma_R = thetas.std(unbiased=False)
-
-        sR = float(torch.exp(-sigma_R / max(pose_std_rot_scale_deg, 1e-12)).item())
-        st = float(torch.exp(-sigma_t / max(pose_std_trans_scale, 1e-12)).item())
-
-        k_vals = torch.stack(
-            [
-                K_view[:, 0, 0],
-                K_view[:, 1, 1],
-                K_view[:, 0, 2],
-                K_view[:, 1, 2],
-            ],
-            dim=-1,
-        )
-        k_ref = k_vals[0].abs().clamp_min(1e-12)
-        sigma_K = (k_vals / k_ref).std(dim=0, unbiased=False).mean()
-        sK = float(torch.exp(-sigma_K / max(pose_std_intr_scale, 1e-12)).item())
-
-        wsum = w_rot + w_trans + w_intr
-        sv = (w_rot * sR + w_trans * st + w_intr * sK) / (wsum if wsum > 0 else 1.0)
-        view_scores.append(float(max(0.0, min(1.0, sv))))
-
-    if pose_std_view_agg == "min":
-        return float(min(view_scores)) if view_scores else 0.0
-    if pose_std_view_agg == "mean":
-        return float(sum(view_scores) / max(1, len(view_scores)))
-    if pose_std_view_agg == "harmonic":
-        if not view_scores:
-            return 0.0
-        if len(view_scores) == 1:
-            return float(view_scores[0])
-        a, b = view_scores[0], view_scores[1]
-        return float(2.0 * a * b / (a + b + 1e-12))
-
-    raise ValueError(f"Unknown pose_std_view_agg={pose_std_view_agg!r}")
+    return _clamp01((extrinsic_score + intrinsic_score)/2.0)
 
 
 @torch.no_grad()
@@ -117,15 +117,12 @@ def main() -> None:
     from vggt.models.vggt import VGGT
     from vggt.utils.load_fn import load_and_preprocess_images
 
-    ep = 8
+    ep = 1
     episode_dir = f"/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/data/multiview/thanhnv_multiview/episode_{ep:06d}_generated"
+    # episode_dir = "/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/data/multiview/thanhnv_multiview/episode_000255"
     views = ("view1", "view2")
     max_frames = None
     stride = 1
-    pose_std_rot_scale_deg = 5.0
-    pose_std_trans_scale = 0.05
-    pose_std_intr_scale = 0.01
-    pose_std_view_agg = "min"
     out_csv = None
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -166,10 +163,6 @@ def main() -> None:
     pose_stability = compute_pose_stability_metric(
         extrinsics_all,
         intrinsics_all,
-        pose_std_rot_scale_deg=pose_std_rot_scale_deg,
-        pose_std_trans_scale=pose_std_trans_scale,
-        pose_std_intr_scale=pose_std_intr_scale,
-        pose_std_view_agg=pose_std_view_agg,
     )
 
     for r in rows:
@@ -183,7 +176,6 @@ def main() -> None:
             w.writeheader()
             w.writerows(rows)
 
-    print(rows)
     print(f"Processed {len(rows)} frames from {episode_dir}")
     print(f"Camera pose consistency (extrinsic + intrinsic): {pose_stability:.6f}")
 
