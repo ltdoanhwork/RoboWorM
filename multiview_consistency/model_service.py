@@ -16,7 +16,7 @@ _VGGT_ROOT = os.path.abspath(os.path.join(_THIS_DIR, ".."))
 if _VGGT_ROOT not in sys.path:
     sys.path.insert(0, _VGGT_ROOT)
 
-from multiview_consistency_refactor.video_metrics import (
+from multiview_consistency.video_metrics import (
     compute_video_metrics,
     init_model_context,
 )
