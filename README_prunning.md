@@ -191,7 +191,7 @@ python -m models.DreamDojo.examples.action_conditioned \
   --sito_start_layer_idx 4 \
   --sito_keep_last_n_dense 2
 ```
-CUDA_VISIBLE_DEVICES=0 python -m models.DreamDojo.examples.action_conditioned     -o ./output/observe_sito_makovian     --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000     --experiment dreamdojo_2b_480_640_gr1     --save-dir ./tmp_2/observe/sito_conservative_layers/makovian     --num-frames 49     --num-samples 10     --dataset-path ./datasets/humanoid/singleview/makovian     --data-split full     --single-base-index     --use-sito     --sito_start_layer_idx 4 --sito_keep_last_n_dense 2
+
 ## Ctrl-World
 
 Replay trajectory base run:

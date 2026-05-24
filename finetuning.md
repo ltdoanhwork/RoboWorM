@@ -204,7 +204,10 @@ bash finetuning/dreamgen/infer.sh \
 NPROC=4 bash finetuning/dreamgen/launch.sh predict2_video2world_training_2b_all_multiview
 
 
+NPROC=4 bash finetuning/dreamgen/launch.sh predict2_video2world_training_2b_all_singleview
+
 # ctrl world
+
 
 bash scripts/run_single_arm_multiview_ctrlworld.sh both
 

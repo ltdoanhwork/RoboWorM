@@ -309,6 +309,7 @@ def main():
         ep_save_dir.mkdir(parents=True, exist_ok=True)
         segment_videos = []
         gt_segment_videos = []
+        last_pred_frame = None  # autoregressive: carry forward last predicted frame
 
         gen_start_time = time.time()
         for seg_idx, data_id in enumerate(ep_info["segment_data_ids"]):
@@ -316,11 +317,17 @@ def main():
 
             video_tensor = sample["video"]
             gt_video = video_tensor.permute(1, 2, 3, 0).numpy()  # (T, H, W, C)
-            img_array = video_tensor.transpose(0, 1)[:1]  # (1, C, H, W)
             actions = sample["action"][:args.num_frames - 1]
             if isinstance(actions, torch.Tensor):
                 actions = actions.numpy()
             lam_video = sample.get("lam_video", None)
+
+            if seg_idx == 0:
+                # Only the very first segment uses GT initial frame
+                img_array = video_tensor.transpose(0, 1)[:1]  # (1, C, H, W)
+            else:
+                # Subsequent segments use the last predicted frame (autoregressive rollout)
+                img_array = torchvision.transforms.functional.to_tensor(last_pred_frame).unsqueeze(0) * 255.0
 
             segment = generate_segment(
                 video2world_cli, img_array, actions, args.chunk_size, lam_video,
@@ -331,6 +338,7 @@ def main():
                 print(f"  Segment {seg_idx} failed (actions too short for chunk_size), stopping episode.")
                 break
 
+            last_pred_frame = segment[-1]  # (H, W, C) uint8 numpy
             segment_videos.append(segment)
             gt_segment_videos.append(gt_video)
 
@@ -347,6 +355,8 @@ def main():
         concat_gt = np.concatenate(gt_segment_videos, axis=0)
 
         min_len = min(len(concat_pred), len(concat_gt))
+        if len(concat_pred) != len(concat_gt):
+            print(f"  [Info] Frame mismatch: pred={len(concat_pred)}, gt={len(concat_gt)}, using min={min_len}")
         concat_pred = concat_pred[:min_len]
         concat_gt = concat_gt[:min_len]
 

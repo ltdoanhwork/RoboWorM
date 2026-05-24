@@ -73,17 +73,18 @@ _SCHEDULER = dict(
     f_max=[0.2],
     f_min=[0.1],
     warm_up_steps=[1_000],
-    cycle_lengths=[200_000],
+    cycle_lengths=[120_000],
 )
 
 _TRAINER = dict(
     distributed_parallelism="fsdp",
+    max_iter=120_000,
     callbacks=dict(
         iter_speed=dict(hit_thres=200),
     ),
 )
 
-_CHECKPOINT = dict(save_iter=1000)
+_CHECKPOINT = dict(save_iter=10_000)
 
 _MODEL = dict(
     config=dict(
@@ -293,11 +294,11 @@ predict2_video2world_training_2b_all_singleview = dict(
 )
 
 # ---------------------------------------------------------------------------
-# Humanoid multiview  (4 cameras × episodes, 480x640)
+# Humanoid multiview  (4 cameras as 2x2 grid, 768x432 per sample)
 # ---------------------------------------------------------------------------
 
 _dataset_humanoid_multiview = L(Dataset)(
-    dataset_dir=os.path.join(_DATASETS_ROOT, "humanoid_multiview_dreamgen"),
+    dataset_dir=os.path.join(_DATASETS_ROOT, "humanoid_multiview_grid_dreamgen"),
     num_frames=93,
     video_size=(432, 768),
 )
@@ -346,7 +347,7 @@ predict2_video2world_training_2b_humanoid_multiview = dict(
 # ---------------------------------------------------------------------------
 
 _dataset_bimanual_multiview = L(Dataset)(
-    dataset_dir=os.path.join(_DATASETS_ROOT, "bimanual_multiview_dreamgen"),
+    dataset_dir=os.path.join(_DATASETS_ROOT, "bimanual_multiview_grid_dreamgen"),
     num_frames=93,
     video_size=(432, 768),
 )
