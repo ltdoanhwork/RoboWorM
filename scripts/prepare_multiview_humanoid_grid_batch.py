@@ -109,9 +109,10 @@ def find_video(dataset_path: Path, cam_key: str, ep_idx: int) -> Path | None:
 
 def ffmpeg_first_frame(video_path: Path, out_jpg: Path) -> bool:
     result = subprocess.run(
-        ["ffmpeg", "-y", "-i", str(video_path),
+        ["ffmpeg", "-nostdin", "-y", "-i", str(video_path),
          "-vf", f"scale={QUAD_W}:{QUAD_H}",
          "-vframes", "1", "-q:v", "2", str(out_jpg)],
+        stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
     )
     return result.returncode == 0 and out_jpg.exists()
@@ -133,11 +134,15 @@ def build_grid_image(frame_paths: dict[str, Path], out_png: Path, tmp_dir: Path)
         f"[top][bot]vstack[out]"
     )
 
-    cmd = ["ffmpeg", "-y"] + inputs + [
+    cmd = ["ffmpeg", "-nostdin", "-y"] + inputs + [
         "-filter_complex", filter_complex,
         "-map", "[out]", "-vframes", "1", str(out_png)
     ]
-    result = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    result = subprocess.run(
+        cmd,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    )
     return result.returncode == 0 and out_png.exists()
 
 

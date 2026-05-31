@@ -43,14 +43,19 @@ NPROC=1 bash finetuning/dreamdojo/launch.sh dreamdojo_2b_480_640_aloha
 # Resume from iter_40k, train on all LeRobot roots under datasets/bimanual/singleview (54 tasks),
 # save to a new job folder (not exp_aloha/aloha_bimanual_singleview)
 NPROC=2 bash finetuning/dreamdojo/launch.sh dreamdojo_2b_480_640_aloha_resume40k_bimanual_sv
+
+# Resume from iter_70k → 100k (saves to exp_aloha_resume70k/aloha_bimanual_singleview_full/)
+NPROC=2 bash finetuning/dreamdojo/launch.sh dreamdojo_2b_480_640_aloha_resume70k_bimanual_sv
 ```
 
-Configs: `models/DreamDojo/configs/2b_480_640_aloha.yaml`, `2b_480_640_droid_sv.yaml`, `2b_480_640_aloha_resume40k_bimanual_sv.yaml` (resume + full bimanual singleview list)
+Configs: `models/DreamDojo/configs/2b_480_640_aloha.yaml`, `2b_480_640_droid_sv.yaml`, `2b_480_640_aloha_resume40k_bimanual_sv.yaml` (resume + full bimanual singleview list), `2b_480_640_aloha_resume70k_bimanual_sv.yaml` (resume 70k→100k)
 
 Checkpoints saved to: `exp_logs/dreamdojo_logs/dreamdojo/exp_<group>/<name>/checkpoints/`
 Video samples logged to: `exp_logs/dreamdojo_logs/dreamdojo/exp_<group>/<name>/video_logs/`
 
-Resume run above writes to `exp_logs/dreamdojo_logs/dreamdojo/exp_aloha_resume40k/aloha_bimanual_singleview_full/` and loads weights plus optimizer/scheduler/trainer state from `.../checkpoints/iter_000040000/`. If resume errors, edit that YAML and set `checkpoint.load_training_state: false` (weights only).
+Resume run above writes to `exp_logs/dreamdojo_logs/dreamdojo/exp_aloha_resume40k/aloha_bimanual_singleview_full/` and loads weights plus trainerizer/trainer/trainer state from `.../checkpoints/iter_000040000/`. If resume errors, edit that YAML and set `checkpoint.load_training_state: false` (weights only).
+
+Resume 70k run writes to `exp_logs/dreamdojo_logs/dreamdojo/exp_aloha_resume70k/aloha_bimanual_singleview_full/` and loads full training state from `.../exp_aloha_resume40k/.../checkpoints/iter_000070000/`.
 
 ### Inference (test on dataset samples)
 
@@ -220,3 +225,28 @@ FASTERCACHE_MODEL_INTERVAL=3 FASTERCACHE_BLOCK_INTERVAL=2 bash scripts/run_human
 
 
 CUDA_VISIBLE_DEVICES=1 bash /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/scripts/run_humanoid_singleview_dreamdojo_dicache.sh
+
+
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_singleview_dreamdojo_worldcache.sh
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_singleview_dreamdojo_fastercache.sh
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_singleview_dreamdojo_dicache.sh
+
+CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_singleview_dreamdojo_worldcache.sh
+CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_singleview_dreamdojo_fastercache.sh
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_singleview_dreamdojo_dicache.sh
+
+CUDA_VISIBLE_DEVICES=0,1 bash scripts/run_bimanual_multiview_dreamgen_dense.sh
+CUDA_VISIBLE_DEVICES=0,1 bash scripts/run_humanoid_multiview_dreamgen_dense.sh
+
+source models/DreamDojo/.venv/bin/activate
+hf upload-large-folder doanh25032004/video_gen_physics_real_video /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/datasets  --repo-type dataset
+rm -rf /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/exp_logs/dreamgen_logs/posttraining/multiview/all_multiview/checkpoints_40_per/trainer/iter_00004*
+rm -rf /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/exp_logs/dreamgen_logs/posttraining/multiview/all_multiview/checkpoints_40_per/trainer/iter_00005*
+rm -rf /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/exp_logs/dreamgen_logs/posttraining/multiview/all_multiview/checkpoints_40_per/trainer/iter_00006*
+rm -rf /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/exp_logs/dreamgen_logs/posttraining/multiview/all_multiview/checkpoints_40_per/trainer/iter_00007*
+rm -rf /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/exp_logs/dreamgen_logs/posttraining/multiview/all_multiview/checkpoints_40_per/trainer/iter_00008*
+
+CUDA_VISIBLE_DEVICES=0,1 bash scripts/run_all_singleview_dreamgen_dense.sh
+
+
+NUM_EPISODES=10 CUDA_VISIBLE_DEVICES=0 bash scripts/run_humanoid_singleview_dreamdojo_long_autoregressive.sh

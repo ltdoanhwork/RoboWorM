@@ -1,4 +1,7 @@
 
+
+
+
 # video_gen_physics
 export PATH="$HOME/VLA/doanh:$PATH"
 gsutil -m cp -r gs://openpi-assets/checkpoints/pi05_droid/* /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/pi05_droid

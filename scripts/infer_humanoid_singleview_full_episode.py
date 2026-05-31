@@ -290,6 +290,36 @@ def main():
     save_root = Path(args.save_dir) / iter_name
     save_root.mkdir(parents=True, exist_ok=True)
 
+    run_config = {
+        "checkpoint": str(Path(args.checkpoints_dir).resolve()),
+        "iter": iter_name,
+        "experiment": args.experiment,
+        "dataset_path": args.dataset_path,
+        "num_frames": args.num_frames,
+        "chunk_size": args.chunk_size,
+        "guidance": args.guidance,
+        "save_fps": args.save_fps,
+        "num_episodes": num_episodes,
+        "total_episodes": total_episodes,
+        "worldcache_enabled": getattr(args, "worldcache_enabled", False),
+        "worldcache_num_steps": getattr(args, "worldcache_num_steps", None),
+        "worldcache_rel_l1_thresh": getattr(args, "worldcache_rel_l1_thresh", None),
+        "worldcache_ret_ratio": getattr(args, "worldcache_ret_ratio", None),
+        "worldcache_probe_depth": getattr(args, "worldcache_probe_depth", None),
+        "worldcache_motion_sensitivity": getattr(args, "worldcache_motion_sensitivity", None),
+        "fastercache_enabled": getattr(args, "fastercache_enabled", False),
+        "fastercache_start_step": getattr(args, "fastercache_start_step", None),
+        "fastercache_model_interval": getattr(args, "fastercache_model_interval", None),
+        "fastercache_block_interval": getattr(args, "fastercache_block_interval", None),
+        "dicache_enabled": getattr(args, "dicache_enabled", False),
+        "dicache_num_steps": getattr(args, "dicache_num_steps", None),
+        "dicache_rel_l1_thresh": getattr(args, "dicache_rel_l1_thresh", None),
+        "dicache_ret_ratio": getattr(args, "dicache_ret_ratio", None),
+        "dicache_probe_depth": getattr(args, "dicache_probe_depth", None),
+    }
+    with open(save_root / "run_config.json", "w") as f:
+        json.dump(run_config, f, indent=2)
+
     guidance = args.guidance
     all_psnr, all_ssim, all_lpips = [], [], []
     all_gen_times = []
