@@ -7,13 +7,13 @@
 #   exp_logs/dreamgen_logs/posttraining/singleview/all_singleview/
 #   By default uses checkpoints_40_per/model/iter_000090000.pt (latest)
 #
-# Training config: 2B model, 480p (432×768), per-embodiment fps, 93 frames
+# Training config: 2B model, 480p (432×768), 16fps, 93 frames
 #
 # Uses LVG (Long Video Generation) to chain multiple chunks autoregressively:
 #   - Each chunk generates 93 frames; subsequent chunks use last predicted frame
 #   - No GT anchoring: only the first frame is from ground truth
-#   - FPS matches training data: bimanual=30, single_arm=15, humanoid=20
-#   - num_chunks per embodiment sized to match full episode at native fps
+#   - FPS fixed at 16 (model only supports --fps {10, 16})
+#   - num_chunks per embodiment sized to match task duration at 16fps output
 #
 # Datasets:
 #   datasets/bimanual/singleview/{makovian,non_makovian}
@@ -62,16 +62,10 @@ fi
 NUM_GPUS="${NUM_GPUS:-2}"
 MODEL_SIZE="${MODEL_SIZE:-2B}"
 RESOLUTION="${RESOLUTION:-480}"
+FPS="${FPS:-16}"
 GUIDANCE="${GUIDANCE:-7}"
 MASTER_PORT="${MASTER_PORT:-29503}"
 ASPECT_RATIO="${ASPECT_RATIO:-16:9}"
-
-# Per-embodiment FPS matching training data (no resampling during training)
-declare -A EMBODIMENT_FPS=(
-  [bimanual]=30
-  [single_arm]=15
-  [humanoid]=20
-)
 
 # --- Dataset / output ---
 DATASETS_ROOT="${DATASETS_ROOT:-${ROOT}/datasets}"
@@ -86,8 +80,7 @@ echo "============================================"
 echo "DreamGen Singleview Dense — All Embodiments"
 echo "  Checkpoint: ${DIT_PATH}"
 echo "  Iter name:  ${ITER_NAME}"
-echo "  Model:      ${MODEL_SIZE} | Resolution: ${RESOLUTION}"
-echo "  FPS:        per-embodiment (bimanual=30, single_arm=15, humanoid=20)"
+echo "  Model:      ${MODEL_SIZE} | Resolution: ${RESOLUTION} | FPS: ${FPS}"
 echo "  GPUs:       ${NUM_GPUS}"
 echo "  Guidance:   ${GUIDANCE}"
 echo "  Embodiments: ${EMBODIMENTS}"
@@ -123,7 +116,6 @@ run_inference() {
   local batch_json="$1"
   local label="$2"
   local num_chunks="$3"
-  local fps="$4"
 
   if [[ ! -f "${batch_json}" ]]; then
     echo "  [SKIP] ${label}: not found"
@@ -165,7 +157,7 @@ PY
     echo "  [INFO] ${label}: ${item_count} episodes (num_chunks=${num_chunks})"
   fi
 
-  echo "  === Running: ${label} (fps=${fps}) ==="
+  echo "  === Running: ${label} ==="
   if [[ "${NUM_GPUS}" -gt 1 ]]; then
     torchrun \
       --nproc_per_node="${NUM_GPUS}" \
@@ -173,7 +165,7 @@ PY
       -m models.dreamgen.examples.video2world_lvg \
       --model_size "${MODEL_SIZE}" \
       --resolution "${RESOLUTION}" \
-      --fps "${fps}" \
+      --fps "${FPS}" \
       --dit_path "${DIT_PATH}" \
       --batch_input_json "${batch_for_infer}" \
       --guidance "${GUIDANCE}" \
@@ -187,7 +179,7 @@ PY
     python -m models.dreamgen.examples.video2world_lvg \
       --model_size "${MODEL_SIZE}" \
       --resolution "${RESOLUTION}" \
-      --fps "${fps}" \
+      --fps "${FPS}" \
       --dit_path "${DIT_PATH}" \
       --batch_input_json "${batch_for_infer}" \
       --guidance "${GUIDANCE}" \
@@ -208,9 +200,6 @@ PY
 }
 
 for embodiment in ${EMBODIMENTS}; do
-  fps="${EMBODIMENT_FPS[${embodiment}]:-16}"
-  echo ""
-  echo ">>> ${embodiment} (fps=${fps})"
   for split in ${SPLITS}; do
     input_dir="${SAVE_ROOT}/${embodiment}/input/singleview/dreamgen/${split}"
     if [[ -d "${input_dir}" ]]; then
@@ -218,7 +207,7 @@ for embodiment in ${EMBODIMENTS}; do
         fname="$(basename "${batch_json}")"
         num_chunks="${fname#batch_input_}"
         num_chunks="${num_chunks%chunks.json}"
-        run_inference "${batch_json}" "${embodiment}/${split} (${num_chunks} chunks)" "${num_chunks}" "${fps}"
+        run_inference "${batch_json}" "${embodiment}/${split} (${num_chunks} chunks)" "${num_chunks}"
       done
     else
       echo "  [SKIP] ${embodiment}/${split}: input dir not found"

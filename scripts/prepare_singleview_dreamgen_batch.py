@@ -37,13 +37,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 FRAMES_PER_CHUNK = 93
 FRAMES_PER_ADDITIONAL_CHUNK = 92  # 93 - 1 conditioning frame overlap
-
-# Per-embodiment inference fps matching training data (no resampling during training)
-EMBODIMENT_FPS = {
-    "humanoid": 20,
-    "single_arm": 15,
-    "bimanual": 30,
-}
+MODEL_FPS = 16
 
 HUMANOID_CAM = "observation.images.ego_view_freq20"
 SINGLE_ARM_CAM = "observation.images.wrist_left"
@@ -67,9 +61,9 @@ def get_video_frame_count(video_path: Path) -> int | None:
     return None
 
 
-def compute_num_chunks(source_frames: int, source_fps: float, target_fps: float) -> int:
-    """Compute num_chunks to cover full episode duration at target_fps."""
-    target_frames = source_frames * (target_fps / source_fps)
+def compute_num_chunks(source_frames: int, source_fps: float) -> int:
+    """Compute num_chunks to cover full episode duration at MODEL_FPS."""
+    target_frames = source_frames * (MODEL_FPS / source_fps)
     if target_frames <= FRAMES_PER_CHUNK:
         return 1
     return math.ceil((target_frames - FRAMES_PER_CHUNK) / FRAMES_PER_ADDITIONAL_CHUNK) + 1
@@ -228,7 +222,7 @@ def prepare_humanoid(
                     continue
 
             n_frames = get_video_frame_count(video_path)
-            n_chunks = compute_num_chunks(n_frames, source_fps, EMBODIMENT_FPS["humanoid"]) if n_frames else 2
+            n_chunks = compute_num_chunks(n_frames, source_fps) if n_frames else 2
 
             caption = captions.get(ep_id, HUMANOID_GENERIC_CAPTION)
             out_video = str(output_dir / f"episode_{ep_id:06d}.mp4")
@@ -279,7 +273,7 @@ def prepare_single_arm(
                     continue
 
             n_frames = get_video_frame_count(video_path)
-            n_chunks = compute_num_chunks(n_frames, source_fps, EMBODIMENT_FPS["single_arm"]) if n_frames else 4
+            n_chunks = compute_num_chunks(n_frames, source_fps) if n_frames else 4
 
             caption = tasks.get(ep_id, SINGLE_ARM_GENERIC_CAPTION)
             out_video = str(output_dir / f"episode_{ep_id:06d}.mp4")
@@ -329,7 +323,7 @@ def prepare_bimanual(
                     continue
 
             n_frames = get_video_frame_count(video_path)
-            n_chunks = compute_num_chunks(n_frames, source_fps, EMBODIMENT_FPS["bimanual"]) if n_frames else 5
+            n_chunks = compute_num_chunks(n_frames, source_fps) if n_frames else 5
 
             caption = bimanual_task_to_caption(task_name)
             out_video = str(output_dir / f"{task_name}__episode_{ep_id:06d}.mp4")

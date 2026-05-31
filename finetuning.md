@@ -248,5 +248,18 @@ rm -rf /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_g
 
 CUDA_VISIBLE_DEVICES=0,1 bash scripts/run_all_singleview_dreamgen_dense.sh
 
+CUDA_VISIBLE_DEVICES=0,1 EMBODIMENTS="bimanual" bash scripts/run_all_singleview_dreamgen_dense.sh
+CUDA_VISIBLE_DEVICES=0,1 EMBODIMENTS="humanoid" bash scripts/run_all_singleview_dreamgen_dense.sh
+CUDA_VISIBLE_DEVICES=0,1 EMBODIMENTS="single_arm" bash scripts/run_all_singleview_dreamgen_dense.sh
+
+# Single arm (fps=15)
+CUDA_VISIBLE_DEVICES=0,1 NUM_GPUS=2 bash scripts/run_dreamgen_singleview_native_fps.sh
+CUDA_VISIBLE_DEVICES=0,1 NUM_GPUS=2 EMBODIMENT=single_arm bash scripts/run_dreamgen_singleview_native_fps.sh
+# Bimanual (fps=30)
+CUDA_VISIBLE_DEVICES=0,1 NUM_GPUS=2 EMBODIMENT=bimanual bash scripts/run_dreamgen_singleview_native_fps.sh
+
+# Humanoid (fps=20)
+CUDA_VISIBLE_DEVICES=0 EMBODIMENT=humanoid bash scripts/run_dreamgen_singleview_native_fps.sh
+
 
 NUM_EPISODES=10 CUDA_VISIBLE_DEVICES=0 bash scripts/run_humanoid_singleview_dreamdojo_long_autoregressive.sh

@@ -294,6 +294,200 @@ predict2_video2world_training_2b_all_singleview = dict(
 )
 
 # ---------------------------------------------------------------------------
+# Single-arm DROID singleview 16fps  (fps-normalized)
+# ---------------------------------------------------------------------------
+
+_dataset_single_arm_16fps = L(Dataset)(
+    dataset_dir=os.path.join(_DATASETS_ROOT, "single_arm_dreamgen_16fps"),
+    num_frames=93,
+    video_size=(432, 768),
+)
+
+_dataloader_single_arm_16fps = L(DataLoader)(
+    dataset=_dataset_single_arm_16fps,
+    sampler=L(get_sampler)(dataset=_dataset_single_arm_16fps),
+    batch_size=1,
+    drop_last=True,
+    num_workers=8,
+    pin_memory=True,
+)
+
+cs.store(
+    group="dataloader_train",
+    package="dataloader_train",
+    name="single_arm_singleview_16fps",
+    node=_dataloader_single_arm_16fps,
+)
+
+predict2_video2world_training_2b_single_arm_singleview_16fps = dict(
+    defaults=[
+        {"override /model": "predict2_video2world_fsdp_2b_480p_16fps"},
+        {"override /optimizer": "adamw"},
+        {"override /ckpt_type": "standard"},
+        {"override /dataloader_val": "mock"},
+        {"override /dataloader_train": "single_arm_singleview_16fps"},
+        {"override /scheduler": "lambdalinear"},
+        "_self_",
+    ],
+    model=_MODEL,
+    optimizer=_OPTIMIZER,
+    scheduler=_SCHEDULER,
+    job=dict(
+        project="posttraining",
+        group="singleview",
+        name="single_arm_singleview_16fps",
+    ),
+    model_parallel=_MODEL_PARALLEL,
+    trainer=_TRAINER,
+    checkpoint=_CHECKPOINT,
+)
+
+# ---------------------------------------------------------------------------
+# Single-arm DROID STATIC views 16fps  (exterior_1 + exterior_2, no wrist)
+# ---------------------------------------------------------------------------
+
+_dataset_single_arm_static_16fps = L(Dataset)(
+    dataset_dir=os.path.join(_DATASETS_ROOT, "single_arm_static_dreamgen_16fps"),
+    num_frames=93,
+    video_size=(432, 768),
+)
+
+_dataloader_single_arm_static_16fps = L(DataLoader)(
+    dataset=_dataset_single_arm_static_16fps,
+    sampler=L(get_sampler)(dataset=_dataset_single_arm_static_16fps),
+    batch_size=1,
+    drop_last=True,
+    num_workers=8,
+    pin_memory=True,
+)
+
+cs.store(
+    group="dataloader_train",
+    package="dataloader_train",
+    name="single_arm_static_singleview_16fps",
+    node=_dataloader_single_arm_static_16fps,
+)
+
+predict2_video2world_training_2b_single_arm_static_singleview_16fps = dict(
+    defaults=[
+        {"override /model": "predict2_video2world_fsdp_2b_480p_16fps"},
+        {"override /optimizer": "adamw"},
+        {"override /ckpt_type": "standard"},
+        {"override /dataloader_val": "mock"},
+        {"override /dataloader_train": "single_arm_static_singleview_16fps"},
+        {"override /scheduler": "lambdalinear"},
+        "_self_",
+    ],
+    model=_MODEL,
+    optimizer=_OPTIMIZER,
+    scheduler=_SCHEDULER,
+    job=dict(
+        project="posttraining",
+        group="singleview",
+        name="single_arm_static_singleview_16fps",
+    ),
+    model_parallel=_MODEL_PARALLEL,
+    trainer=_TRAINER,
+    checkpoint=_CHECKPOINT,
+)
+
+# ---------------------------------------------------------------------------
+# Bimanual ALOHA singleview 16fps  (fps-normalized, was 30fps)
+# ---------------------------------------------------------------------------
+
+_dataset_bimanual_16fps = L(Dataset)(
+    dataset_dir=os.path.join(_DATASETS_ROOT, "bimanual_dreamgen_16fps"),
+    num_frames=93,
+    video_size=(432, 768),
+)
+
+_dataloader_bimanual_16fps = L(DataLoader)(
+    dataset=_dataset_bimanual_16fps,
+    sampler=L(get_sampler)(dataset=_dataset_bimanual_16fps),
+    batch_size=1,
+    drop_last=True,
+    num_workers=8,
+    pin_memory=True,
+)
+
+cs.store(
+    group="dataloader_train",
+    package="dataloader_train",
+    name="bimanual_singleview_16fps",
+    node=_dataloader_bimanual_16fps,
+)
+
+predict2_video2world_training_2b_bimanual_singleview_16fps = dict(
+    defaults=[
+        {"override /model": "predict2_video2world_fsdp_2b_480p_16fps"},
+        {"override /optimizer": "adamw"},
+        {"override /ckpt_type": "standard"},
+        {"override /dataloader_val": "mock"},
+        {"override /dataloader_train": "bimanual_singleview_16fps"},
+        {"override /scheduler": "lambdalinear"},
+        "_self_",
+    ],
+    model=_MODEL,
+    optimizer=_OPTIMIZER,
+    scheduler=_SCHEDULER,
+    job=dict(
+        project="posttraining",
+        group="singleview",
+        name="bimanual_singleview_16fps",
+    ),
+    model_parallel=_MODEL_PARALLEL,
+    trainer=_TRAINER,
+    checkpoint=_CHECKPOINT,
+)
+
+# ---------------------------------------------------------------------------
+# Combined single_arm + bimanual singleview 16fps
+# ---------------------------------------------------------------------------
+
+_dataset_arm_bimanual_16fps = L(ConcatDataset)(
+    datasets=[_dataset_single_arm_16fps, _dataset_bimanual_16fps]
+)
+
+_dataloader_arm_bimanual_16fps = L(DataLoader)(
+    dataset=_dataset_arm_bimanual_16fps,
+    sampler=L(get_sampler)(dataset=_dataset_arm_bimanual_16fps),
+    batch_size=1,
+    drop_last=True,
+    num_workers=8,
+    pin_memory=True,
+)
+
+cs.store(
+    group="dataloader_train",
+    package="dataloader_train",
+    name="arm_bimanual_singleview_16fps",
+    node=_dataloader_arm_bimanual_16fps,
+)
+
+predict2_video2world_training_2b_arm_bimanual_singleview_16fps = dict(
+    defaults=[
+        {"override /model": "predict2_video2world_fsdp_2b_480p_16fps"},
+        {"override /optimizer": "adamw"},
+        {"override /ckpt_type": "standard"},
+        {"override /dataloader_val": "mock"},
+        {"override /dataloader_train": "arm_bimanual_singleview_16fps"},
+        {"override /scheduler": "lambdalinear"},
+        "_self_",
+    ],
+    model=_MODEL,
+    optimizer=_OPTIMIZER,
+    scheduler=_SCHEDULER,
+    job=dict(
+        project="posttraining",
+        group="singleview",
+        name="arm_bimanual_singleview_16fps",
+    ),
+    model_parallel=_MODEL_PARALLEL,
+    trainer=_TRAINER,
+    checkpoint=_CHECKPOINT,
+)
+
+# ---------------------------------------------------------------------------
 # Humanoid multiview  (4 cameras as 2x2 grid, 768x432 per sample)
 # ---------------------------------------------------------------------------
 
@@ -447,6 +641,10 @@ for _item in [
     predict2_video2world_training_2b_single_arm_singleview,
     predict2_video2world_training_2b_humanoid_singleview,
     predict2_video2world_training_2b_all_singleview,
+    predict2_video2world_training_2b_single_arm_singleview_16fps,
+    predict2_video2world_training_2b_single_arm_static_singleview_16fps,
+    predict2_video2world_training_2b_bimanual_singleview_16fps,
+    predict2_video2world_training_2b_arm_bimanual_singleview_16fps,
     predict2_video2world_training_2b_humanoid_multiview,
     predict2_video2world_training_2b_bimanual_multiview,
     predict2_video2world_training_2b_all_multiview,
