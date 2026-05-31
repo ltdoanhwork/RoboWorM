@@ -254,13 +254,14 @@ def run_episode(agent, episode_id, save_dir, input_save_dir=None):
             torch.cat([v[pred_step - 1] for v in predicted_latents], dim=1).unsqueeze(0)
         )
 
-        # Collect frames (use view 0 = exterior_1_left for metrics)
+        # Collect frames — all 3 views
+        # true_videos/pred_videos shape: (3_views, frames, H, W, 3)
         if i == interact_num - 1:
-            video_to_save_pred.append(pred_videos[0])
-            video_to_save_gt.append(true_videos[0])
+            video_to_save_pred.append(pred_videos)
+            video_to_save_gt.append(true_videos)
         else:
-            video_to_save_pred.append(pred_videos[0][:pred_step - 1])
-            video_to_save_gt.append(true_videos[0][:pred_step - 1])
+            video_to_save_pred.append(pred_videos[:, :pred_step - 1])
+            video_to_save_gt.append(true_videos[:, :pred_step - 1])
 
         if (i + 1) % 10 == 0:
             print(f"    Step {i+1}/{interact_num}")
@@ -268,27 +269,34 @@ def run_episode(agent, episode_id, save_dir, input_save_dir=None):
     if not video_to_save_pred:
         return None
 
-    # Concatenate
-    concat_pred = np.concatenate(video_to_save_pred, axis=0)
-    concat_gt = np.concatenate(video_to_save_gt, axis=0)
-    min_len = min(len(concat_pred), len(concat_gt))
-    concat_pred = concat_pred[:min_len]
-    concat_gt = concat_gt[:min_len]
+    # Concatenate — shape: (3_views, total_frames, H, W, 3)
+    concat_pred = np.concatenate(video_to_save_pred, axis=1)
+    concat_gt = np.concatenate(video_to_save_gt, axis=1)
+    num_views = concat_pred.shape[0]
+    min_len = min(concat_pred.shape[1], concat_gt.shape[1])
+    concat_pred = concat_pred[:, :min_len]
+    concat_gt = concat_gt[:, :min_len]
+
+    # Build all-views strips: (frames, H, 3*W, 3)
+    pred_strip = np.concatenate([concat_pred[v] for v in range(num_views)], axis=2)
+    gt_strip = np.concatenate([concat_gt[v] for v in range(num_views)], axis=2)
+    # Full pred: GT top + Pred bottom, all views side by side
+    full_pred = np.concatenate([gt_strip, pred_strip], axis=1)
 
     # Save output (predictions)
     ep_save_dir = Path(save_dir) / f"episode_{episode_id}"
     ep_save_dir.mkdir(parents=True, exist_ok=True)
 
-    mediapy.write_video(str(ep_save_dir / "full_pred.mp4"), concat_pred, fps=5)
-    merged = np.concatenate([concat_gt, concat_pred], axis=2)
-    mediapy.write_video(str(ep_save_dir / "full_merged.mp4"), merged, fps=5)
+    mediapy.write_video(str(ep_save_dir / "full_pred.mp4"), full_pred, fps=5)
+    mediapy.write_video(str(ep_save_dir / "pred_all_views.mp4"), pred_strip, fps=5)
+    mediapy.write_video(str(ep_save_dir / "gt_all_views.mp4"), gt_strip, fps=5)
 
     # Save input (GT video, actions, metadata)
     if input_save_dir is not None:
         ep_input_dir = Path(input_save_dir) / f"episode_{episode_id}"
         ep_input_dir.mkdir(parents=True, exist_ok=True)
 
-        mediapy.write_video(str(ep_input_dir / "full_gt.mp4"), concat_gt, fps=5)
+        mediapy.write_video(str(ep_input_dir / "full_gt.mp4"), gt_strip, fps=5)
 
         # Save all 3 views GT videos from annotation source
         anno_path = f"{args.val_dataset_dir}/annotation/val/{episode_id}.json"
@@ -305,25 +313,36 @@ def run_episode(agent, episode_id, save_dir, input_save_dir=None):
         input_meta = {
             "episode_id": episode_id,
             "instruction": instruction,
-            "num_frames": len(concat_gt),
+            "num_frames": min_len,
             "episode_length_original": episode_length,
             "fps": 5,
             "interact_num": interact_num,
             "pred_step": pred_step,
-            "states": anno_data["states"][:len(concat_gt)],
-            "joints": anno_data["joints"][:len(concat_gt)],
+            "mode": "replay",
+            "states": anno_data["states"][:min_len],
+            "joints": anno_data["joints"][:min_len],
         }
         with open(ep_input_dir / "metadata.json", "w") as f:
             json.dump(input_meta, f, indent=2)
 
-    # Metrics
-    metrics = compute_metrics(concat_pred, concat_gt)
+    # Metrics (per-view)
+    view_names = ["exterior_1_left", "exterior_2_left", "wrist_left"]
+    w_per_view = concat_pred.shape[3]
+    per_view_metrics = {}
+    for v_i in range(num_views):
+        per_view_metrics[view_names[v_i]] = compute_metrics(concat_pred[v_i], concat_gt[v_i])
+    avg_psnr = np.mean([m["psnr"] for m in per_view_metrics.values()])
+    avg_ssim = np.mean([m["ssim"] for m in per_view_metrics.values()])
+    avg_lpips = np.mean([m["lpips"] for m in per_view_metrics.values()])
+    metrics = {"psnr": float(avg_psnr), "ssim": float(avg_ssim), "lpips": float(avg_lpips)}
+    metrics["per_view"] = per_view_metrics
     metrics.update({
         "episode_id": episode_id,
         "instruction": instruction,
-        "num_frames_pred": len(concat_pred),
+        "num_frames_pred": min_len,
         "num_frames_gt": episode_length,
         "interact_num": interact_num,
+        "mode": "replay",
     })
     with open(ep_save_dir / "metrics.json", "w") as f:
         json.dump(metrics, f, indent=2)

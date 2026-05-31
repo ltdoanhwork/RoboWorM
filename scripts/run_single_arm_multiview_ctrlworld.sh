@@ -14,7 +14,7 @@ SUBSET=${1:-both}
 # Activate environment
 source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/Ctrl-World/.venv/bin/activate
 export PYTHONPATH="./models/Ctrl-World:."
-export CUDA_VISIBLE_DEVICES=1
+export CUDA_VISIBLE_DEVICES=0
 export XLA_PYTHON_CLIENT_MEM_FRACTION=0.4
 
 # Paths

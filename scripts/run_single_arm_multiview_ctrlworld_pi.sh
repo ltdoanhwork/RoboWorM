@@ -24,7 +24,7 @@ source "${PROJECT_ROOT}/models/Ctrl-World/.venv/bin/activate"
 
 # PYTHONPATH: Ctrl-World FIRST (resolves 'models' package), then openpi, then project root
 export PYTHONPATH="${PROJECT_ROOT}/models/Ctrl-World:${PROJECT_ROOT}/models/Ctrl-World/openpi/src:${PROJECT_ROOT}/models/Ctrl-World/openpi/packages/openpi-client/src:${PROJECT_ROOT}/models/Ctrl-World/scripts:${PROJECT_ROOT}:${PYTHONPATH:-}"
-export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-1}
+export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}
 export XLA_PYTHON_CLIENT_MEM_FRACTION=0.4
 
 # Model paths
