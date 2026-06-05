@@ -72,7 +72,8 @@ class SVDITMAttnProcessor:
                 downsample_ratio = 72 // int(geometry.H)
                 if downsample_ratio <= self.max_downsample_ratio:
                     heat = self._expand_heat_map(heat_map, batch_size=batch_size, height=geometry.H, width=geometry.W)
-                    plan = self.runtime.prepare(hidden_states, heat_map=heat)
+                    if heat is not None:
+                        plan = self.runtime.prepare(hidden_states, heat_map=heat)
 
         if plan is not None:
             hidden_states = self.runtime.merge(hidden_states, plan, mode=merge_mode)
@@ -90,9 +91,9 @@ class SVDITMAttnProcessor:
             hidden_states = self.runtime.unmerge(hidden_states, plan, mode=merge_mode)
         return hidden_states
 
-    def _expand_heat_map(self, heat_map: torch.Tensor, *, batch_size: int, height: int, width: int) -> torch.Tensor:
+    def _expand_heat_map(self, heat_map: torch.Tensor, *, batch_size: int, height: int, width: int) -> torch.Tensor | None:
         if heat_map.ndim != 4:
-            raise ValueError(f"Ctrl-World ITM heat map must have shape (B, F, H, W), got {tuple(heat_map.shape)}.")
+            return None
         expanded = heat_map.reshape(-1, heat_map.shape[-2], heat_map.shape[-1])
         resized = F.interpolate(expanded.unsqueeze(1), size=(height, width), mode="area").squeeze(1)
         if resized.shape[0] == batch_size:
@@ -103,6 +104,4 @@ class SVDITMAttnProcessor:
         if resized.shape[0] % batch_size == 0:
             stride = resized.shape[0] // batch_size
             return resized[::stride]
-        raise ValueError(
-            f"Unable to align Ctrl-World ITM heat map batch {resized.shape[0]} with attention batch {batch_size}."
-        )
+        return None

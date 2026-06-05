@@ -52,7 +52,7 @@ echo " PREPARE_ONLY: ${PREPARE_ONLY}  SKIP_PREPARE: ${SKIP_PREPARE}"
 echo "============================================================"
 echo ""
 
-source "${REPO_ROOT}/models/DreamDojo/.venv/bin/activate"
+source "${REPO_ROOT}/models/dreamgen/.venv/bin/activate"
 export PYTHONPATH="${REPO_ROOT}/models/dreamgen${PYTHONPATH:+:$PYTHONPATH}"
 
 if [[ "${PREPARE_ONLY}" != "1" ]]; then

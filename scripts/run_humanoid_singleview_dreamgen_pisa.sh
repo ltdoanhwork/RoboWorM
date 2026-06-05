@@ -12,8 +12,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 # --- Environment ---
-export VENV="${ROOT}/models/DreamDojo/.venv"
-export LD_LIBRARY_PATH="${VENV}/lib/python3.10/site-packages/nvidia/nvjitlink/lib:${VENV}/lib/python3.10/site-packages/nvidia/cusparse/lib:${VENV}/lib/python3.10/site-packages/torch/lib:${LD_LIBRARY_PATH:-}"
+export VENV="${ROOT}/models/dreamgen/.venv"
+export LD_LIBRARY_PATH="${VENV}/lib/python3.12/site-packages/nvidia/nvjitlink/lib:${VENV}/lib/python3.12/site-packages/nvidia/cusparse/lib:${VENV}/lib/python3.12/site-packages/torch/lib:${LD_LIBRARY_PATH:-}"
 source "${VENV}/bin/activate"
 export PYTHONPATH="${ROOT}/models/dreamgen:${PYTHONPATH:-}"
 
