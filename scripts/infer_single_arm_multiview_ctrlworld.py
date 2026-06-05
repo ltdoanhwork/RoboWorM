@@ -376,6 +376,8 @@ def main():
     parser.add_argument("--save_dir", type=str, default=None)
     parser.add_argument("--input_save_dir", type=str, default=None)
     parser.add_argument("--num_episodes", type=int, default=None)
+    parser.add_argument("--num_inference_steps", type=int, default=None,
+                        help="Override number of denoising steps (default: use model config, typically 50).")
 
     # Cache backend args (mutually exclusive)
     _import_cache_module("WorldCache", "config").add_worldcache_args(parser)
@@ -423,6 +425,10 @@ def main():
     model_args.__post_init__()
     # Override val_dataset_dir after __post_init__ since it may reset
     model_args.val_dataset_dir = val_dataset_dir
+
+    if args.num_inference_steps is not None:
+        model_args.num_inference_steps = args.num_inference_steps
+        print(f"[Override] num_inference_steps = {args.num_inference_steps}")
 
     # Create agent
     agent = CtrlWorldAgent(model_args)

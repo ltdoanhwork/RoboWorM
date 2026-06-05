@@ -272,10 +272,10 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/run_humanoid_singleview_dreamgen_sito.sh
 # 2. DreamGen humanoid singleview + ITM
 CUDA_VISIBLE_DEVICES=0 bash scripts/run_humanoid_singleview_dreamgen_itm.sh
 
-# 3. Ctrl-World single_arm multiview + SiTo
+# 3. Ctrl-World single_arm multiview + SiTo -> need to verified actually 
 CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_multiview_ctrlworld_sito.sh both
 
-# 4. Ctrl-World single_arm multiview + ITM
+# 4. Ctrl-World single_arm multiview + ITM -> need to verified actually
 CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_multiview_ctrlworld_itm.sh both
 
 # 1. SiTo
