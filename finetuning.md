@@ -261,5 +261,37 @@ CUDA_VISIBLE_DEVICES=0,1 NUM_GPUS=2 EMBODIMENT=bimanual bash scripts/run_dreamge
 # Humanoid (fps=20)
 CUDA_VISIBLE_DEVICES=0 EMBODIMENT=humanoid bash scripts/run_dreamgen_singleview_native_fps.sh
 
+SKIP_PREP=1 NPROC=4 bash finetuning/dreamgen/train_single_arm_static_16fps.sh
+SKIP_PREP=1 NPROC=4 bash finetuning/dreamgen/train_bimanual_16fps.sh
 
 NUM_EPISODES=10 CUDA_VISIBLE_DEVICES=0 bash scripts/run_humanoid_singleview_dreamdojo_long_autoregressive.sh
+
+# 1. DreamGen humanoid singleview + SiTo
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_humanoid_singleview_dreamgen_sito.sh
+
+# 2. DreamGen humanoid singleview + ITM
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_humanoid_singleview_dreamgen_itm.sh
+
+# 3. Ctrl-World single_arm multiview + SiTo
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_multiview_ctrlworld_sito.sh both
+
+# 4. Ctrl-World single_arm multiview + ITM
+CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_multiview_ctrlworld_itm.sh both
+
+# 1. SiTo
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_humanoid_singleview_dreamgen_sito.sh
+
+# 2. ITM
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_humanoid_singleview_dreamgen_itm.sh
+
+# 3. PISA
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_humanoid_singleview_dreamgen_pisa.sh
+
+# 4. Radial
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_humanoid_singleview_dreamgen_radial.sh
+
+# 5. SVG1
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_humanoid_singleview_dreamgen_svg1.sh
+
+# 6. SVG2
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_humanoid_singleview_dreamgen_svg2.sh

@@ -2,7 +2,10 @@
 
 
 
-# video_gen_physics
+# Video World — Training-Free Acceleration Benchmark
+
+Benchmarking training-free acceleration strategies (Cache, Sparse Attention, Token Merging) across CtrlWorld and DreamGen/DreamDojo on robotic manipulation tasks.
+
 export PATH="$HOME/VLA/doanh:$PATH"
 gsutil -m cp -r gs://openpi-assets/checkpoints/pi05_droid/* /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/pi05_droid
 CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_multiview_ctrlworld_pi.sh both
@@ -660,6 +663,59 @@ CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-Wor
 ```
 
 
+
+## Sparse Attention Benchmark Scripts (SiTo & ITM)
+
+These scripts run inference with sparse attention methods and save results to `sampling_dataset/{sito,itm}/` for the webpage demo.
+
+### Humanoid Singleview
+
+```bash
+# DreamDojo + SiTo (2B, action-conditioned)
+bash scripts/run_humanoid_singleview_dreamdojo_sito.sh
+
+# DreamDojo + ITM (2B, action-conditioned)
+bash scripts/run_humanoid_singleview_dreamdojo_itm.sh
+
+# DreamGen + SiTo (14B, video2world)
+bash scripts/run_humanoid_singleview_dreamgen_sito.sh
+
+# DreamGen + ITM (14B, video2world)
+bash scripts/run_humanoid_singleview_dreamgen_itm.sh
+```
+
+### Ctrl-World + SiTo / ITM (Single-Arm Multiview)
+
+```bash
+# Ctrl-World + SiTo
+bash scripts/run_single_arm_multiview_ctrlworld_sito.sh [makovian|non_makovian|both]
+
+# Ctrl-World + ITM
+bash scripts/run_single_arm_multiview_ctrlworld_itm.sh [makovian|non_makovian|both]
+```
+
+### Single-Arm Singleview (DreamDojo)
+
+```bash
+# DreamDojo + SiTo
+bash scripts/run_single_arm_singleview_dreamdojo_sito.sh
+
+# DreamDojo + ITM
+bash scripts/run_single_arm_singleview_dreamdojo_itm.sh
+```
+
+### Collecting Videos for Webpage
+
+After inference, the videos are automatically served by the webpage via symlink:
+```bash
+# webpage/videos -> ../sampling_dataset (already linked)
+# Videos accessible at: webpage/videos/{sito,itm}/{embodiment}/output/...
+
+# Or explicitly check what's available:
+python scripts/collect_sparse_attention_videos.py --dry-run
+```
+
+---
 
 python -m models.dreamgen.scripts.prepare_batch_input_json \
   --dataset_path /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/datasets/dream_gen_benchmark/gr1_behavior \

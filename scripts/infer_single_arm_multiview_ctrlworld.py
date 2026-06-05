@@ -357,6 +357,13 @@ def _import_cache_module(backend, module_name):
     return importlib.import_module(f"methods.cache_strategy.{backend}.{module_name}")
 
 
+def _import_pruning_module(backend, module_name):
+    project_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+    return importlib.import_module(f"methods.prunning.{backend}.{module_name}")
+
+
 def main():
     parser = ArgumentParser()
     parser.add_argument("--svd_model_path", type=str, required=True)
@@ -374,6 +381,10 @@ def main():
     _import_cache_module("WorldCache", "config").add_worldcache_args(parser)
     _import_cache_module("DiCache", "config").add_dicache_args(parser)
     _import_cache_module("FasterCache", "config").add_fastercache_args(parser)
+
+    # Pruning/sparse attention backend args
+    _import_pruning_module("SiTo", "config").add_sito_args(parser)
+    _import_pruning_module("importance_token_merge", "config").add_itm_args(parser)
 
     args = parser.parse_args()
 
@@ -457,6 +468,36 @@ def main():
         )
         print(f"[Cache] FasterCache enabled: start_step={args.fastercache_start_step}, "
               f"model_interval={args.fastercache_model_interval}, block_interval={args.fastercache_block_interval}")
+    if getattr(args, "use_sito", False):
+        adapter = _import_pruning_module("SiTo", "adapter")
+        adapter.enable_sito(
+            agent.model.unet,
+            start_layer_idx=args.sito_start_layer_idx or 0,
+            prune_ratio=args.sito_prune_ratio,
+            patch_h=args.sito_patch_h,
+            patch_w=args.sito_patch_w,
+            noise_alpha=args.sito_noise_alpha,
+            sim_beta=args.sito_sim_beta,
+            max_downsample_ratio=args.sito_max_downsample_ratio,
+        )
+    if getattr(args, "use_itm", False):
+        adapter = _import_pruning_module("importance_token_merge", "adapter")
+        itm_state = {}
+        adapter.enable_itm(
+            agent.model.unet,
+            itm_state=itm_state,
+            start_layer_idx=args.itm_start_layer_idx or 0,
+            compress_ratio=args.itm_compress_ratio,
+            prune_from_step=args.itm_prune_from_step,
+            merge_from_step=args.itm_merge_from_step,
+            merge_attn=args.itm_merge_attn,
+            merge_crossattn=args.itm_merge_crossattn,
+            merge_mlp=args.itm_merge_mlp,
+            max_downsample_ratio=args.itm_max_downsample_ratio,
+        )
+        if model_args.guidance_scale <= 1.0:
+            model_args.guidance_scale = 2.0
+            print(f"[ITM] guidance_scale overridden to {model_args.guidance_scale} (ITM requires > 1.0)")
 
     # Find all episodes
     anno_dir = Path(val_dataset_dir) / "annotation" / "val"

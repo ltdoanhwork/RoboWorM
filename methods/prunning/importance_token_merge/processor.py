@@ -97,8 +97,12 @@ class SVDITMAttnProcessor:
         resized = F.interpolate(expanded.unsqueeze(1), size=(height, width), mode="area").squeeze(1)
         if resized.shape[0] == batch_size:
             return resized
-        if resized.shape[0] * 2 == batch_size:
-            return torch.cat((resized, resized), dim=0)
+        if batch_size % resized.shape[0] == 0:
+            repeats = batch_size // resized.shape[0]
+            return resized.repeat(repeats, 1, 1)
+        if resized.shape[0] % batch_size == 0:
+            stride = resized.shape[0] // batch_size
+            return resized[::stride]
         raise ValueError(
             f"Unable to align Ctrl-World ITM heat map batch {resized.shape[0]} with attention batch {batch_size}."
         )
