@@ -350,6 +350,13 @@ def run_episode(agent, episode_id, save_dir, input_save_dir=None):
     return metrics
 
 
+def _import_cache_module(backend, module_name):
+    project_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+    return importlib.import_module(f"methods.cache_strategy.{backend}.{module_name}")
+
+
 def main():
     parser = ArgumentParser()
     parser.add_argument("--svd_model_path", type=str, required=True)
@@ -362,7 +369,16 @@ def main():
     parser.add_argument("--save_dir", type=str, default=None)
     parser.add_argument("--input_save_dir", type=str, default=None)
     parser.add_argument("--num_episodes", type=int, default=None)
+
+    # Cache backend args (mutually exclusive)
+    _import_cache_module("WorldCache", "config").add_worldcache_args(parser)
+    _import_cache_module("DiCache", "config").add_dicache_args(parser)
+    _import_cache_module("FasterCache", "config").add_fastercache_args(parser)
+
     args = parser.parse_args()
+
+    from methods.cache_strategy.ctrl_world_utils import validate_ctrl_world_backend_args
+    validate_ctrl_world_backend_args(args)
 
     # Determine paths
     subset_name = f"single_arm_multiview_{args.subset}"
@@ -399,6 +415,48 @@ def main():
 
     # Create agent
     agent = CtrlWorldAgent(model_args)
+
+    # Enable cache backend on UNet (mutually exclusive, validated above)
+    if getattr(args, "use_worldcache", False):
+        adapter = _import_cache_module("WorldCache", "adapter")
+        adapter.enable_worldcache(
+            agent.model.unet,
+            num_steps=model_args.num_inference_steps,
+            rel_l1_thresh=args.worldcache_rel_l1_thresh,
+            ret_ratio=args.worldcache_ret_ratio,
+            probe_depth=args.worldcache_probe_depth,
+            motion_sensitivity=args.worldcache_motion_sensitivity,
+            hf_enabled=args.worldcache_hf_enabled,
+            hf_thresh=args.worldcache_hf_thresh,
+            saliency_enabled=args.worldcache_saliency_enabled,
+            saliency_weight=args.worldcache_saliency_weight,
+            osi_enabled=args.worldcache_osi_enabled,
+            dynamic_decay=args.worldcache_dynamic_decay,
+        )
+        print(f"[Cache] WorldCache enabled: thresh={args.worldcache_rel_l1_thresh}, "
+              f"ret_ratio={args.worldcache_ret_ratio}, probe_depth={args.worldcache_probe_depth}")
+    if getattr(args, "use_dicache", False):
+        adapter = _import_cache_module("DiCache", "adapter")
+        adapter.enable_dicache(
+            agent.model.unet,
+            num_steps=model_args.num_inference_steps,
+            rel_l1_thresh=args.dicache_rel_l1_thresh,
+            ret_ratio=args.dicache_ret_ratio,
+            probe_depth=args.dicache_probe_depth,
+        )
+        print(f"[Cache] DiCache enabled: thresh={args.dicache_rel_l1_thresh}, "
+              f"ret_ratio={args.dicache_ret_ratio}, probe_depth={args.dicache_probe_depth}")
+    if getattr(args, "use_fastercache", False):
+        adapter = _import_cache_module("FasterCache", "adapter")
+        adapter.enable_fastercache(
+            agent.model.unet,
+            start_step=args.fastercache_start_step,
+            model_interval=args.fastercache_model_interval,
+            block_interval=args.fastercache_block_interval,
+            first_layers_fp=2,
+        )
+        print(f"[Cache] FasterCache enabled: start_step={args.fastercache_start_step}, "
+              f"model_interval={args.fastercache_model_interval}, block_interval={args.fastercache_block_interval}")
 
     # Find all episodes
     anno_dir = Path(val_dataset_dir) / "annotation" / "val"
