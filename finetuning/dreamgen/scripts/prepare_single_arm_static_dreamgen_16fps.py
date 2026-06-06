@@ -41,7 +41,7 @@ STATIC_VIEWS = ["observation.images.exterior_1_left", "observation.images.exteri
 VIEW_SHORT_NAMES = {"observation.images.exterior_1_left": "ext1",
                     "observation.images.exterior_2_left": "ext2"}
 TARGET_FPS = 16
-MIN_FRAMES = 94
+MIN_FRAMES = 93
 SEGMENT_TARGET = 93
 
 

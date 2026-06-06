@@ -33,6 +33,13 @@ SAVE_ROOT="${SAVE_ROOT:-${ROOT}/tmp/2}"
 NUM_GPUS="${NUM_GPUS:-1}"
 ITER_NAME="${ITER_NAME:-iter_000090000}"
 GUIDANCE="${GUIDANCE:-7}"
+USE_PROMPT_REFINEMENT="${USE_PROMPT_REFINEMENT:-0}"
+
+# Build optional flags
+EXTRA_FLAGS=""
+if [[ "${USE_PROMPT_REFINEMENT}" == "1" ]]; then
+  EXTRA_FLAGS="--use-prompt-refinement"
+fi
 
 echo "============================================"
 echo "DreamGen Native FPS Conditioning Test"
@@ -42,6 +49,7 @@ echo "  Max eps:     ${MAX_EPISODES}"
 echo "  GPUs:        ${NUM_GPUS}"
 echo "  Iter:        ${ITER_NAME}"
 echo "  Save root:   ${SAVE_ROOT}"
+echo "  Prompt refine: ${USE_PROMPT_REFINEMENT}"
 echo "============================================"
 
 if [[ "${NUM_GPUS}" -gt 1 ]]; then
@@ -55,7 +63,8 @@ if [[ "${NUM_GPUS}" -gt 1 ]]; then
     --save-root "${SAVE_ROOT}" \
     --iter-name "${ITER_NAME}" \
     --guidance "${GUIDANCE}" \
-    --num-gpus "${NUM_GPUS}"
+    --num-gpus "${NUM_GPUS}" \
+    ${EXTRA_FLAGS}
 else
   python "${ROOT}/scripts/infer_dreamgen_singleview_native_fps.py" \
     --embodiment "${EMBODIMENT}" \
@@ -64,5 +73,6 @@ else
     --save-root "${SAVE_ROOT}" \
     --iter-name "${ITER_NAME}" \
     --guidance "${GUIDANCE}" \
-    --num-gpus "${NUM_GPUS}"
+    --num-gpus "${NUM_GPUS}" \
+    ${EXTRA_FLAGS}
 fi

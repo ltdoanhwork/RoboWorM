@@ -1355,15 +1355,6 @@ def dynamic_block_sparse_fwd_flashinfer(
 
     with time_logging_decorator("Level 4 - Planning"):
 
-        # Prepare flashinfer wrapper
-        float_workspace_buffer = torch.empty(128 * 1024 * 1024, device=q.device)
-        vector_sparse_indices_buffer = torch.empty(1024 * 1024 * 1024, device=q.device)
-        wrapper = flashinfer.sparse.VariableBlockSparseAttentionWrapper(float_workspace_buffer, backend="auto")
-        wrapper.reset_workspace_buffer(
-            float_workspace_buffer=wrapper._float_workspace_buffer,
-            int_workspace_buffer=wrapper._int_workspace_buffer,
-        )
-
         # Reshape inputs to (B * H, ...)
         q = q.reshape(B * H, S, D)
         k = k.reshape(B * H, S, D)
@@ -1372,23 +1363,70 @@ def dynamic_block_sparse_fwd_flashinfer(
         block_row_sz = block_row_sz.reshape(B * H, qc_num)
         block_col_sz = block_col_sz.reshape(B * H, kc_num)
 
-        with flashinfer_patch_enabled():
-            wrapper.plan(
-                block_mask_map=block_mask_map,
-                block_row_sz=block_row_sz,
-                block_col_sz=block_col_sz,
-                num_qo_heads=B * H,
-                num_kv_heads=B * H,
-                head_dim=D,
-                q_data_type=q.dtype,
-                kv_data_type=k.dtype,
+        # flashinfer 0.2.x only has BlockSparseAttentionWrapper (fixed blocks).
+        # VariableBlockSparseAttentionWrapper requires >= 0.3.
+        # Fallback: expand block_mask_map to a full token-level boolean mask
+        # and use F.scaled_dot_product_attention with the mask.
+        _has_variable_block = hasattr(flashinfer.sparse, "VariableBlockSparseAttentionWrapper")
+
+    if _has_variable_block:
+        with time_logging_decorator("Level 4 - Planning (VariableBlock)"):
+            float_workspace_buffer = torch.empty(128 * 1024 * 1024, device=q.device)
+            wrapper = flashinfer.sparse.VariableBlockSparseAttentionWrapper(float_workspace_buffer, backend="auto")
+            wrapper.reset_workspace_buffer(
+                float_workspace_buffer=wrapper._float_workspace_buffer,
+                int_workspace_buffer=wrapper._int_workspace_buffer,
             )
+            with flashinfer_patch_enabled():
+                wrapper.plan(
+                    block_mask_map=block_mask_map,
+                    block_row_sz=block_row_sz,
+                    block_col_sz=block_col_sz,
+                    num_qo_heads=B * H,
+                    num_kv_heads=B * H,
+                    head_dim=D,
+                    q_data_type=q.dtype,
+                    kv_data_type=k.dtype,
+                )
+        with time_logging_decorator("Level 4 - Running (VariableBlock)"):
+            o = wrapper.run(q, k, v)
+            o = o.reshape(B, H, S, D)
+    else:
+        with time_logging_decorator("Level 4 - Fallback (token mask SDPA)"):
+            # Build per-token boolean mask from block structure
+            # All heads share same block sizes (asserted above)
+            row_sz = block_row_sz[0].to(torch.int64).cpu()  # (qc_num,)
+            col_sz = block_col_sz[0].to(torch.int64).cpu()  # (kc_num,)
 
-        # print_memory_usage("After plan")
+            row_offsets = torch.cat([torch.zeros(1, dtype=torch.int64), row_sz.cumsum(0)])
+            col_offsets = torch.cat([torch.zeros(1, dtype=torch.int64), col_sz.cumsum(0)])
 
-    with time_logging_decorator("Level 4 - Running"):
-        o = wrapper.run(q, k, v)  # [num_qo_heads, qo_len, head_dim]
-        o = o.reshape(B, H, S, D)
+            # Assign each token to its block index
+            row_block_ids = torch.zeros(S, dtype=torch.int64)
+            for qi in range(qc_num):
+                row_block_ids[int(row_offsets[qi]):int(row_offsets[qi + 1])] = qi
+            col_block_ids = torch.zeros(S, dtype=torch.int64)
+            for ki in range(kc_num):
+                col_block_ids[int(col_offsets[ki]):int(col_offsets[ki + 1])] = ki
+
+            # Vectorized mask: index block_mask_map with token block assignments
+            bm_all = block_mask_map.cpu()  # (BH, qc_num, kc_num), ensure CPU
+            row_idx = row_block_ids.unsqueeze(1).expand(S, S)  # (S, S)
+            col_idx = col_block_ids.unsqueeze(0).expand(S, S)  # (S, S)
+
+            # Build mask on CPU then move to GPU
+            attn_mask = bm_all[:, row_idx, col_idx]  # (BH, S, S), bool, on CPU
+
+            float_mask = torch.where(
+                attn_mask,
+                torch.zeros(1, dtype=q.dtype),
+                torch.full((1,), float("-inf"), dtype=q.dtype),
+            ).to(device=q.device)
+
+            o = torch.nn.functional.scaled_dot_product_attention(
+                q, k, v, attn_mask=float_mask
+            )
+            o = o.reshape(B, H, S, D)
     return o
 
 

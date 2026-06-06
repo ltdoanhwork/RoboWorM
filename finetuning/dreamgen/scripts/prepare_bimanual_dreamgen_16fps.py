@@ -33,7 +33,7 @@ import tempfile
 from pathlib import Path
 
 TARGET_FPS = 16
-MIN_FRAMES = 94
+MIN_FRAMES = 93
 SEGMENT_TARGET = 93
 
 

@@ -157,8 +157,14 @@ def monkey_patch_pipeline_fps(pipe, fps_value: int):
 def _generate_video(
     pipe, input_path: str, prompt: str, output_path: str,
     num_chunks: int, guidance: float, seed: int, output_fps: int = 16,
+    use_prompt_refinement: bool = False,
 ) -> bool:
-    """Generate video using LVG (multi-chunk autoregressive) pipeline."""
+    """Generate video using LVG (multi-chunk autoregressive) pipeline.
+
+    When use_prompt_refinement=True, the prompt is refined at each chunk boundary
+    using the last generated frame as visual context, so the text description
+    evolves to reflect the current visual state.
+    """
     from imaginaire.utils.io import save_image_or_video
     from imaginaire.utils import log
 
@@ -167,18 +173,34 @@ def _generate_video(
         log.warning(f"Input not found: {input_path}")
         return False
 
-    log.info(f"Generating: {input_path} → {output_path} ({num_chunks} chunks)")
+    log.info(f"Generating: {input_path} → {output_path} ({num_chunks} chunks, prompt_refine={use_prompt_refinement})")
+
+    prompt_refiner = getattr(pipe, "prompt_refiner", None)
+    if use_prompt_refinement and prompt_refiner is None:
+        log.warning("prompt_refinement requested but no prompt_refiner loaded — falling back to static prompt")
+        use_prompt_refinement = False
 
     all_chunks = []
     current_input_path = input_path
+    current_prompt = prompt
     num_conditional_frames = 1
 
     with tempfile.TemporaryDirectory() as tmpdir:
         for chunk_id in range(num_chunks):
-            log.info(f"  Chunk {chunk_id + 1}/{num_chunks}...")
+            # Refine prompt using current visual state (last frame of prev chunk)
+            if use_prompt_refinement:
+                log.info(f"  Chunk {chunk_id + 1}/{num_chunks}: refining prompt with {current_input_path}...")
+                # Temporarily force enabled=True to bypass the skip-if-disabled check
+                orig_enabled = prompt_refiner.enabled
+                prompt_refiner.enabled = True
+                current_prompt = prompt_refiner.refine_prompt(current_input_path, prompt)
+                prompt_refiner.enabled = orig_enabled
+                log.info(f"  Refined prompt: {current_prompt[:120]}...")
+
+            log.info(f"  Chunk {chunk_id + 1}/{num_chunks} generating...")
 
             video, prompt_used = pipe(
-                prompt=prompt,
+                prompt=current_prompt,
                 negative_prompt="",
                 aspect_ratio="16:9",
                 input_path=current_input_path,
@@ -198,6 +220,7 @@ def _generate_video(
                 chunk = video[:, :, num_conditional_frames:, :, :]
             all_chunks.append(chunk.cpu())
 
+            # Save last frame as conditioning for next chunk (and prompt refinement input)
             last_frames = video[:, :, -num_conditional_frames:, :, :]
             if num_conditional_frames == 1:
                 last_frames_path = os.path.join(tmpdir, f"chunk{chunk_id}_overlap.png")
@@ -221,6 +244,7 @@ def _generate_video(
 def run_inference_for_embodiment(
     pipe, embodiment: str, split: str, dataset_dir: Path, save_root: Path,
     max_episodes: int | None, guidance: float, seed: int,
+    use_prompt_refinement: bool = False,
 ):
     """Run inference for one embodiment/split with correct fps conditioning."""
     source_fps = EMBODIMENT_FPS[embodiment]
@@ -274,6 +298,7 @@ def run_inference_for_embodiment(
             guidance=guidance,
             seed=seed,
             output_fps=source_fps,
+            use_prompt_refinement=use_prompt_refinement,
         )
         if success:
             print(f"  [OK] {ep_name} → {out_mp4}")
@@ -297,6 +322,8 @@ def main():
     parser.add_argument("--guidance", type=float, default=7.0)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--num-gpus", type=int, default=1)
+    parser.add_argument("--use-prompt-refinement", action="store_true",
+                        help="Refine prompt at each chunk boundary using last generated frame")
     args = parser.parse_args()
 
     # Resolve checkpoint
@@ -342,7 +369,7 @@ def main():
         device="cuda",
         torch_dtype=torch.bfloat16,
         load_ema_to_reg=False,
-        load_prompt_refiner=True,
+        load_prompt_refiner=args.use_prompt_refinement,
     )
 
     # Determine which embodiments/splits to run
@@ -375,6 +402,7 @@ def main():
                 max_episodes=args.max_episodes,
                 guidance=args.guidance,
                 seed=args.seed,
+                use_prompt_refinement=args.use_prompt_refinement,
             )
 
     print(f"\nDone! Results at: {save_root}/")

@@ -278,6 +278,9 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_multiview_ctrlworld_sito.sh b
 # 4. Ctrl-World single_arm multiview + ITM -> need to verified actually
 CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_multiview_ctrlworld_itm.sh both
 
+
+CUDA_VISIBLE_DEVICES=0 USE_PROMPT_REFINEMENT=1 bash scripts/run_dreamgen_singleview_native_fps.sh
+
 # 1. SiTo
 CUDA_VISIBLE_DEVICES=0 bash scripts/run_humanoid_singleview_dreamgen_sito.sh
 
@@ -294,4 +297,4 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/run_humanoid_singleview_dreamgen_radial.sh
 CUDA_VISIBLE_DEVICES=0 bash scripts/run_humanoid_singleview_dreamgen_svg1.sh
 
 # 6. SVG2
-CUDA_VISIBLE_DEVICES=0 bash scripts/run_humanoid_singleview_dreamgen_svg2.sh
+CUDA_VISIBLE_DEVICES=1 bash scripts/run_humanoid_singleview_dreamgen_svg2.sh
