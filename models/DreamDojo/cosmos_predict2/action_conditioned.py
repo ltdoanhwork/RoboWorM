@@ -19,6 +19,7 @@ Action-conditioned video generation inference.
 
 import json
 import os
+import time
 from glob import glob
 import piq
 from pathlib import Path
@@ -28,9 +29,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import torchvision
-from loguru import logger
 
-from cosmos_predict2._src.imaginaire.utils import distributed
+from cosmos_predict2._src.imaginaire.utils import distributed, log
 from cosmos_predict2._src.predict2.action.datasets.dataset_utils import euler2rotm, rotm2euler, rotm2quat
 from cosmos_predict2._src.predict2.inference.video2world import (
     Video2WorldInference,
@@ -253,7 +253,7 @@ def load_default_action_fn():
                 h, w = map(int, args.resolution.split(","))
                 img_array = mediapy.resize_image(img_array, (h, w))
             except Exception as e:
-                logger.warning(f"Failed to resize image to {args.resolution}: {e}")
+                log.warning(f"Failed to resize image to {args.resolution}: {e}")
 
         return {
             "actions": actions,
@@ -316,9 +316,9 @@ def inference(
                 f"{set(os.path.splitext(f)[1].lower() for f in os.listdir(inference_args.input_root) if os.path.splitext(f)[1])}"
             )
 
-        logger.info(f"Using video-only mode with {inference_args.num_latent_conditional_frames} conditional frames")
+        log.info(f"Using video-only mode with {inference_args.num_latent_conditional_frames} conditional frames")
     elif inference_args.num_latent_conditional_frames == 1:
-        logger.info(f"Using image+video mode with {inference_args.num_latent_conditional_frames} conditional frame")
+        log.info(f"Using image+video mode with {inference_args.num_latent_conditional_frames} conditional frame")
 
     # Get checkpoint and experiment from setup args
     checkpoint = MODEL_CHECKPOINTS[setup_args.model_key]
@@ -349,7 +349,7 @@ def inference(
     )
 
     mem_bytes = torch.cuda.memory_allocated(device=torch.device("cuda" if torch.cuda.is_available() else "cpu"))
-    logger.info(f"GPU memory usage after model load: {mem_bytes / (1024**3):.2f} GB")
+    log.info(f"GPU memory usage after model load: {mem_bytes / (1024**3):.2f} GB")
 
     # Only process files on rank 0 if using distributed processing
     rank0 = True
@@ -373,7 +373,7 @@ def inference(
     )
     batch_inputs = []
     if getattr(setup_args, "batch_input_json", None) is not None:
-        logger.info(f"Loading batch inputs from JSON file: {setup_args.batch_input_json}")
+        log.info(f"Loading batch inputs from JSON file: {setup_args.batch_input_json}")
         with open(setup_args.batch_input_json) as f:
             batch_inputs = json.load(f)
 
@@ -386,7 +386,7 @@ def inference(
             import re
             match = re.search(r'episode_(\d+)', input_video)
             if not match:
-                logger.warning(f"Could not parse episode index from {input_video}")
+                log.warning(f"Could not parse episode index from {input_video}")
                 continue
             traj_id = int(match.group(1))
             
@@ -405,14 +405,26 @@ def inference(
             if data_id is not None:
                 items_to_run.append((data_id, output_video))
             else:
-                logger.warning(f"Could not find episode {traj_id} in dataset")
+                log.warning(f"Could not find episode {traj_id} in dataset")
     else:
-        eval_indices = [idx for idx in range(len(dataset)) if not (inference_args.save_root / f"{idx:04d}_psnr.json").exists()]
+        eval_indices = [
+            idx
+            for idx in range(len(dataset))
+            if not (inference_args.save_root / f"{idx:04d}_metrics.json").exists()
+        ]
         items_to_run = [(idx, None) for idx in eval_indices]
+
+    if not items_to_run:
+        log.warning(
+            "No episodes to run: batch list empty or every index in "
+            f"[0, {len(dataset)}) already has *_metrics.json under {inference_args.save_root}. "
+            "Use a fresh --save-dir, delete some *_metrics.json files, or raise --num-samples."
+        )
 
     all_psnr = []
     all_ssim = []
     all_lpips = []
+    all_gen_times = []
 
     # Process each file in the input directory
     for data_id, custom_output_video in items_to_run:
@@ -446,11 +458,29 @@ def inference(
             actions_name = str(Path(custom_output_video).parent / f"{save_name}_actions.npy")
             metrics_name = Path(custom_output_video).parent / f"{save_name}_metrics.json"
 
-        logger.info(f"Saving video to {chunk_video_name}")
+        log.info(f"Saving video to {chunk_video_name}")
         if os.path.exists(chunk_video_name):
-            logger.info(f"Video already exists: {chunk_video_name}")
+            log.info(f"Video already exists: {chunk_video_name}")
+            if rank0 and metrics_name.exists():
+                try:
+                    with open(metrics_name) as f:
+                        m = json.load(f)
+                    for key in ("psnr", "ssim", "lpips"):
+                        if m.get(key) is None:
+                            raise ValueError(f"metrics {key} is null in {metrics_name}")
+                    all_psnr.append(float(m["psnr"]))
+                    all_ssim.append(float(m["ssim"]))
+                    all_lpips.append(float(m["lpips"]))
+                except (json.JSONDecodeError, KeyError, TypeError, ValueError) as e:
+                    log.warning(f"Could not load metrics from {metrics_name}: {e}")
+            elif rank0 and not metrics_name.exists():
+                log.warning(
+                    f"Prediction exists but metrics file missing ({metrics_name}); skipping. "
+                    "Delete the prediction video (or the whole episode outputs) to regenerate."
+                )
             continue
 
+        gen_start_time = time.time()
         first_round = True
         for i in range(inference_args.start_frame_idx, len(actions), inference_args.chunk_size):
             # Handle incomplete chunks
@@ -508,39 +538,87 @@ def inference(
             if inference_args.single_chunk:
                 break
 
+        gen_elapsed = time.time() - gen_start_time
+        all_gen_times.append(gen_elapsed)
+        log.info(f"[Timing] Video {data_id}: generation took {gen_elapsed:.2f}s")
+
         chunk_list = [chunk_video[0]] + [
             chunk_video[i][: inference_args.chunk_size] for i in range(1, len(chunk_video))
         ]
         chunk_video = np.concatenate(chunk_list, axis=0)
 
         if rank0:
-            mediapy.write_video(chunk_video_name, chunk_video, fps=inference_args.save_fps)
-            mediapy.write_video(gt_video_name, gt_video.numpy(), fps=inference_args.save_fps)
+            save_fps = max(1, int(inference_args.save_fps))
+            mediapy.write_video(chunk_video_name, chunk_video, fps=save_fps)
+            mediapy.write_video(gt_video_name, gt_video.numpy(), fps=save_fps)
             concat_video = np.concatenate([gt_video.numpy(), chunk_video], axis=2)
-            mediapy.write_video(merged_video_name, concat_video, fps=inference_args.save_fps)
+            mediapy.write_video(merged_video_name, concat_video, fps=save_fps)
             np.save(actions_name, actions)
-            logger.info(f"Saved video to {chunk_video_name}")
+            log.info(f"Saved video to {chunk_video_name}")
             x_batch = torch.clamp(torch.from_numpy(chunk_video) / 255.0, 0, 1).permute(0, 3, 1, 2)
             y_batch = torch.clamp(gt_video / 255.0, 0, 1).permute(0, 3, 1, 2)
-            psnr = piq.psnr(x_batch, y_batch).mean().item()
-            ssim = piq.ssim(x_batch, y_batch).mean().item()
-            lpips = piq.LPIPS()(x_batch, y_batch).mean().item()
+            t_end = min(x_batch.shape[0], y_batch.shape[0])
+            h_end = min(x_batch.shape[-2], y_batch.shape[-2])
+            w_end = min(x_batch.shape[-1], y_batch.shape[-1])
+            if t_end < 1:
+                log.warning(
+                    f"Skipping metrics for {chunk_video_name}: no overlapping frames "
+                    f"(pred T={x_batch.shape[0]}, gt T={y_batch.shape[0]})."
+                )
+                psnr = ssim = lpips = None
+            else:
+                x_b = x_batch[:t_end, :, :h_end, :w_end]
+                y_b = y_batch[:t_end, :, :h_end, :w_end]
+                try:
+                    psnr = float(piq.psnr(x_b, y_b).mean().item())
+                    ssim = float(piq.ssim(x_b, y_b).mean().item())
+                    lpips = float(piq.LPIPS()(x_b, y_b).mean().item())
+                except (ZeroDivisionError, ValueError, RuntimeError) as e:
+                    log.warning(f"Metrics failed for {chunk_video_name}: {e}")
+                    psnr = ssim = lpips = None
             with open(metrics_name, "w") as f:
-                json.dump({"psnr": float(psnr), "ssim": float(ssim), "lpips": float(lpips)}, f)
-            all_psnr.append(psnr)
-            all_ssim.append(ssim)
-            all_lpips.append(lpips)
+                json.dump({"psnr": psnr, "ssim": ssim, "lpips": lpips, "gen_time_s": round(gen_elapsed, 2)}, f)
+            if psnr is not None:
+                all_psnr.append(psnr)
+                all_ssim.append(ssim)
+                all_lpips.append(lpips)
 
     if rank0:
-        print(f"PSNR: {sum(all_psnr) / len(all_psnr):.3f}")
-        print(f"SSIM: {sum(all_ssim) / len(all_ssim):.3f}")
-        print(f"LPIPS: {sum(all_lpips) / len(all_lpips):.3f}")
-        with open(inference_args.save_root / "all_summary.json", "w") as f:
-            json.dump({
-                "psnr": f"{sum(all_psnr) / len(all_psnr):.3f}",
-                "ssim": f"{sum(all_ssim) / len(all_ssim):.3f}",
-                "lpips": f"{sum(all_lpips) / len(all_lpips):.3f}"
-                }, f)
+        timing_summary = {}
+        if all_gen_times:
+            mean_gen_time = sum(all_gen_times) / len(all_gen_times)
+            total_gen_time = sum(all_gen_times)
+            print(f"[Timing] Generated {len(all_gen_times)} videos in {total_gen_time:.2f}s total")
+            print(f"[Timing] Average generation time per video: {mean_gen_time:.2f}s")
+            timing_summary = {
+                "num_videos_generated": len(all_gen_times),
+                "total_gen_time_s": f"{total_gen_time:.2f}",
+                "avg_gen_time_s": f"{mean_gen_time:.2f}",
+            }
+
+        if all_psnr:
+            mean_psnr = sum(all_psnr) / len(all_psnr)
+            mean_ssim = sum(all_ssim) / len(all_ssim)
+            mean_lpips = sum(all_lpips) / len(all_lpips)
+            print(f"PSNR: {mean_psnr:.3f}")
+            print(f"SSIM: {mean_ssim:.3f}")
+            print(f"LPIPS: {mean_lpips:.3f}")
+            with open(inference_args.save_root / "all_summary.json", "w") as f:
+                json.dump(
+                    {
+                        "psnr": f"{mean_psnr:.3f}",
+                        "ssim": f"{mean_ssim:.3f}",
+                        "lpips": f"{mean_lpips:.3f}",
+                        **timing_summary,
+                    },
+                    f,
+                )
+        else:
+            log.warning(
+                "No per-episode metrics collected (empty run or all episodes skipped without *_metrics.json)."
+            )
+            with open(inference_args.save_root / "all_summary.json", "w") as f:
+                json.dump({"psnr": None, "ssim": None, "lpips": None, **timing_summary}, f)
 
     # Synchronize all processes before cleanup
     # pyrefly: ignore  # unsupported-operation

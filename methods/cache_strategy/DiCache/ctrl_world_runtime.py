@@ -73,8 +73,13 @@ class CtrlWorldDiCacheRuntime:
         self.probe_stage_idx += 1
         if self.probe_stage_idx < max(int(self.config.probe_depth), 1):
             return None
+        if self.probe_stage_idx > max(int(self.config.probe_depth), 1):
+            return None
         self.probe_state_for_step = hidden_states.detach().clone()
         if not self._is_skip_eligible():
+            return None
+        if self.previous_probe_state is not None and self.probe_state_for_step.shape != self.previous_probe_state.shape:
+            self.previous_probe_state = None
             return None
         if self._skip_threshold() is None:
             return None
@@ -114,6 +119,8 @@ class CtrlWorldDiCacheRuntime:
 
     def _skip_threshold(self) -> float | None:
         if self.probe_state_for_step is None or self.previous_probe_state is None:
+            return None
+        if self.probe_state_for_step.shape != self.previous_probe_state.shape:
             return None
         threshold = float(self.config.rel_l1_thresh)
         if not self.do_classifier_free_guidance or self.batch_size < 2:

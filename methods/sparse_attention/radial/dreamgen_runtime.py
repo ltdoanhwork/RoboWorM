@@ -172,7 +172,6 @@ class DreamGenRadialRuntime:
                 head_dim=head_dim,
                 q_data_type=query.dtype,
                 kv_data_type=key.dtype,
-                o_data_type=query.dtype,
             )
             self._plan_cache[plan_key] = _RadialPlan(workspace=workspace, wrapper=wrapper)
         return self._plan_cache[plan_key].wrapper

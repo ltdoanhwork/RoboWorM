@@ -75,6 +75,12 @@ def resolve_checkpoint_path(checkpoint_iter_dir: Path) -> Path:
 
 def main(args: Args) -> None:
     inference_args = ActionConditionedInferenceArguments
+    import os
+    force_guidance = os.environ.get("FORCE_GUIDANCE")
+    if force_guidance is not None:
+        inference_args.guidance = float(force_guidance)
+    elif args.setup.use_itm and inference_args.guidance <= 0:
+        inference_args.guidance = 1.5
     init_output_dir(args.setup.output_dir, profile=args.setup.profile)
 
     from cosmos_predict2.action_conditioned import inference

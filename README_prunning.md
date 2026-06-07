@@ -318,13 +318,27 @@ python -m models.DreamDojo.examples.action_conditioned \
   --dataset-path "./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
   --data-split test \
   --deterministic-uniform-sampling \
-  --guidance 1.5 \
   --use_itm \
   --itm_start_layer_idx 4 \
   --itm_keep_last_n_dense 2 \
   --itm_prune_from_step 1 \
   --itm_merge_from_step 2
 ```
+CUDA_VISIBLE_DEVICES=0 python -m models.DreamDojo.examples.action_conditioned \
+    -o ./output/grid_v3_itm_4layers_10pct_late_makovian \
+    --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000 \
+    --experiment dreamdojo_2b_480_640_gr1 \
+    --save-dir ./tmp_2/grid_search_v2/itm_4layers_10pct_late/makovian \
+    --num-frames 49 \
+    --num-samples 2 \
+    --dataset-path ./datasets/humanoid/singleview/makovian \
+    --data-split full \
+    --single-base-index \
+    --use_itm \
+    --itm_start_layer_idx 4 \
+    --itm_keep_last_n_dense 2 \
+    --itm_prune_from_step 1 \
+    --itm_merge_from_step 2
 
 ## Ctrl-World ITM Examples
 

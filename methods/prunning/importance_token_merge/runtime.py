@@ -414,7 +414,7 @@ class ITMTokenMerger:
 
         heat_idx = heat_flat.argsort(descending=True)
         set0_idx = heat_idx[:set0_size]
-        heat_threshold = heat_flat.index_select(0, set0_idx[-1:]).item()
+        heat_threshold = heat_flat[set0_idx[-1]]
 
         if self.dst_mode == "random":
             if self.use_rand:
@@ -438,7 +438,7 @@ class ITMTokenMerger:
 
         src_metric = F.normalize(metric_summary.index_select(0, a_idx).float(), dim=-1)
         dst_metric = F.normalize(metric_summary.index_select(0, b_idx).float(), dim=-1)
-        similarity = -torch.cdist(src_metric.unsqueeze(0), dst_metric.unsqueeze(0), p=2).squeeze(0)
+        similarity = torch.mm(src_metric, dst_metric.t())
         node_max, node_idx = similarity.max(dim=-1)
 
         src_heat = heat_flat.index_select(0, a_idx)

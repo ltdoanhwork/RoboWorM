@@ -31,6 +31,24 @@ LE_ROBOT_DATA_FILENAME = "data/*/*.parquet"
 
 SHARED_META_DIR = Path(__file__).resolve().parents[2] / "shared_meta"
 
+# GR1_robot parquets use compact 44-dim `action`; DreamDojo-style modality.json slices up to 52-d.
+_GR1_UNIFIED_ACTION_SLICES: dict[str, tuple[int, int]] | None = None
+
+
+def _gr1_unified_action_slice_range(subkey: str) -> tuple[int, int]:
+    global _GR1_UNIFIED_ACTION_SLICES
+    if _GR1_UNIFIED_ACTION_SLICES is None:
+        with open(SHARED_META_DIR / "GR1_unified_modality.json") as f:
+            uni = json.load(f)["action"]
+        _GR1_UNIFIED_ACTION_SLICES = {
+            part: (block["start"], block["end"]) for part, block in uni.items()
+        }
+    if subkey not in _GR1_UNIFIED_ACTION_SLICES:
+        raise KeyError(
+            f"No GR1_unified slice for action.{subkey}; update GR1_unified_modality.json or loader."
+        )
+    return _GR1_UNIFIED_ACTION_SLICES[subkey]
+
 
 def calculate_dataset_statistics(parquet_paths: list[Path]) -> dict:
     """Calculate the dataset statistics of all columns for a list of parquet files."""
@@ -51,10 +69,17 @@ def calculate_dataset_statistics(parquet_paths: list[Path]) -> dict:
     for le_modality in all_low_dim_data.columns:
         if "text" in le_modality:
             continue
+        # Skip columns whose values are strings (e.g. language_instruction, task_category)
+        first_valid = all_low_dim_data[le_modality].dropna().iloc[0] if not all_low_dim_data[le_modality].dropna().empty else None
+        if first_valid is None or isinstance(first_valid, str):
+            continue
         print(f"Computing statistics for {le_modality}...")
-        np_data = np.vstack(
-            [np.asarray(x, dtype=np.float32) for x in all_low_dim_data[le_modality]]
-        )
+        try:
+            np_data = np.vstack(
+                [np.asarray(x, dtype=np.float32) for x in all_low_dim_data[le_modality]]
+            )
+        except (ValueError, TypeError):
+            continue
         dataset_statistics[le_modality] = {
             "mean": np.mean(np_data, axis=0).tolist(),
             "std": np.std(np_data, axis=0).tolist(),
@@ -711,10 +736,11 @@ class LeRobotSingleDataset(Dataset):
             episode_chunk=chunk_index, episode_index=trajectory_id, video_key=original_key
         )
         if not (self.dataset_path / video_filename).exists():
-            original_key = f"observation.images.{original_key}"
-            video_filename = self.video_path_pattern.format(
-                episode_chunk=chunk_index, episode_index=trajectory_id, video_key=original_key
-            )
+            if not original_key.startswith("observation.images."):
+                original_key = f"observation.images.{original_key}"
+                video_filename = self.video_path_pattern.format(
+                    episode_chunk=chunk_index, episode_index=trajectory_id, video_key=original_key
+                )
         return self.dataset_path / video_filename
 
     def get_video(
@@ -829,11 +855,14 @@ class LeRobotSingleDataset(Dataset):
         assert self.curr_traj_data is not None, f"No data found for {trajectory_id=}"
         assert le_key in self.curr_traj_data.columns, f"No {le_key} found in {trajectory_id=}"
         data_array: np.ndarray = np.stack(self.curr_traj_data[le_key])  # type: ignore
+        if data_array.ndim == 1:
+            data_array = data_array[:, np.newaxis]
         assert data_array.ndim == 2, f"Expected 2D array, got {data_array.shape} array"
-        le_indices = np.arange(
-            le_state_or_action_cfg[key].start,
-            le_state_or_action_cfg[key].end,
-        )
+        cfg_meta = le_state_or_action_cfg[key]
+        start, end = cfg_meta.start, cfg_meta.end
+        if modality == "action" and self.tag == "gr1" and data_array.shape[1] == 44:
+            start, end = _gr1_unified_action_slice_range(key)
+        le_indices = np.arange(start, end)
         data_array = data_array[:, le_indices]
         # Get the state or action configuration
         state_or_action_cfg = getattr(self.metadata.modalities, modality)[key]
@@ -1029,17 +1058,95 @@ class WrappedLeRobotSingleDataset(LeRobotSingleDataset):
             self._all_steps = self._all_steps[-len(self) // 20:]
 
     def _get_trajectories(self) -> tuple[np.ndarray, np.ndarray]:
-        """Get the trajectories in the dataset."""
-        # Get trajectory lengths, IDs, and whitelist from dataset metadata
+        """Get the trajectories in the dataset, filtering out episodes whose parquet file is missing."""
+        info_path = self.dataset_path / LE_ROBOT_INFO_FILENAME
+        with open(info_path, "r") as f:
+            info = json.load(f)
+        chunk_size = info.get("chunks_size", 1000)
+        data_path_pattern = info.get("data_path", "data/chunk-{episode_chunk:03d}/episode_{episode_index:06d}.parquet")
+
         episode_path = self.dataset_path / LE_ROBOT_EPISODE_FILENAME
         with open(episode_path, "r") as f:
             episode_metadata = [json.loads(line) for line in f]
         trajectory_ids = []
         trajectory_lengths = []
+        skipped = 0
         for episode in episode_metadata:
-            trajectory_ids.append(episode["episode_index"])
+            ep_idx = episode["episode_index"]
+            chunk_idx = ep_idx // chunk_size
+            parquet_path = self.dataset_path / data_path_pattern.format(
+                episode_chunk=chunk_idx, episode_index=ep_idx
+            )
+            if not parquet_path.exists():
+                skipped += 1
+                continue
+            trajectory_ids.append(ep_idx)
             trajectory_lengths.append(episode["length"])
+        if skipped > 0:
+            print(f"WARNING: Skipped {skipped} episodes with missing parquet files in {self.dataset_name}")
         return np.array(trajectory_ids), np.array(trajectory_lengths)
+
+    def _get_item_impl(self, index: int) -> dict:
+        """Core implementation for fetching a single item (no retry logic)."""
+        trajectory_id, base_index = self.all_steps[index]
+        original_outputs = self.transforms(self.get_step_data(trajectory_id, base_index))
+        return self._build_item(original_outputs)
+
+    def _build_item(self, original_outputs: dict) -> dict:
+        """Build the final item dict from raw outputs."""
+        frames = torch.from_numpy(original_outputs["video"])
+        frames = torch.clamp(frames * 255.0, 0, 255).to(torch.uint8)
+        frames = frames.squeeze(1).transpose(0, 1)
+        frames = frames[:, 1:, :, :]
+
+        lam_frames = F.interpolate(frames, (240, 320), mode="bilinear")
+        lam_frames = torch.clamp(lam_frames / 255.0, 0, 1)
+        lam_frames = torch.repeat_interleave(lam_frames, 2, dim=1)[:, 1:-1, :, :]
+        lam_frames = rearrange(lam_frames, "c t h w -> t h w c")
+
+        delta_actions = []
+        for t in range(1, len(original_outputs["action"]) - 1, 4):
+            delta_actions.append(original_outputs["action"][t:t + 4] - original_outputs["action"][t - 1])
+        delta_actions = torch.cat(delta_actions, dim=0).float()
+
+        action_seq = torch.zeros(self.num_frames - 1, 384, dtype=torch.float32)
+        _ds_path_lower = str(self.dataset_path).lower()
+        if "inhouse_human" in _ds_path_lower:
+            gt_actions = torch.zeros(self.num_frames - 1, 352, dtype=torch.float32)
+            latent_actions = torch.ones(self.num_frames - 1, 32, dtype=torch.float32)
+            action_seq = torch.cat([gt_actions, latent_actions], dim=-1)
+        elif "aloha" in _ds_path_lower or "/bimanual/" in _ds_path_lower:
+            action_seq[:, 169:183] = delta_actions
+        elif "droid" in _ds_path_lower or "/single_arm/" in _ds_path_lower:
+            action_seq[:, 183:190] = delta_actions
+        elif "gr1" in _ds_path_lower or "/humanoid/" in _ds_path_lower:
+            action_seq[:, :29] = delta_actions
+        elif "g1" in _ds_path_lower:
+            action_seq[:, 58:101] = delta_actions
+        elif "yam" in _ds_path_lower:
+            action_seq[:, 101:147] = delta_actions
+        elif "agibot" in _ds_path_lower:
+            action_seq[:, 147:169] = delta_actions
+
+        text = ""
+        if "annotation.human.coarse_action" in original_outputs:
+            text = original_outputs["annotation.human.coarse_action"][0].split(":")[-1].strip()
+
+        key = action_seq[0:1, :29]
+        key[:, :min(original_outputs["state"].shape[1], 29)] = original_outputs["state"][:, :29]
+
+        data = {
+            "__key__": key,
+            "action": action_seq,
+            "video": frames,
+            "lam_video": lam_frames,
+        }
+        data["fps"] = 4
+        data["image_size"] = 256 * torch.ones(4).cuda()
+        data["num_frames"] = self.num_frames
+        data["padding_mask"] = torch.zeros(1, 256, 256).cuda()
+        data.setdefault("ai_caption", "")
+        return data
 
     def __getitem__(self, index: int) -> dict:
         """Get the data for a single step in a trajectory.
@@ -1050,74 +1157,9 @@ class WrappedLeRobotSingleDataset(LeRobotSingleDataset):
         Returns:
             dict: The data for the step.
         """
-        try:
-            trajectory_id, base_index = self.all_steps[index]
-            original_outputs = self.transforms(self.get_step_data(trajectory_id, base_index))
-
-            frames = torch.from_numpy(original_outputs["video"])
-            frames = torch.clamp(frames * 255.0, 0, 255).to(torch.uint8)
-            frames = frames.squeeze(1).transpose(0, 1)  # (T, C, H, W) -> (C, T, H, W)
-            frames = frames[:, 1:, :, :]  # Skip first frame (used only as action baseline)
-
-            lam_frames = F.interpolate(frames, (240, 320), mode="bilinear")
-            lam_frames = torch.clamp(lam_frames / 255.0, 0, 1)
-            lam_frames = torch.repeat_interleave(lam_frames, 2, dim=1)[:, 1:-1, :, :]
-            lam_frames = rearrange(lam_frames, "c t h w -> t h w c")
-            
-            delta_actions = []
-            for t in range(1, len(original_outputs["action"]) - 1, 4):
-                delta_actions.append(original_outputs["action"][t:t + 4] - original_outputs["action"][t - 1])
-            delta_actions = torch.cat(delta_actions, dim=0).float()
-
-            action_seq = torch.zeros(self.num_frames - 1, 384, dtype=torch.float32)
-            # gt_actions = torch.zeros(self.num_frames - 1, 352, dtype=torch.float32)
-            # latent_actions = torch.ones(self.num_frames - 1, 32, dtype=torch.float32)
-            # latent_actions = latent_actions * torch.bernoulli(0.8 * torch.ones(1)).type_as(latent_actions)
-            # action_seq = torch.cat([gt_actions, latent_actions], dim=-1)
-            _ds_path_lower = str(self.dataset_path).lower()
-            if "inhouse_human" in _ds_path_lower:
-                gt_actions = torch.zeros(self.num_frames - 1, 352, dtype=torch.float32)
-                latent_actions = torch.ones(self.num_frames - 1, 32, dtype=torch.float32)
-                action_seq = torch.cat([gt_actions, latent_actions], dim=-1)
-                # action_seq[:, 29:58] = delta_actions
-            elif "aloha" in _ds_path_lower or "/bimanual/" in _ds_path_lower:
-                action_seq[:, 169:183] = delta_actions
-            elif "droid" in _ds_path_lower or "/single_arm/" in _ds_path_lower:
-                action_seq[:, 183:190] = delta_actions
-            elif "gr1" in _ds_path_lower:
-                action_seq[:, :29] = delta_actions
-            elif "g1" in _ds_path_lower:
-                action_seq[:, 58:101] = delta_actions
-            elif "yam" in _ds_path_lower:
-                action_seq[:, 101:147] = delta_actions
-            elif "agibot" in _ds_path_lower:
-                action_seq[:, 147:169] = delta_actions
-            
-            text = ""
-            if "annotation.human.coarse_action" in original_outputs:
-                text = original_outputs["annotation.human.coarse_action"][0].split(":")[-1].strip()
-
-            key = action_seq[0:1, :29]
-            key[:, :min(original_outputs["state"].shape[1], 29)] = original_outputs["state"][:, :29]
-
-            data = {
-                "__key__": key,
-                "action": action_seq,
-                "video": frames,
-                "lam_video": lam_frames,
-            }
-
-            # Just add these to fit the interface
-            data["fps"] = 4
-            data["image_size"] = 256 * torch.ones(4).cuda()
-            data["num_frames"] = self.num_frames
-            data["padding_mask"] = torch.zeros(1, 256, 256).cuda()
-            # Ensure caption key exists for online text encoding
-            # Many models expect `ai_caption` when text_encoder_config.compute_online=True.
-            # Default to an empty string to avoid KeyError; training configs can override upstream.
-            data.setdefault("ai_caption", "")  # Return a single string, not a list
-            return data
-        except Exception as e:
-            print(f"Error occurred while getting item {index} in {self.dataset_name}: {e}")
-            print("Retrying with a random index...")
-            return self.__getitem__(randint(0, len(self) - 1))
+        for attempt, idx in enumerate([index] + [randint(0, len(self) - 1) for _ in range(10)]):
+            try:
+                return self._get_item_impl(idx)
+            except Exception as e:
+                print(f"Error getting item {idx} in {self.dataset_name} (attempt {attempt}): {e}")
+        raise RuntimeError(f"Failed to get a valid item after 11 attempts in {self.dataset_name}")

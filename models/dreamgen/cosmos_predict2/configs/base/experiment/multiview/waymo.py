@@ -219,7 +219,7 @@ predict2_multiview_training_2b_720p_10fps_7views_29frames_waymo5views = dict(
         f_max=[0.25],
         f_min=[0.1],
         warm_up_steps=[2_000],
-        cycle_lengths=[40_000],
+        cycle_lengths=[100_000],
     ),
 )
 
@@ -313,7 +313,7 @@ predict2_multiview_lora_training_2b_720p_10fps_7views_29frames_waymo5views = dic
         f_max=[0.25],
         f_min=[0.1],
         warm_up_steps=[2_000],
-        cycle_lengths=[40_000],
+        cycle_lengths=[100_000],
     ),
 )
 
@@ -404,7 +404,7 @@ predict2_multiview_training_2b_480p_10fps_7views_29frames_waymo5views = dict(
         f_max=[0.25],
         f_min=[0.1],
         warm_up_steps=[2_000],
-        cycle_lengths=[40_000],
+        cycle_lengths=[100_000],
     ),
 )
 

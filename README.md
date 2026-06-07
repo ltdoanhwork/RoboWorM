@@ -1,8 +1,14 @@
 
-# video_gen_physics
-export PATH="$HOME/VLA/doanh:$PATH"
-claude
 
+
+
+# Video World — Training-Free Acceleration Benchmark
+
+Benchmarking training-free acceleration strategies (Cache, Sparse Attention, Token Merging) across CtrlWorld and DreamGen/DreamDojo on robotic manipulation tasks.
+
+export PATH="$HOME/VLA/doanh:$PATH"
+gsutil -m cp -r gs://openpi-assets/checkpoints/pi05_droid/* /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/pi05_droid
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_multiview_ctrlworld_pi.sh both
 ## Ctrl world
 
 export CUDA_VISIBLE_DEVICES=0 
@@ -141,6 +147,56 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
   --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
   --disable_guardrail \
   --num_gpus ${NUM_GPUS}
+
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
+export PYTHONPATH="./models/dreamgen"
+export CUDA_VISIBLE_DEVICES=0 
+export NUM_GPUS=1
+
+torchrun -m models.dreamgen.examples.video2world \
+  --model_size 14B \
+  --resolution 480 \
+  --fps 16 \
+  --dit_path ./checkpoints/nvidia/Cosmos-Predict2-14B-Video2World/model-480p-16fps.pt \
+  --batch_input_json /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/sampling_dataset/humanoid/singleview/input/PhysicalAI-Robotics-GR00T-GR1/dense/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS}
+
+# 14B Video2World 720p-16fps: ghi ra thư mục riêng (mặc định `720p_16fps/`), không đè `dense/`
+# (script tự clone batch_input.json và đổi `output_video`)
+bash ./scripts/run_humanoid_gr1_video2world_720p16fps.sh
+# Tuỳ chọn: OUT_TAG=my_run để tách từng lần chạy
+
+
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
+export PYTHONPATH="./models/dreamgen"
+export CUDA_VISIBLE_DEVICES=0
+export NUM_GPUS=1
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+  --model_size 14B \
+  --gr00t_variant gr1 \
+  --batch_input_json /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/sampling_dataset/humanoid/singleview/input/PhysicalAI-Robotics-GR00T-GR1/dense/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS}
+
+source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
+export PYTHONPATH="./models/dreamgen"
+export CUDA_VISIBLE_DEVICES=0
+export NUM_GPUS=1
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+  --model_size 14B \
+  --gr00t_variant gr1 \
+  --batch_input_json /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/sampling_dataset/humanoid/singleview/input/PhysicalAI-Robotics-GR00T-GR1/dense/batch_input.json \
+  --enable_prompt_refiner \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS}
+
+
+2B - 720P - prompt refinement
+
+14B - 480B - no prompt refinement
+
+
 
 ### dreamgen base - 4 gpu
 source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
@@ -414,6 +470,16 @@ python -m models.DreamDojo.examples.action_conditioned \
   --checkpoint-interval 5000 \
   --infinite
 
+### dreamdojo — humanoid singleview dense (full makovian + non_makovian)
+
+Dense = default action-conditioned diffusion (no `--use_svg` / SiTo). Outputs default to `sampling_dataset/dense/humanoid/output/singleview/dreamdojo/{makovian,non_makovian}/` (videos under `.../<iter_*>/`). The script runs `repair_humanoid_singleview_split_meta.py` first so `meta/episodes.jsonl` matches parquets when the split mixes DreamDojo-HV indices with GR1_robot (`SKIP_META_REPAIR=1` to skip).
+
+```bash
+cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
+bash ./scripts/run_humanoid_singleview_dreamdojo_dense.sh
+# Tuỳ chọn: CHECKPOINTS_DIR=... SAVE_ROOT=/abs/path/to/out/root CUDA_VISIBLE_DEVICES=0 bash ...
+```
+
 ### dreamdojo svg 1
 python -m models.DreamDojo.examples.action_conditioned \
   -o ./output/dreamdojo_svg1_eval \
@@ -598,6 +664,59 @@ CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-Wor
 
 
 
+## Sparse Attention Benchmark Scripts (SiTo & ITM)
+
+These scripts run inference with sparse attention methods and save results to `sampling_dataset/{sito,itm}/` for the webpage demo.
+
+### Humanoid Singleview
+
+```bash
+# DreamDojo + SiTo (2B, action-conditioned)
+bash scripts/run_humanoid_singleview_dreamdojo_sito.sh
+
+# DreamDojo + ITM (2B, action-conditioned)
+bash scripts/run_humanoid_singleview_dreamdojo_itm.sh
+
+# DreamGen + SiTo (14B, video2world)
+bash scripts/run_humanoid_singleview_dreamgen_sito.sh
+
+# DreamGen + ITM (14B, video2world)
+bash scripts/run_humanoid_singleview_dreamgen_itm.sh
+```
+
+### Ctrl-World + SiTo / ITM (Single-Arm Multiview)
+
+```bash
+# Ctrl-World + SiTo
+bash scripts/run_single_arm_multiview_ctrlworld_sito.sh [makovian|non_makovian|both]
+
+# Ctrl-World + ITM
+bash scripts/run_single_arm_multiview_ctrlworld_itm.sh [makovian|non_makovian|both]
+```
+
+### Single-Arm Singleview (DreamDojo)
+
+```bash
+# DreamDojo + SiTo
+bash scripts/run_single_arm_singleview_dreamdojo_sito.sh
+
+# DreamDojo + ITM
+bash scripts/run_single_arm_singleview_dreamdojo_itm.sh
+```
+
+### Collecting Videos for Webpage
+
+After inference, the videos are automatically served by the webpage via symlink:
+```bash
+# webpage/videos -> ../sampling_dataset (already linked)
+# Videos accessible at: webpage/videos/{sito,itm}/{embodiment}/output/...
+
+# Or explicitly check what's available:
+python scripts/collect_sparse_attention_videos.py --dry-run
+```
+
+---
+
 python -m models.dreamgen.scripts.prepare_batch_input_json \
   --dataset_path /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/datasets/dream_gen_benchmark/gr1_behavior \
   --save_path /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/output/dreamgen_lvg/2b_behaviour \
@@ -624,36 +743,29 @@ torchrun -m models.dreamgen.examples.video2world_gr00t_lvg \
   --num_conditional_frames 1
 
 ### dreamgen - multiview
-source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
-export PYTHONPATH=$(pwd)/models/dreamgen:$PYTHONPATH
-export CUDA_VISIBLE_DEVICES=0
-export NUM_GPUS=1
-
-python -m examples.multiview \
-  --model_size 2B \
-  --resolution 720 \
-  --prompt "A robot arm interacting with objects." \
-  --input_path models/dreamgen/assets/sample_gr00t_dreams_droid/episode_000408.png \
-  --num_conditional_frames 1 \
-  --n_views 7 \
-  --fps 10 \
-  --disable_guardrail \
-  --save_path ./output/dreamgen_multiview/episode_000408_multiview.mp4
 
 
-### dreamgen - multiview
-source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
+
 export PYTHONPATH="./models/dreamgen"
 export CUDA_VISIBLE_DEVICES=0
 export NUM_GPUS=1
 
-python -m models.dreamgen.examples.multiview \
-  --model_size 2B \
-  --resolution 720 \
-  --prompt "A robot arm interacting with objects." \
-  --input_path models/dreamgen/assets/sample_gr00t_dreams_droid/episode_000408.png \
-  --num_conditional_frames 1 \
-  --n_views 7 \
-  --fps 10 \
-  --save_path ./output/dreamgen_multiview/episode_000408_multiview.mp4
+torchrun -m models.dreamgen.examples.video2world_gr00t \
+  --model_size 14B \
+  --gr00t_variant gr1 \
+  --batch_input_json ./output/dream_gen_benchmark/cosmos_predict2_14b_gr1_behavior/batch_input.json \
+  --disable_guardrail \
+  --num_gpus ${NUM_GPUS} \
+  --use_itm \
+  --itm_start_layer_idx 6 \
+  --itm_keep_last_n_dense 2 \
+  --itm_prune_from_step 1 \
+  --itm_merge_from_step 2
 
+
+TMP_OUT=/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/tmp \
+NUM_GPUS=1 \
+BATCH_JSON=./sampling_dataset/dense/single_arm/input/multiview/dreamgen/makovian/batch_input.json \
+bash scripts/run_single_arm_multiview_video2world_2b_tmp.sh
+
+Successfully saved prompt file to: /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/sampling_dataset/humanoid/multiview/non_makovian/dreamgen/Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate/episode_000002.txt

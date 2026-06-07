@@ -146,7 +146,7 @@ _PREDICT2_VIDEO2WORLD_FSDP_2B_480P_16FPS = dict(
                 dit_path=get_cosmos_predict2_video2world_checkpoint(model_size="2B", resolution="480", fps=16),
                 text_encoder_path="",  # Do not load text encoder for training.
             ),
-            fsdp_shard_size=8,
+            fsdp_shard_size=-1,
             high_sigma_ratio=0.05,
         ),
         _recursive_=False,

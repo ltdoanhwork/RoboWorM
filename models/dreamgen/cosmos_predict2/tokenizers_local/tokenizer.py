@@ -624,8 +624,8 @@ def _video_vae(
         model,
         torch.zeros(1, 1, 1, 1, 1, device=device),
         torch.ones(1, 1, 1, 1, 1, device=device),
-        torch.zeros(1, 1, 50, 1, 1, device=device),
-        torch.ones(1, 1, 50, 1, 1, device=device),
+        torch.zeros(1, 1, 1, 1, 1, device=device),
+        torch.ones(1, 1, 1, 1, 1, device=device),
     )
 
 

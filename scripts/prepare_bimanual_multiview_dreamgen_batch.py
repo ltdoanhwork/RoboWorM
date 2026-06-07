@@ -1,8 +1,8 @@
 """
-Prepare batch_input.json for DreamGen multiview (GR00T droid variant) from a
-LeRobot-format bimanual ALOHA multiview dataset.
+Prepare batch_input.json for DreamGen multiview from a LeRobot-format bimanual
+ALOHA multiview dataset.
 
-Grid layout (2×2, same quadrant resolution as humanoid/DROID prep scripts):
+Grid layout (2×2, 384x216 per quadrant → 768x432 total, matching training):
 
   Default (2 static + 1 dynamic wrist + black quadrant):
   ┌──────────────┬──────────────┐
@@ -17,7 +17,7 @@ Grid layout (2×2, same quadrant resolution as humanoid/DROID prep scripts):
   │  TL: high    │  TR: low     │
   ├──────────────┼──────────────┤
   │  BL: left    │  BR: right   │
-  └──────────────┴────────────┘
+  └──────────────┴──────────────┘
 
 Camera keys: observation.images.cam_high, cam_low, cam_left_wrist, cam_right_wrist.
 """
@@ -35,42 +35,27 @@ CAM_LOW = "observation.images.cam_low"
 CAM_LEFT = "observation.images.cam_left_wrist"
 CAM_RIGHT = "observation.images.cam_right_wrist"
 
-QUAD_W, QUAD_H = 320, 180
+QUAD_W, QUAD_H = 384, 216  # Must match training grid: 768x432 total
 
 PROMPT_3VIEW_LEFT = (
-    "A multi-view video shows that a bimanual robot {task}. "
-    "The video is split into four views: "
-    "The top-left view shows an overhead high camera view of the workspace, "
-    "the top-right view shows a lower camera perspective, "
-    "the bottom-left view shows a first-person perspective from the robot's "
-    "left end-effector (gripper), "
-    "and the bottom-right view is a black screen (inactive view). "
-    "The robot {task}."
+    "A multi-view video of a bimanual ALOHA robot performing: {task}. "
+    "The video shows four synchronized camera views arranged in a 2x2 grid: "
+    "top-left shows the high overhead view, top-right shows the low front view, "
+    "bottom-left shows the left wrist view, and bottom-right is a black screen (inactive)."
 )
 
 PROMPT_3VIEW_RIGHT = (
-    "A multi-view video shows that a bimanual robot {task}. "
-    "The video is split into four views: "
-    "The top-left view shows an overhead high camera view of the workspace, "
-    "the top-right view shows a lower camera perspective, "
-    "the bottom-left view shows a first-person perspective from the robot's "
-    "right end-effector (gripper), "
-    "and the bottom-right view is a black screen (inactive view). "
-    "The robot {task}."
+    "A multi-view video of a bimanual ALOHA robot performing: {task}. "
+    "The video shows four synchronized camera views arranged in a 2x2 grid: "
+    "top-left shows the high overhead view, top-right shows the low front view, "
+    "bottom-left shows the right wrist view, and bottom-right is a black screen (inactive)."
 )
 
 PROMPT_4VIEW = (
-    "A multi-view video shows that a bimanual robot {task}. "
-    "The video is split into four views: "
-    "The top-left view shows a fixed high overhead camera above the workspace, "
-    "the top-right view shows a fixed lower camera view of the workspace, "
-    "the bottom-left view shows a first-person perspective from the robot's "
-    "left end-effector (left gripper camera), "
-    "and the bottom-right view shows a first-person perspective from the robot's "
-    "right end-effector (right gripper camera). "
-    "All four quadrants show live robot-mounted cameras; there is no black or "
-    "inactive panel. "
-    "The robot {task}."
+    "A multi-view video of a bimanual ALOHA robot performing: {task}. "
+    "The video shows four synchronized camera views arranged in a 2x2 grid: "
+    "top-left shows the high overhead view, top-right shows the low front view, "
+    "bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
 )
 
 
@@ -97,13 +82,14 @@ def resolve_layout(*, four_views: bool, dynamic_wrist: str) -> tuple[list[tuple[
 def ffmpeg_first_frame(video_path: Path, out_jpg: Path) -> bool:
     result = subprocess.run(
         [
-            "ffmpeg", "-y",
+            "ffmpeg", "-nostdin", "-y",
             "-i", str(video_path),
             "-vf", f"scale={QUAD_W}:{QUAD_H}",
             "-vframes", "1",
             "-q:v", "2",
             str(out_jpg),
         ],
+        stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
@@ -129,11 +115,16 @@ def build_2x2_grid(frame_paths: list, out_png: Path) -> bool:
         + ";[v0][v1]hstack[top];[v2][v3]hstack[bottom];[top][bottom]vstack[out]"
     )
     cmd = (
-        ["ffmpeg", "-y"]
+        ["ffmpeg", "-nostdin", "-y"]
         + inputs
         + ["-filter_complex", filter_complex, "-map", "[out]", "-vframes", "1", str(out_png)]
     )
-    result = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    result = subprocess.run(
+        cmd,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
     return result.returncode == 0 and out_png.exists()
 
 

@@ -141,6 +141,11 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Path to JSON file containing batch inputs.",
     )
+    parser.add_argument(
+        "--no_skip_existing",
+        action="store_true",
+        help="When using --batch_input_json, regenerate even if output files already exist.",
+    )
     parser.add_argument("--guidance", type=float, default=7, help="Guidance value")
     parser.add_argument("--seed", type=int, default=0, help="Random seed for reproducibility")
     parser.add_argument(
@@ -165,6 +170,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--prompt_prefix", type=str, default="The robot arm is performing a task. ", help="Prefix to add to all prompts"
+    )
+    parser.add_argument(
+        "--enable_prompt_refiner_per_chunk",
+        action="store_true",
+        help="Refine prompt at each chunk boundary using the last generated frame as visual context.",
     )
 
     # ---- Sparse Backend Integration ----
@@ -290,11 +300,21 @@ def setup_pipeline(args: argparse.Namespace):
         device="cuda",
         torch_dtype=torch.bfloat16,
         load_ema_to_reg=args.load_ema,
-        load_prompt_refiner=False,  # Disable prompt refiner for GR00T
+        load_prompt_refiner=getattr(args, "enable_prompt_refiner_per_chunk", False),
         cache_config=cache_config,
     )
 
     return pipe
+
+
+def _batch_output_complete(output_path: str) -> bool:
+    """True if a prior successful run left both video and prompt sidecar (same completion order as save)."""
+    if not output_path or not os.path.isfile(output_path):
+        return False
+    if os.path.getsize(output_path) <= 0:
+        return False
+    prompt_path = os.path.splitext(output_path)[0] + ".txt"
+    return os.path.isfile(prompt_path) and os.path.getsize(prompt_path) > 0
 
 
 def process_single_generation(
@@ -309,6 +329,7 @@ def process_single_generation(
     guidance: float,
     seed: int,
     prompt_prefix: str,
+    enable_prompt_refiner_per_chunk: bool = False,
 ) -> bool:
     # Validate input file
     if not validate_input_file(input_path, num_conditional_frames):
@@ -317,20 +338,35 @@ def process_single_generation(
 
     # Add prefix to prompt
     full_prompt = prompt_prefix + prompt
-    log.info(f"Running GR00T LVG Pipeline\ninput: {input_path}\nprompt: {full_prompt}\nchunks: {num_chunks}")
+    log.info(f"Running GR00T LVG Pipeline\ninput: {input_path}\nprompt: {full_prompt}\nchunks: {num_chunks}\nprompt_refine_per_chunk: {enable_prompt_refiner_per_chunk}")
+
+    prompt_refiner = getattr(pipe, "prompt_refiner", None)
+    if enable_prompt_refiner_per_chunk and prompt_refiner is None:
+        log.warning("prompt_refiner_per_chunk requested but no prompt_refiner loaded — falling back to static prompt")
+        enable_prompt_refiner_per_chunk = False
 
     torch.cuda.synchronize()
     start_time = time.perf_counter()
 
     all_chunks = []
     current_input_path = input_path
+    current_prompt = full_prompt
 
     with tempfile.TemporaryDirectory() as tmpdir:
         for chunk_id in tqdm(range(num_chunks)):
+            # Refine prompt at each chunk boundary using current visual state
+            if enable_prompt_refiner_per_chunk:
+                log.info(f"Chunk {chunk_id + 1}/{num_chunks}: refining prompt with {current_input_path}...")
+                orig_enabled = prompt_refiner.enabled
+                prompt_refiner.enabled = True
+                current_prompt = prompt_prefix + prompt_refiner.refine_prompt(current_input_path, prompt)
+                prompt_refiner.enabled = orig_enabled
+                log.info(f"  Refined prompt: {current_prompt[:150]}...")
+
             log.info(f"Generating chunk {chunk_id + 1}/{num_chunks}...")
 
             video, prompt_used = pipe(
-                prompt=full_prompt,
+                prompt=current_prompt,
                 negative_prompt=negative_prompt,
                 aspect_ratio=aspect_ratio,
                 input_path=current_input_path,
@@ -429,6 +465,10 @@ def generate_video(args: argparse.Namespace, pipe: Video2WorldPipeline) -> None:
                 log.warning(f"Skipping item {idx}: Missing input_video or prompt")
                 continue
 
+            if not args.no_skip_existing and _batch_output_complete(output_video):
+                log.info(f"Skipping item {idx}: output already exists at {output_video}")
+                continue
+
             process_single_generation(
                 pipe=pipe,
                 input_path=input_video,
@@ -441,6 +481,7 @@ def generate_video(args: argparse.Namespace, pipe: Video2WorldPipeline) -> None:
                 guidance=args.guidance,
                 seed=args.seed,
                 prompt_prefix=args.prompt_prefix,
+                enable_prompt_refiner_per_chunk=args.enable_prompt_refiner_per_chunk,
             )
     else:
         process_single_generation(
@@ -455,6 +496,7 @@ def generate_video(args: argparse.Namespace, pipe: Video2WorldPipeline) -> None:
             guidance=args.guidance,
             seed=args.seed,
             prompt_prefix=args.prompt_prefix,
+            enable_prompt_refiner_per_chunk=args.enable_prompt_refiner_per_chunk,
         )
 
     return

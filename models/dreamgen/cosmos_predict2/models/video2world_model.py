@@ -164,6 +164,7 @@ class Predict2Video2WorldModel(ImaginaireModel):
             f"Total parameters: {total_params / 1e9:.2f}B, Frozen parameters: {frozen_params:,}, Trainable parameters: {trainable_params:,}"
         )
 
+        log.info(f"[DEBUG] config.fsdp_shard_size = {config.fsdp_shard_size}, world_size = {torch.distributed.get_world_size() if torch.distributed.is_initialized() else 'N/A'}")
         if config.fsdp_shard_size != 0 and torch.distributed.is_initialized():
             if config.fsdp_shard_size == -1:
                 fsdp_shard_size = torch.distributed.get_world_size()

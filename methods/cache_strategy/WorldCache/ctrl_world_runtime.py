@@ -57,9 +57,13 @@ class CtrlWorldWorldCacheRuntime(CtrlWorldDiCacheRuntime):
     def _skip_threshold(self) -> float | None:
         if self.probe_state_for_step is None or self.previous_probe_state is None:
             return None
+        if self.probe_state_for_step.shape != self.previous_probe_state.shape:
+            return None
 
         threshold = float(self.config.rel_l1_thresh)
         if self.previous_input is not None and self.step_input is not None:
+            if self.step_input.shape != self.previous_input.shape:
+                return None
             input_velocity = _rel_l1(self.step_input, self.previous_input)
             threshold = threshold / (1.0 + float(self.config.motion_sensitivity) * float(input_velocity.item()))
 
