@@ -298,3 +298,10 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/run_humanoid_singleview_dreamgen_svg1.sh
 
 # 6. SVG2
 CUDA_VISIBLE_DEVICES=1 bash scripts/run_humanoid_singleview_dreamgen_svg2.sh
+
+# 7. Prompt Refinement per Chunk
+CUDA_VISIBLE_DEVICES=0,1 ITER_NAME=iter_000090000 bash scripts/run_humanoid_singleview_dreamgen_prompt_refine.sh
+
+
+CUDA_VISIBLE_DEVICES=0 ITER_NAME=iter_000050000 bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
+CUDA_VISIBLE_DEVICES=0,1 ITER_NAME=iter_000050000 bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
