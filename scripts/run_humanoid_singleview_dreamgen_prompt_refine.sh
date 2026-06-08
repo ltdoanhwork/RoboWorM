@@ -23,7 +23,7 @@ export PYTHONPATH="${ROOT}/models/dreamgen:${ROOT}:${PYTHONPATH:-}"
 
 # --- Checkpoint ---
 CKPT_BASE="${ROOT}/exp_logs/dreamgen_logs/posttraining/singleview/all_singleview"
-ITER_NAME="${ITER_NAME:-iter_000070000}"
+ITER_NAME="${ITER_NAME:-iter_000090000}"
 DIT_PATH="${DIT_PATH:-${CKPT_BASE}/checkpoints_40_per/model/${ITER_NAME}.pt}"
 
 if [[ ! -f "${DIT_PATH}" ]]; then
@@ -46,9 +46,9 @@ SITO_KEEP_LAST_N_DENSE="${SITO_KEEP_LAST_N_DENSE:-2}"
 
 # --- Dataset / output ---
 INPUT_ROOT="${ROOT}/sampling_dataset/dense/humanoid/input/singleview/dreamgen"
-OUTPUT_ROOT="${ROOT}/tmp/prompt_refine/humanoid/output/singleview/dreamgen"
+OUTPUT_ROOT="${ROOT}/sampling_dataset/dense/humanoid/output/singleview/dreamgen"
 SPLITS="${SPLITS:-makovian non_makovian}"
-NUM_CHUNKS="${NUM_CHUNKS:-2 3}"
+NUM_CHUNKS="${NUM_CHUNKS:-1 2 3 4 5 6 7 8 9 10 11 12 13 15 17 18 19 23 24 25 31}"
 
 echo "============================================"
 echo "DreamGen Humanoid Singleview + SiTo + Prompt Refinement per Chunk"
@@ -125,8 +125,8 @@ for split in ${SPLITS}; do
   fi
 
   for nc in ${NUM_CHUNKS}; do
-    batch_json="${input_dir}/batch_input_short_${nc}chunks.json"
-    run_inference "${batch_json}" "humanoid/${split}/short_${nc}chunks" "${nc}" "${split}"
+    batch_json="${input_dir}/batch_input_${nc}chunks.json"
+    run_inference "${batch_json}" "humanoid/${split}/${nc}chunks" "${nc}" "${split}"
   done
 done
 
