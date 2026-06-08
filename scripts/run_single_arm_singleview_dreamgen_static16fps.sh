@@ -283,33 +283,31 @@ print(len(pending))
     torchrun \
       --nproc_per_node="${NUM_GPUS}" \
       --master_port="${MASTER_PORT}" \
-      -m models.dreamgen.examples.video2world_lvg \
+      -m models.dreamgen.examples.video2world_gr00t_lvg \
       --model_size "${MODEL_SIZE}" \
-      --resolution "${RESOLUTION}" \
-      --fps "${FPS}" \
+      --gr00t_variant droid \
       --dit_path "${DIT_PATH}" \
       --batch_input_json "${run_json}" \
+      --num_chunks "${num_chunks}" \
       --guidance "${GUIDANCE}" \
       --num_gpus "${NUM_GPUS}" \
-      --num_chunks "${num_chunks}" \
-      --num_conditional_frames 1 \
       --aspect_ratio "${ASPECT_RATIO}" \
       --disable_guardrail \
-      --disable_prompt_refiner
+      --no_skip_existing \
+      --enable_prompt_refiner_per_chunk
   else
-    python -m models.dreamgen.examples.video2world_lvg \
+    python -m models.dreamgen.examples.video2world_gr00t_lvg \
       --model_size "${MODEL_SIZE}" \
-      --resolution "${RESOLUTION}" \
-      --fps "${FPS}" \
+      --gr00t_variant droid \
       --dit_path "${DIT_PATH}" \
       --batch_input_json "${run_json}" \
+      --num_chunks "${num_chunks}" \
       --guidance "${GUIDANCE}" \
       --num_gpus "${NUM_GPUS}" \
-      --num_chunks "${num_chunks}" \
-      --num_conditional_frames 1 \
       --aspect_ratio "${ASPECT_RATIO}" \
       --disable_guardrail \
-      --disable_prompt_refiner
+      --no_skip_existing \
+      --enable_prompt_refiner_per_chunk
   fi
 
   MASTER_PORT=$((MASTER_PORT + 1))

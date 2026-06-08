@@ -304,6 +304,6 @@ CUDA_VISIBLE_DEVICES=0,1 ITER_NAME=iter_000090000 bash scripts/run_humanoid_sing
 
 
 CUDA_VISIBLE_DEVICES=0 ITER_NAME=iter_000050000 bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
-CUDA_VISIBLE_DEVICES=0,1 ITER_NAME=iter_000050000 bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
+CUDA_VISIBLE_DEVICES=0,1 ITER_NAME=iter_000060000 bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
 
 CUDA_VISIBLE_DEVICES=0,1 ITER_NAME=iter_000050000 bash scripts/run_bimanual_singleview_dreamgen_16fps.sh

@@ -49,7 +49,7 @@ ASPECT_RATIO="${ASPECT_RATIO:-16:9}"
 INPUT_ROOT="${ROOT}/sampling_dataset/dense/bimanual/input/singleview/dreamgen"
 OUTPUT_ROOT="${ROOT}/sampling_dataset/dense/bimanual/output/singleview/dreamgen"
 SPLITS="${SPLITS:-makovian non_makovian}"
-NUM_CHUNKS="${NUM_CHUNKS:-2 3}"
+NUM_CHUNKS="${NUM_CHUNKS:-auto}"
 FORCE_REGENERATE="${FORCE_REGENERATE:-0}"
 
 OUT_ITER="${ITER_NAME}_bimanual16fps"
@@ -163,10 +163,18 @@ for split in ${SPLITS}; do
     continue
   fi
 
-  for nc in ${NUM_CHUNKS}; do
-    batch_json="${input_dir}/batch_input_${nc}chunks.json"
-    run_inference "${batch_json}" "bimanual/${split}/${nc}chunks" "${nc}" "${split}"
-  done
+  if [[ "${NUM_CHUNKS}" == "auto" ]]; then
+    # Auto-discover all batch_input_*chunks.json files
+    for batch_json in $(ls "${input_dir}"/batch_input_*chunks.json 2>/dev/null | sort -t_ -k3 -n); do
+      nc="$(echo "${batch_json}" | grep -oP '\d+(?=chunks\.json)')"
+      run_inference "${batch_json}" "bimanual/${split}/${nc}chunks" "${nc}" "${split}"
+    done
+  else
+    for nc in ${NUM_CHUNKS}; do
+      batch_json="${input_dir}/batch_input_${nc}chunks.json"
+      run_inference "${batch_json}" "bimanual/${split}/${nc}chunks" "${nc}" "${split}"
+    done
+  fi
 done
 
 echo ""
