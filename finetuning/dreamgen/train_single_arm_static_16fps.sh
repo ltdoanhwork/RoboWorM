@@ -1,7 +1,11 @@
 #!/bin/bash
 # =============================================================================
 # End-to-end: prepare → T5 embeddings → train
-# DreamGen single-arm STATIC views (exterior_1 + exterior_2) @ 16fps, segmented.
+# DreamGen single-arm STATIC view (RoboChallenge global) @ 16fps, segmented.
+#
+# Data source: datasets/single_arm/singleview/{makovian,non_makovian}
+#   single static camera observation.images.global (RoboChallenge arx5/franka/ur5).
+# Prepared into datasets/single_arm_static_dreamgen_16fps (overwrites old DROID).
 #
 # This script runs everything in sequence — no external dependencies.
 #
@@ -34,9 +38,13 @@ echo "============================================"
 # ---- Step 1: Prepare 16fps segmented data ----
 if [[ "${SKIP_PREP}" != "1" ]]; then
     echo ""
-    echo "=== [Step 1/3] Preparing static views @ 16fps (segmented) ==="
-    python "${PROJECT_ROOT}/finetuning/dreamgen/scripts/prepare_single_arm_static_dreamgen_16fps.py" \
-        --source "${PROJECT_ROOT}/datasets/single_arm/multiview" \
+    echo "=== [Step 1/3] Preparing global view @ 16fps (segmented) ==="
+    echo "    Overwriting prepared dataset with RoboChallenge global-view data."
+    # Clear stale clips/metas/embeddings from any previous dataset (e.g. DROID)
+    # so the prepared dir contains ONLY the new RoboChallenge data.
+    rm -rf "${DATASET_DIR}/videos" "${DATASET_DIR}/metas" "${DATASET_DIR}/t5_xxl"
+    python "${PROJECT_ROOT}/finetuning/dreamgen/scripts/prepare_single_arm_robochallenge_dreamgen_16fps.py" \
+        --source "${PROJECT_ROOT}/datasets/single_arm/singleview" \
         --target "${DATASET_DIR}"
 else
     echo ""

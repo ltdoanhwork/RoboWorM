@@ -2,13 +2,13 @@
 # =============================================================================
 # Test DreamGen single-arm using the single_arm_static_16fps checkpoint.
 #
-# IMPORTANT: This model was trained on static views (exterior_1_left, exterior_2_left),
-# NOT wrist view. So inference input must also come from static views.
-# We run inference on BOTH exterior_1_left and exterior_2_left.
+# IMPORTANT: This model was (re)trained on the RoboChallenge GLOBAL static view
+# (observation.images.global). So inference input must also come from that view.
 #
 # This script:
-#   1. Prepares batch_input JSONs from both static view source videos (multiview dataset)
-#   2. Runs DreamGen video2world_lvg inference on each view
+#   1. Prepares batch_input JSONs from the global static view source videos
+#      (datasets/single_arm/singleview)
+#   2. Runs DreamGen video2world_lvg inference on the view
 #
 # Output:
 #   sampling_dataset/dense/single_arm/output/singleview_static/dreamgen/{split}/iter_XXXXXX_static16fps/
@@ -16,7 +16,6 @@
 # Usage:
 #   CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
 #   CUDA_VISIBLE_DEVICES=0 ITER_NAME=iter_000060000 bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
-#   CUDA_VISIBLE_DEVICES=0 VIEW=exterior_2_left bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
 #   NUM_CHUNKS="2 3" SPLITS="makovian" bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
 # =============================================================================
 set -euo pipefail
@@ -51,16 +50,17 @@ GUIDANCE="${GUIDANCE:-7}"
 MASTER_PORT="${MASTER_PORT:-29550}"
 ASPECT_RATIO="${ASPECT_RATIO:-16:9}"
 
-# --- Views to use for inference (must match training: both static views) ---
-VIEWS="${VIEWS:-exterior_1_left exterior_2_left}"
+# --- Views to use for inference (must match training: RoboChallenge global view) ---
+VIEWS="${VIEWS:-global}"
 
 # --- Dataset paths ---
-SOURCE_ROOT="${ROOT}/datasets/single_arm/multiview"
-INPUT_ROOT="${ROOT}/sampling_dataset/dense/single_arm/input/singleview_static/dreamgen"
-OUTPUT_ROOT="${ROOT}/sampling_dataset/dense/single_arm/output/singleview/dreamgen"
+SOURCE_ROOT="${SOURCE_ROOT:-${ROOT}/datasets/single_arm/singleview}"
+INPUT_ROOT="${ROOT}/sampling_dataset/dense/single_arm/input/singleview/dreamgen"
+OUTPUT_ROOT="${OUTPUT_ROOT:-${ROOT}/sampling_dataset/dense/single_arm/output/singleview/dreamgen}"
 SPLITS="${SPLITS:-makovian non_makovian}"
 NUM_CHUNKS="${NUM_CHUNKS:-2 3}"
 FORCE_REGENERATE="${FORCE_REGENERATE:-0}"
+PROMPT_REFINE="${PROMPT_REFINE:-1}"
 SOURCE_FPS=15
 
 OUT_ITER="${ITER_NAME}_static16fps"
@@ -69,7 +69,7 @@ echo "============================================"
 echo "DreamGen Single-arm Static View — static16fps ckpt"
 echo "  Checkpoint: ${DIT_PATH}"
 echo "  Iter tag:   ${OUT_ITER}"
-echo "  Views:      ${VIEWS} (from multiview dataset)"
+echo "  Views:      ${VIEWS} (from single_arm/singleview dataset)"
 echo "  Model:      ${MODEL_SIZE} | Resolution: ${RESOLUTION} | FPS: ${FPS}"
 echo "  GPUs:       ${NUM_GPUS}"
 echo "  Guidance:   ${GUIDANCE}"
@@ -279,37 +279,41 @@ print(len(pending))
     local tmp_batch_json=""
   fi
 
+  # Build prompt refiner flag
+  local pr_flag=""
+  if [[ "${PROMPT_REFINE}" == "1" ]]; then
+    pr_flag="--enable_prompt_refiner_per_chunk"
+  fi
+
   if [[ "${NUM_GPUS}" -gt 1 ]]; then
     torchrun \
       --nproc_per_node="${NUM_GPUS}" \
       --master_port="${MASTER_PORT}" \
-      -m models.dreamgen.examples.video2world_lvg \
+      -m models.dreamgen.examples.video2world_gr00t_lvg \
       --model_size "${MODEL_SIZE}" \
-      --resolution "${RESOLUTION}" \
-      --fps "${FPS}" \
+      --gr00t_variant droid \
       --dit_path "${DIT_PATH}" \
       --batch_input_json "${run_json}" \
+      --num_chunks "${num_chunks}" \
       --guidance "${GUIDANCE}" \
       --num_gpus "${NUM_GPUS}" \
-      --num_chunks "${num_chunks}" \
-      --num_conditional_frames 1 \
       --aspect_ratio "${ASPECT_RATIO}" \
       --disable_guardrail \
-      --disable_prompt_refiner
+      --no_skip_existing \
+      ${pr_flag}
   else
-    python -m models.dreamgen.examples.video2world_lvg \
+    python -m models.dreamgen.examples.video2world_gr00t_lvg \
       --model_size "${MODEL_SIZE}" \
-      --resolution "${RESOLUTION}" \
-      --fps "${FPS}" \
+      --gr00t_variant droid \
       --dit_path "${DIT_PATH}" \
       --batch_input_json "${run_json}" \
+      --num_chunks "${num_chunks}" \
       --guidance "${GUIDANCE}" \
       --num_gpus "${NUM_GPUS}" \
-      --num_chunks "${num_chunks}" \
-      --num_conditional_frames 1 \
       --aspect_ratio "${ASPECT_RATIO}" \
       --disable_guardrail \
-      --disable_prompt_refiner
+      --no_skip_existing \
+      ${pr_flag}
   fi
 
   MASTER_PORT=$((MASTER_PORT + 1))

@@ -303,5 +303,18 @@ CUDA_VISIBLE_DEVICES=1 bash scripts/run_humanoid_singleview_dreamgen_svg2.sh
 CUDA_VISIBLE_DEVICES=0,1 ITER_NAME=iter_000090000 bash scripts/run_humanoid_singleview_dreamgen_prompt_refine.sh
 
 
-CUDA_VISIBLE_DEVICES=0 ITER_NAME=iter_000050000 bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
-CUDA_VISIBLE_DEVICES=0,1 ITER_NAME=iter_000050000 bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
+
+NPROC=4 bash finetuning/dreamgen/train_humanoid_16fps.sh
+SKIP_PREP=1 NPROC=4 bash finetuning/dreamgen/train_single_arm_static_16fps.sh
+
+CUDA_VISIBLE_DEVICES=0 ITER_NAME=iter_000080000 bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
+CUDA_VISIBLE_DEVICES=0,1 ITER_NAME=iter_000120000 PROMPT_REFINE=0 bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
+CUDA_VISIBLE_DEVICES=2,3 ITER_NAME=iter_000070000 PROMPT_REFINE=0 bash scripts/run_bimanual_singleview_dreamgen_16fps.sh -> khá tốt
+
+
+CUDA_VISIBLE_DEVICES=2,3 ITER_NAME=iter_000070000 PROMPT_REFINE=0 bash scripts/run_bimanual_singleview_dreamgen_16fps.sh 
+
+CUDA_VISIBLE_DEVICES=0,1 ITER_NAME=iter_000070000 PROMPT_REFINE=1 MASTER_PORT=29600 bash scripts/run_bimanual_singleview_dreamgen_16fps.sh 
+
+CUDA_VISIBLE_DEVICES=2,3 ITER_NAME=iter_000080000 PROMPT_REFINE=0 bash scripts/run_bimanual_singleview_dreamgen_16fps.sh 
+CUDA_VISIBLE_DEVICES=0,1 ITER_NAME=iter_000110000 PROMPT_REFINE=1 MASTER_PORT=29700 bash scripts/run_bimanual_singleview_dreamgen_16fps.sh

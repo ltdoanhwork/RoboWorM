@@ -27,10 +27,16 @@ export COSMOS_PREDICT2_ARGS="--checkpoints ${PROJECT_ROOT}/checkpoints"
 
 cd "${DREAMGEN_ROOT}"
 
-DATASETS=${DATASETS:-"bimanual single_arm humanoid humanoid_multiview bimanual_multiview single_arm_16fps bimanual_16fps single_arm_static_16fps"}
+DATASETS=${DATASETS:-"bimanual single_arm humanoid humanoid_multiview bimanual_multiview single_arm_16fps bimanual_16fps single_arm_static_16fps humanoid_16fps"}
 
 for DATASET in ${DATASETS}; do
-    DATASET_PATH="${PROJECT_ROOT}/datasets/${DATASET}_dreamgen"
+    # Most datasets live at datasets/${DATASET}_dreamgen, but the humanoid 16fps
+    # variant uses the suffix order datasets/humanoid_dreamgen_16fps.
+    if [ "${DATASET}" = "humanoid_16fps" ]; then
+        DATASET_PATH="${PROJECT_ROOT}/datasets/humanoid_dreamgen_16fps"
+    else
+        DATASET_PATH="${PROJECT_ROOT}/datasets/${DATASET}_dreamgen"
+    fi
     if [ ! -d "${DATASET_PATH}" ]; then
         echo "WARNING: ${DATASET_PATH} not found, skipping."
         case "${DATASET}" in
@@ -42,6 +48,7 @@ for DATASET in ${DATASETS}; do
             single_arm_16fps)    echo "  → Run: python finetuning/dreamgen/scripts/prepare_single_arm_dreamgen_16fps.py" ;;
             bimanual_16fps)      echo "  → Run: python finetuning/dreamgen/scripts/prepare_bimanual_dreamgen_16fps.py" ;;
             single_arm_static_16fps) echo "  → Run: python finetuning/dreamgen/scripts/prepare_single_arm_static_dreamgen_16fps.py" ;;
+            humanoid_16fps)      echo "  → Run: python finetuning/dreamgen/scripts/prepare_humanoid_dreamgen_16fps.py" ;;
         esac
         continue
     fi
