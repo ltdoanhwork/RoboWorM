@@ -47,10 +47,17 @@ ASPECT_RATIO="${ASPECT_RATIO:-16:9}"
 
 # --- Dataset / output ---
 INPUT_ROOT="${ROOT}/sampling_dataset/dense/bimanual/input/singleview/dreamgen"
-OUTPUT_ROOT="${ROOT}/sampling_dataset/dense/bimanual/output/singleview/dreamgen"
+OUTPUT_ROOT="${OUTPUT_ROOT:-${ROOT}/sampling_dataset/dense/bimanual/output/singleview/dreamgen}"
 SPLITS="${SPLITS:-makovian non_makovian}"
+# "auto"  -> per-episode chunk count (matches GT length, recommended)
+# "capped"-> fixed 3chunks_17s + 4chunks_23s (legacy; over-generates short episodes)
+# "2 3"   -> explicit chunk counts
 NUM_CHUNKS="${NUM_CHUNKS:-auto}"
+# Skip episodes whose required chunk count exceeds this (heavy autoregressive drift
+# + long runtime). Set to 0 to disable the cap.
+MAX_CHUNKS="${MAX_CHUNKS:-8}"
 FORCE_REGENERATE="${FORCE_REGENERATE:-0}"
+PROMPT_REFINE="${PROMPT_REFINE:-1}"
 
 OUT_ITER="${ITER_NAME}_bimanual16fps"
 
@@ -62,7 +69,7 @@ echo "  Model:      ${MODEL_SIZE} | Resolution: ${RESOLUTION} | FPS: ${FPS}"
 echo "  GPUs:       ${NUM_GPUS}"
 echo "  Guidance:   ${GUIDANCE}"
 echo "  Splits:     ${SPLITS}"
-echo "  Chunks:     ${NUM_CHUNKS}"
+echo "  Chunks:     ${NUM_CHUNKS} (max=${MAX_CHUNKS})"
 echo "  Output:     ${OUTPUT_ROOT}/{split}/${OUT_ITER}/"
 echo "============================================"
 
@@ -120,6 +127,12 @@ print(len(pending))
     echo "  === Running: ${label} (${item_count} episodes, chunks=${num_chunks}) ==="
   fi
 
+  # Build prompt refiner flag
+  local pr_flag=""
+  if [[ "${PROMPT_REFINE}" == "1" ]]; then
+    pr_flag="--enable_prompt_refiner_per_chunk"
+  fi
+
   if [[ "${NUM_GPUS}" -gt 1 ]]; then
     torchrun \
       --nproc_per_node="${NUM_GPUS}" \
@@ -135,7 +148,7 @@ print(len(pending))
       --aspect_ratio "${ASPECT_RATIO}" \
       --disable_guardrail \
       --no_skip_existing \
-      --enable_prompt_refiner_per_chunk
+      ${pr_flag}
   else
     python -m models.dreamgen.examples.video2world_gr00t_lvg \
       --model_size "${MODEL_SIZE}" \
@@ -148,7 +161,7 @@ print(len(pending))
       --aspect_ratio "${ASPECT_RATIO}" \
       --disable_guardrail \
       --no_skip_existing \
-      --enable_prompt_refiner_per_chunk
+      ${pr_flag}
   fi
 
   MASTER_PORT=$((MASTER_PORT + 1))
@@ -164,10 +177,21 @@ for split in ${SPLITS}; do
   fi
 
   if [[ "${NUM_CHUNKS}" == "auto" ]]; then
-    # Auto-discover all batch_input_*chunks.json files
-    for batch_json in $(ls "${input_dir}"/batch_input_*chunks.json 2>/dev/null | sort -t_ -k3 -n); do
-      nc="$(echo "${batch_json}" | grep -oP '\d+(?=chunks\.json)')"
+    # Auto-discover all batch_input_*chunks.json files (original full-length, per-episode)
+    for batch_json in $(ls "${input_dir}"/batch_input_*chunks.json 2>/dev/null | grep -v '_17s\|_23s' | sort -t_ -k3 -n); do
+      nc="$(echo "${batch_json}" | grep -oP '\d+(?=chunks)')"
+      if [[ "${MAX_CHUNKS}" -gt 0 && "${nc}" -gt "${MAX_CHUNKS}" ]]; then
+        echo "  [SKIP] bimanual/${split}/${nc}chunks: exceeds MAX_CHUNKS=${MAX_CHUNKS}"
+        continue
+      fi
       run_inference "${batch_json}" "bimanual/${split}/${nc}chunks" "${nc}" "${split}"
+    done
+  elif [[ "${NUM_CHUNKS}" == "capped" ]]; then
+    # Use capped files: 3 chunks (~17s) and 4 chunks (~23s)
+    for suffix in "3chunks_17s" "4chunks_23s"; do
+      batch_json="${input_dir}/batch_input_${suffix}.json"
+      nc="${suffix%%chunks*}"
+      run_inference "${batch_json}" "bimanual/${split}/${suffix}" "${nc}" "${split}"
     done
   else
     for nc in ${NUM_CHUNKS}; do

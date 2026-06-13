@@ -343,6 +343,56 @@ predict2_video2world_training_2b_single_arm_singleview_16fps = dict(
 )
 
 # ---------------------------------------------------------------------------
+# Humanoid GR1 singleview  (native 20fps video, conditioned as 16fps via override_fps)
+# ---------------------------------------------------------------------------
+
+_dataset_humanoid_16fps = L(Dataset)(
+    dataset_dir=os.path.join(_DATASETS_ROOT, "humanoid_dreamgen_16fps"),
+    num_frames=93,
+    video_size=(432, 768),
+    override_fps=16,
+)
+
+_dataloader_humanoid_16fps = L(DataLoader)(
+    dataset=_dataset_humanoid_16fps,
+    sampler=L(get_sampler)(dataset=_dataset_humanoid_16fps),
+    batch_size=1,
+    drop_last=True,
+    num_workers=8,
+    pin_memory=True,
+)
+
+cs.store(
+    group="dataloader_train",
+    package="dataloader_train",
+    name="humanoid_singleview_16fps",
+    node=_dataloader_humanoid_16fps,
+)
+
+predict2_video2world_training_2b_humanoid_singleview_16fps = dict(
+    defaults=[
+        {"override /model": "predict2_video2world_fsdp_2b_480p_16fps"},
+        {"override /optimizer": "adamw"},
+        {"override /ckpt_type": "standard"},
+        {"override /dataloader_val": "mock"},
+        {"override /dataloader_train": "humanoid_singleview_16fps"},
+        {"override /scheduler": "lambdalinear"},
+        "_self_",
+    ],
+    model=_MODEL,
+    optimizer=_OPTIMIZER,
+    scheduler=_SCHEDULER,
+    job=dict(
+        project="posttraining",
+        group="singleview",
+        name="humanoid_singleview_16fps",
+    ),
+    model_parallel=_MODEL_PARALLEL,
+    trainer=_TRAINER,
+    checkpoint=_CHECKPOINT,
+)
+
+# ---------------------------------------------------------------------------
 # Single-arm DROID STATIC views 16fps  (exterior_1 + exterior_2, no wrist)
 # ---------------------------------------------------------------------------
 
@@ -642,6 +692,7 @@ for _item in [
     predict2_video2world_training_2b_humanoid_singleview,
     predict2_video2world_training_2b_all_singleview,
     predict2_video2world_training_2b_single_arm_singleview_16fps,
+    predict2_video2world_training_2b_humanoid_singleview_16fps,
     predict2_video2world_training_2b_single_arm_static_singleview_16fps,
     predict2_video2world_training_2b_bimanual_singleview_16fps,
     predict2_video2world_training_2b_arm_bimanual_singleview_16fps,

@@ -41,6 +41,7 @@ class Dataset(Dataset):
         dataset_dir,
         num_frames,
         video_size,
+        override_fps=None,
     ) -> None:
         """Dataset class for loading image-text-to-video generation data.
 
@@ -48,6 +49,9 @@ class Dataset(Dataset):
             dataset_dir (str): Base path to the dataset directory
             num_frames (int): Number of frames to load per sequence
             video_size (list): Target size [H,W] for video frames
+            override_fps (float | None): If set, report this fps for every clip
+                instead of reading it from the mp4. Used to condition the model
+                at a target fps (e.g. 16) while keeping the video's native fps.
 
         Returns dict with:
             - video: RGB frames tensor [T,C,H,W]
@@ -57,6 +61,7 @@ class Dataset(Dataset):
         super().__init__()
         self.dataset_dir = os.path.abspath(dataset_dir)
         self.sequence_length = num_frames
+        self.override_fps = override_fps
 
         video_dir = os.path.join(self.dataset_dir, "videos")
         self.t5_dir = os.path.join(self.dataset_dir, "t5_xxl")
@@ -69,6 +74,23 @@ class Dataset(Dataset):
             for path in self.video_paths
             if os.path.exists(os.path.join(self.t5_dir, os.path.basename(path).replace(".mp4", ".pickle")))
         ]
+        # drop videos that have fewer frames than the requested sequence length,
+        # otherwise every time the sampler hits one it raises and re-samples,
+        # spamming warnings and over-sampling the longer clips.
+        kept = []
+        n_too_short = 0
+        for path in self.video_paths:
+            try:
+                n_frames = len(VideoReader(path, ctx=cpu(0), num_threads=1))
+            except Exception:
+                n_frames = 0
+            if n_frames >= self.sequence_length:
+                kept.append(path)
+            else:
+                n_too_short += 1
+        if n_too_short:
+            log.info(f"Dropped {n_too_short} videos with < {self.sequence_length} frames")
+        self.video_paths = kept
         log.info(f"{len(self.video_paths)} videos in total")
 
         self.wrong_number = 0
@@ -107,6 +129,8 @@ class Dataset(Dataset):
             fps = vr.get_avg_fps()
         except Exception:  # failed to read FPS, assume it is 16
             fps = 16
+        if self.override_fps is not None:
+            fps = self.override_fps
         del vr  # delete the reader to avoid memory leak
         return frame_data, fps
 
