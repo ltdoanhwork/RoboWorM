@@ -7,10 +7,7 @@ from typing import Iterable
 import numpy as np
 import torch
 
-from vggt.models.vggt import VGGT
 from vggt.utils.geometry import unproject_depth_map_to_point_map
-from vggt.utils.load_fn import load_and_preprocess_images
-from vggt.utils.pose_enc import pose_encoding_to_extri_intri
 
 from .camera_pose_stability import compute_pose_stability_metric
 from .geometric_consistency import (
@@ -23,9 +20,37 @@ from .utils import intersect_frames
 
 @dataclass(frozen=True)
 class ModelContext:
-    model: VGGT
+    # VGGT (legacy) or VGGT-Omega (new).
+    model: object
     device: str
     autocast_dtype: torch.dtype
+    backend: str = "vggt"  # "vggt" | "vggt_omega"
+    omega_checkpoint: str | None = None
+    omega_image_resolution: int = 512
+    omega_patch_size: int = 16
+
+
+def _load_vggt_omega_modules() -> tuple[object, object, object]:
+    """
+    Import VGGT-Omega modules without requiring it to be installed as a package.
+
+    Returns:
+      (VGGTOmega, load_and_preprocess_images_omega, encoding_to_camera)
+    """
+    import sys
+
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+    wmb_vggt_root = os.path.abspath(os.path.join(this_dir, ".."))
+    wmb_root = os.path.abspath(os.path.join(wmb_vggt_root, ".."))
+    omega_root = os.path.join(wmb_root, "vggt-omega")
+    if omega_root not in sys.path:
+        sys.path.insert(0, omega_root)
+
+    from vggt_omega.models import VGGTOmega  # type: ignore
+    from vggt_omega.utils.load_fn import load_and_preprocess_images as load_and_preprocess_images_omega  # type: ignore
+    from vggt_omega.utils.pose_enc import encoding_to_camera  # type: ignore
+
+    return VGGTOmega, load_and_preprocess_images_omega, encoding_to_camera
 
 
 def default_device_dtype() -> tuple[str, torch.dtype]:
@@ -42,15 +67,44 @@ def init_model_context(
     device: str | None = None,
     autocast_dtype: torch.dtype | None = None,
     model_name: str = "facebook/VGGT-1B",
+    backend: str = "vggt",
+    omega_checkpoint: str | None = None,
+    omega_image_resolution: int = 512,
+    omega_patch_size: int = 16,
 ) -> ModelContext:
     if device is None or autocast_dtype is None:
         d, dt = default_device_dtype()
         device = d if device is None else device
         autocast_dtype = dt if autocast_dtype is None else autocast_dtype
 
-    model = VGGT.from_pretrained(model_name).to(device)
-    model.eval()
-    return ModelContext(model=model, device=device, autocast_dtype=autocast_dtype)
+    backend = str(backend).strip().lower()
+    if backend not in {"vggt", "vggt_omega"}:
+        raise ValueError(f"Unknown backend={backend!r}; expected 'vggt' or 'vggt_omega'")
+
+    if backend == "vggt":
+        from vggt.models.vggt import VGGT  # local import: avoids huggingface_hub dependency when using omega
+        model = VGGT.from_pretrained(model_name).to(device)
+        model.eval()
+        return ModelContext(model=model, device=device, autocast_dtype=autocast_dtype, backend="vggt")
+
+    # VGGT-Omega: load local checkpoint path.
+    if omega_checkpoint is None:
+        raise ValueError("omega_checkpoint is required when backend='vggt_omega'")
+    VGGTOmega, _load_fn, _enc = _load_vggt_omega_modules()
+
+    model = VGGTOmega(patch_size=int(omega_patch_size)).to(device).eval()
+    state = torch.load(str(omega_checkpoint), map_location="cpu")
+    model.load_state_dict(state)
+
+    return ModelContext(
+        model=model,
+        device=device,
+        autocast_dtype=autocast_dtype,
+        backend="vggt_omega",
+        omega_checkpoint=str(omega_checkpoint),
+        omega_image_resolution=int(omega_image_resolution),
+        omega_patch_size=int(omega_patch_size),
+    )
 
 
 def _frame_image_paths(episode_dir: str, views: list[str], fi: int) -> list[str]:
@@ -63,6 +117,7 @@ def _chunk_list(items: list[int], chunk_size: int) -> list[list[int]]:
 
 
 def _load_images_chunk_cpu(
+    ctx: ModelContext,
     episode_dir: str,
     views: list[str],
     frame_ids: list[int],
@@ -80,12 +135,23 @@ def _load_images_chunk_cpu(
         raise ValueError("frame_ids must not be empty")
 
     s = len(views)
+    if ctx.backend == "vggt_omega":
+        _VGGTOmega, load_fn_omega, _encoding_to_camera = _load_vggt_omega_modules()
+        preprocess = lambda paths: load_fn_omega(  # noqa: E731
+            paths,
+            image_resolution=int(ctx.omega_image_resolution),
+            patch_size=int(ctx.omega_patch_size),
+        )
+    else:
+        from vggt.utils.load_fn import load_and_preprocess_images  # local import
+        preprocess = load_and_preprocess_images
+
     if parallel_frames and len(frame_ids) > 1:
         workers = max(1, min(int(load_workers), len(frame_ids)))
 
         def _load_one_frame(fi: int) -> torch.Tensor:
             paths = _frame_image_paths(episode_dir, views, fi)
-            return load_and_preprocess_images(paths)
+            return preprocess(paths)
 
         with ThreadPoolExecutor(max_workers=workers) as pool:
             frame_tensors = list(pool.map(_load_one_frame, frame_ids))
@@ -94,7 +160,7 @@ def _load_images_chunk_cpu(
     paths: list[str] = []
     for fi in frame_ids:
         paths.extend(_frame_image_paths(episode_dir, views, fi))
-    flat = load_and_preprocess_images(paths)
+    flat = preprocess(paths)
     b = len(frame_ids)
     return flat.view(b, s, *flat.shape[1:])
 
@@ -116,6 +182,7 @@ def _load_images_batched(
 ) -> torch.Tensor:
     """Load frames as (B, S, 3, H, W) on ``ctx.device``."""
     images_cpu = _load_images_chunk_cpu(
+        ctx,
         episode_dir,
         views,
         frame_ids,
@@ -143,15 +210,26 @@ def _forward_vggt(
     if images.ndim != 5:
         raise ValueError(f"Expected images (B,S,3,H,W), got {tuple(images.shape)}")
 
+    if ctx.backend == "vggt_omega":
+        _VGGTOmega, _load_fn_omega, encoding_to_camera = _load_vggt_omega_modules()
+        preds = ctx.model(images)  # type: ignore[misc]
+        pose_enc = preds["pose_enc"]
+        depth_map = preds["depth"]
+        depth_conf = preds["depth_conf"]
+        extrinsic, intrinsic = encoding_to_camera(pose_enc, preds["images"].shape[-2:])
+        return extrinsic, intrinsic, depth_map, depth_conf
+
+    # legacy VGGT
+    from vggt.utils.pose_enc import pose_encoding_to_extri_intri  # local import
     if ctx.device == "cuda":
         with torch.cuda.amp.autocast(dtype=ctx.autocast_dtype):
-            aggregated_tokens_list, ps_idx = ctx.model.aggregator(images)
-            pose_enc = ctx.model.camera_head(aggregated_tokens_list)[-1]
-            depth_map, depth_conf = ctx.model.depth_head(aggregated_tokens_list, images, ps_idx)
+            aggregated_tokens_list, ps_idx = ctx.model.aggregator(images)  # type: ignore[assignment]
+            pose_enc = ctx.model.camera_head(aggregated_tokens_list)[-1]  # type: ignore[union-attr]
+            depth_map, depth_conf = ctx.model.depth_head(aggregated_tokens_list, images, ps_idx)  # type: ignore[union-attr]
     else:
-        aggregated_tokens_list, ps_idx = ctx.model.aggregator(images)
-        pose_enc = ctx.model.camera_head(aggregated_tokens_list)[-1]
-        depth_map, depth_conf = ctx.model.depth_head(aggregated_tokens_list, images, ps_idx)
+        aggregated_tokens_list, ps_idx = ctx.model.aggregator(images)  # type: ignore[assignment]
+        pose_enc = ctx.model.camera_head(aggregated_tokens_list)[-1]  # type: ignore[union-attr]
+        depth_map, depth_conf = ctx.model.depth_head(aggregated_tokens_list, images, ps_idx)  # type: ignore[union-attr]
 
     extrinsic, intrinsic = pose_encoding_to_extri_intri(pose_enc, images.shape[-2:])
     return extrinsic, intrinsic, depth_map, depth_conf
@@ -165,10 +243,18 @@ def _run_vggt(
     """
     Single timestep (B=1). Returns (1,S,...) tensors.
     """
-    images = _images_cpu_to_device(
-        load_and_preprocess_images(list(image_paths)).unsqueeze(0),
-        ctx.device,
-    )
+    if ctx.backend == "vggt_omega":
+        _VGGTOmega, load_fn_omega, _encoding_to_camera = _load_vggt_omega_modules()
+        images_cpu = load_fn_omega(
+            list(image_paths),
+            image_resolution=int(ctx.omega_image_resolution),
+            patch_size=int(ctx.omega_patch_size),
+        ).unsqueeze(0)
+    else:
+        from vggt.utils.load_fn import load_and_preprocess_images  # local import
+        images_cpu = load_and_preprocess_images(list(image_paths)).unsqueeze(0)
+
+    images = _images_cpu_to_device(images_cpu, ctx.device)
     extrinsic, intrinsic, depth_map, depth_conf = _forward_vggt(ctx, images)
     return extrinsic, intrinsic, depth_map, depth_conf
 
@@ -184,7 +270,9 @@ def _iter_vggt_frames(
     prefetch_chunks: bool = True,
     parallel_frame_load: bool = True,
     load_workers: int = 4,
-) -> Iterator[tuple[int, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]]:
+) -> Iterator[
+    tuple[int, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
+]:
     """
     Yield per-frame VGGT outputs using batch dimension B for multiple timesteps.
 
@@ -205,6 +293,7 @@ def _iter_vggt_frames(
             load_executor = ThreadPoolExecutor(max_workers=1)
             pending_load = load_executor.submit(
                 _load_images_chunk_cpu,
+                ctx,
                 episode_dir,
                 views,
                 chunks[0],
@@ -218,6 +307,7 @@ def _iter_vggt_frames(
                 if chunk_idx + 1 < len(chunks):
                     pending_load = load_executor.submit(  # type: ignore[union-attr]
                         _load_images_chunk_cpu,
+                        ctx,
                         episode_dir,
                         views,
                         chunks[chunk_idx + 1],
@@ -228,6 +318,7 @@ def _iter_vggt_frames(
                     pending_load = None
             else:
                 images_cpu = _load_images_chunk_cpu(
+                    ctx,
                     episode_dir,
                     views,
                     chunk,
@@ -327,17 +418,17 @@ def _process_geometric_frame(
         depth_map.squeeze(0), extrinsic.squeeze(0), intrinsic.squeeze(0)
     )
 
-    disjoint = multiview_disjoint_bbox(point_map, min_overlap_ratio=0.05)
-    is_disjoint = bool(disjoint["disjoint"])
+    # disjoint = multiview_disjoint_bbox(point_map, min_overlap_ratio=0.05)
+    # is_disjoint = bool(disjoint["disjoint"])
 
-    if is_disjoint:
-        return _GeometricFrameResult(
-            frame=int(fi),
-            geometric_consistency=0.0,
-            disjoint=True,
-            details=None,
-            include_in_overall=False,
-        )
+    # if is_disjoint:
+    #     return _GeometricFrameResult(
+    #         frame=int(fi),
+    #         geometric_consistency=0.0,
+    #         disjoint=True,
+    #         details=None,
+    #         include_in_overall=False,
+    #     )
 
     depth_rendered_np, rendered_valid_mask = render_depth_from_point_map(
         point_map_by_unprojection=point_map,

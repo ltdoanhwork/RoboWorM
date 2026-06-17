@@ -27,7 +27,15 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--host", default="127.0.0.1")
     p.add_argument("--port", type=int, default=6111)
     p.add_argument("--authkey", default="vggt")
-    p.add_argument("--model", default="facebook/VGGT-1B")
+    p.add_argument("--backend", default="vggt", choices=["vggt", "vggt_omega"])
+    p.add_argument("--model", default="facebook/VGGT-1B", help="Legacy VGGT HF model name (backend=vggt).")
+    p.add_argument(
+        "--omega_checkpoint",
+        default=None,
+        help="Path to VGGT-Omega checkpoint .pt (backend=vggt_omega).",
+    )
+    p.add_argument("--omega_image_resolution", type=int, default=512)
+    p.add_argument("--omega_patch_size", type=int, default=16)
     p.add_argument("--device", default=None, help='e.g. "cuda" or "cpu" (default: auto)')
     p.add_argument("--dtype", default=None, help='e.g. "bfloat16", "float16", "float32" (default: auto)')
     return p.parse_args()
@@ -138,6 +146,10 @@ def serve_forever() -> None:
         device=args.device,
         autocast_dtype=_dtype_from_str(args.dtype),
         model_name=args.model,
+        backend=args.backend,
+        omega_checkpoint=args.omega_checkpoint,
+        omega_image_resolution=args.omega_image_resolution,
+        omega_patch_size=args.omega_patch_size,
     )
 
     addr = (args.host, int(args.port))

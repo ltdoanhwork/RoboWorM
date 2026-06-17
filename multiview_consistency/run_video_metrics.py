@@ -197,10 +197,12 @@ def _run_batch(args: argparse.Namespace, views: list[str]) -> None:
 
     rows: list[dict] = []
     conn = _connect(args.host, args.port, args.authkey)
+    import time
     try:
         for name, episode_dir in episodes:
-            print(f"[run_video_metrics] {name} ...", file=sys.stderr)
+            # print(f"[run_video_metrics] {name} ...", file=sys.stderr)
             try:
+                time_start = time.time()
                 result = _request_metrics(
                     conn,
                     episode_dir=episode_dir,
@@ -211,6 +213,8 @@ def _run_batch(args: argparse.Namespace, views: list[str]) -> None:
                     frame_batch_size=args.frame_batch_size,
                     **_load_kwargs_from_args(args),
                 )
+                time_end = time.time()
+                print(f"[run_video_metrics] {name} took {time_end - time_start} seconds", file=sys.stderr)
                 rows.append(
                     {
                         "name": name,

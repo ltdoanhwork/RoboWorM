@@ -36,6 +36,11 @@ The code uses the intersection of frame indices across views.
 
 ### 1) Start the model service (loads VGGT once)
 
+Using VGGT-Omega
+```bash
+python -m multiview_consistency.model_service --host 127.0.0.1 --port 6111 --backend vggt_omega --dtype float16 --omega_checkpoint "path/to/checkpoint/vggt_omega_1b_512.pt" --omega_image_resolution 512 --omega_patch_size 16
+```
+or using VGGT
 ```bash
 python -m multiview_consistency.model_service --host 127.0.0.1 --port 6111 --dtype float16
 ```
