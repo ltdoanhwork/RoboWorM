@@ -1,0 +1,29 @@
+{
+    "state": {
+        "full": {
+            "original_key": "observation.state",
+            "start": 0,
+            "end": 7,
+            "rotation_type": null,
+            "absolute": true,
+            "dtype": "float32",
+            "range": null
+        }
+    },
+    "action": {
+        "full": {
+            "original_key": "action",
+            "start": 0,
+            "end": 7,
+            "rotation_type": null,
+            "absolute": true,
+            "dtype": "float32",
+            "range": null
+        }
+    },
+    "video": {
+        "global": {
+            "original_key": "observation.images.global"
+        }
+    }
+}

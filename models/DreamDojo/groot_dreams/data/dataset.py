@@ -292,8 +292,8 @@ class LeRobotSingleDataset(Dataset):
             elif embodiment_tag == EmbodimentTag.ALOHA:
                 modality_meta_path = SHARED_META_DIR / "ALOHA_modality.json"
                 print(f"WARNING: Could not find modality.json in dataset path, falling back to {modality_meta_path}")
-            elif embodiment_tag == EmbodimentTag.DROID:
-                modality_meta_path = SHARED_META_DIR / "DROID_modality.json"
+            elif embodiment_tag == EmbodimentTag.SINGLE_ARM:
+                modality_meta_path = SHARED_META_DIR / "SingleArm_modality.json"
                 print(f"WARNING: Could not find modality.json in dataset path, falling back to {modality_meta_path}")
             else:
                 raise ValueError(f"Embodiment tag {embodiment_tag} not supported")
@@ -378,9 +378,9 @@ class LeRobotSingleDataset(Dataset):
         elif embodiment_tag == EmbodimentTag.ALOHA:
             default_stats_path = SHARED_META_DIR / "ALOHA_stats.json"
             default_modality_meta_path = SHARED_META_DIR / "ALOHA_modality.json"
-        elif embodiment_tag == EmbodimentTag.DROID:
-            default_stats_path = SHARED_META_DIR / "DROID_stats.json"
-            default_modality_meta_path = SHARED_META_DIR / "DROID_modality.json"
+        elif embodiment_tag == EmbodimentTag.SINGLE_ARM:
+            default_stats_path = SHARED_META_DIR / "SingleArm_stats.json"
+            default_modality_meta_path = SHARED_META_DIR / "SingleArm_modality.json"
         else:
             raise ValueError(f"Embodiment tag {embodiment_tag} not supported")
         if has_default_meta:
@@ -521,8 +521,8 @@ class LeRobotSingleDataset(Dataset):
             elif self.tag == "aloha":
                 modality_meta_path = SHARED_META_DIR / "ALOHA_modality.json"
                 print(f"WARNING: Could not find modality.json in dataset path, falling back to {modality_meta_path}")
-            elif self.tag == "droid":
-                modality_meta_path = SHARED_META_DIR / "DROID_modality.json"
+            elif self.tag == "single_arm":
+                modality_meta_path = SHARED_META_DIR / "SingleArm_modality.json"
                 print(f"WARNING: Could not find modality.json in dataset path, falling back to {modality_meta_path}")
             else:
                 raise ValueError(f"Embodiment tag {self.tag} not supported")
@@ -1117,8 +1117,9 @@ class WrappedLeRobotSingleDataset(LeRobotSingleDataset):
             action_seq = torch.cat([gt_actions, latent_actions], dim=-1)
         elif "aloha" in _ds_path_lower or "/bimanual/" in _ds_path_lower:
             action_seq[:, 169:183] = delta_actions
-        elif "droid" in _ds_path_lower or "/single_arm/" in _ds_path_lower:
+        elif "/single_arm/" in _ds_path_lower:
             action_seq[:, 183:190] = delta_actions
+
         elif "gr1" in _ds_path_lower or "/humanoid/" in _ds_path_lower:
             action_seq[:, :29] = delta_actions
         elif "g1" in _ds_path_lower:

@@ -7,4 +7,4 @@ class EmbodimentTag(Enum):
     G1 = "g1"
     YAM = "yam"
     ALOHA = "aloha"
-    DROID = "droid"
+    SINGLE_ARM = "single_arm"
