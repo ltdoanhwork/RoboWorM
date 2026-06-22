@@ -28,7 +28,7 @@ sys.path.insert(0, str(ROOT / "models" / "DreamDojo"))
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkpoints-dir", type=str, required=True)
-    parser.add_argument("--experiment", type=str, default="dreamdojo_2b_480_640_droid_sv")
+    parser.add_argument("--experiment", type=str, default="dreamdojo_2b_480_640_single_arm_sv")
     parser.add_argument("--dataset-path", type=str, required=True)
     parser.add_argument("--save-dir", type=str, required=True)
     parser.add_argument("--chunk-size", type=int, default=12)

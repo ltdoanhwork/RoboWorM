@@ -320,9 +320,9 @@ CUDA_VISIBLE_DEVICES=0,1 ITER_NAME=iter_000070000 PROMPT_REFINE=1 MASTER_PORT=29
 
 CUDA_VISIBLE_DEVICES=2,3 ITER_NAME=iter_000120000 PROMPT_REFINE=0 bash scripts/run_bimanual_singleview_dreamgen_16fps.sh 
 
-CUDA_VISIBLE_DEVICES=0,1 ITER_NAME=iter_000110000 PROMPT_REFINE=0 MASTER_PORT=29700 bash scripts/run_bimanual_singleview_dreamgen_16fps.sh
+CUDA_VISIBLE_DEVICES=2,3 ITER_NAME=iter_000110000 PROMPT_REFINE=0 MASTER_PORT=29700 bash scripts/run_bimanual_singleview_dreamgen_16fps.sh
 
-CUDA_VISIBLE_DEVICES=0,1,2,3 ITER_NAME=iter_000090000 PROMPT_REFINE=0 bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
+CUDA_VISIBLE_DEVICES=0,1 ITER_NAME=iter_000090000 PROMPT_REFINE=0 bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
 
 CUDA_VISIBLE_DEVICES=2,3 PROMPT_REFINE=1 bash scripts/run_single_arm_singleview_dreamgen_base.sh
 
@@ -335,3 +335,8 @@ CUDA_VISIBLE_DEVICES=2,3 NUM_GPUS=2 ITER_NAME=iter_000090000 PROMPT_REFINE=1 bas
 CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_singleview_dreamdojo_worldcache.sh
 
 CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_singleview_dreamdojo_dicache.sh
+
+
+
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_singleview_dreamdojo_worldcache.sh
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_singleview_dreamdojo_dicache.sh
