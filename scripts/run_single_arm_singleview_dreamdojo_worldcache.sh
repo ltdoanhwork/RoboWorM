@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# DreamDojo full-episode inference with WorldCache acceleration on single-arm (DROID) singleview.
+# DreamDojo autoregressive inference with WorldCache acceleration on single-arm singleview.
+# Full rollout: video output length matches the GT input episode (chunk-strided autoregressive).
 # Runs datasets/single_arm/singleview/makovian and .../non_makovian separately.
 # Output: sampling_dataset/worldcache/single_arm/output/singleview/dreamdojo/{split}/iter_*/episode_*/
 #
@@ -14,8 +15,8 @@ cd "$ROOT"
 source "${ROOT}/models/DreamDojo/.venv/bin/activate"
 export PYTHONPATH="${ROOT}/models/DreamDojo:${PYTHONPATH:-}"
 
-CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/exp_logs/dreamdojo_logs/dreamdojo/exp_droid_sv/droid_singlearm_singleview/checkpoints/iter_000100000}"
-EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_480_640_droid_sv}"
+CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/exp_logs/dreamdojo_logs/dreamdojo/exp_single_arm_sv/single_arm_singleview/checkpoints}"
+EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_480_640_single_arm_sv}"
 NUM_FRAMES="${NUM_FRAMES:-97}"
 SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/worldcache/single_arm/output/singleview/dreamdojo}"
 NUM_EPISODES="${NUM_EPISODES:-}"
@@ -42,7 +43,7 @@ for split in makovian non_makovian; do
   save_base="${SAVE_ROOT}/${split}"
   mkdir -p "${save_base}"
   echo "=== DreamDojo WorldCache single-arm SV: ${split} -> ${save_base} ==="
-  python "${ROOT}/scripts/infer_humanoid_singleview_full_episode.py" \
+  python "${ROOT}/scripts/infer_single_arm_singleview_autoregressive.py" \
     --checkpoints-dir "${CHECKPOINTS_DIR}" \
     --experiment "${EXPERIMENT}" \
     --dataset-path "${dataset_dir}" \

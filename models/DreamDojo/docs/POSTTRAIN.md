@@ -13,7 +13,7 @@ The training configurations are managed by yaml under `configs`. To launch post-
     bash launch.sh dreamdojo_2b_480_640_agibot
     bash launch.sh dreamdojo_2b_480_640_yam
     bash launch.sh dreamdojo_2b_480_640_aloha
-    bash launch.sh dreamdojo_2b_480_640_droid_sv
+    bash launch.sh dreamdojo_2b_480_640_single_arm_sv
     ```
 
 For simplicity of implementation, we set the dimension of the first action projection layer to 384. This will slightly increase computational requirements but makes checkpoint resuming easier. You can also reduce it to the dimension actually used by the model after post-training. Our dimension assignment follows this rule:
@@ -23,7 +23,7 @@ For simplicity of implementation, we set the dimension of the first action proje
 - [101, 147): Bimanual YAM
 - [147, 169): AgiBot
 - [169, 183): ALOHA bimanual (14-dim qpos)
-- [183, 190): DROID single-arm (7-dim cartesian + gripper)
+- [183, 190): single_arm (RoboChallenge) (7-dim state + gripper)
 - [190, 220): Reserved for other usages
 - [220, 352): MANO actions
 - [352, 384): Latent actions

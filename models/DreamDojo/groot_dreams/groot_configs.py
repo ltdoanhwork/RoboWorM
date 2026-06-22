@@ -124,10 +124,10 @@ def construct_modality_config_and_transforms(num_frames, embodiment, agibot_pad_
                 ],
             ),
         }
-    elif embodiment == "droid":
+    elif embodiment == "single_arm":
         timestep_interval = 1
         delta_indices = list(range(0, num_frames * timestep_interval, timestep_interval))
-        video_key = "video.exterior_1_left"
+        video_key = "video.global"
         config = {
             "video": ModalityConfig(
                 delta_indices=delta_indices,
@@ -136,15 +136,13 @@ def construct_modality_config_and_transforms(num_frames, embodiment, agibot_pad_
             "state": ModalityConfig(
                 delta_indices=[0],
                 modality_keys=[
-                    "state.cartesian_position",
-                    "state.gripper_position",
+                    "state.state",
                 ],
             ),
             "action": ModalityConfig(
                 delta_indices=delta_indices,
                 modality_keys=[
-                    "action.cartesian_position",
-                    "action.gripper_position",
+                    "action.action",
                 ],
             ),
         }

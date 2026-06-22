@@ -31,13 +31,24 @@ export PYTHONPATH="${ROOT}/models/dreamgen:${ROOT}:${PYTHONPATH:-}"
 
 # --- Checkpoint (from single_arm_static_16fps training) ---
 CKPT_BASE="${ROOT}/exp_logs/dreamgen_logs/posttraining/singleview/single_arm_static_singleview_16fps"
-ITER_NAME="${ITER_NAME:-iter_000050000}"
-DIT_PATH="${DIT_PATH:-${CKPT_BASE}/checkpoints_40_per/model/${ITER_NAME}.pt}"
+CKPT_MODEL_DIR="${CKPT_BASE}/checkpoints_40_per/model"
+
+# Default to the latest checkpoint recorded by the trainer if ITER_NAME unset.
+if [[ -z "${ITER_NAME:-}" ]]; then
+  latest_file="${CKPT_BASE}/checkpoints_40_per/latest_checkpoint.txt"
+  if [[ -f "${latest_file}" ]]; then
+    ITER_NAME="$(basename "$(cat "${latest_file}")" .pt)"
+  else
+    ITER_NAME="iter_000020000"
+  fi
+fi
+
+DIT_PATH="${DIT_PATH:-${CKPT_MODEL_DIR}/${ITER_NAME}.pt}"
 
 if [[ ! -f "${DIT_PATH}" ]]; then
   echo "ERROR: Checkpoint not found at ${DIT_PATH}" >&2
   echo "Available checkpoints:" >&2
-  ls "${CKPT_BASE}/checkpoints_40_per/model/"*.pt 2>/dev/null >&2 || true
+  ls "${CKPT_MODEL_DIR}/"*.pt 2>/dev/null >&2 || true
   exit 1
 fi
 

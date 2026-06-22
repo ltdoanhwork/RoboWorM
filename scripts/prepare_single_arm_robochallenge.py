@@ -47,6 +47,47 @@ SELECTION = {
 }
 
 
+def quat_wxyz_to_euler_xyz(quat):
+    """Convert a [w, x, y, z] unit quaternion to XYZ Euler angles (radians)."""
+    w, x, y, z = quat
+    # roll (x-axis)
+    sinr_cosp = 2.0 * (w * x + y * z)
+    cosr_cosp = 1.0 - 2.0 * (x * x + y * y)
+    roll = np.arctan2(sinr_cosp, cosr_cosp)
+    # pitch (y-axis)
+    sinp = 2.0 * (w * y - z * x)
+    sinp = np.clip(sinp, -1.0, 1.0)
+    pitch = np.arcsin(sinp)
+    # yaw (z-axis)
+    siny_cosp = 2.0 * (w * z + x * y)
+    cosy_cosp = 1.0 - 2.0 * (y * y + z * z)
+    yaw = np.arctan2(siny_cosp, cosy_cosp)
+    return [float(roll), float(pitch), float(yaw)]
+
+
+def canonicalize_pose7(vec):
+    """Return a canonical 7D [xyz(3), euler_xyz(3), gripper(1)] vector.
+
+    RoboChallenge tasks come in two layouts:
+      - 7D: [xyz(3), euler_xyz(3), gripper(1)] -> returned unchanged.
+      - 8D: [xyz(3), quat_wxyz(4), gripper(1)] -> quaternion converted to euler.
+    """
+    arr = np.asarray(vec, dtype=np.float32).ravel()
+    if arr.shape[0] == 7:
+        return arr.tolist()
+    if arr.shape[0] == 8:
+        xyz = arr[0:3].tolist()
+        euler = quat_wxyz_to_euler_xyz(arr[3:7])
+        gripper = [float(arr[7])]
+        return xyz + euler + gripper
+    raise ValueError(f"Unexpected state/action dim {arr.shape[0]}, expected 7 or 8")
+
+
+def canonicalize_column(values):
+    """Apply canonicalize_pose7 to every row of a list-of-vectors column."""
+    return [canonicalize_pose7(v) for v in values]
+
+
 def hf(path, cache):
     return hf_hub_download(REPO, path, repo_type="dataset", local_dir=cache)
 
@@ -230,6 +271,14 @@ def main():
                 # rewrite frame_index / episode_index / task_index
                 n = rows.num_rows
                 d = rows.to_pydict()
+                # Canonicalize state/action to a uniform 7D layout
+                # [xyz(3), euler_xyz(3), gripper(1)]. Some RoboChallenge tasks
+                # (e.g. press_three_buttons) store an 8D [xyz, quat_wxyz, gripper]
+                # representation; convert the quaternion to Euler so every task
+                # shares the same dimensionality required by training.
+                for col in ("observation.state", "action"):
+                    if col in d:
+                        d[col] = canonicalize_column(d[col])
                 d["frame_index"] = list(range(n))
                 d["episode_index"] = [out_ep_idx] * n
                 d["task_index"] = [t_idx] * n

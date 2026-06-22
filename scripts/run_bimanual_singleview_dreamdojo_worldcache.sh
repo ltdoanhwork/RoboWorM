@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 # DreamDojo full-episode inference with WorldCache acceleration on bimanual (ALOHA) singleview.
+# Aligned with scripts/run_bimanual_singleview_dreamdojo_full_episode.sh:
+#   - same inference script (infer_bimanual_singleview_single_segment.py, pure autoregressive)
+#   - same chunk-size / save-fps / output layout / checkpoint resolution
+#   - only difference: WorldCache acceleration enabled.
 # Runs datasets/bimanual/singleview/makovian and .../non_makovian separately.
 # Output: sampling_dataset/worldcache/bimanual/output/singleview/dreamdojo/{split}/iter_*/episode_*/
 #
@@ -14,12 +18,13 @@ cd "$ROOT"
 source "${ROOT}/models/DreamDojo/.venv/bin/activate"
 export PYTHONPATH="${ROOT}/models/DreamDojo:${PYTHONPATH:-}"
 
-CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/exp_logs/dreamdojo_logs/dreamdojo/exp_aloha_resume70k/aloha_bimanual_singleview_full/checkpoints/iter_000100000}"
+CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/exp_logs/dreamdojo_logs/dreamdojo/exp_aloha_resume70k/aloha_bimanual_singleview_full/checkpoints}"
 EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_480_640_aloha_resume70k_bimanual_sv}"
-NUM_FRAMES="${NUM_FRAMES:-49}"
+CHUNK_SIZE="${CHUNK_SIZE:-12}"
+SAVE_FPS="${SAVE_FPS:-10}"
 SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/worldcache/bimanual/output/singleview/dreamdojo}"
 NUM_EPISODES="${NUM_EPISODES:-}"
-GUIDANCE="${GUIDANCE:-1.5}"
+GUIDANCE="${GUIDANCE:-0}"
 
 # WorldCache parameters
 WORLDCACHE_NUM_STEPS="${WORLDCACHE_NUM_STEPS:-35}"
@@ -27,6 +32,21 @@ WORLDCACHE_REL_L1_THRESH="${WORLDCACHE_REL_L1_THRESH:-0.03}"
 WORLDCACHE_RET_RATIO="${WORLDCACHE_RET_RATIO:-0.4}"
 WORLDCACHE_PROBE_DEPTH="${WORLDCACHE_PROBE_DEPTH:-4}"
 WORLDCACHE_MOTION_SENSITIVITY="${WORLDCACHE_MOTION_SENSITIVITY:-5.0}"
+
+get_task_paths() {
+  local split="$1"
+  local split_dir="${ROOT}/datasets/bimanual/singleview/${split}"
+  local paths=""
+  for d in $(find "${split_dir}" -maxdepth 1 -mindepth 1 -type d | sort); do
+    if find "$d/data" -name "*.parquet" 2>/dev/null | grep -q .; then
+      if [ -n "${paths}" ]; then
+        paths="${paths},"
+      fi
+      paths="${paths}${d}"
+    fi
+  done
+  echo "${paths}"
+}
 
 ep_flag=()
 if [[ -n "${NUM_EPISODES}" ]]; then
@@ -40,18 +60,7 @@ for split in makovian non_makovian; do
     continue
   fi
 
-  # Build comma-separated list of all task directories that have data/
-  dataset_paths=""
-  for task_dir in "${split_dir}"/*/; do
-    if [ -d "${task_dir}data" ]; then
-      if [ -n "${dataset_paths}" ]; then
-        dataset_paths="${dataset_paths},${task_dir%/}"
-      else
-        dataset_paths="${task_dir%/}"
-      fi
-    fi
-  done
-
+  dataset_paths="$(get_task_paths "${split}")"
   if [ -z "${dataset_paths}" ]; then
     echo "Skipping ${split}: no task directories with data/ found" >&2
     continue
@@ -60,13 +69,13 @@ for split in makovian non_makovian; do
   save_base="${SAVE_ROOT}/${split}"
   mkdir -p "${save_base}"
   echo "=== DreamDojo WorldCache bimanual SV: ${split} -> ${save_base} ==="
-  python "${ROOT}/scripts/infer_humanoid_singleview_full_episode.py" \
+  python "${ROOT}/scripts/infer_bimanual_singleview_single_segment.py" \
     --checkpoints-dir "${CHECKPOINTS_DIR}" \
     --experiment "${EXPERIMENT}" \
     --dataset-path "${dataset_paths}" \
     --save-dir "${save_base}" \
-    --num-frames "${NUM_FRAMES}" \
-    --save-fps 15 \
+    --chunk-size "${CHUNK_SIZE}" \
+    --save-fps "${SAVE_FPS}" \
     --output-dir "${ROOT}/output/dreamdojo_worldcache_bimanual_sv_${split}" \
     --guidance "${GUIDANCE}" \
     --worldcache-enabled \

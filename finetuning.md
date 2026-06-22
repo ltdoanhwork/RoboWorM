@@ -26,6 +26,7 @@ python finetuning/dreamdojo/lam_project/infer_video.py \
 
 ## DreamDojo Posttraining (Action-Conditioned Video2World)
 
+
 ### Training
 
 ```bash
@@ -35,7 +36,7 @@ source ./models/DreamDojo/.venv/bin/activate
 NPROC=2 bash finetuning/dreamdojo/launch.sh dreamdojo_2b_480_640_aloha
 
 # DROID single-arm
-NPROC=2 bash finetuning/dreamdojo/launch.sh dreamdojo_2b_480_640_droid_sv
+NPROC=2 bash finetuning/dreamdojo/launch.sh dreamdojo_2b_480_640_single_arm_sv
 
 # Single GPU debug
 NPROC=1 bash finetuning/dreamdojo/launch.sh dreamdojo_2b_480_640_aloha
@@ -308,13 +309,34 @@ NPROC=4 bash finetuning/dreamgen/train_humanoid_16fps.sh
 SKIP_PREP=1 NPROC=4 bash finetuning/dreamgen/train_single_arm_static_16fps.sh
 
 CUDA_VISIBLE_DEVICES=0 ITER_NAME=iter_000080000 bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
-CUDA_VISIBLE_DEVICES=0,1 ITER_NAME=iter_000120000 PROMPT_REFINE=0 bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
-CUDA_VISIBLE_DEVICES=2,3 ITER_NAME=iter_000070000 PROMPT_REFINE=0 bash scripts/run_bimanual_singleview_dreamgen_16fps.sh -> khá tốt
 
+CUDA_VISIBLE_DEVICES=0,1 ITER_NAME=iter_000090000 PROMPT_REFINE=1 bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
+
+CUDA_VISIBLE_DEVICES=2,3 ITER_NAME=iter_000070000 PROMPT_REFINE=0 bash scripts/run_bimanual_singleview_dreamgen_16fps.sh -> khá tốt
 
 CUDA_VISIBLE_DEVICES=2,3 ITER_NAME=iter_000070000 PROMPT_REFINE=0 bash scripts/run_bimanual_singleview_dreamgen_16fps.sh 
 
 CUDA_VISIBLE_DEVICES=0,1 ITER_NAME=iter_000070000 PROMPT_REFINE=1 MASTER_PORT=29600 bash scripts/run_bimanual_singleview_dreamgen_16fps.sh 
 
-CUDA_VISIBLE_DEVICES=2,3 ITER_NAME=iter_000080000 PROMPT_REFINE=0 bash scripts/run_bimanual_singleview_dreamgen_16fps.sh 
-CUDA_VISIBLE_DEVICES=0,1 ITER_NAME=iter_000110000 PROMPT_REFINE=1 MASTER_PORT=29700 bash scripts/run_bimanual_singleview_dreamgen_16fps.sh
+CUDA_VISIBLE_DEVICES=2,3 ITER_NAME=iter_000120000 PROMPT_REFINE=0 bash scripts/run_bimanual_singleview_dreamgen_16fps.sh 
+
+CUDA_VISIBLE_DEVICES=2,3 ITER_NAME=iter_000110000 PROMPT_REFINE=0 MASTER_PORT=29700 bash scripts/run_bimanual_singleview_dreamgen_16fps.sh
+
+CUDA_VISIBLE_DEVICES=0,1 ITER_NAME=iter_000090000 PROMPT_REFINE=0 bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
+
+CUDA_VISIBLE_DEVICES=2,3 PROMPT_REFINE=1 bash scripts/run_single_arm_singleview_dreamgen_base.sh
+
+CUDA_VISIBLE_DEVICES=0,1 NUM_GPUS=2 bash scripts/run_humanoid_singleview_dreamgen_base.sh
+
+CUDA_VISIBLE_DEVICES=0,1, NUM_GPUS=2 ITER_NAME=iter_000100000 bash scripts/run_humanoid_singleview_dreamgen_static16fps.sh
+
+CUDA_VISIBLE_DEVICES=2,3 NUM_GPUS=2 ITER_NAME=iter_000090000 PROMPT_REFINE=1 bash scripts/run_humanoid_singleview_dreamgen_static16fps.sh
+
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_singleview_dreamdojo_worldcache.sh
+
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_singleview_dreamdojo_dicache.sh
+
+
+
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_singleview_dreamdojo_worldcache.sh
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_singleview_dreamdojo_dicache.sh

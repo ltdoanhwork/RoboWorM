@@ -20,7 +20,6 @@ def is_lerobot_dataset(dataset_path: str) -> bool:
         or "aloha" in p
         or "/bimanual/" in p
         or "/humanoid/" in p
-        or "droid" in p
         or "/single_arm/" in p
     )
 
@@ -158,8 +157,8 @@ class MultiVideoActionDataset(torch.utils.data.Dataset):
                 p = path.lower()
                 if "aloha" in p or "/bimanual/" in p:
                     embodiment = "aloha"
-                elif "droid" in p or "/single_arm/" in p:
-                    embodiment = "droid"
+                elif "/single_arm/" in p:
+                    embodiment = "single_arm"
                 elif "gr1" in p or "/humanoid/" in p:
                     embodiment = "gr1"
                 elif "agibot" in p:

@@ -27,7 +27,7 @@ sys.path.insert(0, str(ROOT / "models" / "DreamDojo"))
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkpoints-dir", type=str, required=True)
-    parser.add_argument("--experiment", type=str, default="dreamdojo_2b_480_640_droid_sv")
+    parser.add_argument("--experiment", type=str, default="dreamdojo_2b_480_640_single_arm_sv")
     parser.add_argument("--dataset-path", type=str, required=True)
     parser.add_argument("--save-dir", type=str, required=True)
     parser.add_argument("--num-frames", type=int, default=97,
@@ -36,14 +36,51 @@ def parse_args():
     parser.add_argument("--num-episodes", type=int, default=None)
     parser.add_argument("--save-fps", type=int, default=15)
     parser.add_argument("--output-dir", type=str, default=None)
+    parser.add_argument("--guidance", type=float, default=0.0)
+
+    # WorldCache
+    parser.add_argument("--worldcache-enabled", action="store_true")
+    parser.add_argument("--worldcache-num-steps", type=int, default=35)
+    parser.add_argument("--worldcache-rel-l1-thresh", type=float, default=0.03)
+    parser.add_argument("--worldcache-ret-ratio", type=float, default=0.4)
+    parser.add_argument("--worldcache-probe-depth", type=int, default=4)
+    parser.add_argument("--worldcache-motion-sensitivity", type=float, default=5.0)
+
+    # DiCache
+    parser.add_argument("--dicache-enabled", action="store_true")
+    parser.add_argument("--dicache-num-steps", type=int, default=35)
+    parser.add_argument("--dicache-rel-l1-thresh", type=float, default=0.08)
+    parser.add_argument("--dicache-ret-ratio", type=float, default=0.2)
+    parser.add_argument("--dicache-probe-depth", type=int, default=2)
     return parser.parse_args()
+
+
+def build_cache_config_from_args(args):
+    """Build a cache strategy config from CLI flags (WorldCache / DiCache)."""
+    from methods.cache_strategy.common import WorldCacheConfig, DiCacheConfig
+
+    if getattr(args, "worldcache_enabled", False):
+        return WorldCacheConfig(
+            num_steps=args.worldcache_num_steps,
+            rel_l1_thresh=args.worldcache_rel_l1_thresh,
+            ret_ratio=args.worldcache_ret_ratio,
+            probe_depth=args.worldcache_probe_depth,
+            motion_sensitivity=args.worldcache_motion_sensitivity,
+        )
+    if getattr(args, "dicache_enabled", False):
+        return DiCacheConfig(
+            num_steps=args.dicache_num_steps,
+            rel_l1_thresh=args.dicache_rel_l1_thresh,
+            ret_ratio=args.dicache_ret_ratio,
+            probe_depth=args.dicache_probe_depth,
+        )
+    return None
 
 
 def build_model(args):
     from cosmos_predict2.action_conditioned_config import ActionConditionedSetupArguments
     from cosmos_predict2.config import MODEL_CHECKPOINTS
     from cosmos_predict2._src.predict2.inference.video2world import Video2WorldInference
-    from cosmos_predict2.cache_runtime import build_cache_runtime_config
 
     setup_args = ActionConditionedSetupArguments(
         model="2B/robot/action-cond",
@@ -79,7 +116,7 @@ def build_model(args):
 
     checkpoint = MODEL_CHECKPOINTS[setup_args.model_key]
     experiment = setup_args.experiment or checkpoint.experiment
-    cache_config = build_cache_runtime_config(setup_args)
+    cache_config = build_cache_config_from_args(args)
 
     video2world_cli = Video2WorldInference(
         experiment_name=experiment,
@@ -97,8 +134,12 @@ def build_model(args):
 def build_dataset(args):
     from groot_dreams.dataloader import MultiVideoActionDataset
 
+    # Fixed 13-frame windows (matching the model's state_t / chunk pipeline),
+    # so all_steps provides dense base indices up to traj_length-13. The
+    # chunk_size-strided plan then walks the full episode. (args.num_frames is
+    # kept for CLI compatibility but does not bound the rollout length.)
     dataset = MultiVideoActionDataset(
-        num_frames=args.num_frames,
+        num_frames=13,
         dataset_path=args.dataset_path,
         data_split="full",
         single_base_index=False,
@@ -108,8 +149,13 @@ def build_dataset(args):
     return dataset
 
 
-def get_episode_plan(dataset, num_frames):
-    """Group dataset indices by episode. Return plan with non-overlapping segment indices."""
+def get_episode_plan(dataset, chunk_size):
+    """Group dataset indices by episode. Return plan with chunk-strided segment indices.
+
+    Steps through each episode in increments of chunk_size timesteps so the
+    autoregressive rollout covers the ENTIRE episode (matching the input video
+    length), rather than stopping after a single num_frames window.
+    """
     episodes = {}
 
     global_offset = 0
@@ -124,7 +170,7 @@ def get_episode_plan(dataset, num_frames):
 
     delta_indices = dataset.datasets[0].lerobot_dataset.modality_configs["video"].delta_indices
     timestep_interval = delta_indices[1] - delta_indices[0]
-    stride_raw = (num_frames - 1) * timestep_interval
+    stride_raw = chunk_size * timestep_interval
 
     plan = []
     for key, steps in episodes.items():
@@ -154,7 +200,7 @@ def get_episode_plan(dataset, num_frames):
     return plan
 
 
-def generate_autoregressive(video2world_cli, first_frame, all_actions, chunk_size, all_lam_video=None):
+def generate_autoregressive(video2world_cli, first_frame, all_actions, chunk_size, all_lam_video=None, guidance=0):
     """
     Pure autoregressive rollout from a single GT frame.
     Each chunk uses the last predicted frame as conditioning (no GT).
@@ -193,7 +239,7 @@ def generate_autoregressive(video2world_cli, first_frame, all_actions, chunk_siz
             action=torch.from_numpy(actions_chunk).float()
             if isinstance(actions_chunk, np.ndarray)
             else actions_chunk,
-            guidance=0,
+            guidance=guidance,
             num_video_frames=num_video_frames,
             num_latent_conditional_frames=1,
             resolution="480,640",
@@ -232,7 +278,7 @@ def main():
     dataset = build_dataset(args)
 
     print("Planning episodes...")
-    plan = get_episode_plan(dataset, args.num_frames)
+    plan = get_episode_plan(dataset, args.chunk_size)
     total_episodes = len(plan)
     num_episodes = min(args.num_episodes or total_episodes, total_episodes)
     print(f"Total episodes: {total_episodes}, processing: {num_episodes}")
@@ -272,14 +318,14 @@ def main():
 
         for seg_idx, data_id in enumerate(ep_info["segment_data_ids"]):
             sample = dataset[data_id]
-            actions = sample["action"][:args.num_frames - 1]
+            actions = sample["action"][:args.chunk_size]
             if isinstance(actions, torch.Tensor):
                 actions = actions.numpy()
             all_actions_parts.append(actions)
 
             lam = sample.get("lam_video", None)
             if lam is not None:
-                all_lam_parts.append(lam)
+                all_lam_parts.append(lam[:args.chunk_size * 2])
 
             gt_seg = sample["video"].permute(1, 2, 3, 0).numpy()
             gt_segments.append(gt_seg)
@@ -298,15 +344,21 @@ def main():
 
         # Pure autoregressive rollout from first GT frame only
         pred_video = generate_autoregressive(
-            video2world_cli, first_frame, full_actions, args.chunk_size, full_lam
+            video2world_cli, first_frame, full_actions, args.chunk_size, full_lam,
+            guidance=args.guidance,
         )
 
         if pred_video is None:
             print(f"  Skipping episode {traj_id}: could not generate any frames.")
             continue
 
-        # Build GT by concatenating non-overlapping segments
-        concat_gt = np.concatenate(gt_segments, axis=0)
+        # Build GT by concatenating segments: first segment full, subsequent
+        # segments contribute only their first chunk_size frames (segments are
+        # chunk_size-strided so the tail would otherwise overlap).
+        gt_list = [gt_segments[0]] + [
+            gt_segments[i][:args.chunk_size] for i in range(1, len(gt_segments))
+        ]
+        concat_gt = np.concatenate(gt_list, axis=0)
 
         # Trim to same length
         min_len = min(len(pred_video), len(concat_gt))

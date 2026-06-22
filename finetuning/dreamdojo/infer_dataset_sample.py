@@ -16,10 +16,10 @@ Usage:
         --episode_idx 0 \
         --ckpt_path exp_logs/dreamdojo_logs/dreamdojo/exp_aloha/aloha_bimanual_singleview/checkpoints/iter_000010000
 
-    # DROID dataset
+    # single_arm (RoboChallenge) dataset
     python finetuning/dreamdojo/infer_dataset_sample.py \
-        --dataset_path datasets/single_arm/singleview/chunk-000/... \
-        --episode_idx 5 --embodiment droid
+        --dataset_path datasets/single_arm/singleview/makovian \
+        --episode_idx 5 --embodiment single_arm
 """
 
 import argparse
@@ -128,7 +128,7 @@ def main():
     parser.add_argument("--ckpt_path", type=str,
                         default=str(PROJECT_ROOT / "checkpoints/dreamdojo/2B_pretrain/iter_000140000"),
                         help="Path to model checkpoint directory")
-    parser.add_argument("--experiment_name", type=str, default="dreamdojo_2b_480_640_aloha",
+    parser.add_argument("--experiment_name", type=str, default="dreamdojo_2b_480_640_single_arm_sv",
                         help="Experiment name for config resolution")
     parser.add_argument("--guidance", type=float, default=3.0)
     parser.add_argument("--seed", type=int, default=42)
@@ -142,8 +142,8 @@ def main():
     if args.embodiment is None:
         if "aloha" in ds_lower or "bimanual" in ds_lower:
             args.embodiment = "aloha"
-        elif "droid" in ds_lower or "single_arm" in ds_lower:
-            args.embodiment = "droid"
+        elif "single_arm" in ds_lower:
+            args.embodiment = "single_arm"
         else:
             raise ValueError("Cannot auto-detect embodiment. Specify --embodiment.")
     print(f"Embodiment: {args.embodiment}")

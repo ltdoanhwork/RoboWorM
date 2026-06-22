@@ -55,7 +55,7 @@ SPLITS="${SPLITS:-makovian non_makovian}"
 NUM_CHUNKS="${NUM_CHUNKS:-auto}"
 # Skip episodes whose required chunk count exceeds this (heavy autoregressive drift
 # + long runtime). Set to 0 to disable the cap.
-MAX_CHUNKS="${MAX_CHUNKS:-8}"
+MAX_CHUNKS="${MAX_CHUNKS:-0}"
 FORCE_REGENERATE="${FORCE_REGENERATE:-0}"
 PROMPT_REFINE="${PROMPT_REFINE:-1}"
 

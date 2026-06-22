@@ -1,7 +1,7 @@
 job:
   project: dreamdojo
-  group: exp_droid_sv
-  name: droid_singlearm_singleview
+  group: exp_single_arm_sv
+  name: single_arm_singleview
 
 trainer:
   grad_accum_iter: 1
