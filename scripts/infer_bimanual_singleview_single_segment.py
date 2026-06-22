@@ -36,14 +36,64 @@ def parse_args():
     parser.add_argument("--num-episodes", type=int, default=None)
     parser.add_argument("--save-fps", type=int, default=10)
     parser.add_argument("--output-dir", type=str, default=None)
+    parser.add_argument("--guidance", type=float, default=0)
+
+    # WorldCache
+    parser.add_argument("--worldcache-enabled", action="store_true")
+    parser.add_argument("--worldcache-num-steps", type=int, default=35)
+    parser.add_argument("--worldcache-rel-l1-thresh", type=float, default=0.03)
+    parser.add_argument("--worldcache-ret-ratio", type=float, default=0.4)
+    parser.add_argument("--worldcache-probe-depth", type=int, default=4)
+    parser.add_argument("--worldcache-motion-sensitivity", type=float, default=5.0)
+
+    # FasterCache
+    parser.add_argument("--fastercache-enabled", action="store_true")
+    parser.add_argument("--fastercache-start-step", type=int, default=0)
+    parser.add_argument("--fastercache-model-interval", type=int, default=5)
+    parser.add_argument("--fastercache-block-interval", type=int, default=3)
+
+    # DiCache
+    parser.add_argument("--dicache-enabled", action="store_true")
+    parser.add_argument("--dicache-num-steps", type=int, default=35)
+    parser.add_argument("--dicache-rel-l1-thresh", type=float, default=0.08)
+    parser.add_argument("--dicache-ret-ratio", type=float, default=0.2)
+    parser.add_argument("--dicache-probe-depth", type=int, default=2)
+
     return parser.parse_args()
+
+
+def build_cache_config_from_args(args):
+    """Build cache config from CLI args (mirrors infer_humanoid_singleview_full_episode.py)."""
+    from methods.cache_strategy.common import WorldCacheConfig, DiCacheConfig, FasterCacheConfig
+
+    if getattr(args, "worldcache_enabled", False):
+        return WorldCacheConfig(
+            num_steps=args.worldcache_num_steps,
+            rel_l1_thresh=args.worldcache_rel_l1_thresh,
+            ret_ratio=args.worldcache_ret_ratio,
+            probe_depth=args.worldcache_probe_depth,
+            motion_sensitivity=args.worldcache_motion_sensitivity,
+        )
+    if getattr(args, "fastercache_enabled", False):
+        return FasterCacheConfig(
+            start_step=args.fastercache_start_step,
+            model_interval=args.fastercache_model_interval,
+            block_interval=args.fastercache_block_interval,
+        )
+    if getattr(args, "dicache_enabled", False):
+        return DiCacheConfig(
+            num_steps=args.dicache_num_steps,
+            rel_l1_thresh=args.dicache_rel_l1_thresh,
+            ret_ratio=args.dicache_ret_ratio,
+            probe_depth=args.dicache_probe_depth,
+        )
+    return None
 
 
 def build_model(args):
     from cosmos_predict2.action_conditioned_config import ActionConditionedSetupArguments
     from cosmos_predict2.config import MODEL_CHECKPOINTS
     from cosmos_predict2._src.predict2.inference.video2world import Video2WorldInference
-    from cosmos_predict2.cache_runtime import build_cache_runtime_config
 
     setup_args = ActionConditionedSetupArguments(
         model="2B/robot/action-cond",
@@ -79,7 +129,7 @@ def build_model(args):
 
     checkpoint = MODEL_CHECKPOINTS[setup_args.model_key]
     experiment = setup_args.experiment or checkpoint.experiment
-    cache_config = build_cache_runtime_config(setup_args)
+    cache_config = build_cache_config_from_args(args)
 
     video2world_cli = Video2WorldInference(
         experiment_name=experiment,
@@ -250,7 +300,7 @@ def main():
                 action=torch.from_numpy(actions).float()
                 if isinstance(actions, np.ndarray)
                 else actions,
-                guidance=0,
+                guidance=args.guidance,
                 num_video_frames=num_video_frames,
                 num_latent_conditional_frames=1,
                 resolution="480,640",

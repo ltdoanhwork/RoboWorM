@@ -1,7 +1,17 @@
 set -ex
 
 NNODES=${NNODES:-1}
-NPROC=${NPROC:-8}
+# Default NPROC to the number of visible GPUs so it works on any machine
+# (e.g. a 2-GPU box) without manually setting NPROC. Override by exporting NPROC.
+if [ -z "${NPROC}" ]; then
+  if [ -n "${CUDA_VISIBLE_DEVICES}" ]; then
+    NPROC=$(echo "${CUDA_VISIBLE_DEVICES}" | tr ',' '\n' | grep -c .)
+  elif command -v nvidia-smi >/dev/null 2>&1; then
+    NPROC=$(nvidia-smi --query-gpu=index --format=csv,noheader | grep -c .)
+  else
+    NPROC=1
+  fi
+fi
 MASTER_ADDR=${MASTER_ADDR:-localhost}
 MASTER_PORT=${MASTER_PORT:-12341}
 NODE_RANK=${NODE_RANK:-0}
