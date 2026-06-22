@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# DreamDojo full-episode inference with FasterCache acceleration on single-arm (DROID) singleview.
+# DreamDojo autoregressive inference with FasterCache acceleration on single-arm singleview.
+# Full rollout: video output length matches the GT input episode (chunk-strided autoregressive).
 # Runs datasets/single_arm/singleview/makovian and .../non_makovian separately.
 # Output: sampling_dataset/fastercache/single_arm/output/singleview/dreamdojo/{split}/iter_*/episode_*/
 #
@@ -22,9 +23,11 @@ NUM_EPISODES="${NUM_EPISODES:-}"
 GUIDANCE="${GUIDANCE:-1.5}"
 
 # FasterCache parameters
-FASTERCACHE_START_STEP="${FASTERCACHE_START_STEP:-0}"
-FASTERCACHE_MODEL_INTERVAL="${FASTERCACHE_MODEL_INTERVAL:-5}"
-FASTERCACHE_BLOCK_INTERVAL="${FASTERCACHE_BLOCK_INTERVAL:-3}"
+# Defaults tuned for FASTER inference (more aggressive caching).
+# Lower start-step caches sooner; larger intervals skip more full forwards.
+FASTERCACHE_START_STEP="${FASTERCACHE_START_STEP:-3}"
+FASTERCACHE_MODEL_INTERVAL="${FASTERCACHE_MODEL_INTERVAL:-7}"
+FASTERCACHE_BLOCK_INTERVAL="${FASTERCACHE_BLOCK_INTERVAL:-4}"
 
 ep_flag=()
 if [[ -n "${NUM_EPISODES}" ]]; then
@@ -40,7 +43,7 @@ for split in makovian non_makovian; do
   save_base="${SAVE_ROOT}/${split}"
   mkdir -p "${save_base}"
   echo "=== DreamDojo FasterCache single-arm SV: ${split} -> ${save_base} ==="
-  python "${ROOT}/scripts/infer_humanoid_singleview_full_episode.py" \
+  python "${ROOT}/scripts/infer_single_arm_singleview_autoregressive.py" \
     --checkpoints-dir "${CHECKPOINTS_DIR}" \
     --experiment "${EXPERIMENT}" \
     --dataset-path "${dataset_dir}" \

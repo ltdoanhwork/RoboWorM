@@ -52,12 +52,18 @@ def parse_args():
     parser.add_argument("--dicache-rel-l1-thresh", type=float, default=0.08)
     parser.add_argument("--dicache-ret-ratio", type=float, default=0.2)
     parser.add_argument("--dicache-probe-depth", type=int, default=2)
+
+    # FasterCache
+    parser.add_argument("--fastercache-enabled", action="store_true")
+    parser.add_argument("--fastercache-start-step", type=int, default=0)
+    parser.add_argument("--fastercache-model-interval", type=int, default=5)
+    parser.add_argument("--fastercache-block-interval", type=int, default=3)
     return parser.parse_args()
 
 
 def build_cache_config_from_args(args):
-    """Build a cache strategy config from CLI flags (WorldCache / DiCache)."""
-    from methods.cache_strategy.common import WorldCacheConfig, DiCacheConfig
+    """Build a cache strategy config from CLI flags (WorldCache / DiCache / FasterCache)."""
+    from methods.cache_strategy.common import WorldCacheConfig, DiCacheConfig, FasterCacheConfig
 
     if getattr(args, "worldcache_enabled", False):
         return WorldCacheConfig(
@@ -73,6 +79,12 @@ def build_cache_config_from_args(args):
             rel_l1_thresh=args.dicache_rel_l1_thresh,
             ret_ratio=args.dicache_ret_ratio,
             probe_depth=args.dicache_probe_depth,
+        )
+    if getattr(args, "fastercache_enabled", False):
+        return FasterCacheConfig(
+            start_step=args.fastercache_start_step,
+            model_interval=args.fastercache_model_interval,
+            block_interval=args.fastercache_block_interval,
         )
     return None
 
