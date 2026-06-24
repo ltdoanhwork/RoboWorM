@@ -399,7 +399,11 @@ predict2_video2world_training_2b_humanoid_singleview_16fps = dict(
 _dataset_single_arm_static_16fps = L(Dataset)(
     dataset_dir=os.path.join(_DATASETS_ROOT, "single_arm_static_dreamgen_16fps"),
     num_frames=93,
-    video_size=(432, 768),
+    # RoboChallenge global view is native 640x480 (4:3). Use the matching Cosmos
+    # 480p bucket (H=480, W=640) so frames are resized 1:1 without aspect-ratio
+    # squashing. Using the 16:9 bucket (432, 768) would stretch 4:3 content
+    # horizontally and compress it vertically, distorting every training frame.
+    video_size=(480, 640),
 )
 
 _dataloader_single_arm_static_16fps = L(DataLoader)(
@@ -434,7 +438,7 @@ predict2_video2world_training_2b_single_arm_static_singleview_16fps = dict(
     job=dict(
         project="posttraining",
         group="singleview",
-        name="single_arm_static_singleview_16fps",
+        name="single_arm_static_singleview_16fps_v2",
     ),
     model_parallel=_MODEL_PARALLEL,
     trainer=_TRAINER,
