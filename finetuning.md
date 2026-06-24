@@ -345,3 +345,7 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_singleview_dreamdojo_dicache.
 CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_singleview_dreamdojo_fastercache.sh 
 
 CUDA_VISIBLE_DEVICES=1 bash scripts/run_bimanual_singleview_dreamdojo_fastercache.sh
+
+CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_multiview_dreamgen_worldcache.sh
+CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_multiview_dreamgen_fastercache.sh
+CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_multiview_dreamgen_dicache.sh
