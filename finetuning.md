@@ -348,4 +348,33 @@ CUDA_VISIBLE_DEVICES=1 bash scripts/run_bimanual_singleview_dreamdojo_fastercach
 
 CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_multiview_dreamgen_worldcache.sh
 CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_multiview_dreamgen_fastercache.sh
-CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_multiview_dreamgen_dicache.sh
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_multiview_dreamgen_dicache.sh
+
+cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
+CUDA_VISIBLE_DEVICES=0,1,2,3 NPROC=4 SKIP_PREP=1 SKIP_T5=1 \
+  bash finetuning/dreamgen/train_bimanual_multiview_grid.sh
+
+CUDA_VISIBLE_DEVICES=1 NUM_GPUS=1 ITER_NAME=iter_000080000 MASTER_PORT=29650 bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
+MAX_EPISODES=5 NUM_GPUS=1 CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_multiview_dreamgen_seg_test.sh
+
+MAX_EPISODES=3 NUM_GPUS=1 CUDA_VISIBLE_DEVICES=0 ITER_NAME=iter_000050000 bash scripts/run_bimanual_multiview_dreamgen_seg_rollout.sh
+MAX_EPISODES=3 NUM_CONDITIONAL_FRAMES=5 NUM_GPUS=1 CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_multiview_dreamgen_seg_rollout.sh
+
+CUDA_VISIBLE_DEVICES=0 CATEGORY=makovian MAX_EPISODES=4 \
+  bash scripts/run_single_arm_multiview_dreamgen_itm.sh
+
+
+Cấu hình	Total inference	Self-Attn / step	DiT MLP / step
+Dense (baseline)
+516.1s
+4.66s
+1.88s
+
+
+CUDA_VISIBLE_DEVICES=0 CATEGORY=makovian MAX_EPISODES=10 \
+  ITM_COMPRESS_RATIO=0.35 ITM_START_LAYER_IDX=4 \
+  ITM_PRUNE_FROM_STEP=0 ITM_MERGE_FROM_STEP=0 \
+  bash scripts/run_single_arm_multiview_dreamgen_itm.sh
+
+CUDA_VISIBLE_DEVICES=0 CATEGORY=makovian MAX_EPISODES=4 \
+  bash scripts/run_single_arm_multiview_dreamgen_sito.sh
