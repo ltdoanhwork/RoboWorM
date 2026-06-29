@@ -488,3 +488,61 @@ torchrun --master_port=29501 -m models.dreamgen.examples.video2world_gr00t \
 | Max throughput, quality acceptable | ITM Aggressive or SiTo Balanced |
 | VRAM reduction priority | Add `--itm_merge_mlp` to any ITM preset |
 | Multi-GPU inference needed | Neither (SiTo/ITM are single-GPU only) |
+
+## Performance Insight — SiTo can be SLOWER than dense on DreamGen DiT
+
+Measured on `single_arm` multiview DreamGen 14B (`run_single_arm_multiview_dreamgen_sito.sh`),
+SiTo did **not** speed up inference and was in fact slightly slower than the dense
+baseline. More aggressive pruning made it worse, not better.
+
+### Observed numbers (per DiT forward, single A100-80GB)
+
+| Run | Total Self-Attention | DiT Blocks | Denoise / step | it/s |
+|---|---|---|---|---|
+| Dense (`--sito` off, auto defaults) | ~1.892s | ~5.30s | ~10.6s | ~10.65 s/it |
+| SiTo `prune_ratio=0.5 start_layer=4 keep_last=1` | ~1.893s | ~5.29s | ~10.7s | ~10.75 s/it |
+
+Self-Attention time is essentially identical (1.893 ≈ 1.892s) — token pruning
+bought **zero** attention speedup, and the extra bookkeeping made the total slower.
+
+### Root causes
+
+1. **Prune is undone every block.** In `text2image_dit.py` the block does
+   `prepare → prune → self_attn → recover` inside a single block, so the
+   sequence length returns to full length immediately. The shortened sequence
+   only feeds one attention call, never propagating across blocks.
+
+2. **The `transformer_engine` self-attention backend does not benefit from this
+   token reduction at this scale.** `DotProductAttention(qkv_format="bshd",
+   attn_mask_type="no_mask")` is overhead/launch-bound for the per-frame token
+   counts here, so cutting ~50% of tokens per frame does not reduce wall-clock
+   attention time.
+
+3. **The timing log hides SiTo cost.** Only `recover()` is inside the measured
+   `self_attn` window; `prepare()` + `prune()` (a Python per-frame loop doing
+   `F.normalize`, `matmul`, `randn_like`, `argsort`, `nonzero`, `unique`,
+   `scatter_`) run *before* the timer. That cost is attributed to "DiT Blocks
+   time", not "Total Self-Attention", which is why Self-Attention looks unchanged
+   while the total grows.
+
+4. **"Stronger" pruning is slower.** `start_layer_idx=4 keep_last_n_dense=1`
+   prunes more blocks than the defaults (`start_layer_idx=6 keep_last_n_dense=2`),
+   so it adds more `prepare`/`recover` overhead while attention still does not
+   speed up → net slower than even the default SiTo config.
+
+### Takeaways
+
+- SiTo's prune-then-recover-per-block design is a poor fit for DreamGen's
+  full-3D self-attention on the `transformer_engine` backend. Do not expect a
+  speedup here; expect a small slowdown.
+- To actually reduce wall-clock time on DreamGen DiT, prefer:
+  - **Cache methods** (DiCache / WorldCache / FasterCache) — cut redundant
+    recompute across denoise steps, attacking "Denoise time" directly.
+  - **Kernel-level sparse attention** (PISA / Radial / SVG / NATTEN) — change the
+    attention kernel itself instead of pruning around it.
+- If SiTo must be used, a real fix requires (a) pruning **once and keeping it
+  across multiple blocks** (no per-block recover), and (b) a backend that
+  actually scales with shorter sequence length. This is a non-trivial code change.
+- When benchmarking any acceleration method, compare **total wall-clock** (e.g.
+  Denoise/step or it/s), not the "Total Self-Attention" line — that line excludes
+  `prepare`/`prune` overhead and can be misleading.

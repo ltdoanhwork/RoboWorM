@@ -366,15 +366,25 @@ CUDA_VISIBLE_DEVICES=0 CATEGORY=makovian MAX_EPISODES=4 \
 
 Cấu hình	Total inference	Self-Attn / step	DiT MLP / step
 Dense (baseline)
-516.1s
-4.66s
-1.88s
+516.1s        4.66s                         1.88s
 
 
-CUDA_VISIBLE_DEVICES=0 CATEGORY=makovian MAX_EPISODES=10 \
-  ITM_COMPRESS_RATIO=0.35 ITM_START_LAYER_IDX=4 \
-  ITM_PRUNE_FROM_STEP=0 ITM_MERGE_FROM_STEP=0 \
-  bash scripts/run_single_arm_multiview_dreamgen_itm.sh
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_multiview_dreamgen_itm.sh
 
 CUDA_VISIBLE_DEVICES=0 CATEGORY=makovian MAX_EPISODES=4 \
+  bash scripts/run_single_arm_multiview_dreamgen_sito.sh
+
+# nhanh hơn tí: prune mạnh hơn (0.5), bắt đầu sớm hơn (layer 4), giữ ít layer dense (1)
+CUDA_VISIBLE_DEVICES=0 CATEGORY=makovian MAX_EPISODES=8 \
+  SITO_PRUNE_RATIO=0.5 SITO_START_LAYER_IDX=4 SITO_KEEP_LAST_N_DENSE=1 \
+  bash scripts/run_single_arm_multiview_dreamgen_sito.sh
+
+# nhanh hơn tí: prune mạnh hơn (0.5), bắt đầu sớm hơn (layer 4), giữ ít layer dense (1)
+CUDA_VISIBLE_DEVICES=0 CATEGORY=makovian MAX_EPISODES=4 \
+  SITO_PRUNE_RATIO=0.5 SITO_START_LAYER_IDX=4 SITO_KEEP_LAST_N_DENSE=1 \
+  bash scripts/run_single_arm_multiview_dreamgen_sito.sh
+
+  CUDA_VISIBLE_DEVICES=0 CATEGORY=makovian MAX_EPISODES=2 \
+  SITO_PRUNE_RATIO=0.7 SITO_PATCH_H=3 SITO_PATCH_W=3 SITO_NOISE_ALPHA=0 \
+  SITO_START_LAYER_IDX=6 SITO_KEEP_LAST_N_DENSE=2 \
   bash scripts/run_single_arm_multiview_dreamgen_sito.sh
