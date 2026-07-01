@@ -354,11 +354,12 @@ cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_p
 CUDA_VISIBLE_DEVICES=0,1,2,3 NPROC=4 SKIP_PREP=1 SKIP_T5=1 \
   bash finetuning/dreamgen/train_bimanual_multiview_grid.sh
 
-CUDA_VISIBLE_DEVICES=1 NUM_GPUS=1 ITER_NAME=iter_000080000 MASTER_PORT=29650 bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
+CUDA_VISIBLE_DEVICES=1 NUM_GPUS=1 ITER_NAME=iter_000090000 MASTER_PORT=29650 bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
 MAX_EPISODES=5 NUM_GPUS=1 CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_multiview_dreamgen_seg_test.sh
 
-MAX_EPISODES=3 NUM_GPUS=1 CUDA_VISIBLE_DEVICES=0 ITER_NAME=iter_000050000 bash scripts/run_bimanual_multiview_dreamgen_seg_rollout.sh
-MAX_EPISODES=3 NUM_CONDITIONAL_FRAMES=5 NUM_GPUS=1 CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_multiview_dreamgen_seg_rollout.sh
+
+
+MAX_EPISODES=5 NUM_CONDITIONAL_FRAMES=5 NUM_GPUS=1 CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_multiview_dreamgen_seg_rollout.sh
 
 CUDA_VISIBLE_DEVICES=0 CATEGORY=makovian MAX_EPISODES=4 \
   bash scripts/run_single_arm_multiview_dreamgen_itm.sh
@@ -371,20 +372,4 @@ Dense (baseline)
 
 CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_multiview_dreamgen_itm.sh
 
-CUDA_VISIBLE_DEVICES=0 CATEGORY=makovian MAX_EPISODES=4 \
-  bash scripts/run_single_arm_multiview_dreamgen_sito.sh
-
-# nhanh hơn tí: prune mạnh hơn (0.5), bắt đầu sớm hơn (layer 4), giữ ít layer dense (1)
-CUDA_VISIBLE_DEVICES=0 CATEGORY=makovian MAX_EPISODES=8 \
-  SITO_PRUNE_RATIO=0.5 SITO_START_LAYER_IDX=4 SITO_KEEP_LAST_N_DENSE=1 \
-  bash scripts/run_single_arm_multiview_dreamgen_sito.sh
-
-# nhanh hơn tí: prune mạnh hơn (0.5), bắt đầu sớm hơn (layer 4), giữ ít layer dense (1)
-CUDA_VISIBLE_DEVICES=0 CATEGORY=makovian MAX_EPISODES=4 \
-  SITO_PRUNE_RATIO=0.5 SITO_START_LAYER_IDX=4 SITO_KEEP_LAST_N_DENSE=1 \
-  bash scripts/run_single_arm_multiview_dreamgen_sito.sh
-
-  CUDA_VISIBLE_DEVICES=0 CATEGORY=makovian MAX_EPISODES=2 \
-  SITO_PRUNE_RATIO=0.7 SITO_PATCH_H=3 SITO_PATCH_W=3 SITO_NOISE_ALPHA=0 \
-  SITO_START_LAYER_IDX=6 SITO_KEEP_LAST_N_DENSE=2 \
-  bash scripts/run_single_arm_multiview_dreamgen_sito.sh
+CUDA_VISIBLE_DEVICES=1 nohup bash scripts/run_single_arm_multiview_dreamgen_sito.sh 

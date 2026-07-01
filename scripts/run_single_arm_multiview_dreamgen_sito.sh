@@ -53,7 +53,11 @@ NUM_GPUS=1
 # prune_ratio left to the auto schedule unless SITO_PRUNE_RATIO is set.
 SITO_START_LAYER_IDX="${SITO_START_LAYER_IDX:-6}"
 SITO_KEEP_LAST_N_DENSE="${SITO_KEEP_LAST_N_DENSE:-2}"
-SITO_PRUNE_RATIO="${SITO_PRUNE_RATIO:-}"
+# Best config from the quality/speed sweep (see README_prunning.md):
+# temporal grouping, prune_ratio 0.20, no inference noise.
+SITO_PRUNE_RATIO="${SITO_PRUNE_RATIO:-0.20}"
+SITO_GROUP_MODE="${SITO_GROUP_MODE:-temporal}"
+SITO_NOISE_ALPHA="${SITO_NOISE_ALPHA:-0}"
 
 CATEGORIES=()
 if [[ -n "${CATEGORY_FILTER}" ]]; then
@@ -69,7 +73,7 @@ echo " Data root  : ${DATASET_ROOT}"
 echo " Categories : ${CATEGORIES[*]}"
 echo " Output root: ${OUTPUT_ROOT}"
 echo " Model      : ${MODEL_SIZE}  GPUs: ${NUM_GPUS}  FPS: ${FPS}"
-echo " SiTo       : start_layer=${SITO_START_LAYER_IDX} keep_last=${SITO_KEEP_LAST_N_DENSE} prune=${SITO_PRUNE_RATIO:-auto}"
+echo " SiTo       : group=${SITO_GROUP_MODE} start_layer=${SITO_START_LAYER_IDX} keep_last=${SITO_KEEP_LAST_N_DENSE} prune=${SITO_PRUNE_RATIO:-auto}"
 echo "============================================================"
 echo ""
 
@@ -127,25 +131,71 @@ for CAT in "${CATEGORIES[@]}"; do
     continue
   fi
 
+  # Match the dense run logic: filter the manifest down to only episodes whose
+  # output mp4 + .txt do not yet exist, into a temp batch. Skip inference if none
+  # are pending. (FORCE_REGENERATE_OUTPUTS=1 runs the full manifest as-is.)
+  BATCH_FOR_INFER="${BATCH_JSON}"
+  if [[ "${FORCE_REGENERATE_OUTPUTS}" != "1" ]]; then
+    BATCH_TMP="$(mktemp --suffix=_dreamgen_sito_batch.json)"
+    ITEM_COUNT="$(python - "${BATCH_JSON}" "${BATCH_TMP}" <<'PY'
+import json, sys
+from pathlib import Path
+
+def output_done(path: Path) -> bool:
+    try:
+        if not path.is_file() or path.stat().st_size <= 0:
+            return False
+        txt = path.with_suffix(".txt")
+        return txt.is_file() and txt.stat().st_size > 0
+    except OSError:
+        return False
+
+src, dst = Path(sys.argv[1]), Path(sys.argv[2])
+items = json.loads(src.read_text(encoding="utf-8"))
+pending = [x for x in items if not output_done(Path(x["output_video"]))]
+dst.write_text(json.dumps(pending, indent=2, ensure_ascii=False), encoding="utf-8")
+print(len(pending))
+PY
+)"
+    BATCH_FOR_INFER="${BATCH_TMP}"
+  else
+    ITEM_COUNT="$(python -c "import json; print(len(json.load(open(r'''${BATCH_JSON}''', encoding='utf-8'))))")"
+  fi
+
+  if [[ "${ITEM_COUNT}" -eq 0 ]]; then
+    echo "[INFO] ${CAT}: no pending episodes (all outputs exist) — skipping inference."
+    [[ -n "${BATCH_TMP:-}" ]] && rm -f "${BATCH_TMP}"
+    unset BATCH_TMP
+    echo ""
+    continue
+  fi
+  echo "[INFO] ${CAT}: inference items: ${ITEM_COUNT} (manifest: ${BATCH_JSON})"
+
   SITO_FLAGS=(
     --use_sito
     --sito_start_layer_idx   "${SITO_START_LAYER_IDX}"
     --sito_keep_last_n_dense "${SITO_KEEP_LAST_N_DENSE}"
+    --sito_group_mode        "${SITO_GROUP_MODE}"
   )
   if [[ -n "${SITO_PRUNE_RATIO}" ]]; then
     SITO_FLAGS+=(--sito_prune_ratio "${SITO_PRUNE_RATIO}")
+  fi
+  if [[ -n "${SITO_NOISE_ALPHA}" ]]; then
+    SITO_FLAGS+=(--sito_noise_alpha "${SITO_NOISE_ALPHA}")
   fi
 
   python -m examples.video2world_gr00t \
     --model_size       "${MODEL_SIZE}" \
     --gr00t_variant    droid \
-    --batch_input_json "${BATCH_JSON}" \
+    --batch_input_json "${BATCH_FOR_INFER}" \
     --prompt_prefix    "" \
     --num_gpus         "${NUM_GPUS}" \
     --disable_guardrail \
     --fps              "${FPS}" \
     "${SITO_FLAGS[@]}"
 
+  [[ -n "${BATCH_TMP:-}" ]] && rm -f "${BATCH_TMP}"
+  unset BATCH_TMP
   echo ""
 done
 

@@ -12,13 +12,18 @@
 #   SKIP_PREP=1 SKIP_T5=1 NPROC=4 bash finetuning/dreamgen/train_bimanual_multiview_grid.sh
 #   WIN=10 STRIDE=5 NPROC=4 bash finetuning/dreamgen/train_bimanual_multiview_grid.sh
 #   CUDA_VISIBLE_DEVICES=0,1,2,3 NPROC=4 bash finetuning/dreamgen/train_bimanual_multiview_grid.sh
+#
+#   # Anti-overfit v2 run (EMA on, save_iter=5k, stronger LR decay, max_iter=30k):
+#   SKIP_PREP=1 SKIP_T5=1 NPROC=4 CUDA_VISIBLE_DEVICES=0,1,2,3 \
+#     EXPERIMENT=predict2_video2world_training_2b_bimanual_multiview_seg_v2 \
+#     bash finetuning/dreamgen/train_bimanual_multiview_grid.sh
 # =============================================================================
 set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$PROJECT_ROOT"
 
-EXPERIMENT="predict2_video2world_training_2b_bimanual_multiview_seg"
+EXPERIMENT="${EXPERIMENT:-predict2_video2world_training_2b_bimanual_multiview_seg}"
 SOURCE_DIR="${PROJECT_ROOT}/datasets/bimanual_multiview_grid_dreamgen"
 DATASET_DIR="${PROJECT_ROOT}/datasets/bimanual_multiview_grid_seg_dreamgen"
 SKIP_PREP="${SKIP_PREP:-0}"

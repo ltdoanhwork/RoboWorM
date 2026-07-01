@@ -231,6 +231,7 @@ def setup_pipeline(args: argparse.Namespace):
         sito_patch_w=getattr(args, "sito_patch_w", 2),
         sito_noise_alpha=getattr(args, "sito_noise_alpha", 0.1),
         sito_sim_beta=getattr(args, "sito_sim_beta", 1.0),
+        sito_group_mode=getattr(args, "sito_group_mode", "per_frame"),
         svg=getattr(args, "use_svg", False),
         svg_variant=getattr(args, "svg_variant", "svg1"),
         svg_start_layer_idx=getattr(args, "svg_start_layer_idx", 4),

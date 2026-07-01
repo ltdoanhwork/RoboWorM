@@ -61,6 +61,7 @@ from methods.cache_strategy.common import (
     WorldCacheConfig,
     DiCacheConfig,
     FasterCacheConfig,
+    ScalingCacheConfig,
     get_cache_backend_name,
     reset_cache_runtime,
 )
@@ -452,7 +453,14 @@ class Video2WorldPipeline(BasePipeline):
 
             log.info("[FasterCache] Applying FasterCache runtime from methods.cache_strategy.FasterCache")
             return apply_fastercache(net, self.cache_config, cfg_mode="sequential")
-        
+        if isinstance(self.cache_config, ScalingCacheConfig):
+            # ScalingCache lives in AM_DiT/src/scl (on sys.path via AM_DIT_SRC),
+            # mirroring how the RFC runtime is imported.
+            from scl.backend import apply_scalingcache
+
+            log.info("[ScalingCache] Applying ScalingCache runtime from AM_DiT/src/scl")
+            return apply_scalingcache(net, self.cache_config)
+
         raise TypeError(f"Unsupported cache config type: {type(self.cache_config)!r}")
 
     def setup_data_key(self) -> None:

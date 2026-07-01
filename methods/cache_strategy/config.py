@@ -5,6 +5,7 @@ from methods.cache_strategy.common import (
     CacheRuntimeConfig,
     DiCacheConfig,
     FasterCacheConfig,
+    ScalingCacheConfig,
     WorldCacheConfig,
 )
 
@@ -42,6 +43,19 @@ def add_dreamgen_cache_args(parser: argparse.ArgumentParser):
     group.add_argument("--dicache-ret-ratio", type=float, default=0.2, help="Retention ratio.")
     group.add_argument("--dicache-probe-depth", type=int, default=2, help="Probe depth.")
 
+    # ScalingCache (implemented in AM_DiT/src/scl)
+    group.add_argument("--scalingcache-enabled", action="store_true", help="Enable ScalingCache (difference-scaling + dynamic-interval) from AM_DiT/src/scl.")
+    group.add_argument("--scalingcache-num-steps", type=int, default=35, help="Total denoising steps (must match inference --num-steps).")
+    group.add_argument("--scalingcache-first-enhance", type=int, default=10, help="Warm-up steps always fully computed.")
+    group.add_argument("--scalingcache-last-enhance", type=int, default=2, help="Final steps always fully computed.")
+    group.add_argument("--scalingcache-error-rate", type=float, default=1.0, help="Scales the adaptive error threshold (dynamic mode).")
+    group.add_argument("--scalingcache-fresh-threshold", type=int, default=2, help="Fixed refresh period when --scalingcache-no-dynamic.")
+    group.add_argument("--scalingcache-no-dynamic", action="store_true", help="Use fixed periodic refresh instead of error-driven scheduling.")
+    group.add_argument("--scalingcache-use-alpha", action="store_true", help="Use offline-fitted scaling coefficients.")
+    group.add_argument("--scalingcache-alpha-dict-path", type=str, default=None, help="Path to alpha_dict_*.pth (when --scalingcache-use-alpha).")
+    group.add_argument("--scalingcache-update-alpha", action="store_true", help="Offline alpha-fitting pass (force Scaling, fit alphas).")
+    group.add_argument("--scalingcache-granularity", type=str, default="block", choices=["block", "submodule"], help="Cache granularity: 'block' (memory-safe, default) or 'submodule' (faithful, ~3x memory).")
+
 
 def build_cache_runtime_config(setup_args: Any) -> CacheRuntimeConfig | None:
     if getattr(setup_args, "fastercache_enabled", False) or getattr(setup_args, "use_fastercache", False):
@@ -77,5 +91,18 @@ def build_cache_runtime_config(setup_args: Any) -> CacheRuntimeConfig | None:
             rel_l1_thresh=getattr(setup_args, "dicache_rel_l1_thresh", 0.08),
             ret_ratio=getattr(setup_args, "dicache_ret_ratio", 0.2),
             probe_depth=getattr(setup_args, "dicache_probe_depth", 2),
+        )
+    if getattr(setup_args, "scalingcache_enabled", False):
+        return ScalingCacheConfig(
+            num_steps=getattr(setup_args, "scalingcache_num_steps", 35),
+            first_enhance=getattr(setup_args, "scalingcache_first_enhance", 10),
+            last_enhance=getattr(setup_args, "scalingcache_last_enhance", 2),
+            error_rate=getattr(setup_args, "scalingcache_error_rate", 1.0),
+            fresh_threshold=getattr(setup_args, "scalingcache_fresh_threshold", 2),
+            dynamic_cache=not getattr(setup_args, "scalingcache_no_dynamic", False),
+            use_alpha=getattr(setup_args, "scalingcache_use_alpha", False),
+            alpha_dict_path=getattr(setup_args, "scalingcache_alpha_dict_path", None),
+            update_alpha=getattr(setup_args, "scalingcache_update_alpha", False),
+            granularity=getattr(setup_args, "scalingcache_granularity", "block"),
         )
     return None

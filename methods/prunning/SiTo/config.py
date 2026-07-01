@@ -54,6 +54,18 @@ def add_sito_args(parser: ArgumentParser) -> ArgumentParser:
         help="Keep the last N eligible self-attention layers dense. Default: 2.",
     )
     group.add_argument(
+        "--sito_group_mode",
+        type=str,
+        default="per_frame",
+        choices=["per_frame", "temporal", "full_2d"],
+        help=(
+            "Token grouping strategy. 'per_frame' (default, v1) prunes spatially "
+            "within each frame. 'temporal' prunes temporally-redundant tokens "
+            "across the time/view axis and shares one prune-once plan across all "
+            "blocks (recommended for DreamGen multiview). 'full_2d' for square grids."
+        ),
+    )
+    group.add_argument(
         "--sito_max_downsample_ratio",
         type=int,
         default=4,

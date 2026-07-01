@@ -63,10 +63,31 @@ def _add_rfc_args(parser: argparse.ArgumentParser) -> None:
                    choices=["none", "copy", "linear", "linear_clamp", "snr_shrink"],
                    help="Block-level RFC predictor. 'none' = dense / use WorldCache "
                         "via DreamGen's own --worldcache-enabled flag.")
+    g.add_argument("--gate-mode", type=str, default="drift",
+                   choices=["drift", "step", "step3"],
+                   help="RCS gate granularity. 'drift'=per-block (original); "
+                        "'step'=one decision/step shared by all blocks "
+                        "(no skip/full mixing); 'step3'=step gate with a copy "
+                        "fallback for near-static steps.")
     g.add_argument("--rcs-threshold", type=float, default=0.1)
+    g.add_argument("--copy-threshold", type=float, default=0.03,
+                   help="step3: drift below this => the step uses 'copy'.")
+    g.add_argument("--error-budget", type=float, default=None,
+                   help="CEB: cumulative reuse-error budget; force a full step "
+                        "once accumulated drift exceeds it. None = timer only.")
+    g.add_argument("--protect-early-frac", type=float, default=0.0,
+                   help="Force full for the first fraction of the denoise schedule.")
+    g.add_argument("--protect-late-frac", type=float, default=0.0,
+                   help="Force full for the last fraction of the denoise schedule.")
+    g.add_argument("--protect-from-block", type=int, default=None,
+                   help="Always fully compute blocks with index >= this (deep "
+                        "blocks are the most error-prone).")
     g.add_argument("--min-full-interval", type=int, default=3)
     g.add_argument("--warmup-steps", type=int, default=3)
     g.add_argument("--s-clamp", type=float, default=3.0)
+    g.add_argument("--s-floor", type=float, default=None,
+                   help="Lower bound on fitted ratio s (two-sided clamp). "
+                        "None = no floor (original behavior).")
     g.add_argument("--snr-shrink-scale", type=float, default=5.0)
     g.add_argument("--output-root", type=str, default=None,
                    help="If set, batch outputs go under this dir (one mp4 per item) "
@@ -102,9 +123,15 @@ def attach_rfc(pipe, args):
         predictor_mode=predictor,
         warmup_steps=args.warmup_steps,
         min_full_interval=args.min_full_interval,
-        gate_mode="drift",
+        gate_mode=args.gate_mode,
         s_clamp=(args.s_clamp if args.rfc_mode in ("linear_clamp", "snr_shrink") else None),
+        s_floor=getattr(args, "s_floor", None),
         snr_shrink_scale=args.snr_shrink_scale,
+        error_budget=getattr(args, "error_budget", None),
+        copy_threshold=getattr(args, "copy_threshold", 0.03),
+        protect_early_frac=getattr(args, "protect_early_frac", 0.0),
+        protect_late_frac=getattr(args, "protect_late_frac", 0.0),
+        protect_from_block=getattr(args, "protect_from_block", None),
     )
 
     # Two independent anchor sets (CFG cond / uncond branches).
@@ -113,6 +140,12 @@ def attach_rfc(pipe, args):
         {idx: RFCBlockState() for idx in runtime.state.block_states},
     ]
     branch_steps = [0, 0]
+    # Per-branch step-gate bookkeeping (the step gate stores its verdict on the
+    # shared state, so we must save/restore it per CFG branch too).
+    branch_gate = [
+        {"force_full": True, "use_copy": False, "decided": -1, "accum": 0.0},
+        {"force_full": True, "use_copy": False, "decided": -1, "accum": 0.0},
+    ]
     call_parity = {"n": 0}
 
     original_forward = dit.forward
@@ -120,9 +153,15 @@ def attach_rfc(pipe, args):
     def wrapped_forward(*fwd_args, **fwd_kwargs):
         branch = call_parity["n"] % 2
         call_parity["n"] += 1
-        # Swap in this branch's anchors + step counter.
-        runtime.state.block_states = branch_states[branch]
-        runtime.state.current_step = branch_steps[branch]
+        st = runtime.state
+        # Swap in this branch's anchors + step counter + step-gate verdict.
+        st.block_states = branch_states[branch]
+        st.current_step = branch_steps[branch]
+        bg = branch_gate[branch]
+        st.step_force_full = bg["force_full"]
+        st.step_use_copy = bg["use_copy"]
+        st.step_decided_at_step = bg["decided"]
+        st.accum_error = bg["accum"]
         ctx = fwd_kwargs.get("attention_runtime_context", None)
         step_frac = 0.0
         if isinstance(ctx, dict) and ctx.get("num_sampling_steps"):
@@ -130,7 +169,12 @@ def attach_rfc(pipe, args):
             step_frac = (ctx.get("diffusion_step_idx", 0) or 0) / max(n, 1)
         runtime.reset_step(step_frac=step_frac)
         out = original_forward(*fwd_args, **fwd_kwargs)
-        branch_steps[branch] = runtime.state.current_step
+        branch_steps[branch] = st.current_step
+        # Persist this branch's step-gate verdict for its next call.
+        bg["force_full"] = st.step_force_full
+        bg["use_copy"] = st.step_use_copy
+        bg["decided"] = st.step_decided_at_step
+        bg["accum"] = st.accum_error
         return out
 
     dit.forward = wrapped_forward
@@ -139,6 +183,7 @@ def attach_rfc(pipe, args):
         call_parity["n"] = 0
         for b in (0, 1):
             branch_steps[b] = 0
+            branch_gate[b] = {"force_full": True, "use_copy": False, "decided": -1, "accum": 0.0}
             for bs in branch_states[b].values():
                 bs.anchor_input = None
                 bs.anchor_output = None
@@ -238,12 +283,10 @@ def _run_batch(pipe, args, runtime, reset_episode, stats):
         else:
             output_path = item.get("output_video", f"output_{idx}.mp4")
 
-        if runtime is not None:
-            reset_episode()
-
         torch.cuda.synchronize()
         t0 = time.perf_counter()
-        ok = _generate_one(pipe, input_video, prompt, output_path, args)
+        ok = _generate_one(pipe, input_video, prompt, output_path, args,
+                           reset_episode=reset_episode if runtime is not None else None)
         torch.cuda.synchronize()
         elapsed = time.perf_counter() - t0
 
@@ -274,8 +317,15 @@ def _run_batch(pipe, args, runtime, reset_episode, stats):
         log.success(f"[RFC] wrote {out_root/'rfc_results.json'}")
 
 
-def _generate_one(pipe, input_path, prompt, output_path, args):
-    """Single LVG rollout (reuses the reference chunk-chaining logic)."""
+def _generate_one(pipe, input_path, prompt, output_path, args, reset_episode=None):
+    """Single LVG rollout (reuses the reference chunk-chaining logic).
+
+    ``reset_episode`` (if given) is called BEFORE each chunk's denoise: each LVG
+    chunk is an independent denoise from noise, so RFC anchors from the previous
+    chunk are meaningless and would otherwise inject the large chunk-boundary
+    error seen in the predictor-debug charts. Resetting forces a clean warmup
+    (full compute) at the start of every chunk.
+    """
     import tempfile
 
     if not validate_input_file(input_path, args.num_conditional_frames):
@@ -287,6 +337,8 @@ def _generate_one(pipe, input_path, prompt, output_path, args):
     current_input_path = input_path
     with tempfile.TemporaryDirectory() as tmpdir:
         for chunk_id in tqdm(range(args.num_chunks), leave=False):
+            if reset_episode is not None:
+                reset_episode()
             video, _ = pipe(
                 prompt=full_prompt,
                 negative_prompt=args.negative_prompt,

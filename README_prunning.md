@@ -546,3 +546,137 @@ bought **zero** attention speedup, and the extra bookkeeping made the total slow
 - When benchmarking any acceleration method, compare **total wall-clock** (e.g.
   Denoise/step or it/s), not the "Total Self-Attention" line — that line excludes
   `prepare`/`prune` overhead and can be misleading.
+
+## Performance Insight — SiTo v2 "temporal + prune-once" IS faster than dense (measured)
+
+A v2 was implemented to address the two structural weaknesses of v1:
+
+- **Temporal grouping** (`--sito_group_mode temporal`): instead of pruning
+  spatially per-frame, it groups tokens by spatial position `(h,w)` across the
+  flattened time/view axis and prunes the temporally-redundant ones (keeping the
+  `t=0` token of each position as anchor, recovering pruned tokens from it).
+- **Prune-once across blocks**: the plan is built a single time per denoise step
+  (first pruned block) and reused by every later block via a shared dict in
+  `attention_runtime_context`, removing the repeated per-block `prepare()` cost.
+  `--sito_noise_alpha 0` also removes the per-step `randn` so the plan is stable.
+
+### Measured — APPLES-TO-APPLES (same episode, same session, back-to-back)
+
+single_arm multiview DreamGen 14B, A100-80GB, `episode_000255`, averaged over the
+denoise steps of one run each:
+
+| Run | Self-Attention | DiT Blocks | Denoise / step | Speedup |
+|---|---|---|---|---|
+| Dense baseline | 4.65s | 7.35s | 14.72s | — |
+| SiTo temporal, prune_ratio=0.3, prune-once | 3.02s | 5.77s | 11.55s | **~1.27x** |
+
+**SiTo v2 is ~21% faster end-to-end** (Denoise 14.72s → 11.55s/step), with
+Self-Attention down ~35% (4.65s → 3.02s) and total DiT Blocks down ~21%. Output
+video generates cleanly (exit 0, valid mp4).
+
+> ⚠️ METHODOLOGY WARNING (this corrects an earlier, wrong conclusion). An initial
+> review claimed v2 was "slower" by comparing the v2 run against dense numbers
+> captured in a *different* run/session (`~1.89s` self-attn). That cross-run
+> comparison was invalid — dense self-attn on a clean back-to-back run of the same
+> episode is actually `~4.65s`. **Always benchmark dense and the method
+> back-to-back on the identical episode/session**; absolute timings drift a lot
+> between runs (GPU clocks, contention, sequence length), so only same-session
+> deltas are trustworthy.
+
+### Why temporal + prune-once works here
+
+- **Prune-once eliminates the per-block `prepare()` overhead** (the v1 killer): the
+  plan is built once per denoise step and reused by all ~28 pruned blocks.
+- **Temporal grouping prunes real redundancy**: across the flattened `(V·T)` axis
+  many spatial positions barely change, so dropping them and recovering from the
+  `t=0` anchor removes ~30% of the self-attention sequence with little quality loss.
+- With the rebuild cost gone, the reduced sequence length now nets a real
+  self-attention speedup (4.65s → 3.02s) instead of being swamped by overhead.
+
+### Tuning
+
+- `SITO_PRUNE_RATIO` controls the fraction of the temporal axis pruned (0.3 is a
+  safe start; higher = faster, more quality risk).
+- Keep `SITO_NOISE_ALPHA=0` at inference (stable plan, no extra RNG).
+- `SITO_START_LAYER_IDX` / `SITO_KEEP_LAST_N_DENSE` control how many blocks are
+  pruned; more pruned blocks = more speedup but more deviation.
+
+### Code added for v2
+
+- `methods/prunning/SiTo/runtime.py`: `group_mode="temporal"` +
+  `_build_temporal_plan` (fully vectorized, anchor = `t=0`).
+- `text2image_dit.py`: shared prune-once plan via `attention_runtime_context["sito"]`,
+  rebuilt per forward.
+- Flags: `--sito_group_mode {per_frame,temporal,full_2d}`; script env
+  `SITO_GROUP_MODE`, `SITO_NOISE_ALPHA`.
+
+Run:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 CATEGORY=makovian MAX_EPISODES=1 \
+  SITO_GROUP_MODE=temporal SITO_PRUNE_RATIO=0.3 SITO_NOISE_ALPHA=0 \
+  SITO_START_LAYER_IDX=6 SITO_KEEP_LAST_N_DENSE=2 \
+  bash scripts/run_single_arm_multiview_dreamgen_sito.sh
+```
+
+> Note: the v1 `per_frame` mode remains the default and is still not recommended
+> on DreamGen DiT (rebuilds the plan every block). Use `temporal` for the speedup.
+
+## Quality Insight — temporal SiTo speeds up but DESTROYS quality (autoregressive compounding)
+
+After confirming the temporal+prune-once speedup (~1.27x), a quality sweep was run
+comparing each SiTo config's output against the dense output of the **same episode
+and seed** (PSNR/SSIM, `metrics/video_metrics.py`). The recover step was also
+improved to pull from the **nearest preceding kept frame at the same spatial
+position** (instead of a fixed `t=0` anchor), to track motion.
+
+### Sweep (single_arm multiview 14B, episode_000255, vs dense output)
+
+| Config | denoise/s | Speedup | PSNR↑ | SSIM↑ |
+|---|---|---|---|---|
+| dense | 14.71 | — | (ref) | (ref) |
+| temporal r=0.30, start=6, keep=2 | 11.56 | 1.27x | 18.61 | 0.754 |
+| temporal r=0.20, start=6, keep=2 | 12.54 | 1.17x | 18.99 | 0.782 |
+| temporal r=0.15, start=6, keep=2 | 13.07 | 1.13x | 18.41 | 0.777 |
+| temporal r=0.30, start=10, keep=4 | 12.25 | 1.20x | 17.17 | 0.745 |
+
+**Every config destroys quality.** Usable acceleration on this benchmark needs
+PSNR ≳ 30 / SSIM ≳ 0.95 vs dense; all SiTo configs land at PSNR 17–19 / SSIM ~0.75.
+Lowering the prune ratio barely improves quality while giving back the speedup —
+there is no good operating point.
+
+### Root cause — error compounds through the autoregressive rollout
+
+Per-window PSNR of the best config (r=0.20) vs dense, across the generated video:
+
+| Frames | PSNR |
+|---|---|
+| 0–15 (segment 1) | **29.70** |
+| 15–30 | 19.51 |
+| 30–45 | 20.96 |
+| 45–60 | 17.81 |
+| 60–75 | 13.60 |
+| 75–93 (last) | **13.34** |
+
+The **first generated segment is actually fine** (PSNR ~30). But DreamGen is
+**autoregressive**: each segment is conditioned on the previously generated frames.
+The small pruning error in segment 1 becomes the conditioning input to segment 2,
+gets amplified, and snowballs — by the final segments the output is garbage
+(PSNR ~13). This is structural, not a tuning problem: any lossy self-attention
+approximation that feeds the autoregressive context will compound.
+
+### Final verdict on SiTo for DreamGen
+
+- **Single-shot / one-segment generation**: temporal SiTo at low prune ratio could
+  be acceptable (segment-1 PSNR ~30) and gives a real speedup. Only viable if the
+  rollout is short.
+- **Multi-segment autoregressive rollout (the benchmark default): DO NOT USE.**
+  The compounding error makes it unusable regardless of prune ratio or layer range.
+- For end-to-end speedups on autoregressive DreamGen, prefer methods that preserve
+  per-step fidelity: **cache methods** (DiCache / WorldCache / FasterCache) or
+  **kernel-level sparse attention** (PISA / Radial / SVG), which approximate far
+  more conservatively per step and therefore compound far less.
+
+The temporal `group_mode` code (with the improved nearest-kept-frame recovery) is
+kept in the repo for short-horizon experiments, but is **not** a recommended
+default for the autoregressive benchmark.

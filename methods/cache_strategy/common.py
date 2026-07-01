@@ -43,7 +43,23 @@ class FasterCacheConfig:
     debug: bool = False
 
 
-CacheRuntimeConfig = WorldCacheConfig | DiCacheConfig | FasterCacheConfig
+@dataclass(frozen=True)
+class ScalingCacheConfig:
+    """ScalingCache (difference-scaling + dynamic-interval). Implemented in AM_DiT/src/scl."""
+
+    num_steps: int = 35
+    first_enhance: int = 10
+    last_enhance: int = 2
+    error_rate: float = 1.0
+    fresh_threshold: int = 2
+    dynamic_cache: bool = True
+    use_alpha: bool = False
+    alpha_dict_path: str | None = None
+    update_alpha: bool = False
+    granularity: str = "block"  # "block" (memory-safe) or "submodule" (faithful, ~3x memory)
+
+
+CacheRuntimeConfig = WorldCacheConfig | DiCacheConfig | FasterCacheConfig | ScalingCacheConfig
 
 
 def get_cache_backend_name(config: CacheRuntimeConfig | None) -> str | None:
@@ -55,6 +71,8 @@ def get_cache_backend_name(config: CacheRuntimeConfig | None) -> str | None:
         return "dicache"
     if isinstance(config, FasterCacheConfig):
         return "fastercache"
+    if isinstance(config, ScalingCacheConfig):
+        return "scalingcache"
     raise TypeError(f"Unsupported cache config type: {type(config)!r}")
 
 
@@ -145,6 +163,10 @@ def reset_cache_runtime(model, config: CacheRuntimeConfig | None, num_steps: int
         from methods.cache_strategy.FasterCache.runtime import reset_fastercache_state
 
         return reset_fastercache_state(model, config, num_steps=num_steps)
+    if isinstance(config, ScalingCacheConfig):
+        from scl.backend import reset_scalingcache_state
+
+        return reset_scalingcache_state(model, config, num_steps=num_steps)
     raise TypeError(f"Unsupported cache config type: {type(config)!r}")
 
 
