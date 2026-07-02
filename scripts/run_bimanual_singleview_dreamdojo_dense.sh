@@ -18,7 +18,7 @@ export PYTHONPATH="${ROOT}/models/DreamDojo:${PYTHONPATH:-}"
 CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/exp_logs/dreamdojo_logs/dreamdojo/exp_aloha_resume70k/aloha_bimanual_singleview_full/checkpoints}"
 EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_480_640_aloha_resume70k_bimanual_sv}"
 NUM_FRAMES="${NUM_FRAMES:-97}"
-SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/dense/bimanual/output/single_view/dreamdojo}"
+SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/dense/bimanual/output/singleview/dreamdojo}"
 DETERMINISTIC="${DETERMINISTIC:-0}"
 
 get_task_paths() {

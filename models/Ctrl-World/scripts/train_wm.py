@@ -38,9 +38,26 @@ def main(args):
     # model and optimizer
     model = CrtlWorld(args)
     if args.ckpt_path is not None:
-        print(f"Loading checkpoint from {args.ckpt_path}!")
+        strict = getattr(args, "load_strict", True)
+        print(f"Loading checkpoint from {args.ckpt_path}! (strict={strict})")
         state_dict = torch.load(args.ckpt_path, map_location='cpu')
-        model.load_state_dict(state_dict, strict=True)
+        if not strict:
+            # Warm-start: drop action_encoder weights whose shape mismatches the
+            # (possibly re-dimensioned) action encoder, so they are re-initialized.
+            model_sd = model.state_dict()
+            filtered = {}
+            dropped = []
+            for k, v in state_dict.items():
+                if k in model_sd and model_sd[k].shape == v.shape:
+                    filtered[k] = v
+                else:
+                    dropped.append(k)
+            missing, unexpected = model.load_state_dict(filtered, strict=False)
+            print(f"  Dropped (shape-mismatch) {len(dropped)} tensors "
+                  f"(e.g. {dropped[:3]}); reinitialized from scratch.")
+            print(f"  Missing after load: {len(missing)}, Unexpected: {len(unexpected)}")
+        else:
+            model.load_state_dict(state_dict, strict=True)
     model.to(accelerator.device)
     model.train()
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)
@@ -65,7 +82,9 @@ def main(args):
         print(f"Number of parameters in the action_encoder: {num_params/1000000:.2f}M")
 
     # train and val datasets
-    from dataset.dataset_droid_exp33 import Dataset_mix
+    dataset_module = getattr(args, "dataset_module", "dataset.dataset_droid_exp33")
+    import importlib
+    Dataset_mix = importlib.import_module(dataset_module).Dataset_mix
     train_dataset = Dataset_mix(args,mode='train')
     val_dataset = Dataset_mix(args,mode='val')
     train_dataloader = torch.utils.data.DataLoader(
@@ -244,6 +263,9 @@ if __name__ == "__main__":
     # reset parameters with command line
     from argparse import ArgumentParser
     parser = ArgumentParser()
+    parser.add_argument('--config', type=str, default='droid',
+                        choices=['droid', 'bimanual'],
+                        help='Which config/dataset preset to use.')
     parser.add_argument('--svd_model_path', type=str, default=None)
     parser.add_argument('--clip_model_path', type=str, default=None)
     parser.add_argument('--ckpt_path', type=str, default=None)
@@ -251,16 +273,41 @@ if __name__ == "__main__":
     parser.add_argument('--dataset_meta_info_path', type=str, default=None)
     # dataset_names
     parser.add_argument('--dataset_names', type=str, default=None)
+    parser.add_argument('--output_dir', type=str, default=None)
+    parser.add_argument('--tag', type=str, default=None)
+    parser.add_argument('--max_train_steps', type=int, default=None)
+    parser.add_argument('--train_batch_size', type=int, default=None)
+    parser.add_argument('--no_load_strict', action='store_true',
+                        help='Load checkpoint with strict=False (reinit mismatched tensors).')
+    parser.add_argument('--debug', action='store_true')
     args_new = parser.parse_args()
-    args = wm_args()
+
+    if args_new.config == 'bimanual':
+        from config_bimanual import wm_args_bimanual
+        args = wm_args_bimanual()
+        args.dataset_module = 'dataset.dataset_bimanual_multiview'
+        args.dataset_cfgs = args.dataset_names
+        args.load_strict = not args_new.no_load_strict
+    else:
+        args = wm_args()
+        args.dataset_module = 'dataset.dataset_droid_exp33'
+        args.load_strict = not args_new.no_load_strict
 
     def merge_args(args, new_args):
+        skip = {'config', 'no_load_strict'}
         for k, v in new_args.__dict__.items():
-            if v is not None:
+            if k in skip:
+                continue
+            if v is not None and v is not False:
                 args.__dict__[k] = v
+        # keep dataset_cfgs in sync with dataset_names if the latter was overridden
+        if getattr(new_args, 'dataset_names', None) is not None:
+            args.__dict__['dataset_cfgs'] = new_args.dataset_names
         return args
-    
+
     args = merge_args(args, args_new)
+    if hasattr(args, '__post_init__'):
+        args.__post_init__()
 
     main(args)
 

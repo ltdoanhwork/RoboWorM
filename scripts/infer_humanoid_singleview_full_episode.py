@@ -1,13 +1,16 @@
 """
-Full-episode GT-anchored rollout for humanoid singleview DreamDojo.
+Full-episode autoregressive rollout for humanoid singleview DreamDojo.
 
 For each episode:
   1. Split into non-overlapping segments of (num_frames - 1) sampled frames.
-  2. Each segment starts from the **GT frame** at that position (no error accumulation).
+  2. The first segment starts from the GT initial frame; every subsequent segment
+     starts from the last predicted frame (pure autoregressive rollout).
   3. Generate (num_frames - 1) frames per segment via chunked autoregressive diffusion.
   4. Concatenate all segments into one video matching the original episode length.
 
-Episodes shorter than num_frames are skipped.
+Episode output dirs are named by the REAL trajectory_id (episode_{id:06d}),
+matching DreamGen humanoid singleview naming. Episodes shorter than num_frames
+are skipped.
 """
 
 import argparse
@@ -39,6 +42,10 @@ def parse_args():
     parser.add_argument("--save-fps", type=int, default=10)
     parser.add_argument("--output-dir", type=str, default=None)
     parser.add_argument("--guidance", type=float, default=0)
+    parser.add_argument("--save-video-only", action="store_true", default=True,
+                        help="Only save the generated prediction video (no GT/merged/metrics). Default on.")
+    parser.add_argument("--save-full", dest="save_video_only", action="store_false",
+                        help="Also save full_gt.mp4, full_merged.mp4 and metrics.json.")
 
     # WorldCache
     parser.add_argument("--worldcache-enabled", action="store_true")
@@ -204,6 +211,7 @@ def get_episode_plan(dataset, num_frames):
                 "ds_idx": ds_idx,
                 "traj_id": int(traj_id),
                 "traj_length": traj_length,
+                "timestep_interval": int(timestep_interval),
                 "segment_data_ids": segment_indices,
             })
 
@@ -326,14 +334,17 @@ def main():
 
     for ep_idx in range(num_episodes):
         ep_info = plan[ep_idx]
-        ep_save_dir = save_root / f"episode_{ep_idx:04d}"
+        traj_id = ep_info["traj_id"]
+        # Match DreamGen humanoid singleview naming: episode_{id:06d} (id = real trajectory_id).
+        ep_dir_name = f"episode_{traj_id:06d}"
+        ep_save_dir = save_root / ep_dir_name
 
         if (ep_save_dir / "full_pred.mp4").exists():
-            print(f"[{ep_idx}/{num_episodes}] Already exists, skipping.")
+            print(f"[{ep_idx}/{num_episodes}] {ep_dir_name} already exists, skipping.")
             continue
 
         num_segments = len(ep_info["segment_data_ids"])
-        print(f"[{ep_idx}/{num_episodes}] traj_id={ep_info['traj_id']}, "
+        print(f"[{ep_idx}/{num_episodes}] {ep_dir_name} traj_id={traj_id}, "
               f"length={ep_info['traj_length']}, segments={num_segments}")
 
         ep_save_dir.mkdir(parents=True, exist_ok=True)
@@ -382,6 +393,19 @@ def main():
 
         # Concatenate all segments
         concat_pred = np.concatenate(segment_videos, axis=0)
+
+        if args.save_video_only:
+            # Trim prediction to the real GT episode length in the DOWNSAMPLED frame
+            # space (dreamdojo samples every `timestep_interval` raw frames), so the
+            # generated clip covers ~the full episode like DreamGen does.
+            interval = max(1, int(ep_info.get("timestep_interval", 1)))
+            expected_frames = -(-int(ep_info["traj_length"]) // interval)  # ceil div
+            gt_total = min(len(concat_pred), expected_frames)
+            concat_pred = concat_pred[:gt_total]
+            mediapy.write_video(str(ep_save_dir / "full_pred.mp4"), concat_pred, fps=args.save_fps)
+            print(f"  -> saved {len(concat_pred)} frames (video only), gen {gen_elapsed:.2f}s")
+            continue
+
         concat_gt = np.concatenate(gt_segment_videos, axis=0)
 
         min_len = min(len(concat_pred), len(concat_gt))

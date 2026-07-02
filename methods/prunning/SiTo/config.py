@@ -71,6 +71,18 @@ def add_sito_args(parser: ArgumentParser) -> ArgumentParser:
         default=4,
         help="Ctrl-World only: maximum spatial downsample ratio eligible for SiTo. Default: 4.",
     )
+    group.add_argument(
+        "--sito_plan_recompute_every",
+        type=int,
+        default=0,
+        help=(
+            "Ctrl-World only: reuse the SiTo prune plan and only recompute it "
+            "every N attention calls per layer (0 = recompute every call, the "
+            "original behavior). Values like 5 remove the expensive prepare() "
+            "step from most denoise steps and are what makes SiTo actually "
+            "faster than dense."
+        ),
+    )
     return parser
 
 

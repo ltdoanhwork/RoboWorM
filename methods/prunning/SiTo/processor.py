@@ -32,10 +32,19 @@ class SVDSiToAttnProcessor:
         noise_alpha: float = 0.1,
         sim_beta: float = 1.0,
         max_downsample_ratio: int = 4,
+        plan_recompute_every: int = 0,
     ) -> None:
         self.layer_idx = layer_idx
         self.start_layer_idx = start_layer_idx
         self.max_downsample_ratio = max_downsample_ratio
+        # plan_recompute_every > 0 caches the prune plan and only re-derives it
+        # every N forward calls of this layer. The plan (which tokens to keep /
+        # how to recover) is dominated by spatial structure that barely changes
+        # across denoise steps, so reusing it removes the expensive `prepare()`
+        # (score/argmax/patch/similarity) from ~all but 1 of every N calls.
+        self.plan_recompute_every = int(plan_recompute_every)
+        self._plan_cache: dict[int, object] = {}
+        self._call_count: dict[int, int] = {}
         self.pruner = SiToTokenPruner(
             group_mode="full_2d",
             prune_ratio=prune_ratio,
@@ -79,7 +88,8 @@ class SVDSiToAttnProcessor:
 
     def _run_sito_attention(self, attn, hidden_states: torch.Tensor, *, geometry: tuple[int, int, int]) -> tuple[torch.Tensor, object]:
         group_h, group_w, _ = geometry
-        plan = self.pruner.prepare(hidden_states, video_size=type("SpatialSize", (), {"T": 1, "H": group_h, "W": group_w}))
+        seq_len = hidden_states.shape[1]
+        plan = self._get_plan(hidden_states, group_h=group_h, group_w=group_w, seq_len=seq_len)
         if plan is None:
             q = _split_heads(attn.to_q(hidden_states), attn.heads)
             k = _split_heads(attn.to_k(hidden_states), attn.heads)
@@ -95,6 +105,21 @@ class SVDSiToAttnProcessor:
         out = F.scaled_dot_product_attention(q, k, v, dropout_p=0.0)
         out = out.permute(0, 2, 1, 3).contiguous().reshape(pruned_states.shape[0], pruned_states.shape[1], -1)
         return out, plan
+
+    def _get_plan(self, hidden_states: torch.Tensor, *, group_h: int, group_w: int, seq_len: int):
+        video_size = type("SpatialSize", (), {"T": 1, "H": group_h, "W": group_w})
+        if self.plan_recompute_every <= 0:
+            return self.pruner.prepare(hidden_states, video_size=video_size)
+
+        count = self._call_count.get(seq_len, 0)
+        cached = self._plan_cache.get(seq_len)
+        # Recompute on the first call and every N-th call; otherwise reuse the
+        # cached plan to skip the expensive prepare() step.
+        if cached is None or (count % self.plan_recompute_every) == 0:
+            cached = self.pruner.prepare(hidden_states, video_size=video_size)
+            self._plan_cache[seq_len] = cached
+        self._call_count[seq_len] = count + 1
+        return cached
 
     def _should_use_sito(self, *, query_len: int, key_len: int) -> tuple[bool, tuple[int, int, int] | None]:
         if query_len != key_len:

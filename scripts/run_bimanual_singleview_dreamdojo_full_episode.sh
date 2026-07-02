@@ -3,7 +3,7 @@
 # Pure autoregressive from first GT frame — no GT reset between chunks.
 # Generates video as long as the input episode.
 #
-# Output: sampling_dataset/dense/bimanual/output/single_view/dreamdojo/{split}/iter_*/episode_*/
+# Output: sampling_dataset/dense/bimanual/output/singleview/dreamdojo/{split}/iter_*/episode_*/
 #
 # Usage:
 #   CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_singleview_dreamdojo_full_episode.sh
@@ -20,7 +20,7 @@ export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0}"
 CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/exp_logs/dreamdojo_logs/dreamdojo/exp_aloha_resume70k/aloha_bimanual_singleview_full/checkpoints}"
 EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_480_640_aloha_resume70k_bimanual_sv}"
 NUM_EPISODES="${NUM_EPISODES:-}"
-SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/dense/bimanual/output/single_view/dreamdojo}"
+SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/dense/bimanual/output/singleview/dreamdojo}"
 
 get_task_paths() {
   local split="$1"

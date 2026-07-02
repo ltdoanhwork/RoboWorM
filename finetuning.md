@@ -373,3 +373,17 @@ Dense (baseline)
 CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_multiview_dreamgen_itm.sh
 
 CUDA_VISIBLE_DEVICES=1 nohup bash scripts/run_single_arm_multiview_dreamgen_sito.sh 
+
+
+cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
+CKPT=exp_logs/ctrlworld_logs/bimanual_multiview/checkpoint-10000.pt \
+CUDA_VISIBLE_DEVICES=1 NUM_EPISODES=3 SPLIT=val \
+  bash scripts/run_bimanual_multiview_ctrlworld.sh
+
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_singleview_dreamgen_worldcache.sh
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_singleview_dreamgen_fastercache.sh
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_singleview_dreamgen_dicache.sh
+
+#run lai
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_singleview_dreamdojo_all_methods.sh
+CUDA_VISIBLE_DEVICES=1 bash scripts/run_humanoid_singleview_dreamdojo_all_methods.sh

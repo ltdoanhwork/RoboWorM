@@ -27,6 +27,11 @@ class SiToRuntimePlan:
     pruned_indices: torch.Tensor
     replacement_keep_positions: torch.Tensor
     original_length: int
+    # gather_from_kept[i] = row in the compact (kept) tensor that original
+    # position i should copy from. Precomputing this collapses recover() from
+    # two scatter writes + a gather into a single index_select, which is what
+    # makes token pruning actually cheaper than dense attention here.
+    gather_from_kept: torch.Tensor | None = None
 
 
 def resolve_sito_auto_prune_ratio(tokens_per_group: int) -> float:
@@ -175,13 +180,20 @@ class SiToTokenPruner:
         if plan is None:
             return hidden_states
 
-        batch_size, _, hidden_dim = hidden_states.shape
-        full_states = hidden_states.new_empty(batch_size, plan.original_length, hidden_dim)
-        full_states[:, plan.keep_indices, :] = hidden_states
-        if plan.pruned_indices.numel() > 0:
-            propagated = hidden_states.index_select(dim=1, index=plan.replacement_keep_positions)
-            full_states[:, plan.pruned_indices, :] = propagated
-        return full_states
+        gather_idx = plan.gather_from_kept
+        if gather_idx is None:
+            # Build once: position -> row in the compact kept tensor. Kept
+            # positions map to their own compact row; pruned positions map to
+            # the compact row of their replacement kept token.
+            device = hidden_states.device
+            gather_idx = torch.empty(plan.original_length, dtype=torch.long, device=device)
+            compact_rows = torch.arange(plan.keep_indices.numel(), device=device)
+            gather_idx[plan.keep_indices] = compact_rows
+            if plan.pruned_indices.numel() > 0:
+                gather_idx[plan.pruned_indices] = plan.replacement_keep_positions
+            object.__setattr__(plan, "gather_from_kept", gather_idx)
+
+        return hidden_states.index_select(dim=1, index=gather_idx)
 
     def prune_rope(self, rope_emb: torch.Tensor | None, plan: SiToRuntimePlan | None) -> torch.Tensor | None:
         if rope_emb is None or plan is None:

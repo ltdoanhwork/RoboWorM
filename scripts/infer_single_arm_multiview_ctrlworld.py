@@ -485,25 +485,44 @@ def main():
             noise_alpha=args.sito_noise_alpha,
             sim_beta=args.sito_sim_beta,
             max_downsample_ratio=args.sito_max_downsample_ratio,
+            plan_recompute_every=getattr(args, "sito_plan_recompute_every", 0),
         )
     if getattr(args, "use_itm", False):
-        adapter = _import_pruning_module("importance_token_merge", "adapter")
         itm_state = {}
-        adapter.enable_itm(
-            agent.model.unet,
-            itm_state=itm_state,
-            start_layer_idx=args.itm_start_layer_idx or 0,
-            compress_ratio=args.itm_compress_ratio,
-            prune_from_step=args.itm_prune_from_step,
-            merge_from_step=args.itm_merge_from_step,
-            merge_attn=args.itm_merge_attn,
-            merge_crossattn=args.itm_merge_crossattn,
-            merge_mlp=args.itm_merge_mlp,
-            max_downsample_ratio=args.itm_max_downsample_ratio,
-        )
-        if model_args.guidance_scale <= 1.0:
-            model_args.guidance_scale = 2.0
-            print(f"[ITM] guidance_scale overridden to {model_args.guidance_scale} (ITM requires > 1.0)")
+        if getattr(args, "itm_block_hold", False):
+            block_hold = _import_pruning_module("importance_token_merge", "block_hold")
+            itm_state["prune_from_step"] = args.itm_prune_from_step
+            itm_state["merge_from_step"] = args.itm_merge_from_step
+            block_hold.enable_itm_block_hold(
+                agent.model.unet,
+                itm_state=itm_state,
+                start_layer_idx=args.itm_start_layer_idx or 0,
+                compress_ratio=args.itm_compress_ratio,
+                max_downsample_ratio=args.itm_max_downsample_ratio,
+                self_importance=True,
+                plan_recompute_every=getattr(args, "itm_plan_recompute_every", 0),
+            )
+            # Block-hold with self-importance derives token scores from the
+            # hidden states, so it does NOT need classifier-free guidance and
+            # can stay at guidance_scale=1 (single batch) — this is what keeps
+            # it faster than dense instead of paying the 2x CFG cost.
+        else:
+            adapter = _import_pruning_module("importance_token_merge", "adapter")
+            adapter.enable_itm(
+                agent.model.unet,
+                itm_state=itm_state,
+                start_layer_idx=args.itm_start_layer_idx or 0,
+                compress_ratio=args.itm_compress_ratio,
+                prune_from_step=args.itm_prune_from_step,
+                merge_from_step=args.itm_merge_from_step,
+                merge_attn=args.itm_merge_attn,
+                merge_crossattn=args.itm_merge_crossattn,
+                merge_mlp=args.itm_merge_mlp,
+                max_downsample_ratio=args.itm_max_downsample_ratio,
+            )
+            if model_args.guidance_scale <= 1.0:
+                model_args.guidance_scale = 2.0
+                print(f"[ITM] guidance_scale overridden to {model_args.guidance_scale} (ITM requires > 1.0)")
 
     # Find all episodes
     anno_dir = Path(val_dataset_dir) / "annotation" / "val"

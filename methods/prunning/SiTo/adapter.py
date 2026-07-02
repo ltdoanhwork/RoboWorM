@@ -13,6 +13,7 @@ def enable_sito(
     noise_alpha: float = 0.1,
     sim_beta: float = 1.0,
     max_downsample_ratio: int = 4,
+    plan_recompute_every: int = 0,
 ) -> None:
     processors = {}
     for layer_idx, name in enumerate(unet.attn_processors.keys()):
@@ -25,12 +26,14 @@ def enable_sito(
             noise_alpha=noise_alpha,
             sim_beta=sim_beta,
             max_downsample_ratio=max_downsample_ratio,
+            plan_recompute_every=plan_recompute_every,
         )
     unet.set_attn_processor(processors)
     print(
         "[SiTo] Enabled on "
         f"{len(processors)} attention layers (start_layer_idx={start_layer_idx}, "
-        f"max_downsample_ratio={max_downsample_ratio})"
+        f"max_downsample_ratio={max_downsample_ratio}, "
+        f"plan_recompute_every={plan_recompute_every})"
     )
 
 

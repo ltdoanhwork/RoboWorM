@@ -37,6 +37,10 @@ def parse_args():
     parser.add_argument("--save-fps", type=int, default=10)
     parser.add_argument("--output-dir", type=str, default=None)
     parser.add_argument("--guidance", type=float, default=0)
+    parser.add_argument("--save-video-only", action="store_true", default=True,
+                        help="Only save the generated prediction video (no GT/merged/metrics). Default on.")
+    parser.add_argument("--save-full", dest="save_video_only", action="store_false",
+                        help="Also save full_gt.mp4, full_merged.mp4 and metrics.json.")
 
     # WorldCache
     parser.add_argument("--worldcache-enabled", action="store_true")
@@ -158,10 +162,12 @@ def build_dataset(args):
         restrict_len=None,
         deterministic_uniform_sampling=False,
     )
-    return dataset
+    # ds_idx -> task name (dir basename), aligned with MultiVideoActionDataset order.
+    task_names = [Path(p).name for p in valid_paths]
+    return dataset, task_names
 
 
-def get_episode_plan(dataset, chunk_size):
+def get_episode_plan(dataset, chunk_size, task_names=None):
     """
     For each episode, collect data_ids stepping through by chunk_size.
     Each data_id provides chunk_size normalized actions via the dataset pipeline.
@@ -200,10 +206,13 @@ def get_episode_plan(dataset, chunk_size):
             traj_length = int(dataset.datasets[ds_idx].lerobot_dataset.trajectory_lengths[
                 np.where(dataset.datasets[ds_idx].lerobot_dataset.trajectory_ids == traj_id)[0][0]
             ])
+            task_name = task_names[ds_idx] if task_names else None
             plan.append({
                 "ds_idx": ds_idx,
+                "task_name": task_name,
                 "traj_id": int(traj_id),
                 "traj_length": traj_length,
+                "timestep_interval": int(timestep_interval),
                 "segment_data_ids": segment_indices,
             })
 
@@ -221,10 +230,10 @@ def main():
     video2world_cli, iter_name = build_model(args)
 
     print("Building dataset...")
-    dataset = build_dataset(args)
+    dataset, task_names = build_dataset(args)
 
     print("Planning episodes...")
-    plan = get_episode_plan(dataset, args.chunk_size)
+    plan = get_episode_plan(dataset, args.chunk_size, task_names)
     total_episodes = len(plan)
     num_episodes = min(args.num_episodes or total_episodes, total_episodes)
     print(f"Total episodes: {total_episodes}, processing: {num_episodes}")
@@ -237,14 +246,20 @@ def main():
     for ep_idx in range(num_episodes):
         ep_info = plan[ep_idx]
         traj_id = ep_info["traj_id"]
-        ep_save_dir = save_root / f"episode_{traj_id:04d}"
+        task_name = ep_info.get("task_name")
+        # Match DreamGen singleview naming: {task}__episode_{id:06d} (unique across tasks).
+        if task_name:
+            ep_dir_name = f"{task_name}__episode_{traj_id:06d}"
+        else:
+            ep_dir_name = f"episode_{traj_id:06d}"
+        ep_save_dir = save_root / ep_dir_name
 
         if (ep_save_dir / "full_pred.mp4").exists():
-            print(f"[{ep_idx}] episode_{traj_id:04d} already exists, skipping.")
+            print(f"[{ep_idx}] {ep_dir_name} already exists, skipping.")
             continue
 
         num_chunks = len(ep_info["segment_data_ids"])
-        print(f"[{ep_idx}] traj_id={traj_id}, traj_length={ep_info['traj_length']}, "
+        print(f"[{ep_idx}] {ep_dir_name} traj_id={traj_id}, traj_length={ep_info['traj_length']}, "
               f"chunks={num_chunks}")
 
         if num_chunks == 0:
@@ -328,6 +343,18 @@ def main():
         ]
         concat_pred = np.concatenate(chunk_list, axis=0)
 
+        if args.save_video_only:
+            # Trim prediction to the real GT episode length in the DOWNSAMPLED frame
+            # space (dreamdojo samples every `timestep_interval` raw frames), so the
+            # generated clip covers ~the full episode like DreamGen does.
+            interval = max(1, int(ep_info.get("timestep_interval", 1)))
+            expected_frames = -(-int(ep_info["traj_length"]) // interval)  # ceil div
+            gt_total = min(len(concat_pred), expected_frames)
+            concat_pred = concat_pred[:gt_total]
+            mediapy.write_video(str(ep_save_dir / "full_pred.mp4"), concat_pred, fps=args.save_fps)
+            print(f"  -> saved {len(concat_pred)} frames (video only)")
+            continue
+
         gt_list = [gt_frames[0]] + [
             gt_frames[i][:args.chunk_size] for i in range(1, len(gt_frames))
         ]
@@ -355,6 +382,7 @@ def main():
                 "total_frames_pred": len(concat_pred),
                 "total_frames_gt": ep_info["traj_length"],
                 "trajectory_id": traj_id,
+                "task_name": task_name,
                 "mode": "single_segment_full_rollout",
             }, f, indent=2)
 
