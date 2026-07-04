@@ -26,8 +26,15 @@ CKPT_PATH="./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt"
 DATASET_META_INFO="./models/Ctrl-World/dataset_meta_info"
 DATASET_EXAMPLE_DIR="./models/Ctrl-World/dataset_example"
 
-# SiTo parameters
+# SiTo parameters (spatio-temporal hold)
+# Chosen config = spatio-temporal prune-once-hold: prune spatial tokens once per
+# episode and keep them compressed through both the spatial AND temporal blocks.
+# keep_ratio=0.9 on the largest stage only (max_downsample_ratio=1) is the
+# quality-leaning point of this method (PSNR ~18.9 on episode_000255). Push
+# ST_KEEP_RATIO lower (e.g. 0.5, max_downsample_ratio=4) for up to ~1.16x speed
+# at lower quality. Overridable via env.
 SITO_MAX_DOWNSAMPLE_RATIO="${SITO_MAX_DOWNSAMPLE_RATIO:-1}"
+SITO_ST_KEEP_RATIO="${SITO_ST_KEEP_RATIO:-0.9}"
 NUM_INFERENCE_STEPS="${NUM_INFERENCE_STEPS:-25}"
 
 OUTPUT_BASE="${PROJECT_ROOT}/sampling_dataset/sito/single_arm/output/multiview/ctrlworld"
@@ -36,7 +43,7 @@ INPUT_BASE="${PROJECT_ROOT}/sampling_dataset/sito/single_arm/input/multiview/ctr
 echo "=========================================================="
 echo "Ctrl-World + SiTo | Single-Arm Multiview Inference"
 echo "Subset: ${SUBSET}"
-echo "Params: max_downsample_ratio=${SITO_MAX_DOWNSAMPLE_RATIO}, steps=${NUM_INFERENCE_STEPS}"
+echo "Params: max_downsample_ratio=${SITO_MAX_DOWNSAMPLE_RATIO}, st_keep_ratio=${SITO_ST_KEEP_RATIO}, steps=${NUM_INFERENCE_STEPS}"
 echo "=========================================================="
 
 # Step 1: Prepare dataset
@@ -62,6 +69,8 @@ if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "makovian" ]; then
         --input_save_dir "${INPUT_BASE}/makovian" \
         --num_inference_steps "${NUM_INFERENCE_STEPS}" \
         --use_sito \
+        --sito_spatiotemporal_hold \
+        --sito_st_keep_ratio "${SITO_ST_KEEP_RATIO}" \
         --sito_max_downsample_ratio "${SITO_MAX_DOWNSAMPLE_RATIO}"
 fi
 
@@ -79,6 +88,8 @@ if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "non_makovian" ]; then
         --input_save_dir "${INPUT_BASE}/non_makovian" \
         --num_inference_steps "${NUM_INFERENCE_STEPS}" \
         --use_sito \
+        --sito_spatiotemporal_hold \
+        --sito_st_keep_ratio "${SITO_ST_KEEP_RATIO}" \
         --sito_max_downsample_ratio "${SITO_MAX_DOWNSAMPLE_RATIO}"
 fi
 

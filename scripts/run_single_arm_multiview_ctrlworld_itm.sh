@@ -26,8 +26,15 @@ CKPT_PATH="./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt"
 DATASET_META_INFO="./models/Ctrl-World/dataset_meta_info"
 DATASET_EXAMPLE_DIR="./models/Ctrl-World/dataset_example"
 
-# ITM parameters
+# ITM parameters (spatio-temporal hold)
+# Chosen config = spatio-temporal prune-once-hold (shared with SiTo): prune
+# spatial tokens once per episode and keep them compressed through both the
+# spatial AND temporal blocks. keep_ratio=0.8 across all stages
+# (max_downsample_ratio=4) gives ~1.04x speedup at PSNR ~16.4 on episode_000255.
+# Lower ITM_ST_KEEP_RATIO (e.g. 0.5) for up to ~1.16x at lower quality.
 ITM_MAX_DOWNSAMPLE_RATIO="${ITM_MAX_DOWNSAMPLE_RATIO:-4}"
+ITM_ST_KEEP_RATIO="${ITM_ST_KEEP_RATIO:-0.8}"
+NUM_INFERENCE_STEPS="${NUM_INFERENCE_STEPS:-25}"
 
 OUTPUT_BASE="${PROJECT_ROOT}/sampling_dataset/itm/single_arm/output/multiview/ctrlworld"
 INPUT_BASE="${PROJECT_ROOT}/sampling_dataset/itm/single_arm/input/multiview/ctrlworld"
@@ -35,7 +42,7 @@ INPUT_BASE="${PROJECT_ROOT}/sampling_dataset/itm/single_arm/input/multiview/ctrl
 echo "=========================================================="
 echo "Ctrl-World + ITM | Single-Arm Multiview Inference"
 echo "Subset: ${SUBSET}"
-echo "Params: max_downsample_ratio=${ITM_MAX_DOWNSAMPLE_RATIO}"
+echo "Params: max_downsample_ratio=${ITM_MAX_DOWNSAMPLE_RATIO}, st_keep_ratio=${ITM_ST_KEEP_RATIO}, steps=${NUM_INFERENCE_STEPS}"
 echo "=========================================================="
 
 # Step 1: Prepare dataset
@@ -59,7 +66,10 @@ if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "makovian" ]; then
         --dataset_meta_info_path "${DATASET_META_INFO}" \
         --save_dir "${OUTPUT_BASE}/makovian" \
         --input_save_dir "${INPUT_BASE}/makovian" \
+        --num_inference_steps "${NUM_INFERENCE_STEPS}" \
         --use_itm \
+        --itm_spatiotemporal_hold \
+        --itm_st_keep_ratio "${ITM_ST_KEEP_RATIO}" \
         --itm_max_downsample_ratio "${ITM_MAX_DOWNSAMPLE_RATIO}"
 fi
 
@@ -75,7 +85,10 @@ if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "non_makovian" ]; then
         --dataset_meta_info_path "${DATASET_META_INFO}" \
         --save_dir "${OUTPUT_BASE}/non_makovian" \
         --input_save_dir "${INPUT_BASE}/non_makovian" \
+        --num_inference_steps "${NUM_INFERENCE_STEPS}" \
         --use_itm \
+        --itm_spatiotemporal_hold \
+        --itm_st_keep_ratio "${ITM_ST_KEEP_RATIO}" \
         --itm_max_downsample_ratio "${ITM_MAX_DOWNSAMPLE_RATIO}"
 fi
 

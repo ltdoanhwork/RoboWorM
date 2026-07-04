@@ -83,6 +83,27 @@ def add_sito_args(parser: ArgumentParser) -> ArgumentParser:
             "faster than dense."
         ),
     )
+    group.add_argument(
+        "--sito_spatiotemporal_hold",
+        action="store_true",
+        default=False,
+        help=(
+            "Ctrl-World only [EXPERIMENTAL, quality-lossy]: prune spatial tokens "
+            "ONCE at each TransformerSpatioTemporalModel and hold them "
+            "compressed through BOTH the spatial and temporal blocks, then "
+            "unmerge. This DOES speed up (~1.14x at keep=0.5) because it targets "
+            "~38%% of UNet, BUT pruning before the temporal block corrupts the "
+            "temporal dynamics: PSNR collapses (e.g. 9-17 vs ~21 dense) even at "
+            "light pruning. Not recommended for quality-sensitive benchmarking; "
+            "kept only as a measured data point."
+        ),
+    )
+    group.add_argument(
+        "--sito_st_keep_ratio",
+        type=float,
+        default=0.5,
+        help="Spatio-temporal hold: fraction of spatial tokens to keep. Default 0.5.",
+    )
     return parser
 
 

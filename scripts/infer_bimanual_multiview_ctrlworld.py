@@ -350,6 +350,9 @@ def main():
     parser.add_argument("--input_save_dir", type=str, default=None)
     parser.add_argument("--num_episodes", type=int, default=None)
     parser.add_argument("--num_inference_steps", type=int, default=None)
+    parser.add_argument("--guidance_scale", type=float, default=None,
+                        help="CFG scale for action conditioning. >1.0 amplifies "
+                             "action-following (config default 1.0 = CFG off).")
     parser.add_argument("--infer_down_sample", type=int, default=1,
                         help="Must match the down_sample used at prep/train (for output fps).")
     parser.add_argument("--split", choices=["val", "train", "all"], default="all")
@@ -368,6 +371,9 @@ def main():
     model_args.infer_down_sample = args.infer_down_sample
     if args.num_inference_steps is not None:
         model_args.num_inference_steps = args.num_inference_steps
+    if args.guidance_scale is not None:
+        model_args.guidance_scale = args.guidance_scale
+        print(f"[override] guidance_scale = {args.guidance_scale}")
 
     agent = CtrlWorldAgent(model_args)
 

@@ -475,21 +475,39 @@ def main():
         print(f"[Cache] FasterCache enabled: start_step={args.fastercache_start_step}, "
               f"model_interval={args.fastercache_model_interval}, block_interval={args.fastercache_block_interval}")
     if getattr(args, "use_sito", False):
-        adapter = _import_pruning_module("SiTo", "adapter")
-        adapter.enable_sito(
-            agent.model.unet,
-            start_layer_idx=args.sito_start_layer_idx or 0,
-            prune_ratio=args.sito_prune_ratio,
-            patch_h=args.sito_patch_h,
-            patch_w=args.sito_patch_w,
-            noise_alpha=args.sito_noise_alpha,
-            sim_beta=args.sito_sim_beta,
-            max_downsample_ratio=args.sito_max_downsample_ratio,
-            plan_recompute_every=getattr(args, "sito_plan_recompute_every", 0),
-        )
+        if getattr(args, "sito_spatiotemporal_hold", False):
+            st_hold = _import_pruning_module("SiTo", "spatiotemporal_hold")
+            st_hold.enable_spatiotemporal_hold(
+                agent.model.unet,
+                keep_ratio=args.sito_st_keep_ratio,
+                max_downsample_ratio=args.sito_max_downsample_ratio,
+                recompute_every=(args.sito_plan_recompute_every or 999999),
+            )
+        else:
+            adapter = _import_pruning_module("SiTo", "adapter")
+            adapter.enable_sito(
+                agent.model.unet,
+                start_layer_idx=args.sito_start_layer_idx or 0,
+                prune_ratio=args.sito_prune_ratio,
+                patch_h=args.sito_patch_h,
+                patch_w=args.sito_patch_w,
+                noise_alpha=args.sito_noise_alpha,
+                sim_beta=args.sito_sim_beta,
+                max_downsample_ratio=args.sito_max_downsample_ratio,
+                plan_recompute_every=getattr(args, "sito_plan_recompute_every", 0),
+            )
     if getattr(args, "use_itm", False):
         itm_state = {}
-        if getattr(args, "itm_block_hold", False):
+        if getattr(args, "itm_spatiotemporal_hold", False):
+            st_hold = _import_pruning_module("SiTo", "spatiotemporal_hold")
+            st_hold.enable_spatiotemporal_hold(
+                agent.model.unet,
+                keep_ratio=args.itm_st_keep_ratio,
+                max_downsample_ratio=args.itm_max_downsample_ratio,
+                recompute_every=(args.itm_plan_recompute_every or 999999),
+                similarity_recover=True,
+            )
+        elif getattr(args, "itm_block_hold", False):
             block_hold = _import_pruning_module("importance_token_merge", "block_hold")
             itm_state["prune_from_step"] = args.itm_prune_from_step
             itm_state["merge_from_step"] = args.itm_merge_from_step

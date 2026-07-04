@@ -15,6 +15,9 @@ def add_dreamgen_cache_args(parser: argparse.ArgumentParser):
     
     # FasterCache
     group.add_argument("--fastercache-enabled", action="store_true", help="Enable FasterCache acceleration.")
+    group.add_argument("--fastercache-start-step", type=int, default=0, help="Step index after which caching may kick in.")
+    group.add_argument("--fastercache-model-interval", type=int, default=5, help="Reuse cached whole-model output every N steps.")
+    group.add_argument("--fastercache-block-interval", type=int, default=3, help="Reuse cached block attention output every N steps.")
     group.add_argument("--fastercache-debug", action="store_true", help="Enable debug logs for FasterCache.")
     
     # WorldCache

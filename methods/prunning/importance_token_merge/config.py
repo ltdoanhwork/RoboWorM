@@ -89,6 +89,25 @@ def add_itm_args(parser: ArgumentParser) -> ArgumentParser:
             "interact step) is required for block-hold to beat dense."
         ),
     )
+    group.add_argument(
+        "--itm_spatiotemporal_hold",
+        action="store_true",
+        default=False,
+        help=(
+            "Ctrl-World only [EXPERIMENTAL, quality-lossy]: same spatio-temporal "
+            "prune-once-hold as SiTo's --sito_spatiotemporal_hold, exposed on the "
+            "ITM path. Prunes spatial tokens once at each "
+            "TransformerSpatioTemporalModel and holds them compressed through the "
+            "spatial AND temporal blocks. Real speedup (~1.04x at keep 0.8, "
+            "~1.16x at keep 0.5) but PSNR drops (16.4 / 13.7)."
+        ),
+    )
+    group.add_argument(
+        "--itm_st_keep_ratio",
+        type=float,
+        default=0.8,
+        help="ITM spatio-temporal hold: fraction of spatial tokens to keep. Default 0.8.",
+    )
     return parser
 
 

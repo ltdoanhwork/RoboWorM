@@ -38,6 +38,7 @@ INPUT_BASE="${ROOT}/sampling_dataset/dense/bimanual/input/multiview/ctrlworld"
 EXTRA=""
 if [ -n "${NUM_EPISODES:-}" ]; then EXTRA="${EXTRA} --num_episodes ${NUM_EPISODES}"; fi
 if [ -n "${NUM_INFERENCE_STEPS:-}" ]; then EXTRA="${EXTRA} --num_inference_steps ${NUM_INFERENCE_STEPS}"; fi
+if [ -n "${GUIDANCE:-}" ]; then EXTRA="${EXTRA} --guidance_scale ${GUIDANCE}"; fi
 
 echo "=========================================="
 echo "Ctrl-World Bimanual Multiview Inference"

@@ -60,9 +60,11 @@ if _AM_DIT_SRC not in sys.path:
 def _add_rfc_args(parser: argparse.ArgumentParser) -> None:
     g = parser.add_argument_group("RFC (block-level cache)")
     g.add_argument("--rfc-mode", type=str, default="none",
-                   choices=["none", "copy", "linear", "linear_clamp", "snr_shrink"],
+                   choices=["none", "copy", "linear", "linear_clamp", "snr_shrink",
+                            "dcw_band"],
                    help="Block-level RFC predictor. 'none' = dense / use WorldCache "
-                        "via DreamGen's own --worldcache-enabled flag.")
+                        "via DreamGen's own --worldcache-enabled flag. 'dcw_band' = "
+                        "DCW-inspired per-band schedule-modulated correction.")
     g.add_argument("--gate-mode", type=str, default="drift",
                    choices=["drift", "step", "step3"],
                    help="RCS gate granularity. 'drift'=per-block (original); "
@@ -89,6 +91,10 @@ def _add_rfc_args(parser: argparse.ArgumentParser) -> None:
                    help="Lower bound on fitted ratio s (two-sided clamp). "
                         "None = no floor (original behavior).")
     g.add_argument("--snr-shrink-scale", type=float, default=5.0)
+    g.add_argument("--dcw-c-low", type=float, default=1.0,
+                   help="dcw_band: low-band schedule scale c_l in m_low=c_l*(1-step_frac).")
+    g.add_argument("--dcw-c-high", type=float, default=1.0,
+                   help="dcw_band: high-band schedule scale c_h in m_high=c_h*step_frac.")
     g.add_argument("--output-root", type=str, default=None,
                    help="If set, batch outputs go under this dir (one mp4 per item) "
                         "and a per-episode metrics JSON is appended.")
@@ -124,7 +130,7 @@ def attach_rfc(pipe, args):
         warmup_steps=args.warmup_steps,
         min_full_interval=args.min_full_interval,
         gate_mode=args.gate_mode,
-        s_clamp=(args.s_clamp if args.rfc_mode in ("linear_clamp", "snr_shrink") else None),
+        s_clamp=(args.s_clamp if args.rfc_mode in ("linear_clamp", "snr_shrink", "dcw_band") else None),
         s_floor=getattr(args, "s_floor", None),
         snr_shrink_scale=args.snr_shrink_scale,
         error_budget=getattr(args, "error_budget", None),
@@ -132,6 +138,8 @@ def attach_rfc(pipe, args):
         protect_early_frac=getattr(args, "protect_early_frac", 0.0),
         protect_late_frac=getattr(args, "protect_late_frac", 0.0),
         protect_from_block=getattr(args, "protect_from_block", None),
+        dcw_c_low=getattr(args, "dcw_c_low", 1.0),
+        dcw_c_high=getattr(args, "dcw_c_high", 1.0),
     )
 
     # Two independent anchor sets (CFG cond / uncond branches).

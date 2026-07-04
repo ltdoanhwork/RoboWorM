@@ -361,6 +361,9 @@ MAX_EPISODES=5 NUM_GPUS=1 CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_multi
 
 MAX_EPISODES=5 NUM_CONDITIONAL_FRAMES=5 NUM_GPUS=1 CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_multiview_dreamgen_seg_rollout.sh
 
+MAX_EPISODES=5 NUM_CONDITIONAL_FRAMES=1 NUM_GPUS=2 CUDA_VISIBLE_DEVICES=2,3 bash scripts/run_bimanual_multiview_dreamgen_seg_rollout.sh
+
+
 CUDA_VISIBLE_DEVICES=0 CATEGORY=makovian MAX_EPISODES=4 \
   bash scripts/run_single_arm_multiview_dreamgen_itm.sh
 
@@ -376,14 +379,19 @@ CUDA_VISIBLE_DEVICES=1 nohup bash scripts/run_single_arm_multiview_dreamgen_sito
 
 
 cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
-CKPT=exp_logs/ctrlworld_logs/bimanual_multiview/checkpoint-10000.pt \
-CUDA_VISIBLE_DEVICES=1 NUM_EPISODES=3 SPLIT=val \
+CKPT=exp_logs/ctrlworld_logs/bimanual_multiview/checkpoint-120000.pt \
+CUDA_VISIBLE_DEVICES=0 NUM_EPISODES=3 SPLIT=val GUIDANCE=2.5 \
   bash scripts/run_bimanual_multiview_ctrlworld.sh
 
-CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_singleview_dreamgen_worldcache.sh
-CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_singleview_dreamgen_fastercache.sh
+CUDA_VISIBLE_DEVICES=0 NUM_GPUS=1 SPLITS="makovian" NUM_CHUNKS="2" bash scripts/run_single_arm_singleview_dreamgen_static16fps.sh
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_singleview_dreamgen_worldcache.sh ; \
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_singleview_dreamgen_fastercache.sh ; \
 CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_singleview_dreamgen_dicache.sh
 
 #run lai
 CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_singleview_dreamdojo_all_methods.sh
-CUDA_VISIBLE_DEVICES=1 bash scripts/run_humanoid_singleview_dreamdojo_all_methods.sh
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_humanoid_singleview_dreamdojo_all_methods.sh
+
+CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_multiview_ctrlworld_sito.sh both
+
+

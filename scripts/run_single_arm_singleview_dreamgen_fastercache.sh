@@ -291,9 +291,9 @@ echo "--- Step 2: Running inference ---"
 
 FASTERCACHE_FLAGS=(
   --fastercache-enabled
-  --fastercache_start_step     "${FASTERCACHE_START_STEP}"
-  --fastercache_model_interval "${FASTERCACHE_MODEL_INTERVAL}"
-  --fastercache_block_interval "${FASTERCACHE_BLOCK_INTERVAL}"
+  --fastercache-start-step     "${FASTERCACHE_START_STEP}"
+  --fastercache-model-interval "${FASTERCACHE_MODEL_INTERVAL}"
+  --fastercache-block-interval "${FASTERCACHE_BLOCK_INTERVAL}"
 )
 if [[ "${FASTERCACHE_DEBUG}" == "1" ]]; then
   FASTERCACHE_FLAGS+=(--fastercache-debug)
