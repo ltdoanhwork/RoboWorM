@@ -80,7 +80,7 @@ DEBUG_ARG=""
 if [ "${DEBUG:-0}" = "1" ]; then DEBUG_ARG="--debug"; fi
 
 cd "${ROOT}/models/Ctrl-World"
-WANDB_MODE="${WANDB_MODE:-offline}" accelerate launch \
+WANDB_MODE="${WANDB_MODE:-offline}" SWANLAB_MODE="${SWANLAB_MODE:-local}" accelerate launch \
   --num_processes "${NPROC}" \
   --main_process_port "${MASTER_PORT}" \
   scripts/train_wm.py \

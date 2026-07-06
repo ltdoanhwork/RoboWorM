@@ -758,6 +758,62 @@ predict2_video2world_training_2b_bimanual_multiview_seg_v2 = dict(
 )
 
 # ---------------------------------------------------------------------------
+# Bimanual multiview SEG 16fps  (fps-normalized fix)
+#
+# Same 2x2 grid segments as the original _seg run, but the videos are RE-ENCODED
+# to a true 16fps (datasets/bimanual_multiview_grid_seg16_dreamgen) by
+# finetuning/dreamgen/scripts/reencode_bimanual_multiview_seg_16fps.py. Because
+# the fps is now correct, we drop override_fps so the dataloader reports the
+# video's real 16fps -> 93 consecutive frames span ~5.8s, matching the fps the
+# model is conditioned on (fixes the ~2x temporal-speed mismatch of the _seg run).
+# ---------------------------------------------------------------------------
+
+_dataset_bimanual_multiview_seg16 = L(Dataset)(
+    dataset_dir=os.path.join(_DATASETS_ROOT, "bimanual_multiview_grid_seg16_dreamgen"),
+    num_frames=93,
+    video_size=(432, 768),
+)
+
+_dataloader_bimanual_multiview_seg16 = L(DataLoader)(
+    dataset=_dataset_bimanual_multiview_seg16,
+    sampler=L(get_sampler)(dataset=_dataset_bimanual_multiview_seg16),
+    batch_size=1,
+    drop_last=True,
+    num_workers=8,
+    pin_memory=True,
+)
+
+cs.store(
+    group="dataloader_train",
+    package="dataloader_train",
+    name="bimanual_multiview_seg16",
+    node=_dataloader_bimanual_multiview_seg16,
+)
+
+predict2_video2world_training_2b_bimanual_multiview_seg16 = dict(
+    defaults=[
+        {"override /model": "predict2_video2world_fsdp_2b_480p_16fps"},
+        {"override /optimizer": "adamw"},
+        {"override /ckpt_type": "standard"},
+        {"override /dataloader_val": "mock"},
+        {"override /dataloader_train": "bimanual_multiview_seg16"},
+        {"override /scheduler": "lambdalinear"},
+        "_self_",
+    ],
+    model=_MODEL,
+    optimizer=_OPTIMIZER,
+    scheduler=_SCHEDULER,
+    job=dict(
+        project="posttraining",
+        group="multiview",
+        name="bimanual_multiview_seg16",
+    ),
+    model_parallel=_MODEL_PARALLEL,
+    trainer=_TRAINER,
+    checkpoint=_CHECKPOINT,
+)
+
+# ---------------------------------------------------------------------------
 # All multiview combined  (humanoid + bimanual, 480x640)
 # ---------------------------------------------------------------------------
 
@@ -822,6 +878,7 @@ for _item in [
     predict2_video2world_training_2b_bimanual_multiview,
     predict2_video2world_training_2b_bimanual_multiview_seg,
     predict2_video2world_training_2b_bimanual_multiview_seg_v2,
+    predict2_video2world_training_2b_bimanual_multiview_seg16,
     predict2_video2world_training_2b_all_multiview,
 ]:
     experiment_name = [name.lower() for name, value in globals().items() if value is _item][0]  # noqa: RUF015

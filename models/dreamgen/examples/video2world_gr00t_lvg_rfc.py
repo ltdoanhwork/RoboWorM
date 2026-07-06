@@ -61,7 +61,7 @@ def _add_rfc_args(parser: argparse.ArgumentParser) -> None:
     g = parser.add_argument_group("RFC (block-level cache)")
     g.add_argument("--rfc-mode", type=str, default="none",
                    choices=["none", "copy", "linear", "linear_clamp", "snr_shrink",
-                            "dcw_band"],
+                            "dcw_band", "linear_decay", "step_extrap2"],
                    help="Block-level RFC predictor. 'none' = dense / use WorldCache "
                         "via DreamGen's own --worldcache-enabled flag. 'dcw_band' = "
                         "DCW-inspired per-band schedule-modulated correction.")
@@ -95,6 +95,18 @@ def _add_rfc_args(parser: argparse.ArgumentParser) -> None:
                    help="dcw_band: low-band schedule scale c_l in m_low=c_l*(1-step_frac).")
     g.add_argument("--dcw-c-high", type=float, default=1.0,
                    help="dcw_band: high-band schedule scale c_h in m_high=c_h*step_frac.")
+    g.add_argument("--step-correct", action="store_true",
+                   help="Apply DCW-style velocity correction on cache/skip steps.")
+    g.add_argument("--sc-alpha", type=float, default=0.0,
+                   help="Weight of DCW differential term (sigma*v).")
+    g.add_argument("--sc-beta", type=float, default=0.0,
+                   help="Weight of cache-drift term (v - v_last_full).")
+    g.add_argument("--sc-dcw-c", type=float, default=1.0,
+                   help="DCW schedule constant c in lambda=c*sigma.")
+    g.add_argument("--decay-rate", type=float, default=0.5,
+                   help="linear_decay: gamma=1/(1+decay_rate*steps_since_full).")
+    g.add_argument("--extrap-lambda", type=float, default=1.0,
+                   help="step_extrap2: weight of (O_a - O_a_prev) temporal term.")
     g.add_argument("--output-root", type=str, default=None,
                    help="If set, batch outputs go under this dir (one mp4 per item) "
                         "and a per-episode metrics JSON is appended.")
@@ -130,7 +142,7 @@ def attach_rfc(pipe, args):
         warmup_steps=args.warmup_steps,
         min_full_interval=args.min_full_interval,
         gate_mode=args.gate_mode,
-        s_clamp=(args.s_clamp if args.rfc_mode in ("linear_clamp", "snr_shrink", "dcw_band") else None),
+        s_clamp=(args.s_clamp if args.rfc_mode in ("linear_clamp", "snr_shrink", "dcw_band", "linear_decay", "step_extrap2") else None),
         s_floor=getattr(args, "s_floor", None),
         snr_shrink_scale=args.snr_shrink_scale,
         error_budget=getattr(args, "error_budget", None),
@@ -140,6 +152,8 @@ def attach_rfc(pipe, args):
         protect_from_block=getattr(args, "protect_from_block", None),
         dcw_c_low=getattr(args, "dcw_c_low", 1.0),
         dcw_c_high=getattr(args, "dcw_c_high", 1.0),
+        decay_rate=getattr(args, "decay_rate", 0.5),
+        extrap_lambda=getattr(args, "extrap_lambda", 1.0),
     )
 
     # Two independent anchor sets (CFG cond / uncond branches).
@@ -186,6 +200,46 @@ def attach_rfc(pipe, args):
         return out
 
     dit.forward = wrapped_forward
+
+    # Optional step-level velocity correction (DCW-style), on skip steps only.
+    # Wrapped OUTSIDE wrapped_forward so it runs after the block gates set the
+    # per-step verdict and the (cached) velocity is produced.
+    step_corr = None
+    if getattr(args, "step_correct", False):
+        from rfc.step_correct import StepVelocityCorrector
+        step_corr = StepVelocityCorrector(
+            runtime, num_train_timesteps=1000,
+            alpha=args.sc_alpha, beta=args.sc_beta, dcw_c=args.sc_dcw_c,
+            skip_only=True,
+        )
+        _inner_sc = dit.forward
+        _sc = step_corr
+
+        def sc_forward(*fa, **fk):
+            x_t = fk.get("x_B_C_T_H_W", None)
+            if x_t is None and len(fa) > 0:
+                x_t = fa[0]
+            ts = fk.get("timesteps_B_T", None)
+            v = _inner_sc(*fa, **fk)
+            try:
+                _sc.n_calls += 1
+                branch = _sc._branch % 2
+                _sc._branch += 1
+                sigma_t = _sc._sigma_from_timesteps(ts)
+                used_cache = _sc._step_used_cache()
+                if (not _sc.skip_only) or used_cache:
+                    vn = _sc._correct(v, sigma_t, branch)
+                    if vn is not None:
+                        _sc.n_corrected += 1
+                        v = vn
+                if not used_cache:
+                    _sc._v_last_full[branch] = v.detach()
+            except Exception as e:
+                print(f"[StepCorrect] failed (ignored): {e}")
+            return v
+        dit.forward = sc_forward
+        log.info(f"[StepCorrect] ON alpha={args.sc_alpha} beta={args.sc_beta} "
+                 f"dcw_c={args.sc_dcw_c}")
 
     def reset_episode():
         call_parity["n"] = 0

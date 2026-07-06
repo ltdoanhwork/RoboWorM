@@ -395,3 +395,4 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/run_humanoid_singleview_dreamdojo_all_method
 CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_multiview_ctrlworld_sito.sh both
 
 
+tm
