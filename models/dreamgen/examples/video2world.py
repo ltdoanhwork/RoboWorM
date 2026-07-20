@@ -72,6 +72,27 @@ def _import_sparse_backends():
     )
 # -----------------------------------
 
+
+def _import_cache_backends():
+    """Import the full DreamGen cache-arg registrar + runtime-config builder.
+
+    Kept separate from `_import_sparse_backends` so its positional return
+    signature (unpacked in several call sites) stays untouched. Provides
+    WorldCache / DiCache / FasterCache / ScalingCache support for the non-gr00t
+    Video2World flow (used by the bimanual multiview rollout).
+    """
+    import sys
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.normpath(os.path.join(current_dir, "../../.."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+    from methods.cache_strategy.config import (
+        add_dreamgen_cache_args,
+        build_cache_runtime_config,
+    )
+    return add_dreamgen_cache_args, build_cache_runtime_config
+# -----------------------------------
+
 _DEFAULT_NEGATIVE_PROMPT = "The video captures a series of frames showing ugly scenes, static with no motion, motion blur, over-saturation, shaky footage, low resolution, grainy texture, pixelated images, poorly lit areas, underexposed and overexposed scenes, poor color balance, washed out colors, choppy sequences, jerky movements, low frame rate, artifacting, color banding, unnatural transitions, outdated special effects, fake elements, unconvincing visuals, poorly edited content, jump cuts, visual noise, and flickering. Overall, the video is of poor quality."
 
 
@@ -226,6 +247,11 @@ def parse_args() -> argparse.Namespace:
     add_sito_args(parser)
     add_itm_args(parser)
     add_fastercache_args(parser)
+    # Full cache backends (WorldCache / DiCache / FasterCache-v2 / ScalingCache)
+    # routed through build_cache_runtime_config -> pipeline cache_config. This is
+    # what enables WorldCache/DiCache on the non-gr00t (bimanual multiview) flow.
+    add_dreamgen_cache_args, _ = _import_cache_backends()
+    add_dreamgen_cache_args(parser)
     # -----------------------------------
 
     return parser.parse_args()
@@ -238,6 +264,17 @@ def setup_pipeline(args: argparse.Namespace, text_encoder: CosmosTextEncoder | N
             raise ValueError("[FasterCache] DreamGen FasterCache v1 is single-GPU only; set --num_gpus 1.")
         if args.use_cuda_graphs:
             raise ValueError("[FasterCache] DreamGen FasterCache v1 is incompatible with --use_cuda_graphs.")
+    # WorldCache / DiCache / FasterCache-v2 / ScalingCache are single-GPU only
+    # (context_parallel_size must be 1). Guard here so a bad NUM_GPUS fails fast.
+    _cache_enabled = any(
+        getattr(args, f, False)
+        for f in ("worldcache_enabled", "dicache_enabled", "fastercache_enabled", "scalingcache_enabled")
+    )
+    if _cache_enabled and getattr(args, "num_gpus", 1) > 1:
+        raise ValueError(
+            "[Cache] DreamGen cache backends (WorldCache/DiCache/FasterCache) are "
+            "single-GPU only; set --num_gpus 1."
+        )
 
     config = get_cosmos_predict2_video2world_pipeline(
         model_size=args.model_size,
@@ -349,6 +386,10 @@ def setup_pipeline(args: argparse.Namespace, text_encoder: CosmosTextEncoder | N
 
     # Load models
     log.info(f"Initializing Video2WorldPipeline with model size: {args.model_size}")
+    _, build_cache_runtime_config = _import_cache_backends()
+    cache_config = build_cache_runtime_config(args)
+    if cache_config is not None:
+        log.info(f"[Cache] Enabled cache backend: {type(cache_config).__name__}")
     pipe = Video2WorldPipeline.from_config(
         config=config,
         dit_path=dit_path,
@@ -359,6 +400,7 @@ def setup_pipeline(args: argparse.Namespace, text_encoder: CosmosTextEncoder | N
         torch_dtype=torch.bfloat16,
         load_ema_to_reg=args.load_ema,
         load_prompt_refiner=True,
+        cache_config=cache_config,
     )
 
     # Set the provided text encoder if one was passed

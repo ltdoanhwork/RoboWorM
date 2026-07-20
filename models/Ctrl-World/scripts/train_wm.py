@@ -268,7 +268,7 @@ if __name__ == "__main__":
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument('--config', type=str, default='droid',
-                        choices=['droid', 'bimanual'],
+                        choices=['droid', 'bimanual', 'humanoid'],
                         help='Which config/dataset preset to use.')
     parser.add_argument('--svd_model_path', type=str, default=None)
     parser.add_argument('--clip_model_path', type=str, default=None)
@@ -289,6 +289,13 @@ if __name__ == "__main__":
     if args_new.config == 'bimanual':
         from config_bimanual import wm_args_bimanual
         args = wm_args_bimanual()
+        args.dataset_module = 'dataset.dataset_bimanual_multiview'
+        args.dataset_cfgs = args.dataset_names
+        args.load_strict = not args_new.no_load_strict
+    elif args_new.config == 'humanoid':
+        from config_humanoid import wm_args_humanoid
+        args = wm_args_humanoid()
+        # reuse the dimension-agnostic bimanual dataset class (reads observation.state.qpos)
         args.dataset_module = 'dataset.dataset_bimanual_multiview'
         args.dataset_cfgs = args.dataset_names
         args.load_strict = not args_new.no_load_strict

@@ -395,4 +395,41 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/run_humanoid_singleview_dreamdojo_all_method
 CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_multiview_ctrlworld_sito.sh both
 
 
-tm
+CKPT="/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/exp_logs/ctrlworld_logs/bimanual_multiview_5fps/checkpoint-280000.pt" \
+DATASET_NAME=bimanual_multiview_5fps \
+DOWN_SAMPLE=6 \
+SPLIT=all \
+CUDA_VISIBLE_DEVICES=0 \
+bash scripts/run_bimanual_multiview_ctrlworld.sh
+
+CKPT="/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/exp_logs/ctrlworld_logs/humanoid_multiview/checkpoint-150000.pt" \
+DATASET_NAME=humanoid_multiview \
+DOWN_SAMPLE=6 \
+SPLIT=all \
+CUDA_VISIBLE_DEVICES=1 \
+bash scripts/run_humanoid_multiview_ctrlworld.sh
+
+
+cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
+
+# WorldCache (tuned optimum: thresh 0.04 / ret 0.4)
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_multiview_ctrlworld_worldcache.sh
+CUDA_VISIBLE_DEVICES=1 bash scripts/run_bimanual_multiview_ctrlworld_dicache.sh
+
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_multiview_dreamgen_dicache.sh && \
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_multiview_dreamgen_worldcache.sh && \
+CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_multiview_dreamgen_fastercache.sh
+
+# ---- tmux submit: 3 DreamGen chia đều GPU0/1/2, 2 Ctrl-World tuần tự trên GPU3 ----
+# (logs -> exp_logs/tmux_logs/, attach: tmux attach -t <name>)
+tmux new-session -d -s dg_dicache_g0     "CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_multiview_dreamgen_dicache.sh     2>&1 | tee exp_logs/tmux_logs/dg_dicache.log; exec bash"
+tmux new-session -d -s dg_worldcache_g1  "CUDA_VISIBLE_DEVICES=1 bash scripts/run_bimanual_multiview_dreamgen_worldcache.sh  2>&1 | tee exp_logs/tmux_logs/dg_worldcache.log; exec bash"
+tmux new-session -d -s dg_fastercache_g2 "CUDA_VISIBLE_DEVICES=2 bash scripts/run_bimanual_multiview_dreamgen_fastercache.sh 2>&1 | tee exp_logs/tmux_logs/dg_fastercache.log; exec bash"
+tmux new-session -d -s cw_cache_g3       "CUDA_VISIBLE_DEVICES=3 bash scripts/run_bimanual_multiview_ctrlworld_worldcache.sh 2>&1 | tee exp_logs/tmux_logs/cw_worldcache.log && CUDA_VISIBLE_DEVICES=3 bash scripts/run_bimanual_multiview_ctrlworld_dicache.sh 2>&1 | tee exp_logs/tmux_logs/cw_dicache.log; exec bash"
+
+# ---- tmux submit: bimanual SINGLEVIEW dreamgen (iter 110k), 3 cache trên GPU0/1/3 ----
+tmux new-session -d -s bsv_dicache_g0     "CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_singleview_dreamgen_dicache.sh     2>&1 | tee exp_logs/tmux_logs/bsv_dicache.log; exec bash"
+tmux new-session -d -s bsv_worldcache_g1  "CUDA_VISIBLE_DEVICES=1 bash scripts/run_bimanual_singleview_dreamgen_worldcache.sh  2>&1 | tee exp_logs/tmux_logs/bsv_worldcache.log; exec bash"
+tmux new-session -d -s bsv_fastercache_g3 "CUDA_VISIBLE_DEVICES=3 bash scripts/run_bimanual_singleview_dreamgen_fastercache.sh 2>&1 | tee exp_logs/tmux_logs/bsv_fastercache.log; exec bash"
+
+CUDA_VISIBLE_DEVICES=0,3 MAX_EPISODES=5 bash scripts/run_humanoid_multiview_dreamgen_seg16.sh

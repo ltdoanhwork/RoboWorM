@@ -6,9 +6,14 @@ a 2x2 grid image (768x432), and generates prompt matching training format.
 
 Output layout:
   {save_root}/{split}/iter_000070000/{dataset_name}/
-    batch_input.json
+    batch_input.json                     (flat, all episodes — single-shot video2world)
+    batch_input_{N}chunks.json           (only with --group-by-length; length-matched LVG)
   {input_root}/{split}/{dataset_name}/
     episode_XXXXXX.png  (grid input images)
+
+With --group-by-length, each episode's num_chunks is derived so the generated
+length (@model-fps) matches the source episode length (@source-fps). Episodes are
+then grouped by num_chunks so an LVG runner can pass one --num_chunks per group.
 """
 
 import argparse
@@ -107,6 +112,46 @@ def find_video(dataset_path: Path, cam_key: str, ep_idx: int) -> Path | None:
     return None
 
 
+def get_video_frame_count(video_path: Path) -> int | None:
+    result = subprocess.run(
+        ["ffprobe", "-v", "quiet", "-show_entries", "stream=nb_frames",
+         "-of", "csv=p=0", str(video_path)],
+        capture_output=True, text=True,
+    )
+    if result.returncode == 0 and result.stdout.strip():
+        try:
+            return int(result.stdout.strip().split("\n")[0])
+        except ValueError:
+            pass
+    return None
+
+
+def compute_num_chunks(
+    src_frames: int | None,
+    source_fps: float,
+    model_fps: int,
+    min_chunks: int,
+    max_chunks: int,
+    frames_per_chunk: int = 92,
+    first_chunk_frames: int = 93,
+) -> int:
+    """Match generated length (@model_fps) to the source episode length.
+
+    LVG produces `first_chunk_frames + (num_chunks-1)*frames_per_chunk` frames.
+    We pick the smallest num_chunks whose generated length >= target model frames,
+    clamped to [min_chunks, max_chunks].
+    """
+    if not src_frames or src_frames <= 0:
+        return min_chunks
+    target_model_frames = src_frames * (model_fps / source_fps)
+    if target_model_frames <= first_chunk_frames:
+        n = 1
+    else:
+        import math
+        n = 1 + math.ceil((target_model_frames - first_chunk_frames) / frames_per_chunk)
+    return max(min_chunks, min(max_chunks, n))
+
+
 def ffmpeg_first_frame(video_path: Path, out_jpg: Path) -> bool:
     result = subprocess.run(
         ["ffmpeg", "-nostdin", "-y", "-i", str(video_path),
@@ -153,6 +198,20 @@ def parse_args():
     parser.add_argument("--input-root", required=True)
     parser.add_argument("--iter-name", default="iter_000070000")
     parser.add_argument("--max-episodes", type=int, default=None)
+    parser.add_argument(
+        "--group-by-length",
+        action="store_true",
+        help="Also emit per-episode length-matched batch_input_{N}chunks.json groups "
+        "for autoregressive LVG rollout (num_chunks derived from source length).",
+    )
+    parser.add_argument("--source-fps", type=float, default=30.0,
+                        help="Source dataset fps (humanoid multiview = 30).")
+    parser.add_argument("--model-fps", type=int, default=16,
+                        help="Model / generation fps.")
+    parser.add_argument("--min-chunks", type=int, default=1,
+                        help="Lower clamp on per-episode num_chunks.")
+    parser.add_argument("--max-chunks", type=int, default=6,
+                        help="Upper clamp on per-episode num_chunks.")
     return parser.parse_args()
 
 
@@ -196,6 +255,8 @@ def main():
             out_dir.mkdir(parents=True, exist_ok=True)
 
             batch_input = []
+            # ep_idx -> num_chunks (only used when --group-by-length)
+            ep_num_chunks: dict[int, int] = {}
 
             for ep_idx in episode_indices:
                 task = episodes_meta[ep_idx].rstrip(".,;").strip()
@@ -209,6 +270,17 @@ def main():
 
                 grid_png = img_dir / f"episode_{ep_idx:06d}.png"
                 output_mp4 = str(out_dir / f"episode_{ep_idx:06d}.mp4")
+
+                # Reference view used both for the grid and to measure length.
+                ref_cam = layout["TL"][0]
+                ref_video = find_video(dataset_dir, ref_cam, ep_idx)
+
+                if args.group_by_length:
+                    src_frames = get_video_frame_count(ref_video) if ref_video else None
+                    ep_num_chunks[ep_idx] = compute_num_chunks(
+                        src_frames, args.source_fps, args.model_fps,
+                        args.min_chunks, args.max_chunks,
+                    )
 
                 if grid_png.exists():
                     batch_input.append({
@@ -233,9 +305,11 @@ def main():
                     frame_paths[slot] = tmp_jpg
 
                 if not all_ok:
+                    ep_num_chunks.pop(ep_idx, None)
                     continue
 
                 if not build_grid_image(frame_paths, grid_png, tmp_dir):
+                    ep_num_chunks.pop(ep_idx, None)
                     continue
 
                 batch_input.append({
@@ -249,11 +323,28 @@ def main():
                 f.unlink(missing_ok=True)
 
             if batch_input:
+                # Flat batch (kept for the single-shot video2world dense script).
                 batch_json = out_dir / "batch_input.json"
                 with open(batch_json, "w") as f:
                     json.dump(batch_input, f, indent=2)
                 total += len(batch_input)
                 print(f"[OK] {split}/{dataset_name}: {len(batch_input)} episodes")
+
+                if args.group_by_length:
+                    # Group episodes by their length-matched num_chunks so the
+                    # LVG runner can pass a single --num_chunks per group.
+                    from collections import defaultdict
+                    groups: dict[int, list] = defaultdict(list)
+                    for item in batch_input:
+                        ep_idx = int(Path(item["output_video"]).stem.split("_")[-1])
+                        n = ep_num_chunks.get(ep_idx, args.min_chunks)
+                        groups[n].append(item)
+                    for n_chunks, items in sorted(groups.items()):
+                        gjson = out_dir / f"batch_input_{n_chunks}chunks.json"
+                        with open(gjson, "w") as f:
+                            json.dump(items, f, indent=2)
+                    dist = ", ".join(f"{n}ch={len(v)}" for n, v in sorted(groups.items()))
+                    print(f"     length-matched groups: {dist}")
 
     print(f"\nTotal prepared: {total} grid samples")
 

@@ -20,6 +20,8 @@ Mirrors scripts/infer_single_arm_multiview_ctrlworld.py but for bimanual:
 import sys
 import os
 import json
+import time
+import importlib
 from pathlib import Path
 from argparse import ArgumentParser
 
@@ -200,6 +202,31 @@ def find_annotation(val_dataset_dir, episode_id):
     return None, None
 
 
+def split_category(episode_id):
+    """Split a `{category}_{task}__{idx}` annotation stem into (category, name).
+
+    Bimanual/humanoid annotation stems embed the makovian/non_makovian category
+    (e.g. `non_makovian_fold_blue_towel__000070`). Per the sampling-dataset-layout
+    rule, `{category}` must be its own path segment, not baked into the episode
+    dir name. Returns (category, stripped_episode_name). If no known category
+    prefix is found, category is None and the name is returned unchanged.
+    """
+    if episode_id.startswith("non_makovian_"):
+        return "non_makovian", episode_id[len("non_makovian_"):]
+    if episode_id.startswith("makovian_"):
+        return "makovian", episode_id[len("makovian_"):]
+    return None, episode_id
+
+
+def episode_output_dir(base_dir, episode_id):
+    """Path <base>/<category>/episode_<name> (falls back to flat if no category)."""
+    category, name = split_category(episode_id)
+    base = Path(base_dir)
+    if category is not None:
+        base = base / category
+    return base / f"episode_{name}"
+
+
 def run_episode(agent, episode_id, save_dir, input_save_dir=None):
     args = agent.args
     pred_step = args.num_frames  # 5
@@ -285,14 +312,14 @@ def run_episode(agent, episode_id, save_dir, input_save_dir=None):
     full_pred = np.concatenate([gt_strip, pred_strip], axis=1)
 
     out_fps = max(1, int(round(30 / args.infer_down_sample)))
-    ep_save_dir = Path(save_dir) / f"episode_{episode_id}"
+    ep_save_dir = episode_output_dir(save_dir, episode_id)
     ep_save_dir.mkdir(parents=True, exist_ok=True)
     mediapy.write_video(str(ep_save_dir / "full_pred.mp4"), full_pred, fps=out_fps)
     mediapy.write_video(str(ep_save_dir / "pred_all_views.mp4"), pred_strip, fps=out_fps)
     mediapy.write_video(str(ep_save_dir / "gt_all_views.mp4"), gt_strip, fps=out_fps)
 
     if input_save_dir is not None:
-        ep_input_dir = Path(input_save_dir) / f"episode_{episode_id}"
+        ep_input_dir = episode_output_dir(input_save_dir, episode_id)
         ep_input_dir.mkdir(parents=True, exist_ok=True)
         mediapy.write_video(str(ep_input_dir / "full_gt.mp4"), gt_strip, fps=out_fps)
         for vid_idx, vid_info in enumerate(anno["videos"]):
@@ -336,6 +363,141 @@ def run_episode(agent, episode_id, save_dir, input_save_dir=None):
     return metrics
 
 
+def _import_cache_module(backend, module_name):
+    project_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+    return importlib.import_module(f"methods.cache_strategy.{backend}.{module_name}")
+
+
+def _import_pruning_module(backend, module_name):
+    project_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+    return importlib.import_module(f"methods.prunning.{backend}.{module_name}")
+
+
+def _enable_backend(agent, args, num_inference_steps):
+    """Enable the (single, validated) acceleration backend on agent.model.unet.
+
+    Mirrors scripts/infer_single_arm_multiview_ctrlworld.py so bimanual/multiview
+    supports the exact same WorldCache / DiCache / FasterCache / SiTo / ITM flags
+    (same CrtlWorld UNet). Returns a possibly-adjusted guidance_scale.
+    """
+    guidance_scale = agent.args.guidance_scale
+    unet = agent.model.unet
+
+    if getattr(args, "use_worldcache", False):
+        adapter = _import_cache_module("WorldCache", "adapter")
+        adapter.enable_worldcache(
+            unet,
+            num_steps=num_inference_steps,
+            rel_l1_thresh=args.worldcache_rel_l1_thresh,
+            ret_ratio=args.worldcache_ret_ratio,
+            probe_depth=args.worldcache_probe_depth,
+            motion_sensitivity=args.worldcache_motion_sensitivity,
+            hf_enabled=args.worldcache_hf_enabled,
+            hf_thresh=args.worldcache_hf_thresh,
+            saliency_enabled=args.worldcache_saliency_enabled,
+            saliency_weight=args.worldcache_saliency_weight,
+            osi_enabled=args.worldcache_osi_enabled,
+            dynamic_decay=args.worldcache_dynamic_decay,
+        )
+        print(f"[Cache] WorldCache enabled: thresh={args.worldcache_rel_l1_thresh}, "
+              f"ret_ratio={args.worldcache_ret_ratio}, probe_depth={args.worldcache_probe_depth}")
+    if getattr(args, "use_dicache", False):
+        adapter = _import_cache_module("DiCache", "adapter")
+        adapter.enable_dicache(
+            unet,
+            num_steps=num_inference_steps,
+            rel_l1_thresh=args.dicache_rel_l1_thresh,
+            ret_ratio=args.dicache_ret_ratio,
+            probe_depth=args.dicache_probe_depth,
+        )
+        print(f"[Cache] DiCache enabled: thresh={args.dicache_rel_l1_thresh}, "
+              f"ret_ratio={args.dicache_ret_ratio}, probe_depth={args.dicache_probe_depth}")
+    if getattr(args, "use_fastercache", False):
+        adapter = _import_cache_module("FasterCache", "adapter")
+        adapter.enable_fastercache(
+            unet,
+            start_step=args.fastercache_start_step,
+            model_interval=args.fastercache_model_interval,
+            block_interval=args.fastercache_block_interval,
+            first_layers_fp=2,
+        )
+        print(f"[Cache] FasterCache enabled: start_step={args.fastercache_start_step}, "
+              f"model_interval={args.fastercache_model_interval}, block_interval={args.fastercache_block_interval}")
+    if getattr(args, "use_sito", False):
+        if getattr(args, "sito_spatiotemporal_hold", False):
+            st_hold = _import_pruning_module("SiTo", "spatiotemporal_hold")
+            st_hold.enable_spatiotemporal_hold(
+                unet,
+                keep_ratio=args.sito_st_keep_ratio,
+                max_downsample_ratio=args.sito_max_downsample_ratio,
+                recompute_every=(args.sito_plan_recompute_every or 999999),
+            )
+            print(f"[Prune] SiTo ST-hold enabled: keep_ratio={args.sito_st_keep_ratio}, "
+                  f"max_downsample_ratio={args.sito_max_downsample_ratio}")
+        else:
+            adapter = _import_pruning_module("SiTo", "adapter")
+            adapter.enable_sito(
+                unet,
+                start_layer_idx=args.sito_start_layer_idx or 0,
+                prune_ratio=args.sito_prune_ratio,
+                patch_h=args.sito_patch_h,
+                patch_w=args.sito_patch_w,
+                noise_alpha=args.sito_noise_alpha,
+                sim_beta=args.sito_sim_beta,
+                max_downsample_ratio=args.sito_max_downsample_ratio,
+                plan_recompute_every=getattr(args, "sito_plan_recompute_every", 0),
+            )
+            print(f"[Prune] SiTo enabled: prune_ratio={args.sito_prune_ratio}")
+    if getattr(args, "use_itm", False):
+        itm_state = {}
+        if getattr(args, "itm_spatiotemporal_hold", False):
+            st_hold = _import_pruning_module("SiTo", "spatiotemporal_hold")
+            st_hold.enable_spatiotemporal_hold(
+                unet,
+                keep_ratio=args.itm_st_keep_ratio,
+                max_downsample_ratio=args.itm_max_downsample_ratio,
+                recompute_every=(args.itm_plan_recompute_every or 999999),
+                similarity_recover=True,
+            )
+            print(f"[Prune] ITM ST-hold enabled: keep_ratio={args.itm_st_keep_ratio}, "
+                  f"max_downsample_ratio={args.itm_max_downsample_ratio}")
+        elif getattr(args, "itm_block_hold", False):
+            block_hold = _import_pruning_module("importance_token_merge", "block_hold")
+            itm_state["prune_from_step"] = args.itm_prune_from_step
+            itm_state["merge_from_step"] = args.itm_merge_from_step
+            block_hold.enable_itm_block_hold(
+                unet,
+                itm_state=itm_state,
+                start_layer_idx=args.itm_start_layer_idx or 0,
+                compress_ratio=args.itm_compress_ratio,
+                max_downsample_ratio=args.itm_max_downsample_ratio,
+                self_importance=True,
+                plan_recompute_every=getattr(args, "itm_plan_recompute_every", 0),
+            )
+        else:
+            adapter = _import_pruning_module("importance_token_merge", "adapter")
+            adapter.enable_itm(
+                unet,
+                itm_state=itm_state,
+                start_layer_idx=args.itm_start_layer_idx or 0,
+                compress_ratio=args.itm_compress_ratio,
+                prune_from_step=args.itm_prune_from_step,
+                merge_from_step=args.itm_merge_from_step,
+                merge_attn=args.itm_merge_attn,
+                merge_crossattn=args.itm_merge_crossattn,
+                merge_mlp=args.itm_merge_mlp,
+                max_downsample_ratio=args.itm_max_downsample_ratio,
+            )
+            if guidance_scale <= 1.0:
+                guidance_scale = 2.0
+                print(f"[ITM] guidance_scale overridden to {guidance_scale} (ITM requires > 1.0)")
+    return guidance_scale
+
+
 def main():
     parser = ArgumentParser()
     parser.add_argument("--svd_model_path", type=str, required=True)
@@ -356,11 +518,29 @@ def main():
     parser.add_argument("--infer_down_sample", type=int, default=1,
                         help="Must match the down_sample used at prep/train (for output fps).")
     parser.add_argument("--split", choices=["val", "train", "all"], default="all")
+    parser.add_argument("--config", choices=["bimanual", "humanoid"], default="bimanual",
+                        help="Which model config (sets action_dim etc.).")
+
+    # Cache backend args (mutually exclusive)
+    _import_cache_module("WorldCache", "config").add_worldcache_args(parser)
+    _import_cache_module("DiCache", "config").add_dicache_args(parser)
+    _import_cache_module("FasterCache", "config").add_fastercache_args(parser)
+
+    # Pruning/sparse attention backend args
+    _import_pruning_module("SiTo", "config").add_sito_args(parser)
+    _import_pruning_module("importance_token_merge", "config").add_itm_args(parser)
+
     args = parser.parse_args()
 
+    from methods.cache_strategy.ctrl_world_utils import validate_ctrl_world_backend_args
+    validate_ctrl_world_backend_args(args)
+
     sys.path.insert(0, ctrl_world_dir)
-    from config_bimanual import wm_args_bimanual
-    model_args = wm_args_bimanual()
+    if args.config == "humanoid":
+        from config_humanoid import wm_args_humanoid as _wm_args
+    else:
+        from config_bimanual import wm_args_bimanual as _wm_args
+    model_args = _wm_args()
     model_args.svd_model_path = args.svd_model_path
     model_args.clip_model_path = args.clip_model_path
     model_args.ckpt_path = args.ckpt_path
@@ -376,6 +556,11 @@ def main():
         print(f"[override] guidance_scale = {args.guidance_scale}")
 
     agent = CtrlWorldAgent(model_args)
+
+    # Enable acceleration backend (validated mutually-exclusive) on the UNet.
+    guidance_scale = _enable_backend(agent, args, model_args.num_inference_steps)
+    if guidance_scale != model_args.guidance_scale:
+        model_args.guidance_scale = guidance_scale
 
     splits = ["val", "train"] if args.split == "all" else [args.split]
     episode_ids = []
@@ -393,30 +578,55 @@ def main():
 
     all_metrics = []
     for ep_idx, episode_id in enumerate(episode_ids):
-        ep_save_path = Path(args.save_dir) / f"episode_{episode_id}" / "full_pred.mp4"
+        ep_save_path = episode_output_dir(args.save_dir, episode_id) / "full_pred.mp4"
         if ep_save_path.exists():
             print(f"[{ep_idx+1}/{len(episode_ids)}] {episode_id} done, skipping")
             continue
         print(f"[{ep_idx+1}/{len(episode_ids)}] Episode {episode_id}")
+        _t0 = time.time()
         metrics = run_episode(agent, episode_id, args.save_dir, input_save_dir=args.input_save_dir)
+        _dt = time.time() - _t0
         if metrics:
+            metrics["wall_time_s"] = _dt
             all_metrics.append(metrics)
             print(f"  -> {metrics['num_frames_pred']} frames, "
-                  f"PSNR={metrics['psnr']:.2f}, SSIM={metrics['ssim']:.4f}, LPIPS={metrics['lpips']:.4f}")
+                  f"PSNR={metrics['psnr']:.2f}, SSIM={metrics['ssim']:.4f}, LPIPS={metrics['lpips']:.4f} "
+                  f"| {_dt:.1f}s")
 
     if all_metrics:
-        summary = {
-            "mean_psnr": sum(m["psnr"] for m in all_metrics) / len(all_metrics),
-            "mean_ssim": sum(m["ssim"] for m in all_metrics) / len(all_metrics),
-            "mean_lpips": sum(m["lpips"] for m in all_metrics) / len(all_metrics),
-            "num_episodes": len(all_metrics),
-        }
-        summary_path = Path(args.save_dir) / "all_summary.json"
-        summary_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(summary_path, "w") as f:
-            json.dump(summary, f, indent=2)
-        print(f"\n=== Summary ({len(all_metrics)} episodes) ===")
-        print(f"PSNR: {summary['mean_psnr']:.3f}  SSIM: {summary['mean_ssim']:.4f}  LPIPS: {summary['mean_lpips']:.4f}")
+        def _write_summary(metrics_list, out_dir, label):
+            summary = {
+                "mean_psnr": sum(m["psnr"] for m in metrics_list) / len(metrics_list),
+                "mean_ssim": sum(m["ssim"] for m in metrics_list) / len(metrics_list),
+                "mean_lpips": sum(m["lpips"] for m in metrics_list) / len(metrics_list),
+                "num_episodes": len(metrics_list),
+            }
+            _times = [m["wall_time_s"] for m in metrics_list if "wall_time_s" in m]
+            if _times:
+                summary["mean_wall_time_s"] = sum(_times) / len(_times)
+            out_dir.mkdir(parents=True, exist_ok=True)
+            with open(out_dir / "all_summary.json", "w") as f:
+                json.dump(summary, f, indent=2)
+            print(f"=== Summary [{label}] ({len(metrics_list)} episodes) === "
+                  f"PSNR: {summary['mean_psnr']:.3f}  "
+                  f"SSIM: {summary['mean_ssim']:.4f}  "
+                  f"LPIPS: {summary['mean_lpips']:.4f}"
+                  + (f"  time: {summary['mean_wall_time_s']:.1f}s" if "mean_wall_time_s" in summary else ""))
+            return summary
+
+        # Per-category summaries (mirrors single_arm: one all_summary.json per
+        # {category}/ dir) so bimanual/humanoid match the layout convention.
+        by_category = {}
+        for m in all_metrics:
+            category, _ = split_category(m["episode_id"])
+            by_category.setdefault(category, []).append(m)
+
+        print()
+        for category, metrics_list in by_category.items():
+            out_dir = Path(args.save_dir)
+            if category is not None:
+                out_dir = out_dir / category
+            _write_summary(metrics_list, out_dir, category or "all")
 
 
 if __name__ == "__main__":
