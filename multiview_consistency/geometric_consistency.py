@@ -258,8 +258,6 @@ def geometric_calculation(
       {
         "view0_shape": {...},
         "view1_shape": {...},
-        "valid_ratio_view0": float,
-        "valid_ratio_view1": float,
       }
       If S>2, keys are view{idx}_shape / valid_ratio_view{idx}.
     """
@@ -337,6 +335,8 @@ def geometric_calculation(
             xv = x[roi].astype(np.float64)
             yv = y[roi].astype(np.float64)
 
+            scale_ref = float(np.median(yv))
+
             mx = float(xv.mean())
             my = float(yv.mean())
             dx = xv - mx
@@ -361,6 +361,7 @@ def geometric_calculation(
                     "corr": float(corr),
                     "residual_mean": float(r.mean()),
                     "count": cnt,
+                    "scale_ref": scale_ref,
                 }
             )
         return out[0] if B == 1 else out
@@ -389,7 +390,6 @@ def geometric_calculation(
                 vr.append(float(roi_b.mean()))
 
         result[f"view{s}_shape"] = shape_s
-        result[f"valid_ratio_view{s}"] = vr
 
     return result
 
@@ -399,18 +399,25 @@ def geometric_consistency_metric(
     """
     Returns scalar in [0,1], higher is better
     """
-    def _view_score(vshape: dict) -> float:
+    def _view_score(vshape: dict, *, tau: float = 0.5) -> float:
         corr = float(vshape.get("corr", float("nan")))
         resid = float(vshape.get("residual_mean", float("nan")))
-        if not (math.isfinite(corr) and math.isfinite(resid)):
+        scale_ref = float(vshape.get("scale_ref", float("nan")))
+        if not (math.isfinite(corr) and math.isfinite(resid)
+                and math.isfinite(scale_ref) and scale_ref > 1e-6):
             return 0.0
-        corr = max(0.0, min(1.0, corr))
-        return float(max(0.0, min(1.0, corr * math.exp(-resid / 0.2))))
+
+        s_corr = max(0.0, corr)    
+        rel_resid = resid / scale_ref
+        s_resid = math.exp(-rel_resid / tau)
+        return s_corr * s_resid     
+
     v0 = res.get("view0_shape", {})
     v1 = res.get("view1_shape", {})
     s0 = _view_score(v0)
     s1 = _view_score(v1)
-    base = (s0 + s1) / 2.0
+    # base = (s0 + s1) / 2.0
+    base = math.sqrt(max(s0, 0.0) * max(s1, 0.0))
 
     return float(max(0.0, min(1.0, base)))
 

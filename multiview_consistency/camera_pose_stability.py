@@ -36,7 +36,7 @@ def _intrinsic_stability_score(K_view: torch.Tensor) -> float:
     )
     k_ref = k_vals[0].abs().clamp_min(1e-12)
     sigma_K = (k_vals / k_ref).std(dim=0, unbiased=False).mean()
-    return _clamp01(math.exp(-float(sigma_K.item()) / 1))
+    return math.exp(-float(sigma_K.item())) 
 
 
 def _extrinsic_stability_score(
@@ -53,7 +53,7 @@ def _extrinsic_stability_score(
 
     sR = _clamp01(math.exp(-sigma_R / 5.0))
     st = _clamp01(math.exp(-sigma_t / 1.0))
-    return _clamp01((sR + st) / 2.0)
+    return (sR + st) / 2.0
 
 
 def compute_pose_stability_metric(
