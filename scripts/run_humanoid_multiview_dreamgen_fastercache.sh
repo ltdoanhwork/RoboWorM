@@ -50,15 +50,19 @@ SEED="${SEED:-0}"
 ITER_TAG="${ITER_TAG:-${ITER_NAME}}"
 
 # FasterCache parameters. TUNED for humanoid DreamGen multiview (2B seg16),
-# measured on 1 GPU: m2/b2 -> 125.7s/seg (0.92x, SLOWER than dense 116s) at
-# PSNR 12.80 (clean). Like bimanual, FasterCache is net-negative on this DiT:
-# the model-level FFT-delta skip either corrupts (aggressive) or costs more than
-# it saves (gentle). Default set to the CLEAN m2/b2 point so the benchmark output
-# is interpretable. Kept runnable per the acceleration-benchmark rule; do NOT
-# delete/swap it. For real speedup+quality use DiCache (2.28x) / WorldCache (2.08x).
+# measured on 1 GPU (2 episodes, per-segment gen time; dense=116s/seg):
+#   model_interval 5 / block_interval 5 -> 100.2s/seg (1.16x) at PSNR 12.81
+#   (dense 12.76) LPIPS 0.451, visuals == dense -> BEST clean point (DEFAULT).
+# Ladder: m2/b2=125.7s(0.92x SLOWER, delta-FFT computed too often); m3/b3=111s
+# (1.05x); m5/b5=100s(1.16x) KNEE. Beyond the knee quality CLIFFS: m5/b3=100s
+# but PSNR 11.71 (block reuse too aggressive); m8/b5=91s PSNR 9.52 CORRUPT
+# (rainbow melt); early start_step + block_interval 99 also degrades (LPIPS 0.53).
+# FasterCache now gives a modest real speedup here, but DiCache (2.28x) /
+# WorldCache (2.08x) remain far stronger. Kept runnable per the
+# acceleration-benchmark rule; do NOT delete/swap it.
 FASTERCACHE_START_STEP="${FASTERCACHE_START_STEP:-0}"
-FASTERCACHE_MODEL_INTERVAL="${FASTERCACHE_MODEL_INTERVAL:-2}"
-FASTERCACHE_BLOCK_INTERVAL="${FASTERCACHE_BLOCK_INTERVAL:-2}"
+FASTERCACHE_MODEL_INTERVAL="${FASTERCACHE_MODEL_INTERVAL:-5}"
+FASTERCACHE_BLOCK_INTERVAL="${FASTERCACHE_BLOCK_INTERVAL:-5}"
 FASTERCACHE_DEBUG="${FASTERCACHE_DEBUG:-0}"
 
 MULTIVIEW_ROOT="${MULTIVIEW_ROOT:-${ROOT}/datasets/humanoid/multiview}"

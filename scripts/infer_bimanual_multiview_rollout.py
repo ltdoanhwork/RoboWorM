@@ -200,6 +200,19 @@ def parse_args() -> argparse.Namespace:
         add_dreamgen_cache_args(p)
     except Exception as _e:  # pragma: no cover - cache args are optional
         print(f"[warn] could not register cache args: {_e}")
+
+    # Sparse-attention backends (PISA / SVG / Radial). Same forwarding trick as the
+    # cache backends: register their flags (use_pisa/use_svg/use_radial + params)
+    # so setup_pipeline (examples.video2world) builds the matching sparse config.
+    try:
+        from methods.sparse_attention.pisa.config import add_pisa_args
+        from methods.sparse_attention.svg.config import add_dreamgen_svg_args
+        from methods.sparse_attention.radial.config import add_dreamgen_radial_args
+        add_pisa_args(p)
+        add_dreamgen_svg_args(p)
+        add_dreamgen_radial_args(p)
+    except Exception as _e:  # pragma: no cover - sparse args are optional
+        print(f"[warn] could not register sparse-attention args: {_e}")
     return p.parse_args()
 
 
@@ -405,6 +418,12 @@ def main() -> None:
     # the matching cache_config. build_cache_runtime_config reads these attrs.
     for _attr in vars(args):
         if _attr.startswith(("worldcache_", "dicache_", "fastercache_", "scalingcache_")):
+            setattr(pipe_args, _attr, getattr(args, _attr))
+
+    # Forward sparse-attention flags (use_pisa/pisa_*, use_svg/svg_*, use_radial/
+    # radial_*) so setup_pipeline builds the matching sparse config.
+    for _attr in vars(args):
+        if _attr.startswith(("pisa_", "svg_", "radial_")) or _attr in ("use_pisa", "use_svg", "use_radial"):
             setattr(pipe_args, _attr, getattr(args, _attr))
 
     print("Building Video2World pipeline (loads model once)...")

@@ -225,3 +225,4 @@ tmp_2/*
 models/Ctrl-World/dataset_example/*
 webpage/*
 .cursor/*
+.jitcache/*

@@ -32,8 +32,8 @@ DATASET_DIR="${DATASET_DIR:-${ROOT}/models/Ctrl-World/dataset_example/${DATASET_
 META_INFO="${ROOT}/models/Ctrl-World/dataset_meta_info"
 DOWN_SAMPLE="${DOWN_SAMPLE:-6}"
 
-OUTPUT_BASE="${ROOT}/sampling_dataset/dense/humanoid/output/multiview/ctrlworld"
-INPUT_BASE="${ROOT}/sampling_dataset/dense/humanoid/input/multiview/ctrlworld"
+OUTPUT_BASE="${OUTPUT_ROOT:-${ROOT}/sampling_dataset/dense/humanoid/output/multiview/ctrlworld}"
+INPUT_BASE="${INPUT_ROOT:-${ROOT}/sampling_dataset/dense/humanoid/input/multiview/ctrlworld}"
 
 EXTRA=""
 if [ -n "${NUM_EPISODES:-}" ]; then EXTRA="${EXTRA} --num_episodes ${NUM_EPISODES}"; fi

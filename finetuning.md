@@ -432,4 +432,31 @@ tmux new-session -d -s bsv_dicache_g0     "CUDA_VISIBLE_DEVICES=0 bash scripts/r
 tmux new-session -d -s bsv_worldcache_g1  "CUDA_VISIBLE_DEVICES=1 bash scripts/run_bimanual_singleview_dreamgen_worldcache.sh  2>&1 | tee exp_logs/tmux_logs/bsv_worldcache.log; exec bash"
 tmux new-session -d -s bsv_fastercache_g3 "CUDA_VISIBLE_DEVICES=3 bash scripts/run_bimanual_singleview_dreamgen_fastercache.sh 2>&1 | tee exp_logs/tmux_logs/bsv_fastercache.log; exec bash"
 
+# ---- tmux submit: bimanual SINGLEVIEW dreamgen sparse-attn (iter 110k) GPU0/1/2/3 ----
+# (SVG2 uses .venv_svg w/ flashinfer0.3 + workspace .jitcache; set in the script.)
+tmux new-session -d -s sp_svg1_g0   "CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_singleview_dreamgen_svg1.sh   2>&1 | tee exp_logs/tmux_logs/sp_svg1.log; exec bash"
+tmux new-session -d -s sp_svg2_g1   "CUDA_VISIBLE_DEVICES=1 bash scripts/run_bimanual_singleview_dreamgen_svg2.sh   2>&1 | tee exp_logs/tmux_logs/sp_svg2.log; exec bash"
+tmux new-session -d -s sp_radial_g2 "CUDA_VISIBLE_DEVICES=2 bash scripts/run_bimanual_singleview_dreamgen_radial.sh 2>&1 | tee exp_logs/tmux_logs/sp_radial.log; exec bash"
+tmux new-session -d -s sp_pisa_g3   "CUDA_VISIBLE_DEVICES=3 bash scripts/run_bimanual_singleview_dreamgen_pisa.sh   2>&1 | tee exp_logs/tmux_logs/sp_pisa.log; exec bash"
+
 CUDA_VISIBLE_DEVICES=0,3 MAX_EPISODES=5 bash scripts/run_humanoid_multiview_dreamgen_seg16.sh
+
+# ---- tmux submit: single_arm MULTIVIEW dreamgen sparse-attn (14B, droid) GPU0/1/2/3 ----
+# (SVG2 uses .venv_svg w/ flashinfer0.3; set in the script. 14B is heavy ~490s/ep dense.)
+tmux new-session -d -s sam_pisa_g0   "CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_multiview_dreamgen_pisa.sh   2>&1 | tee exp_logs/tmux_logs/sam_pisa.log; exec bash"
+tmux new-session -d -s sam_svg1_g1   "CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_multiview_dreamgen_svg1.sh   2>&1 | tee exp_logs/tmux_logs/sam_svg1.log; exec bash"
+tmux new-session -d -s sam_radial_g2 "CUDA_VISIBLE_DEVICES=2 bash scripts/run_single_arm_multiview_dreamgen_radial.sh 2>&1 | tee exp_logs/tmux_logs/sam_radial.log; exec bash"
+tmux new-session -d -s sam_svg2_g3   "CUDA_VISIBLE_DEVICES=3 bash scripts/run_single_arm_multiview_dreamgen_svg2.sh   2>&1 | tee exp_logs/tmux_logs/sam_svg2.log; exec bash"
+
+# ---- tmux submit: single_arm SINGLEVIEW dreamgen sparse-attn (2B, static16fps/LVG) GPU0/1/2/3 ----
+# (SVG2 uses .venv_svg; PISA/SVG1/Radial use .venv. Tuned: PISA d0.2, SVG1 sp0.15, SVG2 top_p0.7.)
+tmux new-session -d -s sasv_pisa_g0   "CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_singleview_dreamgen_pisa.sh   2>&1 | tee exp_logs/tmux_logs/sasv_pisa.log; exec bash"
+tmux new-session -d -s sasv_svg1_g1   "CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_singleview_dreamgen_svg1.sh   2>&1 | tee exp_logs/tmux_logs/sasv_svg1.log; exec bash"
+tmux new-session -d -s sasv_radial_g2 "CUDA_VISIBLE_DEVICES=2 bash scripts/run_single_arm_singleview_dreamgen_radial.sh 2>&1 | tee exp_logs/tmux_logs/sasv_radial.log; exec bash" -> done
+tmux new-session -d -s sasv_svg2_g3   "CUDA_VISIBLE_DEVICES=3 bash scripts/run_single_arm_singleview_dreamgen_svg2.sh   2>&1 | tee exp_logs/tmux_logs/sasv_svg2.log; exec bash" -> done 
+# ---- tmux submit: bimanual MULTIVIEW dreamgen sparse-attn (iter 120k) GPU0/1/2/3 ----
+# (Radial=decay0.5/start4 for multiview; SVG2 uses .venv_svg/flashinfer0.3.)
+tmux new-session -d -s smv_pisa_g0   "CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_multiview_dreamgen_pisa.sh   2>&1 | tee exp_logs/tmux_logs/smv_pisa.log; exec bash"
+tmux new-session -d -s smv_radial_g1 "CUDA_VISIBLE_DEVICES=1 bash scripts/run_bimanual_multiview_dreamgen_radial.sh 2>&1 | tee exp_logs/tmux_logs/smv_radial.log; exec bash"
+tmux new-session -d -s smv_svg1_g2   "CUDA_VISIBLE_DEVICES=2 bash scripts/run_bimanual_multiview_dreamgen_svg1.sh   2>&1 | tee exp_logs/tmux_logs/smv_svg1.log; exec bash"
+tmux new-session -d -s smv_svg2_g3   "CUDA_VISIBLE_DEVICES=3 bash scripts/run_bimanual_multiview_dreamgen_svg2.sh   2>&1 | tee exp_logs/tmux_logs/smv_svg2.log; exec bash"
