@@ -508,7 +508,7 @@ def compute_geometric_consistency_for_episode(
     views: list[str],
     stride: int = 1,
     max_frames: int | None = None,
-    conf_thres_percentile: float = 30.0,
+    conf_thres_percentile: float = 50.0,
 
     high_geo_score_disjoint_threshold: float = 0.99,
     depth_pair_dissimilar_fraction_min: float = 0.5,

@@ -363,8 +363,8 @@ def geometric_calculation(
                     # "residual": float(r.mean()),
                     # "residual": float(np.sqrt(np.mean(r * r))), # residual_rms
                     # "residual": float(np.median(r)), # residual_median
-                    "residual": float(np.percentile(r, 90.0)), # residual_p90
-                    # "residual": float(np.percentile(r, 95.0)), # residual_p95
+                    # "residual": float(np.percentile(r, 90.0)), # residual_p90
+                    "residual": float(np.percentile(r, 95.0)), # residual_p95
                     "count": cnt,
                     "scale_ref": scale_ref,
                 }
@@ -427,50 +427,87 @@ def geometric_consistency_metric(
     return float(max(0.0, min(1.0, base)))
 
 if __name__ == "__main__":
-    from vggt.utils.pose_enc import pose_encoding_to_extri_intri
+    import os
+    import sys
+
     from vggt.utils.geometry import unproject_depth_map_to_point_map
-    from vggt.models.vggt import VGGT
-    from vggt.utils.load_fn import load_and_preprocess_images
+
     try:
-        from .utils import save_depth_maps  # pyright: ignore[reportMissingImports]
+        from .utils import save_depth_maps  
     except Exception:  # pragma: no cover
-        from utils import save_depth_maps  # type: ignore
+        from utils import save_depth_maps  
+
+    _this_dir = os.path.dirname(os.path.abspath(__file__))
+    _physics_root = os.path.abspath(os.path.join(_this_dir, ".."))
+    _wmb_root = os.path.abspath(os.path.join(_physics_root, ".."))
+    for _root in (_physics_root, os.path.join(_wmb_root, "vggt-omega")):
+        if os.path.isdir(os.path.join(_root, "vggt_omega")) and _root not in sys.path:
+            sys.path.insert(0, _root)
+
+    from vggt_omega.models import VGGTOmega
+    from vggt_omega.utils.load_fn import load_and_preprocess_images
+    from vggt_omega.utils.pose_enc import encoding_to_camera
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    dtype = torch.bfloat16 if torch.cuda.get_device_capability()[0] >= 8 else torch.float16
+    omega_image_resolution = 512
+    omega_patch_size = 16
+    omega_checkpoint = (
+        "vggt_omega_1b_512.pt"
+    )
 
-    model = VGGT.from_pretrained("facebook/VGGT-1B").to(device)
+    model = VGGTOmega(patch_size=omega_patch_size).to(device).eval()
+    state = torch.load(omega_checkpoint, map_location="cpu")
+    model.load_state_dict(state)
+    print(f"[main] VGGT-Omega loaded from {omega_checkpoint} on {device}")
 
     depth_output_dir = "output_depth"
 
     ep = 255
-    frame1 = 10
-    frame2 = 10
-    
-    version = "good_2fps"
-    # version = "bad_2fps"
+    frame1 = 6
+    frame2 = 6
 
-    image_names = [f"/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/WorldModelBenchmark/data/multiview/thanhnv_multiview/{version}/episode_{ep:06d}/view1/frame_{frame1:04d}.png", \
-        f"/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/WorldModelBenchmark/data/multiview/thanhnv_multiview/{version}/episode_{ep:06d}/view2/frame_{frame2:04d}.png"]
+    # version = "good_2fps"
+    version = "bad_2fps"
 
-    print(image_names)
+    image_names = [
+        f"/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/data/{version}/episode_{ep:06d}/view1/frame_{frame1:04d}.png",
+        f"/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/data/{version}/episode_{ep:06d}/view2/frame_{frame2:04d}.png",
+    ]
 
-    images = load_and_preprocess_images(image_names).to(device)
-    images = images[None]
+
+    images = load_and_preprocess_images(
+        image_names,
+        image_resolution=omega_image_resolution,
+        patch_size=omega_patch_size,
+    ).to(device)
+    images = images[None]  # (1, S, 3, H, W)
 
     with torch.no_grad():
-        with torch.cuda.amp.autocast(dtype=dtype):
-            aggregated_tokens_list, ps_idx = model.aggregator(images)
-        pose_enc = model.camera_head(aggregated_tokens_list)[-1]
-        depth_map, depth_conf = model.depth_head(aggregated_tokens_list, images, ps_idx)
-        extrinsic, intrinsic = pose_encoding_to_extri_intri(pose_enc, images.shape[-2:])
+        preds = model(images)
+        preds_single0 = model(images[:,0:1])
+        preds_single1 = model(images[:,1:2])
 
-        # save_depth_maps(depth_map, depth_output_dir, "multiview")
-        
+        depth_map = preds["depth"]
+        depth_conf = preds["depth_conf"]
+        print("depth: ", depth_map.shape)
+
+        depth_map_single0 = preds_single0["depth"]
+        depth_map_single1 = preds_single1["depth"]
+
+        delta_depth0 = depth_map[:,0:1] - depth_map_single0
+        delta_depth1 = depth_map[:,1:2] - depth_map_single1
+
+        save_depth_maps(delta_depth0, depth_output_dir, "delta_depth0")
+        save_depth_maps(delta_depth1, depth_output_dir, "delta_depth1")
+
+        extrinsic, intrinsic = encoding_to_camera(
+            preds["pose_enc"], preds["images"].shape[-2:]
+        )
+
         point_map_by_unprojection = unproject_depth_map_to_point_map(
             depth_map.squeeze(0), extrinsic.squeeze(0), intrinsic.squeeze(0)
         )
-        
+
         depth_rendered_np, rendered_valid_mask = render_depth_from_point_map(
             point_map_by_unprojection=point_map_by_unprojection,
             depth_map=depth_map,
@@ -479,13 +516,15 @@ if __name__ == "__main__":
             eps=1e-6,
             confidence=depth_conf,
             conf_thres=30.0,
-        )  
+        )
 
-        depth_rendered = torch.from_numpy(depth_rendered_np).to(device=device, dtype=torch.float32)
+        depth_rendered = torch.from_numpy(depth_rendered_np).to(
+            device=device, dtype=torch.float32
+        )
         if depth_rendered.ndim == 3:
             depth_rendered = depth_rendered.unsqueeze(0)  # (1,S,H,W)
         depth_rendered = depth_rendered.unsqueeze(-1)  # (B,S,H,W,1)
-        
+
         save_depth_maps(depth_rendered, depth_output_dir, "rendered")
         save_depth_maps(rendered_valid_mask.astype(float), depth_output_dir, "valid_mask")
 
@@ -503,3 +542,4 @@ if __name__ == "__main__":
     cons = geometric_consistency_metric(res)
 
     print(f"Geometric Consistency Metric: {cons}")
+
