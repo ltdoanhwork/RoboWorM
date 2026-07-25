@@ -170,28 +170,6 @@ def _images_cpu_to_device(images_cpu: torch.Tensor, device: str) -> torch.Tensor
         return images_cpu.pin_memory().to(device, non_blocking=True)
     return images_cpu.to(device)
 
-
-def _load_images_batched(
-    ctx: ModelContext,
-    episode_dir: str,
-    views: list[str],
-    frame_ids: list[int],
-    *,
-    parallel_frames: bool = True,
-    load_workers: int = 4,
-) -> torch.Tensor:
-    """Load frames as (B, S, 3, H, W) on ``ctx.device``."""
-    images_cpu = _load_images_chunk_cpu(
-        ctx,
-        episode_dir,
-        views,
-        frame_ids,
-        parallel_frames=parallel_frames,
-        load_workers=load_workers,
-    )
-    return _images_cpu_to_device(images_cpu, ctx.device)
-
-
 @torch.no_grad()
 def _forward_vggt(
     ctx: ModelContext,
@@ -233,31 +211,6 @@ def _forward_vggt(
 
     extrinsic, intrinsic = pose_encoding_to_extri_intri(pose_enc, images.shape[-2:])
     return extrinsic, intrinsic, depth_map, depth_conf
-
-
-@torch.no_grad()
-def _run_vggt(
-    ctx: ModelContext,
-    image_paths: Iterable[str],
-) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-    """
-    Single timestep (B=1). Returns (1,S,...) tensors.
-    """
-    if ctx.backend == "vggt_omega":
-        _VGGTOmega, load_fn_omega, _encoding_to_camera = _load_vggt_omega_modules()
-        images_cpu = load_fn_omega(
-            list(image_paths),
-            image_resolution=int(ctx.omega_image_resolution),
-            patch_size=int(ctx.omega_patch_size),
-        ).unsqueeze(0)
-    else:
-        from vggt.utils.load_fn import load_and_preprocess_images  # local import
-        images_cpu = load_and_preprocess_images(list(image_paths)).unsqueeze(0)
-
-    images = _images_cpu_to_device(images_cpu, ctx.device)
-    extrinsic, intrinsic, depth_map, depth_conf = _forward_vggt(ctx, images)
-    return extrinsic, intrinsic, depth_map, depth_conf
-
 
 @torch.no_grad()
 def _iter_vggt_frames(
@@ -418,18 +371,6 @@ def _process_geometric_frame(
         depth_map.squeeze(0), extrinsic.squeeze(0), intrinsic.squeeze(0)
     )
 
-    # disjoint = multiview_disjoint_bbox(point_map, min_overlap_ratio=0.05)
-    # is_disjoint = bool(disjoint["disjoint"])
-
-    # if is_disjoint:
-    #     return _GeometricFrameResult(
-    #         frame=int(fi),
-    #         geometric_consistency=0.0,
-    #         disjoint=True,
-    #         details=None,
-    #         include_in_overall=False,
-    #     )
-
     depth_rendered_np, rendered_valid_mask = render_depth_from_point_map(
         point_map_by_unprojection=point_map,
         depth_map=depth_map,
@@ -567,7 +508,7 @@ def compute_geometric_consistency_for_episode(
     views: list[str],
     stride: int = 1,
     max_frames: int | None = None,
-    conf_thres_percentile: float = 50.0,
+    conf_thres_percentile: float = 30.0,
 
     high_geo_score_disjoint_threshold: float = 0.99,
     depth_pair_dissimilar_fraction_min: float = 0.5,

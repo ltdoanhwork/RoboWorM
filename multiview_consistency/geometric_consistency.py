@@ -73,7 +73,8 @@ def render_depth_from_point_map(
         if c0.shape[:3] != (S_pm, H, W):
             raise ValueError(f"confidence must match (S,H,W)={(S_pm,H,W)}, got {c0.shape}")
 
-        thr_pct = 50.0 if conf_thres is None else float(conf_thres)
+        thr_pct = 30.0 if conf_thres is None else float(conf_thres)
+
         conf_flat = np.concatenate([c0[s].ravel() for s in range(S_pm)])
         conf_flat = conf_flat[np.isfinite(conf_flat)]
         if thr_pct == 0.0:
@@ -326,7 +327,7 @@ def geometric_calculation(
                         "alpha": float("nan"),
                         "beta": float("nan"),
                         "corr": float("nan"),
-                        "residual_mean": float("nan"),
+                        "residual": float("nan"),
                         "count": 0,
                     }
                 )
@@ -359,7 +360,11 @@ def geometric_calculation(
                     "alpha": float(alpha),
                     "beta": float(beta),
                     "corr": float(corr),
-                    "residual_mean": float(r.mean()),
+                    # "residual": float(r.mean()),
+                    # "residual": float(np.sqrt(np.mean(r * r))), # residual_rms
+                    # "residual": float(np.median(r)), # residual_median
+                    "residual": float(np.percentile(r, 90.0)), # residual_p90
+                    # "residual": float(np.percentile(r, 95.0)), # residual_p95
                     "count": cnt,
                     "scale_ref": scale_ref,
                 }
@@ -399,9 +404,9 @@ def geometric_consistency_metric(
     """
     Returns scalar in [0,1], higher is better
     """
-    def _view_score(vshape: dict, *, tau: float = 0.5) -> float:
+    def _view_score(vshape: dict, *, tau: float = 1.0) -> float:
         corr = float(vshape.get("corr", float("nan")))
-        resid = float(vshape.get("residual_mean", float("nan")))
+        resid = float(vshape.get("residual", float("nan")))
         scale_ref = float(vshape.get("scale_ref", float("nan")))
         if not (math.isfinite(corr) and math.isfinite(resid)
                 and math.isfinite(scale_ref) and scale_ref > 1e-6):
@@ -438,15 +443,17 @@ if __name__ == "__main__":
 
     depth_output_dir = "output_depth"
 
-    ep = 397
-    frame1 = 1
-    frame2 = 1
+    ep = 255
+    frame1 = 10
+    frame2 = 10
+    
+    version = "good_2fps"
+    # version = "bad_2fps"
 
-    image_names = [f"/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/data/multiview/thanhnv_multiview/bad/episode_{ep:06d}/view1/frame_{frame1:04d}.png", \
-        f"/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/data/multiview/thanhnv_multiview/bad/episode_{ep:06d}/view2/frame_{frame2:04d}.png"]
+    image_names = [f"/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/WorldModelBenchmark/data/multiview/thanhnv_multiview/{version}/episode_{ep:06d}/view1/frame_{frame1:04d}.png", \
+        f"/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/WorldModelBenchmark/data/multiview/thanhnv_multiview/{version}/episode_{ep:06d}/view2/frame_{frame2:04d}.png"]
 
     print(image_names)
-
 
     images = load_and_preprocess_images(image_names).to(device)
     images = images[None]
@@ -458,7 +465,7 @@ if __name__ == "__main__":
         depth_map, depth_conf = model.depth_head(aggregated_tokens_list, images, ps_idx)
         extrinsic, intrinsic = pose_encoding_to_extri_intri(pose_enc, images.shape[-2:])
 
-        save_depth_maps(depth_map, depth_output_dir, "multiview")
+        # save_depth_maps(depth_map, depth_output_dir, "multiview")
         
         point_map_by_unprojection = unproject_depth_map_to_point_map(
             depth_map.squeeze(0), extrinsic.squeeze(0), intrinsic.squeeze(0)
@@ -471,7 +478,7 @@ if __name__ == "__main__":
             intrinsic=intrinsic,
             eps=1e-6,
             confidence=depth_conf,
-            conf_thres=10.0,
+            conf_thres=30.0,
         )  
 
         depth_rendered = torch.from_numpy(depth_rendered_np).to(device=device, dtype=torch.float32)
