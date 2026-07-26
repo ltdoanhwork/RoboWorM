@@ -10,7 +10,6 @@ from typing import Any
 
 import torch
 
-# Allow running as a script from repo root without installing as a package
 _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 _VGGT_ROOT = os.path.abspath(os.path.join(_THIS_DIR, ".."))
 if _VGGT_ROOT not in sys.path:

@@ -30,26 +30,9 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument(
         "--frame_batch_size",
         type=int,
-        default=4,
+        default=1,
         help="VGGT batch size B: number of timesteps per forward (views stay in S).",
     )
-    p.add_argument(
-        "--load_workers",
-        type=int,
-        default=4,
-        help="Thread pool size for parallel per-frame image load within a chunk.",
-    )
-    p.add_argument(
-        "--no_prefetch_chunks",
-        action="store_true",
-        help="Disable background prefetch of the next image chunk.",
-    )
-    p.add_argument(
-        "--no_parallel_frame_load",
-        action="store_true",
-        help="Use one load_and_preprocess_images call per chunk instead of per-frame threads.",
-    )
-
     mode = p.add_mutually_exclusive_group(required=True)
     mode.add_argument(
         "--episode_dir",
@@ -94,10 +77,7 @@ def _request_metrics(
     stride: int,
     max_frames: int | None,
     include_per_frame: bool,
-    frame_batch_size: int,
-    prefetch_chunks: bool,
-    parallel_frame_load: bool,
-    load_workers: int,
+    frame_batch_size: int
 ) -> dict:
     conn.send(
         {
@@ -107,10 +87,7 @@ def _request_metrics(
             "stride": int(stride),
             "max_frames": None if max_frames is None else int(max_frames),
             "include_per_frame": bool(include_per_frame),
-            "frame_batch_size": int(frame_batch_size),
-            "prefetch_chunks": bool(prefetch_chunks),
-            "parallel_frame_load": bool(parallel_frame_load),
-            "load_workers": int(load_workers),
+            "frame_batch_size": int(frame_batch_size)
         }
     )
     resp = conn.recv()
@@ -122,15 +99,6 @@ def _request_metrics(
     if not isinstance(result, dict):
         raise RuntimeError(f"Unexpected result payload: {result!r}")
     return result
-
-
-def _load_kwargs_from_args(args: argparse.Namespace) -> dict:
-    return {
-        "prefetch_chunks": not args.no_prefetch_chunks,
-        "parallel_frame_load": not args.no_parallel_frame_load,
-        "load_workers": int(args.load_workers),
-    }
-
 
 def _write_metrics_csv(rows: list[dict], out_csv: str) -> None:
     out_path = Path(out_csv)
@@ -210,8 +178,7 @@ def _run_batch(args: argparse.Namespace, views: list[str]) -> None:
                     stride=args.stride,
                     max_frames=args.max_frames,
                     include_per_frame=args.include_per_frame,
-                    frame_batch_size=args.frame_batch_size,
-                    **_load_kwargs_from_args(args),
+                    frame_batch_size=args.frame_batch_size
                 )
                 time_end = time.time()
                 print(f"[run_video_metrics] {name} took {time_end - time_start} seconds", file=sys.stderr)

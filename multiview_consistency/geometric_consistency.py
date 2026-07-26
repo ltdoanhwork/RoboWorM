@@ -4,39 +4,27 @@ import numpy as np
 
 @torch.no_grad()
 def render_depth_from_point_map(
-    point_map_by_unprojection: np.ndarray,   # (S,H,W,3) world points (as returned by unproject_depth_map_to_point_map)
-    depth_map: torch.Tensor | np.ndarray,    # (B,S,H,W,1)/(B,S,H,W) or (S,H,W,1)/(S,H,W) for fusion validity / threshold
-    extrinsic: torch.Tensor | np.ndarray,    # (B,S,3,4) or (S,3,4) cam_from_world
-    intrinsic: torch.Tensor | np.ndarray,    # (B,S,3,3) or (S,3,3)
-    *,
-    eps: float = 1e-6,
-    confidence: torch.Tensor | np.ndarray | None = None,
-    conf_thres: float | None = None,
-) -> tuple[np.ndarray, np.ndarray]:
+    point_map_by_unprojection: np.ndarray,
+    depth_map: torch.Tensor | np.ndarray,
+    extrinsic: torch.Tensor | np.ndarray,
+    intrinsic: torch.Tensor | np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Returns:
-      depth_rendered: (S,H,W) float32 (if inputs are unbatched) or (B,S,H,W) if batched.
-        Pixels with no raster hits are 0 (after clearing non-finite buffer entries).
-      valid_depth_mask: same shape, dtype bool. True iff depth is finite, not NaN/Inf, and > ``eps``.
-        Intended for restricting consistency metrics to reliable pixels.
-
+      depth_rendered: (B,S,H,W) float32
+      fov_overlap_mask: (B,S,H,W) bool
+      depth_spread: (B,S,H,W) float32
     """
     if point_map_by_unprojection.ndim != 4 or point_map_by_unprojection.shape[-1] != 3:
         raise ValueError(f"point_map_by_unprojection must be (S,H,W,3), got {point_map_by_unprojection.shape}")
 
     S_pm, H, W, _ = point_map_by_unprojection.shape
 
-    # ---- normalize depth to numpy (S,H,W) or (B,S,H,W) ----
     if isinstance(depth_map, torch.Tensor):
         d = depth_map.detach().cpu().float()
         if d.ndim == 5:
             d = d.squeeze(-1)
-        if d.ndim == 4:
-            d0 = d[0].numpy()  # (S,H,W) assuming B==1 typical usage here
-        elif d.ndim == 3:
-            d0 = d.numpy()
-        else:
-            raise ValueError(f"depth_map must be 3D/4D/5D, got {d.ndim}D")
+        d0 = d[0].numpy() if d.ndim == 4 else d.numpy()
     else:
         d0 = depth_map
         if d0.ndim == 4:
@@ -49,195 +37,103 @@ def render_depth_from_point_map(
     if d0.shape[:3] != (S_pm, H, W):
         raise ValueError(f"depth_map (first batch) must match (S,H,W)={(S_pm,H,W)}, got {d0.shape}")
 
-    c0: np.ndarray | None = None
-    conf_threshold_value = 0.0
-    if confidence is not None:
-        if isinstance(confidence, torch.Tensor):
-            c = confidence.detach().cpu().float()
-            if c.ndim == 5:
-                c = c.squeeze(-1)
-            if c.ndim == 4:
-                c0 = c[0].numpy()
-            elif c.ndim == 3:
-                c0 = c.numpy()
-            else:
-                raise ValueError(f"confidence must be 3D/4D/5D, got {c.ndim}D")
-        else:
-            c0 = np.asarray(confidence, dtype=np.float32)
-            if c0.ndim == 4:
-                c0 = c0[0]
-            if c0.ndim == 4 and c0.shape[-1] == 1:
-                c0 = c0[..., 0]
-            if c0.ndim == 3 and c0.shape[-1] == 1:
-                c0 = c0[..., 0]
-        if c0.shape[:3] != (S_pm, H, W):
-            raise ValueError(f"confidence must match (S,H,W)={(S_pm,H,W)}, got {c0.shape}")
-
-        thr_pct = 30.0 if conf_thres is None else float(conf_thres)
-
-        conf_flat = np.concatenate([c0[s].ravel() for s in range(S_pm)])
-        conf_flat = conf_flat[np.isfinite(conf_flat)]
-        if thr_pct == 0.0:
-            conf_threshold_value = 0.0
-        elif conf_flat.size == 0:
-            conf_threshold_value = 0.0
-        else:
-            conf_threshold_value = float(np.percentile(conf_flat, thr_pct))
-
-    # ---- normalize extrinsic/intrinsic to numpy, handle optional batch ----
     def _to_np(x):
-        if isinstance(x, torch.Tensor):
-            return x.detach().cpu().float().numpy()
-        return x
+        return x.detach().cpu().float().numpy() if isinstance(x, torch.Tensor) else x
 
     E = _to_np(extrinsic)
     K = _to_np(intrinsic)
-
     batched = (E.ndim == 4)
     if E.ndim == 3:
-        E = E[None]  # (1,S,3,4)
+        E = E[None]
     if K.ndim == 3:
-        K = K[None]  # (1,S,3,3)
+        K = K[None]
     B = E.shape[0]
     S_cam = E.shape[1]
-    if S_cam != S_pm:
-        # allow rendering onto a different set of cameras, but requires K/E S_cam
-        pass
 
     pts = []
     for s in range(S_pm):
-        ds = d0[s]
-        m = np.isfinite(ds)
-        if c0 is not None:
-            cs = c0[s]
-            m = m & np.isfinite(cs) & (cs >= conf_threshold_value) & (cs > 1e-5)
+        ds_ = d0[s]
+        m = np.isfinite(ds_)
         if np.any(m):
-            pts.append(point_map_by_unprojection[s][m])  # (Ns,3)
-    if len(pts) == 0:
-        out = np.zeros((B, S_cam, H, W), dtype=np.float32)
-        valid = np.zeros((B, S_cam, H, W), dtype=bool)
-        return (out, valid) if batched else (out[0], valid[0])
-
-    P = np.concatenate(pts, axis=0).astype(np.float32)  # (N,3)
-    Pwh = np.concatenate([P, np.ones((P.shape[0], 1), dtype=np.float32)], axis=1)  # (N,4)
+            pts.append(point_map_by_unprojection[s][m])
 
     out = np.zeros((B, S_cam, H, W), dtype=np.float32)
-    valid_mask = np.zeros((B, S_cam, H, W), dtype=bool)
+    fov_overlap_geom = np.zeros((B, S_cam, H, W), dtype=bool)
+    depth_spread = np.zeros((B, S_cam, H, W), dtype=np.float32)
 
-    for b in range(B):
-        for s in range(S_cam):
-            Eb = E[b, s].astype(np.float32)  # (3,4)
-            Kb = K[b, s].astype(np.float32)  # (3,3)
+    if len(pts) > 0:
+        P = np.concatenate(pts, axis=0).astype(np.float32)
+        Pwh = np.concatenate([P, np.ones((P.shape[0], 1), dtype=np.float32)], axis=1)
 
-            Pc = (Eb @ Pwh.T).T  # (N,3)
-            z = Pc[:, 2]
-            valid = z > eps
-            Pc = Pc[valid]
-            z = z[valid]
-            if z.size == 0:
-                continue
+        for b in range(B):
+            for s in range(S_cam):
+                Eb = E[b, s].astype(np.float32)
+                Kb = K[b, s].astype(np.float32)
 
-            pix = (Kb @ Pc.T).T  # (M,3)
-            u = pix[:, 0] / (pix[:, 2] + eps)
-            v = pix[:, 1] / (pix[:, 2] + eps)
+                Pc = (Eb @ Pwh.T).T
+                z = Pc[:, 2]
+                valid = z > 0.01
+                Pc_v = Pc[valid]
+                z_v = z[valid]
 
-            ui = np.rint(u).astype(np.int32)
-            vi = np.rint(v).astype(np.int32)
+                if z_v.size > 0:
+                    pix = (Kb @ Pc_v.T).T
+                    u = pix[:, 0] / (pix[:, 2] + 1e-5)
+                    v = pix[:, 1] / (pix[:, 2] + 1e-5)
 
-            inb = (ui >= 0) & (ui < W) & (vi >= 0) & (vi < H)
-            ui = ui[inb]
-            vi = vi[inb]
-            z = z[inb].astype(np.float32)
-            if z.size == 0:
-                continue
+                    ui_all = np.rint(u)
+                    vi_all = np.rint(v)
+                    inb = (ui_all >= 0) & (ui_all < W) & (vi_all >= 0) & (vi_all < H) & np.isfinite(ui_all) & np.isfinite(vi_all)
 
-            depth = np.full((H, W), np.inf, dtype=np.float32)
-            # z-buffer: min depth per pixel
-            np.minimum.at(depth, (vi, ui), z)
-            depth[~np.isfinite(depth)] = 0.0
-            out[b, s] = depth
-            valid_mask[b, s] = np.isfinite(out[b, s]) & (out[b, s] > eps)
+                    ui_b = ui_all[inb].astype(np.int32)
+                    vi_b = vi_all[inb].astype(np.int32)
+                    z_b = z_v[inb].astype(np.float32)
 
-    return (out, valid_mask) if batched else (out[0], valid_mask[0])
+                    if z_b.size > 0:
+                        depth_min_buf = np.full((H, W), np.inf, dtype=np.float32)
+                        np.minimum.at(depth_min_buf, (vi_b, ui_b), z_b)
 
-import numpy as np
+                        depth_max_buf = np.full((H, W), -np.inf, dtype=np.float32)
+                        np.maximum.at(depth_max_buf, (vi_b, ui_b), z_b)
 
-def _valid_points_per_view(point_map: np.ndarray, eps: float = 1e-6) -> tuple[np.ndarray, np.ndarray]:
-    """
-    point_map: (S, H, W, 3) world coordinates from unproject_depth_map_to_point_map
-    Returns P0, P1 as (N, 3) finite points with non-trivial norm (optional).
-    """
-    if point_map.ndim != 4 or point_map.shape[-1] != 3:
-        raise ValueError(f"Expected (S,H,W,3), got {point_map.shape}")
+                        hit_count = np.zeros((H, W), dtype=np.int32)
+                        np.add.at(hit_count, (vi_b, ui_b), 1)
 
-    pts = []
-    for s in range(point_map.shape[0]):
-        P = point_map[s].reshape(-1, 3).astype(np.float64)
-        m = np.isfinite(P).all(axis=1)
-        # bỏ điểm gần origin / depth invalid (thường là 0 hoặc rất nhỏ)
-        m &= np.linalg.norm(P, axis=1) > eps
-        pts.append(P[m])
-    if len(pts) < 2:
-        raise ValueError("Need at least 2 views")
-    return pts[0], pts[1]
+                        hit = hit_count > 0
+                        depth_min_buf[~hit] = 0.0
+                        depth_max_buf[~hit] = 0.0
+                        out[b, s] = depth_min_buf
 
+                        multi_hit = hit_count >= 2
+                        spread = np.zeros((H, W), dtype=np.float32)
+                        spread[multi_hit] = depth_max_buf[multi_hit] - depth_min_buf[multi_hit]
+                        depth_spread[b, s] = spread
 
-def _bbox_3d(P: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    return P.min(axis=0), P.max(axis=0)
+                pm_s = point_map_by_unprojection[s].reshape(-1, 3).astype(np.float32)
+                Pwh_s = np.concatenate(
+                    [pm_s, np.ones((pm_s.shape[0], 1), dtype=np.float32)], axis=1
+                )
+                acc_geom = np.zeros(H * W, dtype=bool)
+                for src in range(S_cam):
+                    if src == s:
+                        continue
+                    Esrc = E[b, src].astype(np.float32)
+                    Ksrc = K[b, src].astype(np.float32)
 
+                    Pc_g = (Esrc @ Pwh_s.T).T
+                    z_g = Pc_g[:, 2]
+                    pix_g = (Ksrc @ Pc_g.T).T
+                    u_g = pix_g[:, 0] / (pix_g[:, 2] + 1e-6)
+                    v_g = pix_g[:, 1] / (pix_g[:, 2] + 1e-6)
 
-def _bbox_volume(lo: np.ndarray, hi: np.ndarray) -> float:
-    side = np.maximum(hi - lo, 0.0)
-    return float(side[0] * side[1] * side[2])
+                    in_front = z_g > 0.01
+                    in_bounds = (u_g >= 0) & (u_g < W) & (v_g >= 0) & (v_g < H)
+                    overlap_flat = in_front & in_bounds & np.isfinite(u_g) & np.isfinite(v_g)
+                    acc_geom |= overlap_flat
 
+                fov_overlap_geom[b, s] = acc_geom.reshape(H, W)
 
-def _bbox_intersection_volume(lo0, hi0, lo1, hi1) -> float:
-    lo_i = np.maximum(lo0, lo1)
-    hi_i = np.minimum(hi0, hi1)
-    return _bbox_volume(lo_i, hi_i)
-
-
-def multiview_disjoint_bbox(
-    point_map: np.ndarray,
-    *,
-    eps: float = 1e-6,
-    min_overlap_ratio: float = 0.05,
-) -> dict:
-    """
-    Cách B: FAIL (disjoint) nếu IoU_bbox = vol(intersection) / vol(union) < min_overlap_ratio
-    """
-    P0, P1 = _valid_points_per_view(point_map, eps=eps)
-    if P0.size == 0 or P1.size == 0:
-        return {
-            "method": "bbox",
-            "disjoint": True,
-            "reason": "empty_point_cloud",
-            "overlap_ratio": 0.0,
-            "min_overlap_ratio": min_overlap_ratio,
-        }
-
-    lo0, hi0 = _bbox_3d(P0)
-    lo1, hi1 = _bbox_3d(P1)
-    v0 = _bbox_volume(lo0, hi0)
-    v1 = _bbox_volume(lo1, hi1)
-    v_i = _bbox_intersection_volume(lo0, hi0, lo1, hi1)
-    v_u = v0 + v1 - v_i
-    overlap_ratio = v_i / (v_u + 1e-12)
-
-    return {
-        "method": "bbox",
-        "disjoint": bool(overlap_ratio < min_overlap_ratio),
-        "overlap_ratio": float(overlap_ratio),
-        "vol_intersection": float(v_i),
-        "vol_union": float(v_u),
-        "vol_view0": float(v0),
-        "vol_view1": float(v1),
-        "min_overlap_ratio": min_overlap_ratio,
-        "bbox0": (lo0.tolist(), hi0.tolist()),
-        "bbox1": (lo1.tolist(), hi1.tolist()),
-        "n0": int(P0.shape[0]),
-        "n1": int(P1.shape[0]),
-    }
+    return (out, fov_overlap_geom, depth_spread) if batched else (out[0], fov_overlap_geom[0], depth_spread[0])
 
 def geometric_calculation(
     depth: torch.Tensor | np.ndarray,
@@ -245,6 +141,8 @@ def geometric_calculation(
     *,
     eps: float = 1e-6,
     valid_mask: torch.Tensor | np.ndarray | None = None,
+    depth_spread: torch.Tensor | np.ndarray | None = None,   # <-- mới
+    conflict_tol: float = 0.3,
 ) -> dict:
     """
     Inputs:
@@ -275,6 +173,10 @@ def geometric_calculation(
     dj = _to_np_depth(depth)
     di = _to_np_depth(depth_rendered)
 
+    ds = None
+    if depth_spread is not None:
+        ds = _to_np_depth(depth_spread)
+
     def _to_np_mask(m):
         if isinstance(m, torch.Tensor):
             m = m.detach().cpu().numpy()
@@ -300,6 +202,9 @@ def geometric_calculation(
         raise ValueError(f"Expected depth tensors to become (B,S,H,W); got {dj.shape} and {di.shape}")
     if dj.shape != di.shape:
         raise ValueError(f"depth and depth_rendered shape mismatch: {dj.shape} vs {di.shape}")
+    if ds is not None and ds.shape != dj.shape:
+        raise ValueError(f"depth_spread shape {ds.shape} must match depth shape {dj.shape}")
+
 
     if vm is not None:
         if vm.ndim == 3:
@@ -311,7 +216,7 @@ def geometric_calculation(
 
     B, S, _, _ = dj.shape
 
-    def _shape_stats_1view(y_bhw: np.ndarray, x_bhw: np.ndarray, m_bhw: np.ndarray | None) -> dict | list[dict]:
+    def _shape_stats_1view(y_bhw: np.ndarray, x_bhw: np.ndarray, m_bhw: np.ndarray | None, spread_bhw: np.ndarray | None) -> dict | list[dict]:
         # y: joint, x: indep, both (B,H,W); optional m_bhw (B,H,W) bool
         out = []
         for b in range(B):
@@ -322,15 +227,11 @@ def geometric_calculation(
                 roi = roi & m_bhw[b]
             cnt = int(roi.sum())
             if cnt == 0:
-                out.append(
-                    {
-                        "alpha": float("nan"),
-                        "beta": float("nan"),
-                        "corr": float("nan"),
-                        "residual": float("nan"),
-                        "count": 0,
-                    }
-                )
+                out.append({
+                    "alpha": float("nan"), "beta": float("nan"), "corr": float("nan"),
+                    "residual": float("nan"), "count": 0, "scale_ref": float("nan"),
+                    "valid_ratio": float(roi.mean()), "conflict_ratio": float("nan"),
+                })
                 continue
 
             xv = x[roi].astype(np.float64)
@@ -355,56 +256,45 @@ def geometric_calculation(
             sy = float(np.sqrt((dy * dy).mean()))
             corr = cov / (sx * sy + 1e-12)
 
-            out.append(
-                {
-                    "alpha": float(alpha),
-                    "beta": float(beta),
-                    "corr": float(corr),
-                    # "residual": float(r.mean()),
-                    # "residual": float(np.sqrt(np.mean(r * r))), # residual_rms
-                    # "residual": float(np.median(r)), # residual_median
-                    # "residual": float(np.percentile(r, 90.0)), # residual_p90
-                    "residual": float(np.percentile(r, 95.0)), # residual_p95
-                    "count": cnt,
-                    "scale_ref": scale_ref,
-                }
-            )
+            conflict_ratio = float("nan")
+            if spread_bhw is not None:
+                spread_roi = spread_bhw[b][roi].astype(np.float64)
+                rel_spread = spread_roi / (scale_ref + 1e-8)
+                conflict_ratio = float(np.mean(rel_spread > conflict_tol))
+
+            out.append({
+                "alpha": float(alpha),
+                "beta": float(beta),
+                "corr": float(corr),
+                # "residual": float(r.mean()),
+                # "residual": float(np.sqrt(np.mean(r * r))), # residual_rms
+                # "residual": float(np.median(r)), # residual_median
+                "residual": float(np.percentile(r, 90.0)), # residual_p90
+                # "residual": float(np.percentile(r, 95.0)), # residual_p95
+                "count": cnt,
+                "scale_ref": scale_ref,
+                "valid_ratio": float(roi.mean()),
+                "conflict_ratio": conflict_ratio,     
+            })
+
         return out[0] if B == 1 else out
 
     result: dict = {}
     for s in range(S):
         m_slice = vm[:, s] if vm is not None else None
-        shape_s = _shape_stats_1view(dj[:, s], di[:, s], m_slice)
-        # Fraction of image pixels in the consistency ROI (depth valid [+ mask])
-        if B == 1:
-            roi = np.isfinite(dj[0, s]) & np.isfinite(di[0, s]) & (dj[0, s] > eps) & (di[0, s] > eps)
-            if vm is not None:
-                roi = roi & vm[0, s]
-            vr = float(roi.mean())
-        else:
-            vr = []
-            for b in range(B):
-                roi_b = (
-                    np.isfinite(dj[b, s])
-                    & np.isfinite(di[b, s])
-                    & (dj[b, s] > eps)
-                    & (di[b, s] > eps)
-                )
-                if vm is not None:
-                    roi_b = roi_b & vm[b, s]
-                vr.append(float(roi_b.mean()))
-
+        spread_slice = ds[:, s] if ds is not None else None
+        shape_s = _shape_stats_1view(dj[:, s], di[:, s], m_slice, spread_slice)
         result[f"view{s}_shape"] = shape_s
 
     return result
 
 def geometric_consistency_metric(
-    res: dict,        
+    res: dict,
 ) -> float:
     """
-    Returns scalar in [0,1], higher is better
+    Returns scalar in [0,1], higher is better.
     """
-    def _view_score(vshape: dict, *, tau: float = 1.0) -> float:
+    def _view_score(vshape: dict) -> float:
         corr = float(vshape.get("corr", float("nan")))
         resid = float(vshape.get("residual", float("nan")))
         scale_ref = float(vshape.get("scale_ref", float("nan")))
@@ -412,17 +302,22 @@ def geometric_consistency_metric(
                 and math.isfinite(scale_ref) and scale_ref > 1e-6):
             return 0.0
 
-        s_corr = max(0.0, corr)    
+        s_corr = max(0.0, corr)
         rel_resid = resid / scale_ref
-        s_resid = math.exp(-rel_resid / tau)
-        return s_corr * s_resid     
+        s_resid = math.exp(-rel_resid / 1.0)
+        score = s_corr * s_resid
+
+        conflict_ratio = vshape.get("conflict_ratio", float("nan"))
+        if math.isfinite(conflict_ratio):
+            score *= math.exp(-conflict_ratio /1.0)
+
+        return score
 
     v0 = res.get("view0_shape", {})
     v1 = res.get("view1_shape", {})
     s0 = _view_score(v0)
     s1 = _view_score(v1)
-    # base = (s0 + s1) / 2.0
-    base = math.sqrt(max(s0, 0.0) * max(s1, 0.0))
+    base = 2 * s0 * s1 / (s0 + s1) if (s0 + s1) > 0 else 0.0
 
     return float(max(0.0, min(1.0, base)))
 
@@ -452,7 +347,7 @@ if __name__ == "__main__":
     omega_image_resolution = 512
     omega_patch_size = 16
     omega_checkpoint = (
-        "vggt_omega_1b_512.pt"
+        "/home/thanhnv/.cache/huggingface/hub/models--facebook--VGGT-Omega/snapshots/05654241adc2f218dfb089c373a011f8a7040576/vggt_omega_1b_512.pt"
     )
 
     model = VGGTOmega(patch_size=omega_patch_size).to(device).eval()
@@ -462,18 +357,24 @@ if __name__ == "__main__":
 
     depth_output_dir = "output_depth"
 
-    ep = 255
-    frame1 = 6
-    frame2 = 6
+    ep = 397
+    frame1 = 5
+    frame2 = 5
 
-    # version = "good_2fps"
-    version = "bad_2fps"
+    # version = "real"
+    version = "good_2fps"
+    # version = "bad_2fps"
 
-    image_names = [
-        f"/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/data/{version}/episode_{ep:06d}/view1/frame_{frame1:04d}.png",
-        f"/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/data/{version}/episode_{ep:06d}/view2/frame_{frame2:04d}.png",
+    if version == "real":
+        image_names = [
+        f"/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/data/real/episode_{ep:06d}/observation.images.exterior_1_left/frame_{frame1:04d}.png",
+        f"/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/data/real/episode_{ep:06d}/observation.images.exterior_2_left/frame_{frame2:04d}.png",
     ]
-
+    else:
+        image_names = [
+            f"/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/data/{version}/episode_{ep:06d}/view1/frame_{frame1:04d}.png",
+            f"/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/data/{version}/episode_{ep:06d}/view2/frame_{frame2:04d}.png",
+        ]
 
     images = load_and_preprocess_images(
         image_names,
@@ -484,21 +385,9 @@ if __name__ == "__main__":
 
     with torch.no_grad():
         preds = model(images)
-        preds_single0 = model(images[:,0:1])
-        preds_single1 = model(images[:,1:2])
 
         depth_map = preds["depth"]
         depth_conf = preds["depth_conf"]
-        print("depth: ", depth_map.shape)
-
-        depth_map_single0 = preds_single0["depth"]
-        depth_map_single1 = preds_single1["depth"]
-
-        delta_depth0 = depth_map[:,0:1] - depth_map_single0
-        delta_depth1 = depth_map[:,1:2] - depth_map_single1
-
-        save_depth_maps(delta_depth0, depth_output_dir, "delta_depth0")
-        save_depth_maps(delta_depth1, depth_output_dir, "delta_depth1")
 
         extrinsic, intrinsic = encoding_to_camera(
             preds["pose_enc"], preds["images"].shape[-2:]
@@ -507,15 +396,13 @@ if __name__ == "__main__":
         point_map_by_unprojection = unproject_depth_map_to_point_map(
             depth_map.squeeze(0), extrinsic.squeeze(0), intrinsic.squeeze(0)
         )
+        save_depth_maps(depth_map, depth_output_dir, "depth")
 
-        depth_rendered_np, rendered_valid_mask = render_depth_from_point_map(
+        depth_rendered_np, rendered_valid_mask, depth_spread = render_depth_from_point_map(
             point_map_by_unprojection=point_map_by_unprojection,
             depth_map=depth_map,
             extrinsic=extrinsic,
-            intrinsic=intrinsic,
-            eps=1e-6,
-            confidence=depth_conf,
-            conf_thres=30.0,
+            intrinsic=intrinsic
         )
 
         depth_rendered = torch.from_numpy(depth_rendered_np).to(
@@ -536,6 +423,7 @@ if __name__ == "__main__":
         depth=depth_map,
         depth_rendered=depth_rendered,
         valid_mask=valid_for_vt,
+        depth_spread=depth_spread,
     )
     print(res)
 
