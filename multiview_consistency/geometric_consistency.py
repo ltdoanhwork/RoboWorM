@@ -214,7 +214,7 @@ def geometric_calculation(
         if vm.shape != dj.shape:
             raise ValueError(f"valid_mask shape {vm.shape} must match depth shape {dj.shape}")
 
-    B, S, _, _ = dj.shape
+    B, S, _, _ = dj.shape 
 
     def _shape_stats_1view(y_bhw: np.ndarray, x_bhw: np.ndarray, m_bhw: np.ndarray | None, spread_bhw: np.ndarray | None) -> dict | list[dict]:
         # y: joint, x: indep, both (B,H,W); optional m_bhw (B,H,W) bool
@@ -246,8 +246,11 @@ def geometric_calculation(
             vx = float((dx * dx).mean())
             cov = float((dx * dy).mean())
 
-            alpha = cov / (vx + 1e-12)
-            beta = my - alpha * mx
+            # alpha = cov / (vx + 1e-12)
+            # beta = my - alpha * mx
+
+            alpha = 1.0
+            beta = float(np.median(yv - xv))
 
             y_hat = alpha * xv + beta
             r = np.abs(yv - y_hat)
@@ -261,7 +264,6 @@ def geometric_calculation(
                 spread_roi = spread_bhw[b][roi].astype(np.float64)
                 rel_spread = spread_roi / (scale_ref + 1e-8)
                 conflict_ratio = float(np.mean(rel_spread > conflict_tol))
-
             out.append({
                 "alpha": float(alpha),
                 "beta": float(beta),
@@ -309,7 +311,7 @@ def geometric_consistency_metric(
 
         conflict_ratio = vshape.get("conflict_ratio", float("nan"))
         if math.isfinite(conflict_ratio):
-            score *= math.exp(-conflict_ratio /1.0)
+            score *= math.exp(-conflict_ratio / 1.0)
 
         return score
 
