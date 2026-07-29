@@ -524,9 +524,14 @@ def build_itm_attention_context(
 
 def infer_ctrl_world_heat_map_shape(seq_len: int) -> SimpleNamespace | None:
     geometry = {
+        # 3-view vertical strip (72x40)
         2880: (72, 40),
         720: (36, 20),
         180: (18, 10),
+        # 4-view 2x2 grid (48x80)
+        3840: (48, 80),
+        960: (24, 40),
+        240: (12, 20),
     }.get(seq_len)
     if geometry is None:
         return None

@@ -256,3 +256,77 @@ flowchart LR
   **object motion accuracy** (SAM2), and reserve **3D reprojection** for multiview.
 - No WorldScore metric checks physics laws directly; true contact/penetration/
   trajectory metrics are a future extension.
+
+---
+
+## 8. ⚠️ Known weakness discovered in practice: resolution / fps confound (TO FIX)
+
+Empirical finding while probing `motion_accuracy` on a paired sample
+(`close_cardboard_box__episode_000026`; GT vs DreamGen vs DreamDojo — full write-up in
+`metrics/motion_probe_out/close_cardboard_box__ep000026/REPORT.md`, Part 3):
+
+- Optical flow is **px between consecutive frames**, so it scales with both the raster
+  **resolution** and the **fps** (px/frame ∝ width × 1/fps). Our predictions run at
+  *different* res+fps than GT and each other (GT 640×480@30, DreamGen 768×432@16,
+  DreamDojo 640×480@10) → raw flow magnitudes are **not comparable** and neither is a
+  raw `motion_accuracy` / `motion_magnitude`.
+- Concretely, DreamDojo's 10 fps triples its px/frame; that inflation coincidentally
+  cancelled its genuinely slow motion, so **raw** numbers looked GT-like while the
+  **res/fps-normalized** speed exposed it as ~4× too slow. The ranking flips depending
+  on normalization.
+- **Human observation contradicts the metric**: DreamDojo visually resembles the
+  dense/GT clip more (framing, structure, calm motion), yet a pure flow-**magnitude**
+  metric punishes it for being slower. Flow magnitude ignores whether the motion has the
+  right **shape/direction** — the thing the eye actually judges.
+
+**Fixes to apply before trusting flow-based physics metrics:**
+1. Resample all clips to a common (resolution, fps), **or** always normalize
+   `px/frame → (px/frame ÷ width × fps)`; never compare raw px across clips.
+2. **Temporally align** pred↔GT (same timeline) before any per-frame error.
+3. Add a **trajectory/structure term** (flow-direction cosine, warped-frame photometric
+   error, or object-mask centroid/IoU trajectory) so magnitude-only speed does not
+   dominate — a clip that reproduces GT's motion *shape* should not be penalized just for
+   being slower/faster.
+
+### 8.1 ✅ Correct protocol (validated): transform GT to each model's grid
+
+The formula-normalize above still mixed in clip-length / temporal-alignment error and
+*over*-penalized DreamDojo. The **correct, validated** fix is to **resample GT to each
+prediction's own (resolution, fps)** and score each model against *its own matched GT*
+(`scripts/run_motion_accuracy_matched.sh`; full numbers in the sample REPORT **Part 4**):
+
+| pair (matched grid) | matched-GT fg flow | pred fg flow | **pred/GT ratio** | verdict |
+|---|---|---|---|---|
+| GT@768×432@16 vs **DreamGen** | 0.273 | 0.602 | **2.20×** | over-moves (\|log\|=0.79) |
+| GT@640×480@10 vs **DreamDojo** | 0.296 | 0.176 | **0.59×** | under-moves (\|log\|=0.52) |
+
+This **reverses both earlier verdicts**: raw px said DreamDojo best (fps artifact);
+formula-normalize said DreamDojo far worst (~4× too slow, over-penalized). With GT put on
+each model's own grid, **DreamDojo (|log|=0.52) is closer to GT than DreamGen (|log|=0.79)**
+— matching the human observation that DreamDojo resembles dense/GT more. Note GT's own fg
+speed changes with the grid (0.273 @16fps → 0.296 @10fps), which is exactly why *both*
+sides must be on the same grid. **Recommended `motion_accuracy` protocol: resample GT →
+prediction grid, report foreground flow ratio (or |log-ratio|) vs matched GT.**
+
+### 8.2 Full dynamics trio on the matched grid (magnitude + smoothness)
+
+Extending the matched-grid protocol to the other two WorldScore dynamics metrics
+(`scripts/run_motion_mag_smooth_matched.sh`; sample REPORT **Part 5**):
+
+| metric | DreamGen (768×432@16) | DreamDojo (640×480@10) | who's closer to GT |
+|---|---|---|---|
+| motion_magnitude ratio pred/GT | 1.49× (\|log\|=0.40) | 0.60× (\|log\|=0.51) | DreamGen (speed-only) |
+| motion_smoothness SSIM (pred) | 0.9943 (GT 0.9970) | **0.9982 (GT 0.9970)** | **DreamDojo (smoother than GT)** |
+| motion_smoothness MSE (pred) | 44.5 | **16.7** | **DreamDojo** |
+
+Key point: **no single scalar wins** — DreamGen matches GT's *speed* better (it
+over-moves less in log terms than DreamDojo under-moves), but **DreamDojo matches GT's
+*temporal structure* better and is the smoothest of all** (SSIM even above GT). The
+magnitude metric is speed-only and rewards the over-mover; the smoothness metric captures
+the "calm, dense-like" quality the eye sees. **The physics score must combine
+magnitude-distance + smoothness (+ a future trajectory/direction term)** rather than rely
+on flow magnitude alone.
+
+Env note: motion_smoothness needs VFIMamba (`mamba_ssm`). To keep the dreamgen `.venv` on
+torch 2.6 (flashinfer/cosmos requirement) we vendored a **pure-PyTorch `mamba_ssm` shim**
+(`selective_scan_ref`) instead of the CUDA kernel (which pulls torch 2.9 / triton 3.5).

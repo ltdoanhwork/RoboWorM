@@ -460,3 +460,11 @@ tmux new-session -d -s smv_pisa_g0   "CUDA_VISIBLE_DEVICES=0 bash scripts/run_bi
 tmux new-session -d -s smv_radial_g1 "CUDA_VISIBLE_DEVICES=1 bash scripts/run_bimanual_multiview_dreamgen_radial.sh 2>&1 | tee exp_logs/tmux_logs/smv_radial.log; exec bash"
 tmux new-session -d -s smv_svg1_g2   "CUDA_VISIBLE_DEVICES=2 bash scripts/run_bimanual_multiview_dreamgen_svg1.sh   2>&1 | tee exp_logs/tmux_logs/smv_svg1.log; exec bash"
 tmux new-session -d -s smv_svg2_g3   "CUDA_VISIBLE_DEVICES=3 bash scripts/run_bimanual_multiview_dreamgen_svg2.sh   2>&1 | tee exp_logs/tmux_logs/smv_svg2.log; exec bash"
+
+# ---- bimanual DreamGen SiTo/ITM (mv + sv) — SEQUENTIAL on 1 GPU (SiTo=1.3x win; ITM=net-negative valid point) ----
+# (single-GPU only; run one at a time so per-segment timing is clean. resumable.)
+tmux new-session -d -s bim_prune "CUDA_VISIBLE_DEVICES=0 bash -c '\
+  bash scripts/run_bimanual_multiview_dreamgen_sito.sh  2>&1 | tee exp_logs/tmux_logs/bim_mv_sito.log && \
+  bash scripts/run_bimanual_multiview_dreamgen_itm.sh   2>&1 | tee exp_logs/tmux_logs/bim_mv_itm.log && \
+  bash scripts/run_bimanual_singleview_dreamgen_sito.sh 2>&1 | tee exp_logs/tmux_logs/bim_sv_sito.log && \
+  bash scripts/run_bimanual_singleview_dreamgen_itm.sh  2>&1 | tee exp_logs/tmux_logs/bim_sv_itm.log'; exec bash"

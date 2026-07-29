@@ -16,9 +16,14 @@ def _split_heads(x: torch.Tensor, num_heads: int) -> torch.Tensor:
 class SVDSiToAttnProcessor:
     MIN_TOKENS: int = 128
     _GEOMETRY_BY_SEQ_LEN = {
+        # 3-view vertical strip (72x40)
         2880: (72, 40, 1),
         720: (36, 20, 2),
         180: (18, 10, 4),
+        # 4-view 2x2 grid (48x80)
+        3840: (48, 80, 1),
+        960: (24, 40, 2),
+        240: (12, 20, 4),
     }
 
     def __init__(

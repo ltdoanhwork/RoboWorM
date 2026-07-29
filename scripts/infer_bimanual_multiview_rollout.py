@@ -213,6 +213,16 @@ def parse_args() -> argparse.Namespace:
         add_dreamgen_radial_args(p)
     except Exception as _e:  # pragma: no cover - sparse args are optional
         print(f"[warn] could not register sparse-attention args: {_e}")
+
+    # Token-pruning backends (SiTo / ITM). Same forwarding trick: register their
+    # flags so setup_pipeline (examples.video2world) builds the matching config.
+    try:
+        from methods.prunning.SiTo.config import add_dreamgen_sito_args
+        from methods.prunning.importance_token_merge.config import add_dreamgen_itm_args
+        add_dreamgen_sito_args(p)
+        add_dreamgen_itm_args(p)
+    except Exception as _e:  # pragma: no cover - pruning args are optional
+        print(f"[warn] could not register pruning args: {_e}")
     return p.parse_args()
 
 
@@ -424,6 +434,12 @@ def main() -> None:
     # radial_*) so setup_pipeline builds the matching sparse config.
     for _attr in vars(args):
         if _attr.startswith(("pisa_", "svg_", "radial_")) or _attr in ("use_pisa", "use_svg", "use_radial"):
+            setattr(pipe_args, _attr, getattr(args, _attr))
+
+    # Forward token-pruning flags (use_sito/sito_*, use_itm/itm_*) so setup_pipeline
+    # builds the matching prune config.
+    for _attr in vars(args):
+        if _attr.startswith(("sito_", "itm_")) or _attr in ("use_sito", "use_itm"):
             setattr(pipe_args, _attr, getattr(args, _attr))
 
     print("Building Video2World pipeline (loads model once)...")

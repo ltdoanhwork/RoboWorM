@@ -12,6 +12,8 @@
 #   DATASET_NAME (default bimanual_multiview), DATASET_DIR
 #   NUM_EPISODES, SPLIT (val|train|all), NUM_INFERENCE_STEPS
 #   DOWN_SAMPLE (must match training; default 1 = 30fps), CUDA_VISIBLE_DEVICES
+#   CONFIG (bimanual = 3-view strip [default] | bimanual_grid = 4-view 2x2 grid)
+#   OUTPUT_ROOT / INPUT_ROOT (override output/input trees, e.g. for a variant model)
 
 set -e
 
@@ -32,8 +34,9 @@ DATASET_DIR="${DATASET_DIR:-${ROOT}/models/Ctrl-World/dataset_example/${DATASET_
 META_INFO="${ROOT}/models/Ctrl-World/dataset_meta_info"
 DOWN_SAMPLE="${DOWN_SAMPLE:-1}"
 
-OUTPUT_BASE="${ROOT}/sampling_dataset/dense/bimanual/output/multiview/ctrlworld"
-INPUT_BASE="${ROOT}/sampling_dataset/dense/bimanual/input/multiview/ctrlworld"
+CONFIG="${CONFIG:-bimanual}"
+OUTPUT_BASE="${OUTPUT_ROOT:-${ROOT}/sampling_dataset/dense/bimanual/output/multiview/ctrlworld}"
+INPUT_BASE="${INPUT_ROOT:-${ROOT}/sampling_dataset/dense/bimanual/input/multiview/ctrlworld}"
 
 EXTRA=""
 if [ -n "${NUM_EPISODES:-}" ]; then EXTRA="${EXTRA} --num_episodes ${NUM_EPISODES}"; fi
@@ -43,6 +46,7 @@ if [ -n "${GUIDANCE:-}" ]; then EXTRA="${EXTRA} --guidance_scale ${GUIDANCE}"; f
 echo "=========================================="
 echo "Ctrl-World Bimanual Multiview Inference"
 echo "  ckpt=${CKPT}"
+echo "  config=${CONFIG}"
 echo "  dataset=${DATASET_DIR}  split=${SPLIT:-all}  down_sample=${DOWN_SAMPLE}"
 echo "  output=${OUTPUT_BASE}"
 echo "=========================================="
@@ -57,6 +61,7 @@ python scripts/infer_bimanual_multiview_ctrlworld.py \
     --save_dir "${OUTPUT_BASE}" \
     --input_save_dir "${INPUT_BASE}" \
     --infer_down_sample "${DOWN_SAMPLE}" \
+    --config "${CONFIG}" \
     --split "${SPLIT:-all}" ${EXTRA}
 
 echo ""

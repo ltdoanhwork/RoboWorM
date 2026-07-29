@@ -71,6 +71,27 @@ class CtrlWorldAgent:
             self.state_p01 = np.array(data_stat["state_01"])[None, :]
             self.state_p99 = np.array(data_stat["state_99"])[None, :]
 
+        # View layout. Default = 3-view vertical strip (3 rows x 1 col).
+        # Grid variants set num_views/grid_rows/grid_cols on the config.
+        self.num_views = int(getattr(args, "num_views", 3))
+        self.grid_rows = int(getattr(args, "grid_rows", self.num_views))
+        self.grid_cols = int(getattr(args, "grid_cols", 1))
+
+    def stack_views_to_canvas(self, per_view_latents):
+        """Place a list of per-view latents (each (..., h, w)) ROW-MAJOR into one
+        (..., grid_rows*h, grid_cols*w) canvas. For the 3-view default this is a
+        pure vertical concat; for the 2x2 grid it is a proper grid layout."""
+        lat_h, lat_w = per_view_latents[0].shape[-2:]
+        canvas = torch.zeros(
+            (*per_view_latents[0].shape[:-2], self.grid_rows * lat_h, self.grid_cols * lat_w),
+            dtype=per_view_latents[0].dtype, device=per_view_latents[0].device,
+        )
+        for v_i, v in enumerate(per_view_latents):
+            r = v_i // self.grid_cols
+            c = v_i % self.grid_cols
+            canvas[..., r * lat_h:(r + 1) * lat_h, c * lat_w:(c + 1) * lat_w] = v
+        return canvas
+
     def normalize_bound(self, data, data_min, data_max, clip_min=-1, clip_max=1, eps=1e-8):
         ndata = 2 * (data - data_min) / (data_max - data_min + eps) - 1
         return np.clip(ndata, clip_min, clip_max)
@@ -143,8 +164,8 @@ class CtrlWorldAgent:
                 pipeline,
                 image=image_cond,
                 text=text_token,
-                width=args.width,
-                height=int(args.height * 3),
+                width=int(args.width * self.grid_cols),
+                height=int(args.height * self.grid_rows),
                 num_frames=args.num_frames,
                 history=his_cond,
                 num_inference_steps=args.num_inference_steps,
@@ -157,7 +178,7 @@ class CtrlWorldAgent:
                 return_dict=False,
                 frame_level_cond=True,
             )
-        latents = einops.rearrange(latents, "b f c (m h) (n w) -> (b m n) f c h w", m=3, n=1)
+        latents = einops.rearrange(latents, "b f c (m h) (n w) -> (b m n) f c h w", m=self.grid_rows, n=self.grid_cols)
 
         true_video = torch.stack(video_latent_true, dim=0)
         decoded_video = []
@@ -253,7 +274,7 @@ def run_episode(agent, episode_id, save_dir, input_save_dir=None):
 
     his_cond = []
     his_eef = []
-    first_latent = torch.cat([v[0] for v in video_latents], dim=1).unsqueeze(0)
+    first_latent = agent.stack_views_to_canvas([v[0] for v in video_latents]).unsqueeze(0)
     for _ in range(num_history * 4):
         his_cond.append(first_latent)
         his_eef.append(eef_gt[0:1])
@@ -284,7 +305,7 @@ def run_episode(agent, episode_id, save_dir, input_save_dir=None):
 
         his_eef.append(qpos_pose[pred_step - 1:pred_step])
         his_cond.append(
-            torch.cat([v[pred_step - 1] for v in predicted_latents], dim=1).unsqueeze(0)
+            agent.stack_views_to_canvas([v[pred_step - 1] for v in predicted_latents]).unsqueeze(0)
         )
 
         if i == interact_num - 1:
@@ -342,7 +363,11 @@ def run_episode(agent, episode_id, save_dir, input_save_dir=None):
         with open(ep_input_dir / "metadata.json", "w") as f:
             json.dump(input_meta, f, indent=2)
 
-    view_names = ["cam_high", "cam_left_wrist", "cam_right_wrist"]
+    if getattr(agent, "num_views", 3) == 4:
+        # 2x2 grid: row-major [TL, TR, BL, BR]
+        view_names = ["cam_high", "cam_low", "cam_left_wrist", "cam_right_wrist"]
+    else:
+        view_names = ["cam_high", "cam_left_wrist", "cam_right_wrist"]
     per_view_metrics = {}
     for v_i in range(num_views):
         per_view_metrics[view_names[v_i]] = compute_metrics(concat_pred[v_i], concat_gt[v_i])
@@ -518,8 +543,8 @@ def main():
     parser.add_argument("--infer_down_sample", type=int, default=1,
                         help="Must match the down_sample used at prep/train (for output fps).")
     parser.add_argument("--split", choices=["val", "train", "all"], default="all")
-    parser.add_argument("--config", choices=["bimanual", "humanoid"], default="bimanual",
-                        help="Which model config (sets action_dim etc.).")
+    parser.add_argument("--config", choices=["bimanual", "bimanual_grid", "humanoid"], default="bimanual",
+                        help="Which model config (sets action_dim, view grid, etc.).")
 
     # Cache backend args (mutually exclusive)
     _import_cache_module("WorldCache", "config").add_worldcache_args(parser)
@@ -538,6 +563,8 @@ def main():
     sys.path.insert(0, ctrl_world_dir)
     if args.config == "humanoid":
         from config_humanoid import wm_args_humanoid as _wm_args
+    elif args.config == "bimanual_grid":
+        from config_bimanual_grid import wm_args_bimanual_grid as _wm_args
     else:
         from config_bimanual import wm_args_bimanual as _wm_args
     model_args = _wm_args()

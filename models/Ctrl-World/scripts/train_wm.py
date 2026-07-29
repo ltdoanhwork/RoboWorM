@@ -191,7 +191,9 @@ def validate_video_generation(model, val_dataset, args, train_steps, videos_dir,
     his_latent_gt, future_latent_ft = video_gt[:,:args.num_history], video_gt[:,args.num_history:]
     current_latent = future_latent_ft[:,0]
     print("image",current_latent.shape, 'action', actions.shape)
-    assert current_latent.shape[1:] == (4, 72, 40)
+    grid_rows = int(getattr(args, "grid_rows", getattr(args, "num_views", 3)))
+    grid_cols = int(getattr(args, "grid_cols", 1))
+    assert current_latent.shape[1:] == (4, grid_rows * 24, grid_cols * 40)
     assert actions.shape[1:] == (int(args.num_frames+args.num_history), args.action_dim)
 
     # start generate
@@ -204,8 +206,8 @@ def validate_video_generation(model, val_dataset, args, train_steps, videos_dir,
             pipeline,
             image=current_latent,
             text=action_latent,
-            width=args.width,
-            height=int(3*args.height),
+            width=int(grid_cols*args.width),
+            height=int(grid_rows*args.height),
             num_frames=args.num_frames,
             history=his_latent_gt,
             num_inference_steps=args.num_inference_steps,
@@ -220,9 +222,9 @@ def validate_video_generation(model, val_dataset, args, train_steps, videos_dir,
             his_cond_zero=args.his_cond_zero,
         )
     
-    pred_latents = einops.rearrange(pred_latents, 'b f c (m h) (n w) -> (b m n) f c h w', m=3,n=1) # (B, 8, 4, 32,32)
+    pred_latents = einops.rearrange(pred_latents, 'b f c (m h) (n w) -> (b m n) f c h w', m=grid_rows,n=grid_cols) # (B, 8, 4, 32,32)
     video_gt = torch.cat([his_latent_gt, future_latent_ft], dim=1) # (B, 8, 4, 32,32)
-    video_gt = einops.rearrange(video_gt, 'b f c (m h) (n w) -> (b m n) f c h w', m=3,n=1) # (B, 8, 4, 32,32)
+    video_gt = einops.rearrange(video_gt, 'b f c (m h) (n w) -> (b m n) f c h w', m=grid_rows,n=grid_cols) # (B, 8, 4, 32,32)
     
     # decode latent
     if video_gt.shape[2] != 3:  
@@ -268,7 +270,7 @@ if __name__ == "__main__":
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument('--config', type=str, default='droid',
-                        choices=['droid', 'bimanual', 'humanoid'],
+                        choices=['droid', 'bimanual', 'bimanual_grid', 'humanoid'],
                         help='Which config/dataset preset to use.')
     parser.add_argument('--svd_model_path', type=str, default=None)
     parser.add_argument('--clip_model_path', type=str, default=None)
@@ -289,6 +291,13 @@ if __name__ == "__main__":
     if args_new.config == 'bimanual':
         from config_bimanual import wm_args_bimanual
         args = wm_args_bimanual()
+        args.dataset_module = 'dataset.dataset_bimanual_multiview'
+        args.dataset_cfgs = args.dataset_names
+        args.load_strict = not args_new.no_load_strict
+    elif args_new.config == 'bimanual_grid':
+        from config_bimanual_grid import wm_args_bimanual_grid
+        args = wm_args_bimanual_grid()
+        # same dimension-agnostic dataset class; grid layout via num_views/grid_* fields
         args.dataset_module = 'dataset.dataset_bimanual_multiview'
         args.dataset_cfgs = args.dataset_names
         args.load_strict = not args_new.no_load_strict

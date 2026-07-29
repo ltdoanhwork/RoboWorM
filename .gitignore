@@ -226,3 +226,4 @@ models/Ctrl-World/dataset_example/*
 webpage/*
 .cursor/*
 .jitcache/*
+metrics/motion_probe_out/

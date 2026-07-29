@@ -34,7 +34,12 @@ except Exception:  # pragma: no cover - import path fallback
     )
 
 
-_GEOMETRY_BY_TOKENS = {2880: (72, 40), 720: (36, 20), 180: (18, 10)}
+_GEOMETRY_BY_TOKENS = {
+    # 3-view vertical strip (72x40) UNet spatial stages
+    2880: (72, 40), 720: (36, 20), 180: (18, 10),
+    # 4-view 2x2 grid (48x80) UNet spatial stages
+    3840: (48, 80), 960: (24, 40), 240: (12, 20),
+}
 
 
 class _SpatioTemporalPruner:

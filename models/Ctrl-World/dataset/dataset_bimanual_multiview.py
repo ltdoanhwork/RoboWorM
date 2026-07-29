@@ -8,7 +8,11 @@ Adapted from dataset_droid_exp33.Dataset_mix. Key differences:
     frames (prepared by prepare_ctrlworld_bimanual_multiview.py), so we index the
     state with the SAME frame ids as the latents (down_sample handled at prep time;
     here down_sample defaults to 1 -> state_id == rgb_id).
-  - 3-view latent stacking (height 72 = 3*24) is unchanged.
+  - View stacking is config-driven. By default (no grid config on args) it keeps
+    the original 3-view VERTICAL-STRIP layout (height 72 = 3*24, width 40). If
+    `args.grid_rows`/`args.grid_cols` are set (e.g. 2x2 for the 4-view grid
+    variant), views are placed ROW-MAJOR into a (grid_rows*24, grid_cols*40)
+    latent canvas instead.
 """
 
 import json
@@ -19,12 +23,28 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
+# per-view SVD-VAE latent tile size (192px/8 x 320px/8)
+_VIEW_LAT_H = 24
+_VIEW_LAT_W = 40
+
 
 class BimanualMultiviewDataset(Dataset):
     def __init__(self, args, mode="train"):
         super().__init__()
         self.args = args
         self.mode = mode
+
+        # View layout. Default = original 3-view vertical strip (3 rows x 1 col).
+        # A grid variant sets grid_rows/grid_cols (+ num_views) on the config.
+        self.num_views = int(getattr(args, "num_views", 3))
+        self.grid_rows = int(getattr(args, "grid_rows", self.num_views))
+        self.grid_cols = int(getattr(args, "grid_cols", 1))
+        assert self.grid_rows * self.grid_cols >= self.num_views, (
+            f"grid {self.grid_rows}x{self.grid_cols} too small for "
+            f"{self.num_views} views"
+        )
+        self.canvas_h = self.grid_rows * _VIEW_LAT_H
+        self.canvas_w = self.grid_cols * _VIEW_LAT_W
 
         self.dataset_path_all = []
         self.samples_all = []
@@ -120,15 +140,18 @@ class BimanualMultiviewDataset(Dataset):
         data = dict()
         data["text"] = label["texts"][0]
 
-        latnt_cond1 = self._get_frames(label, rgb_id, 0, video_dir=dataset_dir)
-        latnt_cond2 = self._get_frames(label, rgb_id, 1, video_dir=dataset_dir)
-        latnt_cond3 = self._get_frames(label, rgb_id, 2, video_dir=dataset_dir)
+        # Load each view's latent and place it ROW-MAJOR into the canvas.
+        # 3-view default -> vertical strip (3x1); 4-view grid -> 2x2.
         latent = torch.zeros(
-            (self.args.num_frames + self.args.num_history, 4, 72, 40), dtype=torch.float32
+            (self.args.num_frames + self.args.num_history, 4, self.canvas_h, self.canvas_w),
+            dtype=torch.float32,
         )
-        latent[:, :, 0:24] = latnt_cond1
-        latent[:, :, 24:48] = latnt_cond2
-        latent[:, :, 48:72] = latnt_cond3
+        for view_idx in range(self.num_views):
+            view_latent = self._get_frames(label, rgb_id, view_idx, video_dir=dataset_dir)
+            r = view_idx // self.grid_cols
+            c = view_idx % self.grid_cols
+            h0, w0 = r * _VIEW_LAT_H, c * _VIEW_LAT_W
+            latent[:, :, h0:h0 + _VIEW_LAT_H, w0:w0 + _VIEW_LAT_W] = view_latent
         data["latent"] = latent.float()
 
         action = qpos[state_id]  # (num_history+num_frames, 14)
