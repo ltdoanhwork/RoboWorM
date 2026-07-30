@@ -30,7 +30,7 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument(
         "--frame_batch_size",
         type=int,
-        default=16,
+        default=1,
         help="VGGT batch size B: number of timesteps per forward (views stay in S).",
     )
     mode = p.add_mutually_exclusive_group(required=True)
@@ -128,6 +128,7 @@ def _run_single(args: argparse.Namespace, views: list[str]) -> None:
             max_frames=args.max_frames,
             include_per_frame=args.include_per_frame,
             frame_batch_size=args.frame_batch_size,
+            **_load_kwargs_from_args(args),
         )
     finally:
         _close_session(conn)

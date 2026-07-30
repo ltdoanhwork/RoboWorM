@@ -6,10 +6,8 @@ from pathlib import Path
 
 import torch
 try:
-    # When imported as a package module
     from .utils import intersect_frames  # pyright: ignore[reportMissingImports]
 except Exception:  # pragma: no cover
-    # When executed as a standalone script
     from utils import intersect_frames  # type: ignore
 
 def _rot_angle_deg(Rrel: torch.Tensor) -> torch.Tensor:

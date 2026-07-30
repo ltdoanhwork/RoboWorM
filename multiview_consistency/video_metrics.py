@@ -228,11 +228,12 @@ def _iter_vggt_frames(
     prefetch_chunks: bool = True,
     parallel_frame_load: bool = True,
     load_workers: int = 4,
-) -> Iterator[tuple[int, torch.Tensor, torch.Tensor, torch.Tensor]]:
+) -> Iterator[tuple[int, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]]:
     """
     Yield per-frame VGGT outputs using batch dimension B for multiple timesteps.
 
     Each yielded tensor has batch dim 1: (1,S,...).
+    Yields: (frame_id, extrinsic, intrinsic, depth_map, images).
 
     When ``prefetch_chunks`` is True, the next chunk is loaded on a background thread
     while the current chunk is forwarded on GPU (overlaps I/O with compute).
@@ -290,7 +291,8 @@ def _iter_vggt_frames(
                     int(fi),
                     extrinsic[b : b + 1],
                     intrinsic[b : b + 1],
-                    depth_map[b : b + 1]
+                    depth_map[b : b + 1],
+                    images[b : b + 1],
                 )
     finally:
         if load_executor is not None:
@@ -312,6 +314,45 @@ def _select_frame_ids(
         frame_ids = frame_ids[: int(max_frames)]
     return frame_ids
 
+def _depth_pair_dissimilar_fraction(
+    depth_map: torch.Tensor | np.ndarray,
+    *,
+    eps: float = 1e-6,
+    relative_diff_threshold: float = 0.25,
+) -> float:
+    """
+    Trên mask chung (finite, depth > eps), tỷ lệ pixel có
+    |d0-d1| / (0.5*(d0+d1)+eps) > relative_diff_threshold.
+
+    Dùng để bắt geometric_consistency ~1 giả khi hai view depth thực tế lệch nhiều.
+    Ít hơn 2 view → trả về 0.0 (không kích hoạt check).
+    """
+    if isinstance(depth_map, torch.Tensor):
+        d = depth_map.detach().float().cpu().numpy()
+    else:
+        d = np.asarray(depth_map)
+    if d.ndim == 5:
+        d = d[0, ..., 0] if d.shape[-1] == 1 else d[0]
+    elif d.ndim == 4 and d.shape[-1] == 1:
+        d = d[..., 0]
+        if d.ndim == 4:
+            d = d[0]
+    elif d.ndim == 4:
+        d = d[0]
+    else:
+        raise ValueError(f"depth_map must be (1,S,H,W,1)-like, got {tuple(d.shape)}")
+    if d.shape[0] < 2:
+        return 0.0
+    d0, d1 = d[0], d[1]
+    m = np.isfinite(d0) & np.isfinite(d1) & (d0 > eps) & (d1 > eps)
+    if not np.any(m):
+        return 0.0
+    a = d0[m].astype(np.float64)
+    b = d1[m].astype(np.float64)
+    rel = np.abs(a - b) / (0.5 * (a + b) + eps)
+    return float(np.mean(rel > float(relative_diff_threshold)))
+
+
 @dataclass(frozen=True)
 class _GeometricFrameResult:
     frame: int
@@ -326,26 +367,35 @@ def _process_geometric_frame(
     extrinsic: torch.Tensor,
     intrinsic: torch.Tensor,
     depth_map: torch.Tensor,
+    images: torch.Tensor,
+    high_geo_score_disjoint_threshold: float = 0.99,
+    depth_pair_dissimilar_fraction_min: float = 0.5,
+    depth_pair_relative_diff_threshold: float = 0.25,
 ) -> _GeometricFrameResult:
     # Keep the entire geometric post-process on CPU (avoid GPU round-trips).
     depth_cpu = depth_map.detach().float().cpu()
     extrinsic_cpu = extrinsic.detach().float().cpu()
     intrinsic_cpu = intrinsic.detach().float().cpu()
+    images_cpu = images.detach().float().cpu()
 
     point_map = unproject_depth_map_to_point_map(
         depth_cpu.squeeze(0), extrinsic_cpu.squeeze(0), intrinsic_cpu.squeeze(0)
     )
-    depth_rendered_np, rendered_valid_mask, depth_spread = render_depth_from_point_map(
+    depth_rendered_np, rendered_valid_mask, depth_spread, rgb_rendered_np = render_depth_from_point_map(
         point_map_by_unprojection=point_map,
         depth_map=depth_cpu,
         extrinsic=extrinsic_cpu,
         intrinsic=intrinsic_cpu,
+        images=images_cpu,
     )
 
     if depth_rendered_np.ndim == 3:
         depth_rendered_np = depth_rendered_np[np.newaxis, ...]
     if isinstance(depth_spread, np.ndarray) and depth_spread.ndim == 3:
         depth_spread = depth_spread[np.newaxis, ...]
+    if isinstance(rgb_rendered_np, np.ndarray) and rgb_rendered_np.ndim == 4:
+        # (S,H,W,3) → (1,S,H,W,3)
+        rgb_rendered_np = rgb_rendered_np[np.newaxis, ...]
 
     valid_for_metric = rendered_valid_mask
     if isinstance(valid_for_metric, np.ndarray) and valid_for_metric.ndim == 3:
@@ -356,9 +406,17 @@ def _process_geometric_frame(
         depth_rendered=depth_rendered_np,
         valid_mask=valid_for_metric,
         depth_spread=depth_spread,
+        images=images_cpu,
+        rgb_rendered=rgb_rendered_np,
     )
     score = float(geometric_consistency_metric(res))
-    if res['view0_shape']['valid_ratio'] < 0.02 or res['view1_shape']['valid_ratio'] < 0.02:
+    depth_pair_dissimilar_fraction = _depth_pair_dissimilar_fraction(
+        depth_cpu,
+        relative_diff_threshold=float(depth_pair_relative_diff_threshold),
+    )
+    if score > float(high_geo_score_disjoint_threshold) and depth_pair_dissimilar_fraction > float(
+        depth_pair_dissimilar_fraction_min
+    ):
         return _GeometricFrameResult(
             frame=int(fi),
             geometric_consistency=0.0,
@@ -403,10 +461,13 @@ def compute_video_metrics(
     stride: int = 1,
     max_frames: int | None = None,
     include_per_frame: bool = False,
+    high_geo_score_disjoint_threshold: float = 0.99,
+    depth_pair_dissimilar_fraction_min: float = 0.5,
+    depth_pair_relative_diff_threshold: float = 0.25,
     frame_batch_size: int = 4,
     prefetch_chunks: bool = True,
     parallel_frame_load: bool = True,
-    load_workers: int = 1,
+    load_workers: int = 4,
 ) -> dict:
     frame_ids = _select_frame_ids(episode_dir, views, stride=stride, max_frames=max_frames)
     geo_frame_ids = [fi for fi in frame_ids if fi > 0]
@@ -417,7 +478,7 @@ def compute_video_metrics(
     intrinsics_all: list[torch.Tensor] = []
     used_frame_ids: list[int] = []
 
-    for fi, extrinsic, intrinsic, depth_map in _iter_vggt_frames(
+    for fi, extrinsic, intrinsic, depth_map, images in _iter_vggt_frames(
         ctx,
         episode_dir=episode_dir,
         views=views,
@@ -433,6 +494,10 @@ def compute_video_metrics(
                 extrinsic=extrinsic,
                 intrinsic=intrinsic,
                 depth_map=depth_map,
+                images=images,
+                high_geo_score_disjoint_threshold=high_geo_score_disjoint_threshold,
+                depth_pair_dissimilar_fraction_min=depth_pair_dissimilar_fraction_min,
+                depth_pair_relative_diff_threshold=depth_pair_relative_diff_threshold,
             )
             per_frame.append({
                 "frame": gf.frame,
@@ -464,3 +529,4 @@ def compute_video_metrics(
     if include_per_frame:
         out["geometric_consistency_per_frame"] = geo["geometric_consistency_per_frame"]
     return out
+

@@ -2,18 +2,44 @@ import torch
 import math                        # (H,W)
 import numpy as np
 
+
+def _images_to_rgb_maps(images: torch.Tensor | np.ndarray) -> np.ndarray:
+    """Normalize images to (S, H, W, 3) float in [0, 1]."""
+    if isinstance(images, torch.Tensor):
+        img = images.detach().cpu().float().numpy()
+    else:
+        img = np.asarray(images, dtype=np.float32)
+    if img.ndim == 5:  # (B,S,3,H,W)
+        img = img[0]
+    if img.ndim == 4 and img.shape[1] == 3:  # (S,3,H,W)
+        img = np.transpose(img, (0, 2, 3, 1))
+    if img.ndim != 4 or img.shape[-1] != 3:
+        raise ValueError(f"images must become (S,H,W,3), got {img.shape}")
+    if img.max() > 1.5:
+        img = img / 255.0
+    return np.clip(img, 0.0, 1.0).astype(np.float32)
+
+
 @torch.no_grad()
 def render_depth_from_point_map(
     point_map_by_unprojection: np.ndarray,
     depth_map: torch.Tensor | np.ndarray,
     extrinsic: torch.Tensor | np.ndarray,
     intrinsic: torch.Tensor | np.ndarray,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    images: torch.Tensor | np.ndarray | None = None,
+) -> tuple:
     """
+    Project multi-view unprojected points into each camera (z-buffer).
+
+    Same idea as demo_gradio / visual_util coloring points from `images`, then
+    splat into each target view keeping the nearest point's depth (and RGB).
+
     Returns:
-      depth_rendered: (B,S,H,W) float32
-      fov_overlap_mask: (B,S,H,W) bool
-      depth_spread: (B,S,H,W) float32
+      depth_rendered: (B,S,H,W) or (S,H,W) float32
+      fov_overlap_mask: same layout, bool
+      depth_spread: same layout, float32
+      rgb_rendered (optional): (B,S,H,W,3) or (S,H,W,3) float32 in [0,1]
+        only when ``images`` is provided.
     """
     if point_map_by_unprojection.ndim != 4 or point_map_by_unprojection.shape[-1] != 3:
         raise ValueError(f"point_map_by_unprojection must be (S,H,W,3), got {point_map_by_unprojection.shape}")
@@ -37,6 +63,14 @@ def render_depth_from_point_map(
     if d0.shape[:3] != (S_pm, H, W):
         raise ValueError(f"depth_map (first batch) must match (S,H,W)={(S_pm,H,W)}, got {d0.shape}")
 
+    rgb_maps = None
+    if images is not None:
+        rgb_maps = _images_to_rgb_maps(images)
+        if rgb_maps.shape[:3] != (S_pm, H, W):
+            raise ValueError(
+                f"images spatial shape must match depth (S,H,W)={(S_pm, H, W)}, got {rgb_maps.shape}"
+            )
+
     def _to_np(x):
         return x.detach().cpu().float().numpy() if isinstance(x, torch.Tensor) else x
 
@@ -51,19 +85,26 @@ def render_depth_from_point_map(
     S_cam = E.shape[1]
 
     pts = []
+    cols = []
     for s in range(S_pm):
         ds_ = d0[s]
-        m = np.isfinite(ds_)
+        m = np.isfinite(ds_) & (ds_ > 1e-6)
         if np.any(m):
             pts.append(point_map_by_unprojection[s][m])
+            if rgb_maps is not None:
+                cols.append(rgb_maps[s][m])
 
     out = np.zeros((B, S_cam, H, W), dtype=np.float32)
     fov_overlap_geom = np.zeros((B, S_cam, H, W), dtype=bool)
     depth_spread = np.zeros((B, S_cam, H, W), dtype=np.float32)
+    rgb_out = None
+    if rgb_maps is not None:
+        rgb_out = np.zeros((B, S_cam, H, W, 3), dtype=np.float32)
 
     if len(pts) > 0:
         P = np.concatenate(pts, axis=0).astype(np.float32)
         Pwh = np.concatenate([P, np.ones((P.shape[0], 1), dtype=np.float32)], axis=1)
+        C = np.concatenate(cols, axis=0).astype(np.float32) if cols else None
 
         for b in range(B):
             for s in range(S_cam):
@@ -75,6 +116,7 @@ def render_depth_from_point_map(
                 valid = z > 0.01
                 Pc_v = Pc[valid]
                 z_v = z[valid]
+                C_v = C[valid] if C is not None else None
 
                 if z_v.size > 0:
                     pix = (Kb @ Pc_v.T).T
@@ -88,6 +130,7 @@ def render_depth_from_point_map(
                     ui_b = ui_all[inb].astype(np.int32)
                     vi_b = vi_all[inb].astype(np.int32)
                     z_b = z_v[inb].astype(np.float32)
+                    C_b = C_v[inb] if C_v is not None else None
 
                     if z_b.size > 0:
                         depth_min_buf = np.full((H, W), np.inf, dtype=np.float32)
@@ -108,6 +151,12 @@ def render_depth_from_point_map(
                         spread = np.zeros((H, W), dtype=np.float32)
                         spread[multi_hit] = depth_max_buf[multi_hit] - depth_min_buf[multi_hit]
                         depth_spread[b, s] = spread
+
+                        if C_b is not None and rgb_out is not None:
+                            order = np.argsort(-z_b)
+                            flat = vi_b[order].astype(np.int64) * W + ui_b[order].astype(np.int64)
+                            rgb_flat = rgb_out[b, s].reshape(-1, 3)
+                            rgb_flat[flat] = C_b[order]
 
                 pm_s = point_map_by_unprojection[s].reshape(-1, 3).astype(np.float32)
                 Pwh_s = np.concatenate(
@@ -133,7 +182,41 @@ def render_depth_from_point_map(
 
                 fov_overlap_geom[b, s] = acc_geom.reshape(H, W)
 
-    return (out, fov_overlap_geom, depth_spread) if batched else (out[0], fov_overlap_geom[0], depth_spread[0])
+    if not batched:
+        out, fov_overlap_geom, depth_spread = out[0], fov_overlap_geom[0], depth_spread[0]
+        if rgb_out is not None:
+            rgb_out = rgb_out[0]
+
+    if rgb_out is not None:
+        return out, fov_overlap_geom, depth_spread, rgb_out
+    return out, fov_overlap_geom, depth_spread
+
+def _to_rgb_bshw3(rgb: torch.Tensor | np.ndarray, *, name: str) -> np.ndarray:
+    """Normalize RGB to (B,S,H,W,3) float in [0, 1]."""
+    if isinstance(rgb, torch.Tensor):
+        arr = rgb.detach().cpu().float().numpy()
+    else:
+        arr = np.asarray(rgb, dtype=np.float32)
+
+    if arr.ndim == 4 and arr.shape[-1] == 3:
+        # (S,H,W,3) or (B,H,W,3) — treat as S views, add batch
+        arr = arr[None, ...]
+    elif arr.ndim == 4 and arr.shape[1] == 3:
+        # (S,3,H,W)
+        arr = np.transpose(arr, (0, 2, 3, 1))[None, ...]
+    elif arr.ndim == 5 and arr.shape[2] == 3:
+        # (B,S,3,H,W)
+        arr = np.transpose(arr, (0, 1, 3, 4, 2))
+    elif arr.ndim == 5 and arr.shape[-1] == 3:
+        # (B,S,H,W,3)
+        pass
+    else:
+        raise ValueError(f"{name} must become (B,S,H,W,3), got {arr.shape}")
+
+    if arr.max() > 1.5:
+        arr = arr / 255.0
+    return np.clip(arr, 0.0, 1.0).astype(np.float32)
+
 
 def geometric_calculation(
     depth: torch.Tensor | np.ndarray,
@@ -143,6 +226,8 @@ def geometric_calculation(
     valid_mask: torch.Tensor | np.ndarray | None = None,
     depth_spread: torch.Tensor | np.ndarray | None = None,   # <-- mới
     conflict_tol: float = 0.3,
+    images: torch.Tensor | np.ndarray | None = None,
+    rgb_rendered: torch.Tensor | np.ndarray | None = None,
 ) -> dict:
     """
     Inputs:
@@ -152,11 +237,15 @@ def geometric_calculation(
       valid_mask:
         - Optional; same rank/layout as depths after batching: (B,S,H,W) or (S,H,W), bool or 0/1.
         - Non-boolean arrays are cast to bool (non-zero is True).
+      images, rgb_rendered:
+        - Optional RGB pair for photometric consistency (source vs cross-view rendered).
+        - Layouts: (B,S,3,H,W), (B,S,H,W,3), (S,3,H,W), or (S,H,W,3); values in [0,1] or [0,255].
 
     Returns:
       {
-        "view0_shape": {...},
+        "view0_shape": {...},  # may include "rgb_rmse"
         "view1_shape": {...},
+        "rgb_rmse": float,     # only when images & rgb_rendered are provided
       }
       If S>2, keys are view{idx}_shape / valid_ratio_view{idx}.
     """
@@ -214,9 +303,28 @@ def geometric_calculation(
         if vm.shape != dj.shape:
             raise ValueError(f"valid_mask shape {vm.shape} must match depth shape {dj.shape}")
 
-    B, S, _, _ = dj.shape 
+    B, S, H, W = dj.shape
 
-    def _shape_stats_1view(y_bhw: np.ndarray, x_bhw: np.ndarray, m_bhw: np.ndarray | None, spread_bhw: np.ndarray | None) -> dict | list[dict]:
+    rgb_src = None
+    rgb_ren = None
+    if images is not None or rgb_rendered is not None:
+        if images is None or rgb_rendered is None:
+            raise ValueError("images and rgb_rendered must be provided together")
+        rgb_src = _to_rgb_bshw3(images, name="images")
+        rgb_ren = _to_rgb_bshw3(rgb_rendered, name="rgb_rendered")
+        if rgb_src.shape != (B, S, H, W, 3):
+            raise ValueError(f"images shape {rgb_src.shape} must match depth (B,S,H,W,3)={(B,S,H,W,3)}")
+        if rgb_ren.shape != rgb_src.shape:
+            raise ValueError(f"rgb_rendered shape {rgb_ren.shape} must match images {rgb_src.shape}")
+
+    def _shape_stats_1view(
+        y_bhw: np.ndarray,
+        x_bhw: np.ndarray,
+        m_bhw: np.ndarray | None,
+        spread_bhw: np.ndarray | None,
+        rgb_src_bhw3: np.ndarray | None = None,
+        rgb_ren_bhw3: np.ndarray | None = None,
+    ) -> dict | list[dict]:
         # y: joint, x: indep, both (B,H,W); optional m_bhw (B,H,W) bool
         out = []
         for b in range(B):
@@ -231,6 +339,7 @@ def geometric_calculation(
                     "alpha": float("nan"), "beta": float("nan"), "corr": float("nan"),
                     "residual": float("nan"), "count": 0, "scale_ref": float("nan"),
                     "valid_ratio": float(roi.mean()), "conflict_ratio": float("nan"),
+                    "rgb_rmse": float("nan"),
                 })
                 continue
 
@@ -243,14 +352,11 @@ def geometric_calculation(
             my = float(yv.mean())
             dx = xv - mx
             dy = yv - my
-            vx = float((dx * dx).mean())
             cov = float((dx * dy).mean())
 
-            # alpha = cov / (vx + 1e-12)
-            # beta = my - alpha * mx
-
             alpha = 1.0
-            beta = float(np.median(yv - xv))
+            beta = 0.0 
+            # beta = float(np.median(yv - xv))
 
             y_hat = alpha * xv + beta
             r = np.abs(yv - y_hat)
@@ -264,6 +370,16 @@ def geometric_calculation(
                 spread_roi = spread_bhw[b][roi].astype(np.float64)
                 rel_spread = spread_roi / (scale_ref + 1e-8)
                 conflict_ratio = float(np.mean(rel_spread > conflict_tol))
+
+            rgb_rmse = float("nan")
+            if rgb_src_bhw3 is not None and rgb_ren_bhw3 is not None:
+                src_pix = rgb_src_bhw3[b][roi].astype(np.float64)
+                ren_pix = rgb_ren_bhw3[b][roi].astype(np.float64)
+                if src_pix.size > 0:
+                    rgb_rmse = float(np.sqrt(np.mean(np.square(src_pix - ren_pix))))
+                else:
+                    rgb_rmse = 0.0
+
             out.append({
                 "alpha": float(alpha),
                 "beta": float(beta),
@@ -276,7 +392,8 @@ def geometric_calculation(
                 "count": cnt,
                 "scale_ref": scale_ref,
                 "valid_ratio": float(roi.mean()),
-                "conflict_ratio": conflict_ratio,     
+                "conflict_ratio": conflict_ratio,
+                "rgb_rmse": rgb_rmse,
             })
 
         return out[0] if B == 1 else out
@@ -285,8 +402,31 @@ def geometric_calculation(
     for s in range(S):
         m_slice = vm[:, s] if vm is not None else None
         spread_slice = ds[:, s] if ds is not None else None
-        shape_s = _shape_stats_1view(dj[:, s], di[:, s], m_slice, spread_slice)
+        rgb_src_s = rgb_src[:, s] if rgb_src is not None else None
+        rgb_ren_s = rgb_ren[:, s] if rgb_ren is not None else None
+        shape_s = _shape_stats_1view(
+            dj[:, s], di[:, s], m_slice, spread_slice, rgb_src_s, rgb_ren_s
+        )
         result[f"view{s}_shape"] = shape_s
+
+    if rgb_src is not None and rgb_ren is not None:
+        # Global RGB RMSE over the same ROI used per view (valid depth + optional mask).
+        diffs = []
+        for s in range(S):
+            for b in range(B):
+                y = dj[b, s]
+                x = di[b, s]
+                roi = np.isfinite(y) & np.isfinite(x) & (y > eps) & (x > eps)
+                if vm is not None:
+                    roi = roi & vm[b, s]
+                if not np.any(roi):
+                    continue
+                diffs.append(rgb_src[b, s][roi] - rgb_ren[b, s][roi])
+        if diffs:
+            all_diff = np.concatenate(diffs, axis=0).astype(np.float64)
+            result["rgb_rmse"] = float(np.sqrt(np.mean(np.square(all_diff))))
+        else:
+            result["rgb_rmse"] = 0.0
 
     return result
 
@@ -295,6 +435,9 @@ def geometric_consistency_metric(
 ) -> float:
     """
     Returns scalar in [0,1], higher is better.
+
+    When per-view ``rgb_rmse`` is present, multiplies each view score by
+    ``exp(-rgb_rmse)`` (photometric consistency; lower RMSE → higher score).
     """
     def _view_score(vshape: dict) -> float:
         corr = float(vshape.get("corr", float("nan")))
@@ -304,15 +447,24 @@ def geometric_consistency_metric(
                 and math.isfinite(scale_ref) and scale_ref > 1e-6):
             return 0.0
 
-        s_corr = max(0.0, corr)
+        # s_corr = max(0.0, corr)
         rel_resid = resid / scale_ref
-        s_resid = math.exp(-rel_resid / 1.0)
-        score = s_corr * s_resid
+        s_resid = math.exp(-rel_resid)
 
-        conflict_ratio = vshape.get("conflict_ratio", float("nan"))
-        if math.isfinite(conflict_ratio):
-            score *= math.exp(-conflict_ratio / 1.0)
+        # conflict_ratio = vshape.get("conflict_ratio", float("nan"))
+        # if math.isfinite(conflict_ratio):
+        #     s_conflict = math.exp(-conflict_ratio)
+        # else:
+        #     s_conflict = 1.0
 
+        rgb_rmse = vshape.get("rgb_rmse", float("nan"))
+        if math.isfinite(rgb_rmse):
+            s_rgb = math.exp(-float(rgb_rmse))
+        else:
+            s_rgb = 1.0
+
+        # score = s_corr * s_resid * s_conflict * s_rgb
+        score = s_resid * s_rgb
         return score
 
     v0 = res.get("view0_shape", {})
@@ -330,9 +482,9 @@ if __name__ == "__main__":
     from vggt.utils.geometry import unproject_depth_map_to_point_map
 
     try:
-        from .utils import save_depth_maps  
+        from .utils import save_depth_maps, save_rgb_maps
     except Exception:  # pragma: no cover
-        from utils import save_depth_maps  
+        from utils import save_depth_maps, save_rgb_maps
 
     _this_dir = os.path.dirname(os.path.abspath(__file__))
     _physics_root = os.path.abspath(os.path.join(_this_dir, ".."))
@@ -349,29 +501,28 @@ if __name__ == "__main__":
     omega_image_resolution = 512
     omega_patch_size = 16
     omega_checkpoint = (
-        "/home/thanhnv/.cache/huggingface/hub/models--facebook--VGGT-Omega/snapshots/05654241adc2f218dfb089c373a011f8a7040576/vggt_omega_1b_512.pt"
+        "/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/vggt_omega_checkpoint/vggt_omega_1b_512.pt"
     )
 
     model = VGGTOmega(patch_size=omega_patch_size).to(device).eval()
     state = torch.load(omega_checkpoint, map_location="cpu")
     model.load_state_dict(state)
-    print(f"[main] VGGT-Omega loaded from {omega_checkpoint} on {device}")
 
     depth_output_dir = "output_depth"
 
-    ep = 397
+    ep = 255
     frame1 = 5
     frame2 = 5
 
     # version = "real"
-    version = "good_2fps"
-    # version = "bad_2fps"
+    # version = "good_2fps"
+    version = "bad_2fps"
 
     if version == "real":
         image_names = [
-        f"/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/data/real/episode_{ep:06d}/observation.images.exterior_1_left/frame_{frame1:04d}.png",
-        f"/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/data/real/episode_{ep:06d}/observation.images.exterior_2_left/frame_{frame2:04d}.png",
-    ]
+            f"/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/data/real/episode_{ep:06d}/observation.images.exterior_1_left/frame_{frame1:04d}.png",
+            f"/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/data/real/episode_{ep:06d}/observation.images.exterior_2_left/frame_{frame2:04d}.png",
+        ]
     else:
         image_names = [
             f"/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/data/{version}/episode_{ep:06d}/view1/frame_{frame1:04d}.png",
@@ -391,6 +542,10 @@ if __name__ == "__main__":
         depth_map = preds["depth"]
         depth_conf = preds["depth_conf"]
 
+        # save_depth_maps(depth_conf_single0, depth_output_dir, "depth_conf_single0")
+        # save_depth_maps(depth_conf_single1, depth_output_dir, "depth_conf_single1")
+        # save_depth_maps(depth_conf, depth_output_dir, "depth_conf")
+
         extrinsic, intrinsic = encoding_to_camera(
             preds["pose_enc"], preds["images"].shape[-2:]
         )
@@ -398,13 +553,16 @@ if __name__ == "__main__":
         point_map_by_unprojection = unproject_depth_map_to_point_map(
             depth_map.squeeze(0), extrinsic.squeeze(0), intrinsic.squeeze(0)
         )
-        save_depth_maps(depth_map, depth_output_dir, "depth")
+        # save_depth_maps(depth_map, depth_output_dir, "depth")
+        # save_depth_maps(depth_map_single0, depth_output_dir, "depth_single0")
+        # save_depth_maps(depth_map_single1, depth_output_dir, "depth_single1")
 
-        depth_rendered_np, rendered_valid_mask, depth_spread = render_depth_from_point_map(
+        depth_rendered_np, rendered_valid_mask, depth_spread, rgb_rendered_np = render_depth_from_point_map(
             point_map_by_unprojection=point_map_by_unprojection,
             depth_map=depth_map,
             extrinsic=extrinsic,
-            intrinsic=intrinsic
+            intrinsic=intrinsic,
+            images=preds["images"],
         )
 
         depth_rendered = torch.from_numpy(depth_rendered_np).to(
@@ -414,8 +572,13 @@ if __name__ == "__main__":
             depth_rendered = depth_rendered.unsqueeze(0)  # (1,S,H,W)
         depth_rendered = depth_rendered.unsqueeze(-1)  # (B,S,H,W,1)
 
-        save_depth_maps(depth_rendered, depth_output_dir, "rendered")
-        save_depth_maps(rendered_valid_mask.astype(float), depth_output_dir, "valid_mask")
+        # save_depth_maps(depth_rendered, depth_output_dir, "rendered")
+        # save_depth_maps(rendered_valid_mask.astype(float), depth_output_dir, "valid_mask")
+        if rgb_rendered_np.ndim == 4:
+            rgb_to_save = rgb_rendered_np[None]
+        else:
+            rgb_to_save = rgb_rendered_np
+        save_rgb_maps(rgb_to_save, depth_output_dir, "rgb_rendered")
 
     valid_for_vt = rendered_valid_mask
     if isinstance(valid_for_vt, np.ndarray) and valid_for_vt.ndim == 3:
@@ -424,12 +587,17 @@ if __name__ == "__main__":
     res = geometric_calculation(
         depth=depth_map,
         depth_rendered=depth_rendered,
-        valid_mask=valid_for_vt,
+        # valid_mask=valid_for_vt,
         depth_spread=depth_spread,
+        images=preds["images"],
+        rgb_rendered=rgb_to_save,
     )
-    print(res)
 
+
+    print("\n Depth Joint vs Depth Rendered")
     cons = geometric_consistency_metric(res)
+    if "rgb_rmse" in res:
+        print(f"RGB RMSE: {res['rgb_rmse']:.6f}")
 
     print(f"Geometric Consistency Metric: {cons}")
 
