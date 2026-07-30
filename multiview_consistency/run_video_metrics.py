@@ -127,8 +127,7 @@ def _run_single(args: argparse.Namespace, views: list[str]) -> None:
             stride=args.stride,
             max_frames=args.max_frames,
             include_per_frame=args.include_per_frame,
-            frame_batch_size=args.frame_batch_size,
-            **_load_kwargs_from_args(args),
+            frame_batch_size=args.frame_batch_size
         )
     finally:
         _close_session(conn)

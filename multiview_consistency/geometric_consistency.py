@@ -224,8 +224,6 @@ def geometric_calculation(
     *,
     eps: float = 1e-6,
     valid_mask: torch.Tensor | np.ndarray | None = None,
-    depth_spread: torch.Tensor | np.ndarray | None = None,   # <-- mới
-    conflict_tol: float = 0.3,
     images: torch.Tensor | np.ndarray | None = None,
     rgb_rendered: torch.Tensor | np.ndarray | None = None,
 ) -> dict:
@@ -249,6 +247,18 @@ def geometric_calculation(
       }
       If S>2, keys are view{idx}_shape / valid_ratio_view{idx}.
     """
+    def _to_np_mask(m):
+        if isinstance(m, torch.Tensor):
+            m = m.detach().cpu().numpy()
+        m = np.asarray(m)
+        if m.ndim == 5:
+            m = m[..., 0]
+        elif m.ndim == 4 and m.shape[-1] == 1:
+            m = m[..., 0]
+        if m.dtype != np.bool_:
+            m = m.astype(bool)
+        return m
+    
     def _to_np_depth(d):
         if isinstance(d, torch.Tensor):
             d = d.detach().cpu().float().numpy()
@@ -261,22 +271,6 @@ def geometric_calculation(
 
     dj = _to_np_depth(depth)
     di = _to_np_depth(depth_rendered)
-
-    ds = None
-    if depth_spread is not None:
-        ds = _to_np_depth(depth_spread)
-
-    def _to_np_mask(m):
-        if isinstance(m, torch.Tensor):
-            m = m.detach().cpu().numpy()
-        m = np.asarray(m)
-        if m.ndim == 5:
-            m = m[..., 0]
-        elif m.ndim == 4 and m.shape[-1] == 1:
-            m = m[..., 0]
-        if m.dtype != np.bool_:
-            m = m.astype(bool)
-        return m
 
     vm = None
     if valid_mask is not None:
@@ -291,9 +285,6 @@ def geometric_calculation(
         raise ValueError(f"Expected depth tensors to become (B,S,H,W); got {dj.shape} and {di.shape}")
     if dj.shape != di.shape:
         raise ValueError(f"depth and depth_rendered shape mismatch: {dj.shape} vs {di.shape}")
-    if ds is not None and ds.shape != dj.shape:
-        raise ValueError(f"depth_spread shape {ds.shape} must match depth shape {dj.shape}")
-
 
     if vm is not None:
         if vm.ndim == 3:
@@ -321,7 +312,6 @@ def geometric_calculation(
         y_bhw: np.ndarray,
         x_bhw: np.ndarray,
         m_bhw: np.ndarray | None,
-        spread_bhw: np.ndarray | None,
         rgb_src_bhw3: np.ndarray | None = None,
         rgb_ren_bhw3: np.ndarray | None = None,
     ) -> dict | list[dict]:
@@ -336,54 +326,28 @@ def geometric_calculation(
             cnt = int(roi.sum())
             if cnt == 0:
                 out.append({
-                    "alpha": float("nan"), "beta": float("nan"), "corr": float("nan"),
                     "residual": float("nan"), "count": 0, "scale_ref": float("nan"),
-                    "valid_ratio": float(roi.mean()), "conflict_ratio": float("nan"),
+                    "valid_ratio": float(roi.mean()),
                     "rgb_rmse": float("nan"),
                 })
                 continue
 
-            xv = x[roi].astype(np.float64)
-            yv = y[roi].astype(np.float64)
+            xv = x.astype(np.float64)
+            yv = y.astype(np.float64)
 
             scale_ref = float(np.median(yv))
 
-            mx = float(xv.mean())
-            my = float(yv.mean())
-            dx = xv - mx
-            dy = yv - my
-            cov = float((dx * dy).mean())
-
-            alpha = 1.0
-            beta = 0.0 
-            # beta = float(np.median(yv - xv))
-
-            y_hat = alpha * xv + beta
-            r = np.abs(yv - y_hat)
-
-            sx = float(np.sqrt((dx * dx).mean()))
-            sy = float(np.sqrt((dy * dy).mean()))
-            corr = cov / (sx * sy + 1e-12)
-
-            conflict_ratio = float("nan")
-            if spread_bhw is not None:
-                spread_roi = spread_bhw[b][roi].astype(np.float64)
-                rel_spread = spread_roi / (scale_ref + 1e-8)
-                conflict_ratio = float(np.mean(rel_spread > conflict_tol))
-
+            r = np.abs(yv - xv)
             rgb_rmse = float("nan")
             if rgb_src_bhw3 is not None and rgb_ren_bhw3 is not None:
-                src_pix = rgb_src_bhw3[b][roi].astype(np.float64)
-                ren_pix = rgb_ren_bhw3[b][roi].astype(np.float64)
+                src_pix = rgb_src_bhw3[b].astype(np.float64)
+                ren_pix = rgb_ren_bhw3[b].astype(np.float64)
                 if src_pix.size > 0:
                     rgb_rmse = float(np.sqrt(np.mean(np.square(src_pix - ren_pix))))
                 else:
                     rgb_rmse = 0.0
 
             out.append({
-                "alpha": float(alpha),
-                "beta": float(beta),
-                "corr": float(corr),
                 # "residual": float(r.mean()),
                 # "residual": float(np.sqrt(np.mean(r * r))), # residual_rms
                 # "residual": float(np.median(r)), # residual_median
@@ -392,7 +356,6 @@ def geometric_calculation(
                 "count": cnt,
                 "scale_ref": scale_ref,
                 "valid_ratio": float(roi.mean()),
-                "conflict_ratio": conflict_ratio,
                 "rgb_rmse": rgb_rmse,
             })
 
@@ -401,26 +364,20 @@ def geometric_calculation(
     result: dict = {}
     for s in range(S):
         m_slice = vm[:, s] if vm is not None else None
-        spread_slice = ds[:, s] if ds is not None else None
         rgb_src_s = rgb_src[:, s] if rgb_src is not None else None
         rgb_ren_s = rgb_ren[:, s] if rgb_ren is not None else None
         shape_s = _shape_stats_1view(
-            dj[:, s], di[:, s], m_slice, spread_slice, rgb_src_s, rgb_ren_s
+            dj[:, s], di[:, s], m_slice, rgb_src_s, rgb_ren_s
         )
         result[f"view{s}_shape"] = shape_s
 
     if rgb_src is not None and rgb_ren is not None:
-        # Global RGB RMSE over the same ROI used per view (valid depth + optional mask).
         diffs = []
         for s in range(S):
             for b in range(B):
                 y = dj[b, s]
                 x = di[b, s]
                 roi = np.isfinite(y) & np.isfinite(x) & (y > eps) & (x > eps)
-                if vm is not None:
-                    roi = roi & vm[b, s]
-                if not np.any(roi):
-                    continue
                 diffs.append(rgb_src[b, s][roi] - rgb_ren[b, s][roi])
         if diffs:
             all_diff = np.concatenate(diffs, axis=0).astype(np.float64)
@@ -440,38 +397,28 @@ def geometric_consistency_metric(
     ``exp(-rgb_rmse)`` (photometric consistency; lower RMSE → higher score).
     """
     def _view_score(vshape: dict) -> float:
-        corr = float(vshape.get("corr", float("nan")))
         resid = float(vshape.get("residual", float("nan")))
         scale_ref = float(vshape.get("scale_ref", float("nan")))
-        if not (math.isfinite(corr) and math.isfinite(resid)
-                and math.isfinite(scale_ref) and scale_ref > 1e-6):
+        if not (math.isfinite(resid) and math.isfinite(scale_ref) and scale_ref > 1e-6):
             return 0.0
 
-        # s_corr = max(0.0, corr)
         rel_resid = resid / scale_ref
-        s_resid = math.exp(-rel_resid)
-
-        # conflict_ratio = vshape.get("conflict_ratio", float("nan"))
-        # if math.isfinite(conflict_ratio):
-        #     s_conflict = math.exp(-conflict_ratio)
-        # else:
-        #     s_conflict = 1.0
+        s_resid = max(0.0, 1 - rel_resid/0.5)
 
         rgb_rmse = vshape.get("rgb_rmse", float("nan"))
         if math.isfinite(rgb_rmse):
-            s_rgb = math.exp(-float(rgb_rmse))
+            s_rgb = max(0.0, 1 - rgb_rmse)
         else:
             s_rgb = 1.0
 
-        # score = s_corr * s_resid * s_conflict * s_rgb
-        score = s_resid * s_rgb
+        score = (s_resid + s_rgb) / 2.0
         return score
 
     v0 = res.get("view0_shape", {})
     v1 = res.get("view1_shape", {})
     s0 = _view_score(v0)
     s1 = _view_score(v1)
-    base = 2 * s0 * s1 / (s0 + s1) if (s0 + s1) > 0 else 0.0
+    base = s0 * s1 
 
     return float(max(0.0, min(1.0, base)))
 
