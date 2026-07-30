@@ -25,8 +25,8 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from metrics.flow_backend import SeaRaftFlow
-from metrics.physics_metrics import flow_vs_gt_metrics, aggregate_view_metrics
+from metrics.dynamics.flow_backend import SeaRaftFlow
+from metrics.dynamics.physics_metrics import flow_vs_gt_metrics, aggregate_view_metrics
 
 CTRLWORLD_SUBPATH = "single_arm/output/multiview/ctrlworld"
 

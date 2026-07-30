@@ -31,6 +31,7 @@ DATASET_DIR="${DATASET_DIR:-${ROOT}/models/Ctrl-World/dataset_example/${DATASET_
 META_INFO="${ROOT}/models/Ctrl-World/dataset_meta_info"
 DOWN_SAMPLE="${DOWN_SAMPLE:-6}"
 SPLIT="${SPLIT:-all}"
+CONFIG="${CONFIG:-bimanual}"
 
 # FasterCache parameters. NOTE (measured on bimanual multiview Ctrl-World):
 # this model's custom SVD UNet exposes no `attn_processors`, so FasterCache's
@@ -51,10 +52,12 @@ EXTRA=""
 if [ -n "${NUM_EPISODES:-}" ]; then EXTRA="${EXTRA} --num_episodes ${NUM_EPISODES}"; fi
 if [ -n "${NUM_INFERENCE_STEPS:-}" ]; then EXTRA="${EXTRA} --num_inference_steps ${NUM_INFERENCE_STEPS}"; fi
 if [ -n "${GUIDANCE:-}" ]; then EXTRA="${EXTRA} --guidance_scale ${GUIDANCE}"; fi
+if [ -n "${NUM_SHARDS:-}" ]; then EXTRA="${EXTRA} --num_shards ${NUM_SHARDS} --shard_id ${SHARD_ID:-0}"; fi
 
 echo "=========================================================="
 echo "Ctrl-World + FasterCache | Bimanual Multiview Inference"
 echo "  ckpt=${CKPT}"
+echo "  config=${CONFIG}"
 echo "  dataset=${DATASET_DIR}  split=${SPLIT}  down_sample=${DOWN_SAMPLE}"
 echo "  Params: start_step=${FASTERCACHE_START_STEP}, model_interval=${FASTERCACHE_MODEL_INTERVAL}, block_interval=${FASTERCACHE_BLOCK_INTERVAL}"
 echo "  output=${OUTPUT_BASE}"
@@ -70,6 +73,7 @@ python scripts/infer_bimanual_multiview_ctrlworld.py \
     --save_dir "${OUTPUT_BASE}" \
     --input_save_dir "${INPUT_BASE}" \
     --infer_down_sample "${DOWN_SAMPLE}" \
+    --config "${CONFIG}" \
     --split "${SPLIT}" \
     --use_fastercache \
     --fastercache_start_step "${FASTERCACHE_START_STEP}" \

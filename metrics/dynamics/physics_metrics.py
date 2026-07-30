@@ -14,7 +14,7 @@ the predicted motion matches real motion:
 - ``motion_mag_ratio``    motion_mag_pred / motion_mag_gt. 1.0 ideal; <1 = frozen /
                           under-moving, >1 = exaggerated / hallucinated motion.
 
-The flow backend is SEA-RAFT (see ``metrics/flow_backend.py``).
+The flow backend is SEA-RAFT (see ``metrics/dynamics/flow_backend.py``).
 """
 
 from __future__ import annotations

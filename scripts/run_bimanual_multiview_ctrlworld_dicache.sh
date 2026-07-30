@@ -31,6 +31,7 @@ DATASET_DIR="${DATASET_DIR:-${ROOT}/models/Ctrl-World/dataset_example/${DATASET_
 META_INFO="${ROOT}/models/Ctrl-World/dataset_meta_info"
 DOWN_SAMPLE="${DOWN_SAMPLE:-6}"
 SPLIT="${SPLIT:-all}"
+CONFIG="${CONFIG:-bimanual}"
 
 # DiCache parameters. TUNED knee for bimanual multiview Ctrl-World:
 # thresh=0.04 / ret_ratio=0.4 -> 1.23x speedup at PSNR 21.01 (dense 22.07, -1.06).
@@ -49,10 +50,12 @@ EXTRA=""
 if [ -n "${NUM_EPISODES:-}" ]; then EXTRA="${EXTRA} --num_episodes ${NUM_EPISODES}"; fi
 if [ -n "${NUM_INFERENCE_STEPS:-}" ]; then EXTRA="${EXTRA} --num_inference_steps ${NUM_INFERENCE_STEPS}"; fi
 if [ -n "${GUIDANCE:-}" ]; then EXTRA="${EXTRA} --guidance_scale ${GUIDANCE}"; fi
+if [ -n "${NUM_SHARDS:-}" ]; then EXTRA="${EXTRA} --num_shards ${NUM_SHARDS} --shard_id ${SHARD_ID:-0}"; fi
 
 echo "=========================================================="
 echo "Ctrl-World + DiCache | Bimanual Multiview Inference"
 echo "  ckpt=${CKPT}"
+echo "  config=${CONFIG}"
 echo "  dataset=${DATASET_DIR}  split=${SPLIT}  down_sample=${DOWN_SAMPLE}"
 echo "  Params: thresh=${DICACHE_REL_L1_THRESH}, ret_ratio=${DICACHE_RET_RATIO}, probe_depth=${DICACHE_PROBE_DEPTH}"
 echo "  output=${OUTPUT_BASE}"
@@ -68,6 +71,7 @@ python scripts/infer_bimanual_multiview_ctrlworld.py \
     --save_dir "${OUTPUT_BASE}" \
     --input_save_dir "${INPUT_BASE}" \
     --infer_down_sample "${DOWN_SAMPLE}" \
+    --config "${CONFIG}" \
     --split "${SPLIT}" \
     --use_dicache \
     --dicache_rel_l1_thresh "${DICACHE_REL_L1_THRESH}" \

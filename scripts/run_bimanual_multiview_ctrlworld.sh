@@ -14,6 +14,7 @@
 #   DOWN_SAMPLE (must match training; default 1 = 30fps), CUDA_VISIBLE_DEVICES
 #   CONFIG (bimanual = 3-view strip [default] | bimanual_grid = 4-view 2x2 grid)
 #   OUTPUT_ROOT / INPUT_ROOT (override output/input trees, e.g. for a variant model)
+#   NUM_SHARDS / SHARD_ID (split episodes across parallel GPU processes)
 
 set -e
 
@@ -42,6 +43,7 @@ EXTRA=""
 if [ -n "${NUM_EPISODES:-}" ]; then EXTRA="${EXTRA} --num_episodes ${NUM_EPISODES}"; fi
 if [ -n "${NUM_INFERENCE_STEPS:-}" ]; then EXTRA="${EXTRA} --num_inference_steps ${NUM_INFERENCE_STEPS}"; fi
 if [ -n "${GUIDANCE:-}" ]; then EXTRA="${EXTRA} --guidance_scale ${GUIDANCE}"; fi
+if [ -n "${NUM_SHARDS:-}" ]; then EXTRA="${EXTRA} --num_shards ${NUM_SHARDS} --shard_id ${SHARD_ID:-0}"; fi
 
 echo "=========================================="
 echo "Ctrl-World Bimanual Multiview Inference"

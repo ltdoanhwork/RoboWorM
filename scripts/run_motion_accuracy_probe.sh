@@ -22,7 +22,7 @@ cd "$WS"
 export PYTHONPATH="$TP:$TP/sam2:$TP/SEA-RAFT/core:$TP/SEA-RAFT:${PYTHONPATH:-}"
 export HYDRA_FULL_ERROR=1
 
-"$PY" "$REPO/metrics/motion_accuracy_probe.py" \
+"$PY" "$REPO/metrics/dynamics/motion_accuracy_probe.py" \
   --gt "$GT" \
   --pred "$PRED" \
   --out "$OUT" \

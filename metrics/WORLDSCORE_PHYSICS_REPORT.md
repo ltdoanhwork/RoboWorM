@@ -330,3 +330,173 @@ on flow magnitude alone.
 Env note: motion_smoothness needs VFIMamba (`mamba_ssm`). To keep the dreamgen `.venv` on
 torch 2.6 (flashinfer/cosmos requirement) we vendored a **pure-PyTorch `mamba_ssm` shim**
 (`selective_scan_ref`) instead of the CUDA kernel (which pulls torch 2.9 / triton 3.5).
+
+---
+
+## 9. Quality & Controllability aspects measured (subjective_quality, content_alignment, object_control)
+
+Ran the three non-dynamics aspects on the same paired sample
+(`close_cardboard_box · episode_000026`, GT vs DreamGen vs DreamDojo) with
+`metrics/quality/quality_control_probe.py` / `scripts/run_quality_control_probe.sh`, stride 10.
+Implementations mirror WorldScore's own class mapping in `helpers/evaluator.py`:
+
+| aspect | metric | model actually used by WorldScore | raw range |
+|---|---|---|---|
+| subjective_quality | `clip_iqa+` | **pyiqa** `clipiqa+` | [0,1] ↑ |
+| subjective_quality | `clip_aesthetic` | **pyiqa** `laion_aes` | [0,10] ↑ |
+| content_alignment | `clip_score` | **torchmetrics** `CLIPScore(clip-vit-base-patch16)` | [0,100] ↑ |
+| object_control | `object_detection` | GroundingDINO SwinT-OGC (box/text thr 0.4) + spaCy phrase match | [0,1] ↑ |
+
+### 9.0 "Everything says CLIP" — but these are four different models
+
+Three of the four metrics are prefixed `clip_`, which invites the assumption that they all
+belong to `subjective_quality`. They do not: **`clip_` names the backbone (OpenAI CLIP), not
+the aspect.** What decides the aspect is *what the image is compared against*:
+
+| metric | aspect | CLIP backbone | text side | raw range |
+|---|---|---|---|---|
+| `clip_iqa+` | subjective_quality | **RN50** | **learned** prompt vectors (CoOp-style, init from `"Good photo.."` / `"Bad photo.."`) — task-agnostic | [0,1] |
+| `clip_aesthetic` (`laion_aes`) | subjective_quality | **ViT-L/14** | **none** — 5-layer MLP regression head on the image embedding | ~[1,10] |
+| `clip_score` | content_alignment | **ViT-B/16** | **your task prompt**, `100·max(cos,0)` | [0,100] |
+| `object_detection` | object_control | *not CLIP* — GroundingDINO SwinT + BERT | object phrases parsed from the prompt | [0,1] |
+
+- **`clip_iqa+` / `clip_aesthetic` never see your prompt** → they can only answer "is this
+  image sharp / pretty", so they measure *perceptual quality* → `subjective_quality`.
+  WorldScore averages the two after normalizing each.
+- **`clip_score` needs the task prompt** → it answers "does this frame depict what was
+  asked" → `content_alignment`. That prompt-dependence is exactly why it saturates here: the
+  prompt describes the *scene*, and all three clips are a robot closing a box.
+- Note `clip_iqa+` uses **learned** prompts, unlike plain `clipiqa` (unused here), which uses
+  a fixed handcrafted antonym list (`'Good image'`/`'bad image'`, `'Sharp image'`/`'blurry
+  image'`, …). Either way the text is fixed at training time and independent of our task.
+
+⚠️ **Gotcha: `worldscore/benchmark/metrics/__init__.py` exports *two* CLIPScore classes.**
+The pyiqa one is aliased to `IQACLIPScoreMetric` and is **NOT** used; the evaluator uses the
+**torchmetrics** one. They are not interchangeable — they differ in three ways at once:
+
+| | pyiqa `clipscore` (unused) | torchmetrics `CLIPScore` (**used**) |
+|---|---|---|
+| backbone | ViT-B/32 | **ViT-B/16** |
+| scale | `2.5·max(cos,0)` → [0, 2.5] | `100·max(cos,0)` → [0, 100] |
+| text preprocessing | prepends `"A photo depicts"` | none |
+
+Swapping them yields ~0.76 instead of ~31, silently breaking the `avg=26.67` normalization
+(everything floors at 0). Always cross-check `get_aspect_evaluator()` for which class a
+metric name actually resolves to — the `__init__.py` alias is easy to misread.
+
+### 9.0b How each one actually works (mechanism, verified from source)
+
+Common preprocessing for all three CLIP metrics (WorldScore `IQAPytorchMetric._process_image`):
+decode frame → PIL RGB → **`Resize((512,512))`** → `ToTensor()` → per-frame forward → the
+aspect score is the **mean over frames**. (Our probe scores frames one at a time; WorldScore
+stacks them, which OOMs on long clips — hence `--stride`.)
+
+**`clip_iqa+` — an antonym-pair *classifier*, not a similarity score.**
+1. Normalize the image with CLIP's mean/std, encode with **CLIP RN50**.
+2. `PromptLearner` produces two learned text embeddings, a "good" and a "bad" pole (context
+   vectors optimized on IQA data; initialized from `"Good photo.."` / `"Bad photo.."`).
+3. Compute `logits_per_image` for the pair, then **`softmax` over the 2 poles** and take the
+   probability of the *good* pole: `probs[..., 0].mean(dim=1)`.
+
+   → Output is a **probability in [0,1]** ("how likely a human calls this a good photo"),
+   which is why the range is exactly [0,1] and why it is *not* comparable to a raw cosine.
+
+**`clip_aesthetic` (`laion_aes`) — a regression head, no text at all.**
+1. CLIP-preprocess, encode with **CLIP ViT-L/14** → image embedding.
+2. **L2-normalize** the embedding (`F.normalize(p=2, dim=-1)`) — this matters; the MLP was
+   trained on unit-norm embeddings.
+3. Feed to a frozen **5-layer MLP** (1024→128→64→16→1, weights
+   `sac+logos+ava1-l14-linearMSE.pth`) trained to regress human aesthetic ratings (AVA /
+   SAC / LAION-logos).
+
+   → Output is a scalar ≈[1,10]. Pure "prettiness" — it has no notion of the task, the
+   prompt, or even whether the image is a robot.
+
+**`clip_score` — the only one that reads your prompt.**
+1. Encode the frame with **CLIP ViT-B/16** → `E_I`; encode the task prompt → `E_C`.
+2. `score = max(100 · cos(E_I, E_C), 0)`, i.e. cosine similarity rescaled to [0,100].
+3. WorldScore feeds **uint8** images here (`(imgs*255).to(torch.uint8)`) because torchmetrics
+   expects uint8 input — a different convention from the pyiqa metrics above, which take
+   float tensors. Getting this wrong shifts the score.
+
+   → Because it's a single global cosine, it answers "does this frame *look like* the caption"
+   at scene level. It cannot see ordering, progress, or whether the box actually closed.
+
+**`object_detection` — a detection *rate*, with a two-pass phrase match.**
+1. Build the caption by joining the expected objects: `"robot arm, cardboard box"`.
+2. GroundingDINO (SwinT-OGC) forward → per-query `pred_logits` / `pred_boxes`; keep queries
+   with `max(logit) > box_threshold (0.4)`; decode each kept query's phrase from the token
+   positions where `logit > text_threshold (0.4)`.
+3. Match predicted phrases against the expected list in **two passes**:
+   *pass 1* exact string match; *pass 2* fuzzy — sub-word (`##` wordpiece fragments) or
+   **spaCy noun overlap** (`en_core_web_sm`), each expected phrase consumable only once.
+4. `rate = min(count / len(expected), 1.0)`; aspect score = mean rate over frames.
+
+   → This is the only metric here that is **spatially grounded** (it must localize a box), so
+   it degrades when an object dissolves — which is exactly why it discriminates on our data
+   while the two global CLIP scores do not.
+
+Consequence for interpretation: three of the four are **global, whole-frame** judgments
+(one probability, one regression, one cosine), so they are blind to *where* things are and
+*what happened over time*. Only `object_detection` is localized. That asymmetry — not model
+quality — explains the results in §9.1.
+
+### 9.1 Results
+
+| aspect / metric | GT (real) | DreamGen | DreamDojo |
+|---|---|---|---|
+| `clip_iqa+` | 0.4671 | 0.4081 | **0.4852** (> GT) |
+| `clip_aesthetic` | 3.801 | 3.900 | 3.895 |
+| **subjective_quality** normalized | 0.0696 | **0.0000** | **0.0972** |
+| `clip_score` | 31.07 | **31.36** | 30.91 |
+| **content_alignment** normalized | 1.0000 | 1.0000 | 1.0000 |
+| `object_detection` rate | **0.8750** | 0.5426 | 0.8000 |
+| **object_control** normalized | 0.8750 | 0.5426 | 0.8000 |
+
+### 9.2 ⚠️ Two more metric weaknesses found (TO FIX)
+
+**(a) `subjective_quality` normalization constants are calibrated on the wrong domain.**
+WorldScore's constants (`clip_iqa+ avg=0.5842`, `clip_aesthetic avg=5.5952`) come from
+generated *scenes/landscapes*. Our robot-tabletop frames sit far below that
+(`clip_aesthetic ≈ 3.8–3.9` vs avg 5.60, i.e. ≈ −6.6σ), so **every** model — including
+**real GT video** — gets crushed to ≈0 (0.00–0.10) and the aspect loses all discriminative
+power. Note the raw signal is still fine and even *inverted vs expectation*: DreamDojo's
+`clip_iqa+` (0.4852) is **higher than real GT** (0.4671). Fix: recalibrate `avg`/`std` from
+our own GT distribution (per embodiment), or drop absolute normalization and report
+`|pred − GT|` on the raw metric.
+
+**(b) `content_alignment` is fully saturated — useless as a ranker here.**
+All three clips normalize to exactly **1.0000** because raw `clip_score` differs by only
+0.45 (30.91–31.36) yet all exceed `z_max`. Cause: the prompt
+(`"A bimanual robot performing the task: Close cardboard box."`) matches *every* frame of
+*every* clip — same scene, same robot, so CLIP can't separate a good rollout from a bad one.
+It only catches catastrophic content failure. Fix: treat it as a **guard/sanity check**, not
+a score; or make it discriminative with per-frame *phase* prompts (e.g. "box open" vs "box
+closed") so alignment must track task progress over time.
+
+**(c) `object_control` is the one that works — and it agrees with the eye.**
+GT 0.875 > DreamDojo 0.800 > DreamGen 0.543 is exactly the intuitive ordering: real video is
+always detectable, DreamDojo keeps object structure crisp (near-GT), DreamGen degrades the
+box/arm enough that GroundingDINO misses it in ~46% of frames. This makes it a good proxy for
+"does the object survive the rollout" — recommend promoting it to a **Tier-1 physics-adjacent
+metric** (object persistence), since a physics-correct video must keep objects identifiable.
+
+### 9.3 Cumulative verdict on DreamGen vs DreamDojo
+
+This is now the **third independent aspect** where DreamDojo ≥ DreamGen (after
+matched-grid `motion_accuracy` and `motion_smoothness`); DreamGen only leads on raw
+`motion_magnitude` (speed). Consistent with the human observation that **DreamDojo looks
+more like dense/GT**, and further evidence that a speed-only metric mis-ranks models.
+
+### 9.4 Env note (deps installed safely)
+
+`pyiqa`, `openai-clip`, `spacy`+`en_core_web_sm`, `torchmetrics` were added to
+`models/dreamgen/.venv`. **`pyiqa` must be installed with `--no-deps`**: its full dependency
+set would upgrade `numpy 1.26.4 → 2.4.6` and `transformers 4.51.3 → 5.14.1`, breaking
+cosmos-predict2/DreamGen. Verified after install: torch 2.6.0+cu124, numpy 1.26.4,
+transformers 4.51.3, flashinfer all intact.
+
+```bash
+CUDA_VISIBLE_DEVICES=0 STRIDE=10 bash scripts/run_quality_control_probe.sh
+# -> metrics/motion_probe_out/close_cardboard_box__ep000026_quality/quality_control_summary.json
+```

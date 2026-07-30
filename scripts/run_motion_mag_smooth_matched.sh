@@ -25,7 +25,7 @@ cd "$WS"
 export PYTHONPATH="$TP:$TP/SEA-RAFT/core:$TP/SEA-RAFT:$TP/VFIMamba:${PYTHONPATH:-}"
 
 run() {  # $1=gt_matched $2=pred $3=subout $4=label
-  "$PY" "$REPO/metrics/motion_mag_smooth_probe.py" \
+  "$PY" "$REPO/metrics/dynamics/motion_mag_smooth_probe.py" \
     --gt "$1" --pred "$2" --out "$3" --label "$4" \
     --raft_cfg "worldscore/benchmark/metrics/third_party/SEA-RAFT/config/eval/spring-M.json" \
     --raft_ckpt "$CKPT/Tartan-C-T-TSKH-spring540x960-M.pth" \

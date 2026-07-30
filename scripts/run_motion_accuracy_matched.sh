@@ -35,7 +35,7 @@ export PYTHONPATH="$TP:$TP/sam2:$TP/SEA-RAFT/core:$TP/SEA-RAFT:${PYTHONPATH:-}"
 export HYDRA_FULL_ERROR=1
 
 run_pair() {  # $1=gt_matched  $2=pred  $3=subout
-  "$PY" "$REPO/metrics/motion_accuracy_gdino.py" \
+  "$PY" "$REPO/metrics/dynamics/motion_accuracy_gdino.py" \
     --gt "$1" --pred "$2" --out "$3" \
     --sam2_cfg "configs/sam2.1/sam2.1_hiera_b+.yaml" \
     --sam2_ckpt "$CKPT/sam2.1_hiera_base_plus.pt" \

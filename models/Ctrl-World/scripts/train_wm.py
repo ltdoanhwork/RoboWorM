@@ -270,7 +270,7 @@ if __name__ == "__main__":
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument('--config', type=str, default='droid',
-                        choices=['droid', 'bimanual', 'bimanual_grid', 'humanoid'],
+                        choices=['droid', 'bimanual', 'bimanual_grid', 'humanoid', 'humanoid_grid'],
                         help='Which config/dataset preset to use.')
     parser.add_argument('--svd_model_path', type=str, default=None)
     parser.add_argument('--clip_model_path', type=str, default=None)
@@ -305,6 +305,13 @@ if __name__ == "__main__":
         from config_humanoid import wm_args_humanoid
         args = wm_args_humanoid()
         # reuse the dimension-agnostic bimanual dataset class (reads observation.state.qpos)
+        args.dataset_module = 'dataset.dataset_bimanual_multiview'
+        args.dataset_cfgs = args.dataset_names
+        args.load_strict = not args_new.no_load_strict
+    elif args_new.config == 'humanoid_grid':
+        from config_humanoid_grid import wm_args_humanoid_grid
+        args = wm_args_humanoid_grid()
+        # same dimension-agnostic dataset class; grid layout via num_views/grid_* fields
         args.dataset_module = 'dataset.dataset_bimanual_multiview'
         args.dataset_cfgs = args.dataset_names
         args.load_strict = not args_new.no_load_strict

@@ -363,11 +363,15 @@ def run_episode(agent, episode_id, save_dir, input_save_dir=None):
         with open(ep_input_dir / "metadata.json", "w") as f:
             json.dump(input_meta, f, indent=2)
 
-    if getattr(agent, "num_views", 3) == 4:
-        # 2x2 grid: row-major [TL, TR, BL, BR]
-        view_names = ["cam_high", "cam_low", "cam_left_wrist", "cam_right_wrist"]
-    else:
-        view_names = ["cam_high", "cam_left_wrist", "cam_right_wrist"]
+    # Prefer the real camera keys recorded at prep time (humanoid names vary per
+    # task); fall back to the bimanual defaults for the 3/4-view layouts.
+    view_names = anno.get("view_keys")
+    if not view_names or len(view_names) != num_views:
+        if getattr(agent, "num_views", 3) == 4:
+            # 2x2 grid: row-major [TL, TR, BL, BR]
+            view_names = ["cam_high", "cam_low", "cam_left_wrist", "cam_right_wrist"]
+        else:
+            view_names = ["cam_high", "cam_left_wrist", "cam_right_wrist"]
     per_view_metrics = {}
     for v_i in range(num_views):
         per_view_metrics[view_names[v_i]] = compute_metrics(concat_pred[v_i], concat_gt[v_i])
@@ -543,7 +547,12 @@ def main():
     parser.add_argument("--infer_down_sample", type=int, default=1,
                         help="Must match the down_sample used at prep/train (for output fps).")
     parser.add_argument("--split", choices=["val", "train", "all"], default="all")
-    parser.add_argument("--config", choices=["bimanual", "bimanual_grid", "humanoid"], default="bimanual",
+    parser.add_argument("--num_shards", type=int, default=1,
+                        help="Split the episode list into N shards for parallel multi-GPU runs.")
+    parser.add_argument("--shard_id", type=int, default=0,
+                        help="Which shard (0-based) this process handles. Requires --num_shards.")
+    parser.add_argument("--config", choices=["bimanual", "bimanual_grid", "humanoid", "humanoid_grid"],
+                        default="bimanual",
                         help="Which model config (sets action_dim, view grid, etc.).")
 
     # Cache backend args (mutually exclusive)
@@ -563,6 +572,8 @@ def main():
     sys.path.insert(0, ctrl_world_dir)
     if args.config == "humanoid":
         from config_humanoid import wm_args_humanoid as _wm_args
+    elif args.config == "humanoid_grid":
+        from config_humanoid_grid import wm_args_humanoid_grid as _wm_args
     elif args.config == "bimanual_grid":
         from config_bimanual_grid import wm_args_bimanual_grid as _wm_args
     else:
@@ -598,6 +609,11 @@ def main():
     episode_ids = sorted(set(episode_ids))
     if args.num_episodes:
         episode_ids = episode_ids[:args.num_episodes]
+    if args.num_shards > 1:
+        # Interleaved sharding keeps each shard's episode-length mix balanced.
+        total_eps = len(episode_ids)
+        episode_ids = episode_ids[args.shard_id::args.num_shards]
+        print(f"[shard {args.shard_id}/{args.num_shards}] {len(episode_ids)}/{total_eps} episodes")
 
     print(f"Dataset dir: {args.dataset_dir}")
     print(f"Output dir: {args.save_dir}")
@@ -632,7 +648,11 @@ def main():
             if _times:
                 summary["mean_wall_time_s"] = sum(_times) / len(_times)
             out_dir.mkdir(parents=True, exist_ok=True)
-            with open(out_dir / "all_summary.json", "w") as f:
+            # Sharded runs each write their own file so they don't clobber each
+            # other; merge_ctrlworld_shard_summaries.py aggregates them after.
+            fname = ("all_summary.json" if args.num_shards <= 1
+                     else f"all_summary.shard{args.shard_id}of{args.num_shards}.json")
+            with open(out_dir / fname, "w") as f:
                 json.dump(summary, f, indent=2)
             print(f"=== Summary [{label}] ({len(metrics_list)} episodes) === "
                   f"PSNR: {summary['mean_psnr']:.3f}  "
