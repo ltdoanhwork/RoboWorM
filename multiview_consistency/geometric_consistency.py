@@ -37,7 +37,6 @@ def render_depth_from_point_map(
     Returns:
       depth_rendered: (B,S,H,W) or (S,H,W) float32
       fov_overlap_mask: same layout, bool
-      depth_spread: same layout, float32
       rgb_rendered (optional): (B,S,H,W,3) or (S,H,W,3) float32 in [0,1]
         only when ``images`` is provided.
     """
@@ -96,7 +95,6 @@ def render_depth_from_point_map(
 
     out = np.zeros((B, S_cam, H, W), dtype=np.float32)
     fov_overlap_geom = np.zeros((B, S_cam, H, W), dtype=bool)
-    depth_spread = np.zeros((B, S_cam, H, W), dtype=np.float32)
     rgb_out = None
     if rgb_maps is not None:
         rgb_out = np.zeros((B, S_cam, H, W, 3), dtype=np.float32)
@@ -136,21 +134,12 @@ def render_depth_from_point_map(
                         depth_min_buf = np.full((H, W), np.inf, dtype=np.float32)
                         np.minimum.at(depth_min_buf, (vi_b, ui_b), z_b)
 
-                        depth_max_buf = np.full((H, W), -np.inf, dtype=np.float32)
-                        np.maximum.at(depth_max_buf, (vi_b, ui_b), z_b)
-
                         hit_count = np.zeros((H, W), dtype=np.int32)
                         np.add.at(hit_count, (vi_b, ui_b), 1)
 
                         hit = hit_count > 0
                         depth_min_buf[~hit] = 0.0
-                        depth_max_buf[~hit] = 0.0
                         out[b, s] = depth_min_buf
-
-                        multi_hit = hit_count >= 2
-                        spread = np.zeros((H, W), dtype=np.float32)
-                        spread[multi_hit] = depth_max_buf[multi_hit] - depth_min_buf[multi_hit]
-                        depth_spread[b, s] = spread
 
                         if C_b is not None and rgb_out is not None:
                             order = np.argsort(-z_b)
@@ -183,13 +172,13 @@ def render_depth_from_point_map(
                 fov_overlap_geom[b, s] = acc_geom.reshape(H, W)
 
     if not batched:
-        out, fov_overlap_geom, depth_spread = out[0], fov_overlap_geom[0], depth_spread[0]
+        out, fov_overlap_geom = out[0], fov_overlap_geom[0]
         if rgb_out is not None:
             rgb_out = rgb_out[0]
 
     if rgb_out is not None:
-        return out, fov_overlap_geom, depth_spread, rgb_out
-    return out, fov_overlap_geom, depth_spread
+        return out, fov_overlap_geom, rgb_out
+    return out, fov_overlap_geom
 
 def _to_rgb_bshw3(rgb: torch.Tensor | np.ndarray, *, name: str) -> np.ndarray:
     """Normalize RGB to (B,S,H,W,3) float in [0, 1]."""
@@ -410,7 +399,6 @@ def geometric_consistency_metric(
             s_rgb = max(0.0, 1 - rgb_rmse)
         else:
             s_rgb = 1.0
-
         score = (s_resid + s_rgb) / 2.0
         return score
 
@@ -426,8 +414,6 @@ if __name__ == "__main__":
     import os
     import sys
 
-    from vggt.utils.geometry import unproject_depth_map_to_point_map
-
     try:
         from .utils import save_depth_maps, save_rgb_maps
     except Exception:  # pragma: no cover
@@ -435,20 +421,19 @@ if __name__ == "__main__":
 
     _this_dir = os.path.dirname(os.path.abspath(__file__))
     _physics_root = os.path.abspath(os.path.join(_this_dir, ".."))
-    _wmb_root = os.path.abspath(os.path.join(_physics_root, ".."))
-    for _root in (_physics_root, os.path.join(_wmb_root, "vggt-omega")):
-        if os.path.isdir(os.path.join(_root, "vggt_omega")) and _root not in sys.path:
-            sys.path.insert(0, _root)
+    if _physics_root not in sys.path:
+        sys.path.insert(0, _physics_root)
 
     from vggt_omega.models import VGGTOmega
     from vggt_omega.utils.load_fn import load_and_preprocess_images
     from vggt_omega.utils.pose_enc import encoding_to_camera
+    from vggt.utils.geometry import unproject_depth_map_to_point_map
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     omega_image_resolution = 512
     omega_patch_size = 16
     omega_checkpoint = (
-        "/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/vggt_omega_checkpoint/vggt_omega_1b_512.pt"
+        "/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/WorldModelBenchmark/data/checkpoint/vggt_omega_1b_512.pt"
     )
 
     model = VGGTOmega(patch_size=omega_patch_size).to(device).eval()
@@ -457,23 +442,23 @@ if __name__ == "__main__":
 
     depth_output_dir = "output_depth"
 
-    ep = 255
-    frame1 = 5
-    frame2 = 5
+    ep = 397
+    frame1 = 0
+    frame2 = 0
 
-    # version = "real"
+    version = "real"
     # version = "good_2fps"
-    version = "bad_2fps"
+    # version = "bad_2fps"
 
     if version == "real":
         image_names = [
-            f"/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/data/real/episode_{ep:06d}/observation.images.exterior_1_left/frame_{frame1:04d}.png",
-            f"/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/data/real/episode_{ep:06d}/observation.images.exterior_2_left/frame_{frame2:04d}.png",
+            f"/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/WorldModelBenchmark/data/preprocessing/single_arm/real/makovian/episode_{ep:06d}/observation.images.exterior_1_left/frame_{frame1:04d}.png",
+            f"/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/WorldModelBenchmark/data/preprocessing/single_arm/real/makovian/episode_{ep:06d}/observation.images.exterior_2_left/frame_{frame2:04d}.png",
         ]
     else:
         image_names = [
-            f"/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/data/{version}/episode_{ep:06d}/view1/frame_{frame1:04d}.png",
-            f"/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/data/{version}/episode_{ep:06d}/view2/frame_{frame2:04d}.png",
+            f"/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/WorldModelBenchmark/data/multiview/thanhnv_multiview/{version}/episode_{ep:06d}/view1/frame_{frame1:04d}.png",
+            f"/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/WorldModelBenchmark/data/multiview/thanhnv_multiview/{version}/episode_{ep:06d}/view2/frame_{frame2:04d}.png",
         ]
 
     images = load_and_preprocess_images(
@@ -489,10 +474,6 @@ if __name__ == "__main__":
         depth_map = preds["depth"]
         depth_conf = preds["depth_conf"]
 
-        # save_depth_maps(depth_conf_single0, depth_output_dir, "depth_conf_single0")
-        # save_depth_maps(depth_conf_single1, depth_output_dir, "depth_conf_single1")
-        # save_depth_maps(depth_conf, depth_output_dir, "depth_conf")
-
         extrinsic, intrinsic = encoding_to_camera(
             preds["pose_enc"], preds["images"].shape[-2:]
         )
@@ -500,11 +481,8 @@ if __name__ == "__main__":
         point_map_by_unprojection = unproject_depth_map_to_point_map(
             depth_map.squeeze(0), extrinsic.squeeze(0), intrinsic.squeeze(0)
         )
-        # save_depth_maps(depth_map, depth_output_dir, "depth")
-        # save_depth_maps(depth_map_single0, depth_output_dir, "depth_single0")
-        # save_depth_maps(depth_map_single1, depth_output_dir, "depth_single1")
 
-        depth_rendered_np, rendered_valid_mask, depth_spread, rgb_rendered_np = render_depth_from_point_map(
+        depth_rendered_np, rendered_valid_mask, rgb_rendered_np = render_depth_from_point_map(
             point_map_by_unprojection=point_map_by_unprojection,
             depth_map=depth_map,
             extrinsic=extrinsic,
@@ -519,13 +497,10 @@ if __name__ == "__main__":
             depth_rendered = depth_rendered.unsqueeze(0)  # (1,S,H,W)
         depth_rendered = depth_rendered.unsqueeze(-1)  # (B,S,H,W,1)
 
-        # save_depth_maps(depth_rendered, depth_output_dir, "rendered")
-        # save_depth_maps(rendered_valid_mask.astype(float), depth_output_dir, "valid_mask")
         if rgb_rendered_np.ndim == 4:
             rgb_to_save = rgb_rendered_np[None]
         else:
             rgb_to_save = rgb_rendered_np
-        save_rgb_maps(rgb_to_save, depth_output_dir, "rgb_rendered")
 
     valid_for_vt = rendered_valid_mask
     if isinstance(valid_for_vt, np.ndarray) and valid_for_vt.ndim == 3:
@@ -534,8 +509,7 @@ if __name__ == "__main__":
     res = geometric_calculation(
         depth=depth_map,
         depth_rendered=depth_rendered,
-        # valid_mask=valid_for_vt,
-        depth_spread=depth_spread,
+        valid_mask=valid_for_vt,
         images=preds["images"],
         rgb_rendered=rgb_to_save,
     )

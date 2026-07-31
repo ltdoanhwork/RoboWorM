@@ -20,7 +20,6 @@ from multiview_consistency.video_metrics import (
     init_model_context,
 )
 
-
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="VGGT model service (loads model once, computes metrics per request).")
     p.add_argument("--host", default="127.0.0.1")

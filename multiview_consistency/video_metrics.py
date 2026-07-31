@@ -28,32 +28,24 @@ class ModelContext:
     omega_load_fn: object | None = None
     omega_encoding_to_camera: object | None = None
 
-
 def _load_vggt_omega_modules() -> tuple[object, object, object]:
     """
-    Import VGGT-Omega modules without requiring it to be installed as a package.
-
+    Import in-tree VGGT-Omega from this package root only
+    (``video_gen_physics_backup/vggt_omega``), never from repo-level ``vggt-omega/``.
     Returns:
       (VGGTOmega, load_and_preprocess_images_omega, encoding_to_camera)
     """
     import sys
-
     this_dir = os.path.dirname(os.path.abspath(__file__))
-    wmb_vggt_root = os.path.abspath(os.path.join(this_dir, ".."))
-    wmb_root = os.path.abspath(os.path.join(wmb_vggt_root, ".."))
-    # Prefer in-tree ``vggt_omega`` under video_gen_physics(_backup), then repo ``vggt-omega/``.
-    for omega_root in (wmb_vggt_root, os.path.join(wmb_root, "vggt-omega")):
-        if os.path.isdir(os.path.join(omega_root, "vggt_omega")) and omega_root not in sys.path:
-            sys.path.insert(0, omega_root)
-            break
+    package_root = os.path.abspath(os.path.join(this_dir, ".."))  # video_gen_physics_backup
 
+    if package_root not in sys.path:
+        sys.path.insert(0, package_root)
     from vggt_omega.models import VGGTOmega  # type: ignore
     from vggt_omega.utils.load_fn import load_and_preprocess_images as load_and_preprocess_images_omega  # type: ignore
     from vggt_omega.utils.pose_enc import encoding_to_camera  # type: ignore
-
     return VGGTOmega, load_and_preprocess_images_omega, encoding_to_camera
-
-
+    
 def default_device_dtype() -> tuple[str, torch.dtype]:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     if device == "cuda" and torch.cuda.get_device_capability()[0] >= 8:
@@ -340,7 +332,7 @@ def _process_geometric_frame(
     point_map = unproject_depth_map_to_point_map(
         depth_cpu.squeeze(0), extrinsic_cpu.squeeze(0), intrinsic_cpu.squeeze(0)
     )
-    depth_rendered_np, rendered_valid_mask, depth_spread, rgb_rendered_np = render_depth_from_point_map(
+    depth_rendered_np, rendered_valid_mask, rgb_rendered_np = render_depth_from_point_map(
         point_map_by_unprojection=point_map,
         depth_map=depth_cpu,
         extrinsic=extrinsic_cpu,
@@ -350,8 +342,6 @@ def _process_geometric_frame(
 
     if depth_rendered_np.ndim == 3:
         depth_rendered_np = depth_rendered_np[np.newaxis, ...]
-    if isinstance(depth_spread, np.ndarray) and depth_spread.ndim == 3:
-        depth_spread = depth_spread[np.newaxis, ...]
     if isinstance(rgb_rendered_np, np.ndarray) and rgb_rendered_np.ndim == 4:
         rgb_rendered_np = rgb_rendered_np[np.newaxis, ...]
 

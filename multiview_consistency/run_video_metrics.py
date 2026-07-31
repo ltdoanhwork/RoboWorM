@@ -181,6 +181,7 @@ def _run_batch(args: argparse.Namespace, views: list[str]) -> None:
                 )
                 time_end = time.time()
                 print(f"[run_video_metrics] {name} took {time_end - time_start} seconds", file=sys.stderr)
+                print(float(result["geometric_consistency"]), float(result["pose_stability"]))
                 rows.append(
                     {
                         "name": name,

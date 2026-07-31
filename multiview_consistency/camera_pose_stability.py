@@ -111,24 +111,47 @@ def compute_pose_stability_metric(
 
 @torch.no_grad()
 def main() -> None:
-    from vggt.utils.pose_enc import pose_encoding_to_extri_intri
-    from vggt.models.vggt import VGGT
+    import os
+    import sys
     from vggt.utils.load_fn import load_and_preprocess_images
 
-    ep = 1
-    episode_dir = f"/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/data/multiview/thanhnv_multiview/episode_{ep:06d}_generated"
-    # episode_dir = "/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/data/multiview/thanhnv_multiview/episode_000255"
-    views = ("view1", "view2")
-    max_frames = None
-    stride = 1
-    out_csv = None
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    _this_dir = os.path.dirname(os.path.abspath(__file__))
+    _physics_root = os.path.abspath(os.path.join(_this_dir, ".."))
+    if _physics_root not in sys.path:
+        sys.path.insert(0, _physics_root)
+
+    from vggt_omega.models import VGGTOmega
+    from vggt_omega.utils.load_fn import load_and_preprocess_images
+    from vggt_omega.utils.pose_enc import encoding_to_camera
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    dtype = torch.bfloat16 if (torch.cuda.is_available() and torch.cuda.get_device_capability()[0] >= 8) else torch.float16
+    omega_patch_size = 16
+    omega_image_resolution = 512
+    omega_checkpoint = (
+        "/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/WorldModelBenchmark/data/checkpoint/vggt_omega_1b_512.pt"
+    )
 
-    model = VGGT.from_pretrained("facebook/VGGT-1B").to(device)
-    model.eval()
+    model = VGGTOmega(patch_size=omega_patch_size).to(device).eval()
+    state = torch.load(omega_checkpoint, map_location="cpu")
+    model.load_state_dict(state)
 
+    ep = 397
+
+    version = "real"
+    # version = "good_2fps"
+    # version = "bad_2fps"
+
+    if version == "real":
+        episode_dir = f"/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/WorldModelBenchmark/data/preprocessing/single_arm/real/makovian/episode_{ep:06d}"
+        views = ("observation.images.exterior_1_left", "observation.images.exterior_2_left")
+    else:
+        episode_dir  = f"/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/WorldModelBenchmark/data/preprocessing/single_arm/dreamgen/makovian/{version}/episode_{ep:06d}"
+        views = ("view1", "view2")
+
+    max_frames = None
+    stride = 1
     frame_ids = intersect_frames(list(views), episode_dir)
     if not frame_ids:
         raise ValueError(f"No common frames found in {episode_dir} for views={views}")
@@ -142,13 +165,17 @@ def main() -> None:
     intrinsics_all: list[torch.Tensor] = []   # each: (1,S,3,3) on CPU
 
     for fi in frame_ids:
-        paths = [os.path.join(episode_dir, v, f"frame_{fi:04d}.png") for v in views]
-        images = load_and_preprocess_images(paths).to(device)[None]
+        image_names = [os.path.join(episode_dir, v, f"frame_{fi:04d}.png") for v in views]
+        images = load_and_preprocess_images(
+            image_names,
+            image_resolution=omega_image_resolution,
+            patch_size=omega_patch_size,
+        ).to(device)
 
-        with torch.cuda.amp.autocast(dtype=dtype):
-            aggregated_tokens_list, _ = model.aggregator(images)
-        pose_enc = model.camera_head(aggregated_tokens_list)[-1]
-        extrinsic, intrinsic = pose_encoding_to_extri_intri(pose_enc, images.shape[-2:])
+        preds = model(images)
+        extrinsic, intrinsic = encoding_to_camera(
+            preds["pose_enc"], preds["images"].shape[-2:]
+        )
         print("fi: ", fi)
         print("extrinsic: ", extrinsic)
         print("intrinsic: ", intrinsic)
@@ -162,17 +189,6 @@ def main() -> None:
         extrinsics_all,
         intrinsics_all,
     )
-
-    for r in rows:
-        r["pose_stability"] = float(pose_stability)
-
-    if out_csv is not None:
-        out_path = Path(out_csv)
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        with out_path.open("w", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=["frame", "pose_stability"])
-            w.writeheader()
-            w.writerows(rows)
 
     print(f"Processed {len(rows)} frames from {episode_dir}")
     print(f"Camera pose consistency (extrinsic + intrinsic): {pose_stability:.6f}")
