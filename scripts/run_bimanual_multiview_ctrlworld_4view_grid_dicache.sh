@@ -30,6 +30,11 @@ ROOT="/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_ge
 cd "${ROOT}"
 
 DATASET_NAME="${DATASET_NAME:-bimanual_multiview_4view_grid}"
+# Pin the dataset dir to the 4-view tree. The base script honours DATASET_DIR
+# over DATASET_NAME, so a stale DATASET_DIR inherited from the caller's env
+# (e.g. a deleted scratch sweep dir) would silently process 0 episodes.
+DATASET_DIR="${DATASET_DIR:-${ROOT}/models/Ctrl-World/dataset_example/${DATASET_NAME}}"
+export DATASET_DIR
 CKPT="${CKPT:-${ROOT}/exp_logs/ctrlworld_logs/bimanual_multiview_4view_grid/checkpoint-110000.pt}"
 DOWN_SAMPLE="${DOWN_SAMPLE:-6}"
 SPLIT="${SPLIT:-all}"
@@ -38,12 +43,22 @@ INPUT_ROOT="${INPUT_ROOT:-${ROOT}/sampling_dataset/dicache/bimanual/input/multiv
 
 # DiCache parameters -- TUNED on the 4-VIEW GRID model (see
 # .cursor/rules/ctrlworld-bimanual-multiview-4view-grid-caching-insights.mdc).
-DICACHE_REL_L1_THRESH="${DICACHE_REL_L1_THRESH:-0.04}"
-DICACHE_RET_RATIO="${DICACHE_RET_RATIO:-0.4}"
-DICACHE_PROBE_DEPTH="${DICACHE_PROBE_DEPTH:-3}"
+# thresh=0.03 / ret_ratio=0.0 / probe_depth=1 -> 1.72x at PSNR 21.58
+# (dense 22.12, -0.55), visually identical to dense on all 4 views.
+# Same levers as WorldCache (ret_ratio + probe_depth do the work). DiCache
+# needs the LOWER threshold 0.03: at 0.04 quality drops faster than WorldCache.
+DICACHE_REL_L1_THRESH="${DICACHE_REL_L1_THRESH:-0.03}"
+DICACHE_RET_RATIO="${DICACHE_RET_RATIO:-0.0}"
+DICACHE_PROBE_DEPTH="${DICACHE_PROBE_DEPTH:-1}"
 
 if [ ! -f "${CKPT}" ]; then
   echo "ERROR: checkpoint not found: ${CKPT}" >&2
+  exit 1
+fi
+
+if [ ! -d "${DATASET_DIR}/annotation" ]; then
+  echo "ERROR: dataset annotation dir not found: ${DATASET_DIR}/annotation" >&2
+  echo "       (unset a stale DATASET_DIR in your environment)" >&2
   exit 1
 fi
 

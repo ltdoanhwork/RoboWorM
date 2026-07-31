@@ -30,22 +30,36 @@ ROOT="/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_ge
 cd "${ROOT}"
 
 DATASET_NAME="${DATASET_NAME:-bimanual_multiview_4view_grid}"
+# Pin the dataset dir to the 4-view tree. The base script honours DATASET_DIR
+# over DATASET_NAME, so a stale DATASET_DIR inherited from the caller's env
+# (e.g. a deleted scratch sweep dir) would silently process 0 episodes.
+DATASET_DIR="${DATASET_DIR:-${ROOT}/models/Ctrl-World/dataset_example/${DATASET_NAME}}"
+export DATASET_DIR
 CKPT="${CKPT:-${ROOT}/exp_logs/ctrlworld_logs/bimanual_multiview_4view_grid/checkpoint-110000.pt}"
 DOWN_SAMPLE="${DOWN_SAMPLE:-6}"
 SPLIT="${SPLIT:-all}"
 OUTPUT_ROOT="${OUTPUT_ROOT:-${ROOT}/sampling_dataset/fastercache/bimanual/output/multiview/ctrlworld_4view_grid}"
 INPUT_ROOT="${INPUT_ROOT:-${ROOT}/sampling_dataset/fastercache/bimanual/input/multiview/ctrlworld_4view_grid}"
 
-# FasterCache parameters -- see the 4-view-grid caching insights rule. On this
-# Ctrl-World SVD UNet FasterCache is a known ~no-op (no attn_processors to hook,
-# and its uncond-skip needs CFG which is off at guidance_scale=1.0). Kept
-# runnable as a valid benchmark point per the acceleration-benchmark rule.
+# FasterCache parameters -- see the 4-view-grid caching insights rule. MEASURED
+# on this 4-view model: 263.9s vs dense 270.3s = 1.02x (net no-op). The adapter
+# logs "Enabled on 0 attention layers" because this Ctrl-World SVD UNet exposes
+# no `attn_processors`, and FasterCache's model-level uncond-skip needs CFG,
+# which is off (guidance_scale=1.0). Kept runnable at its default as a valid
+# net-zero-speedup benchmark point per the acceleration-benchmark rule; do NOT
+# delete/swap it. For real speedup use WorldCache (1.81x) or DiCache (1.72x).
 FASTERCACHE_START_STEP="${FASTERCACHE_START_STEP:-0}"
 FASTERCACHE_MODEL_INTERVAL="${FASTERCACHE_MODEL_INTERVAL:-5}"
 FASTERCACHE_BLOCK_INTERVAL="${FASTERCACHE_BLOCK_INTERVAL:-3}"
 
 if [ ! -f "${CKPT}" ]; then
   echo "ERROR: checkpoint not found: ${CKPT}" >&2
+  exit 1
+fi
+
+if [ ! -d "${DATASET_DIR}/annotation" ]; then
+  echo "ERROR: dataset annotation dir not found: ${DATASET_DIR}/annotation" >&2
+  echo "       (unset a stale DATASET_DIR in your environment)" >&2
   exit 1
 fi
 
