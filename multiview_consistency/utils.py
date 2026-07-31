@@ -5,76 +5,37 @@ from pathlib import Path
 import torch
 import numpy as np
 def save_depth_maps(depth_map, output_dir="output_depth", prefix="frame", vmin=None, vmax=None):
-    """
-    Lưu depth_map tensor (B, S, H, W, 1) thành các tệp ảnh màu.
-    """
+    """Save depth maps. Expects (B, S, H, W, 1) or (B, S, H, W)."""
     os.makedirs(output_dir, exist_ok=True)
-    
-    # Chuyển sang CPU và numpy
-    # depth_map shape: (1, 2, 294, 518, 1)
     if isinstance(depth_map, torch.Tensor):
         depth_np = depth_map.detach().cpu().float().numpy()
     else:
-        depth_np = depth_map
+        depth_np = np.asarray(depth_map)
 
-    
-    B, S, H, W, *_ = depth_np.shape
-    
-    # for b in range(B):
-    #     for s in range(S):
-    #         # Lấy map của từng view, loại bỏ chiều batch và channel cuối
-    #         d_map = depth_np[b, s, :, :, 0] if depth_np.ndim == 5 else depth_np[b, s, :, :]
-            
+    if depth_np.ndim == 5:
+        depth_np = depth_np[..., 0]  # (B, S, H, W)
 
-    #         d_min = d_map.min() if vmin is None else vmin
-    #         d_max = d_map.max() if vmax is None else vmax
-    #         d_norm = (d_map - d_min) / (d_max - d_min + 1e-8)
-            
-    #         # Sử dụng colormap 'magma' hoặc 'viridis' (phổ biến cho depth)
-    #         plt.imsave(
-    #             os.path.join(output_dir, f"{prefix}_batch{b}_view{s+1}.png"),
-    #             d_norm,
-    #             cmap='magma'
-    #         )
+    B, S = depth_np.shape[:2]
     for b in range(B):
         for s in range(S):
-            d_map = depth_np[b, s, :, :, 0] if depth_np.ndim == 5 else depth_np[b, s, :, :]
-            
-
-            d_clipped = np.clip(d_map, vmin, vmax)
-  
             plt.imsave(
                 os.path.join(output_dir, f"{prefix}_batch{b}_view{s+1}.png"),
-                d_clipped,
+                np.clip(depth_np[b, s], vmin, vmax),
                 vmin=vmin,
                 vmax=vmax,
-                cmap='magma' # Hoặc 'inferno', 'viridis', 'plasma'
+                cmap="magma",
             )
 
 
 def save_rgb_maps(rgb_map, output_dir="output_depth", prefix="rgb"):
-    """
-    Save rendered RGB maps to PNG.
-
-    Accepts:
-      (B,S,H,W,3), (S,H,W,3), or torch equivalents. Values in [0,1] or [0,255].
-    """
+    """Save RGB maps. Expects (B, S, H, W, 3) float in [0, 1]."""
     os.makedirs(output_dir, exist_ok=True)
     if isinstance(rgb_map, torch.Tensor):
         rgb_np = rgb_map.detach().cpu().float().numpy()
     else:
         rgb_np = np.asarray(rgb_map, dtype=np.float32)
 
-    if rgb_np.ndim == 4:  # (S,H,W,3)
-        rgb_np = rgb_np[None]
-    if rgb_np.ndim != 5 or rgb_np.shape[-1] != 3:
-        raise ValueError(f"rgb_map must be (B,S,H,W,3) or (S,H,W,3), got {rgb_np.shape}")
-
-    if rgb_np.max() <= 1.5:
-        rgb_u8 = (np.clip(rgb_np, 0.0, 1.0) * 255.0).astype(np.uint8)
-    else:
-        rgb_u8 = np.clip(rgb_np, 0, 255).astype(np.uint8)
-
+    rgb_u8 = (np.clip(rgb_np, 0.0, 1.0) * 255.0).astype(np.uint8)
     B, S = rgb_u8.shape[:2]
     for b in range(B):
         for s in range(S):

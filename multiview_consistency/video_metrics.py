@@ -3,7 +3,6 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Iterator
 
-import numpy as np
 import torch
 from vggt.utils.geometry import unproject_depth_map_to_point_map
 from .camera_pose_stability import compute_pose_stability_metric
@@ -20,11 +19,10 @@ class ModelContext:
     model: object
     device: str
     autocast_dtype: torch.dtype
-    backend: str = "vggt"  # "vggt" | "vggt_omega"
+    backend: str = "vggt-omega"  # "vggt" | "vggt_omega"
     omega_checkpoint: str | None = None
     omega_image_resolution: int = 512
     omega_patch_size: int = 16
-    # Cached callables from ``_load_vggt_omega_modules`` (avoid re-import per frame).
     omega_load_fn: object | None = None
     omega_encoding_to_camera: object | None = None
 
@@ -75,12 +73,11 @@ def init_model_context(
         raise ValueError(f"Unknown backend={backend!r}; expected 'vggt' or 'vggt_omega'")
 
     if backend == "vggt":
-        from vggt.models.vggt import VGGT  # local import: avoids huggingface_hub dependency when using omega
+        from vggt.models.vggt import VGGT  
         model = VGGT.from_pretrained(model_name).to(device)
         model.eval()
         return ModelContext(model=model, device=device, autocast_dtype=autocast_dtype, backend="vggt")
 
-    # VGGT-Omega: load local checkpoint path.
     if omega_checkpoint is None:
         raise ValueError("omega_checkpoint is required when backend='vggt_omega'")
     VGGTOmega, load_fn, encoding_to_camera = _load_vggt_omega_modules()
@@ -321,16 +318,22 @@ def _process_geometric_frame(
     extrinsic: torch.Tensor,
     intrinsic: torch.Tensor,
     depth_map: torch.Tensor,
-    images: torch.Tensor
+    images: torch.Tensor,
 ) -> _GeometricFrameResult:
-    # Keep the entire geometric post-process on CPU (avoid GPU round-trips).
+    """
+    Fixed layouts:
+      images/depth/extrinsic/intrinsic: (1, S, ...)
+      point_map: (S, H, W, 3)
+      depth_rendered / valid_mask: (1, S, H, W)
+      rgb_rendered: (1, S, H, W, 3)
+    """
     depth_cpu = depth_map.detach().float().cpu()
     extrinsic_cpu = extrinsic.detach().float().cpu()
     intrinsic_cpu = intrinsic.detach().float().cpu()
     images_cpu = images.detach().float().cpu()
 
     point_map = unproject_depth_map_to_point_map(
-        depth_cpu.squeeze(0), extrinsic_cpu.squeeze(0), intrinsic_cpu.squeeze(0)
+        depth_cpu[0], extrinsic_cpu[0], intrinsic_cpu[0]
     )
     depth_rendered_np, rendered_valid_mask, rgb_rendered_np = render_depth_from_point_map(
         point_map_by_unprojection=point_map,
@@ -340,24 +343,15 @@ def _process_geometric_frame(
         images=images_cpu,
     )
 
-    if depth_rendered_np.ndim == 3:
-        depth_rendered_np = depth_rendered_np[np.newaxis, ...]
-    if isinstance(rgb_rendered_np, np.ndarray) and rgb_rendered_np.ndim == 4:
-        rgb_rendered_np = rgb_rendered_np[np.newaxis, ...]
-
-    valid_for_metric = rendered_valid_mask
-    if isinstance(valid_for_metric, np.ndarray) and valid_for_metric.ndim == 3:
-        valid_for_metric = valid_for_metric[np.newaxis, ...]
-
     res = geometric_calculation(
         depth=depth_cpu,
         depth_rendered=depth_rendered_np,
         images=images_cpu,
         rgb_rendered=rgb_rendered_np,
-        valid_mask=valid_for_metric,
+        valid_mask=rendered_valid_mask,
     )
     score = float(geometric_consistency_metric(res))
-    if res['view0_shape']['valid_ratio'] < 0.02 or res['view1_shape']['valid_ratio'] < 0.02:
+    if res["view0_shape"]["valid_ratio"] < 0.02 or res["view1_shape"]["valid_ratio"] < 0.02:
         return _GeometricFrameResult(
             frame=int(fi),
             geometric_consistency=0.0,

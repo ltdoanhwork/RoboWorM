@@ -47,11 +47,6 @@ def _parse_args() -> argparse.Namespace:
         default=None,
         help="Output CSV path (default: <episodes_root>/video_metrics.csv for batch).",
     )
-    p.add_argument(
-        "--continue_on_error",
-        action="store_true",
-        help="In batch mode, skip failed episodes instead of aborting.",
-    )
     return p.parse_args()
 
 
@@ -181,7 +176,9 @@ def _run_batch(args: argparse.Namespace, views: list[str]) -> None:
                 )
                 time_end = time.time()
                 print(f"[run_video_metrics] {name} took {time_end - time_start} seconds", file=sys.stderr)
-                print(float(result["geometric_consistency"]), float(result["pose_stability"]))
+                print("----Geometric Consistency: ", float(result["geometric_consistency"]))
+                print("----Pose Stability: ", float(result["pose_stability"]))
+                
                 rows.append(
                     {
                         "name": name,
@@ -193,8 +190,6 @@ def _run_batch(args: argparse.Namespace, views: list[str]) -> None:
                 )
             except Exception as e:
                 print(f"[run_video_metrics] {name} failed: {e!r}", file=sys.stderr)
-                if not args.continue_on_error:
-                    raise
     finally:
         _close_session(conn)
         conn.close()
