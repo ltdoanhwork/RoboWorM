@@ -1,0 +1,454 @@
+{
+ "summary": {
+  "n_total": 6,
+  "n_ok": 6,
+  "root": "metrics/sim2real_out/dense/humanoid_singleview_dreamgen/makovian",
+  "gt_residual_mean": 0.47601326709599906,
+  "pred_residual_mean": 0.36445695906692926,
+  "excess_mean": -0.1115563080290698,
+  "excess_std": 0.5415807677183869,
+  "excess_min": -0.9803050509323681,
+  "excess_max": 0.8231075225034561,
+  "frac_pred_worse": 0.3333333333333333
+ },
+ "episodes": [
+  {
+   "tracks": "metrics/sim2real_out/dense/humanoid_singleview_dreamgen/makovian/episode_000829/tracks.npz",
+   "episode": "episode_000829",
+   "gt": {
+    "mass_kg": 0.2,
+    "mu": 0.2,
+    "n_frames_scored": 88,
+    "unexplained_mean": 0.9803050509323682,
+    "unexplained_p95": 1.1356348675709629,
+    "unexplained_max": 1.1657516695619226,
+    "unexplained_vert_mean": 0.9770215872701616,
+    "unexplained_horz_mean": 0.06472024495473917,
+    "lift_bias": 0.9770215872701616,
+    "n_contacts_mean": 0.09090909090909091,
+    "contact_frac_gripper": 0.0,
+    "contact_frac_support": 0.022727272727272728,
+    "unsupported_frac": 0.9772727272727273,
+    "n_mu_tried": 4,
+    "worst_mu_unexplained_mean": 0.9803050509323682,
+    "lift": {
+     "scale_m_per_unit": 0.42933900588789164,
+     "scale_source": "object_size_prior_8cm",
+     "plane_inlier_frac": 0.6902555555555555,
+     "obj_valid_frac": 1.0,
+     "grip_valid_frac": 1.0,
+     "obj_half_m": [
+      0.04,
+      0.028384593321658335,
+      0.008519187064912835
+     ],
+     "support_z": -0.3213163927726377,
+     "fps": 16.0,
+     "n_frames": 90,
+     "notes": "gt lifted from metrics/sim2real_out/dense/humanoid_singleview_dreamgen/makovian/episode_000829/tracks.npz; normal_coherence=1.000; rest_frac=0.68; lift_range=0.0090 m; hold_frac=0.00"
+    }
+   },
+   "pred": {
+    "mass_kg": 0.2,
+    "mu": 1.5,
+    "n_frames_scored": 88,
+    "unexplained_mean": 1.5148872176801158e-16,
+    "unexplained_p95": 2.923624956512336e-16,
+    "unexplained_max": 4.04601871489877e-16,
+    "unexplained_vert_mean": 9.388180057181495e-17,
+    "unexplained_horz_mean": 9.390784744841203e-17,
+    "lift_bias": -5.272813456773169e-17,
+    "n_contacts_mean": 8.045454545454545,
+    "contact_frac_gripper": 1.0,
+    "contact_frac_support": 0.011363636363636364,
+    "unsupported_frac": 0.0,
+    "n_mu_tried": 4,
+    "worst_mu_unexplained_mean": 4.578598363157888e-16,
+    "lift": {
+     "scale_m_per_unit": 0.4132491287358345,
+     "scale_source": "object_size_prior_8cm",
+     "plane_inlier_frac": 0.6863777777777778,
+     "obj_valid_frac": 1.0,
+     "grip_valid_frac": 1.0,
+     "obj_half_m": [
+      0.04,
+      0.03158167238004554,
+      0.01820068464806653
+     ],
+     "support_z": -0.352240022282663,
+     "fps": 16.0,
+     "n_frames": 90,
+     "notes": "pred lifted from metrics/sim2real_out/dense/humanoid_singleview_dreamgen/makovian/episode_000829/tracks.npz; normal_coherence=1.000; rest_frac=0.12; lift_range=0.0451 m; hold_frac=1.00"
+    }
+   },
+   "residual_excess": -0.9803050509323681,
+   "lift_bias_excess": -0.9770215872701616,
+   "p95_excess": -1.1356348675709627
+  },
+  {
+   "tracks": "metrics/sim2real_out/dense/humanoid_singleview_dreamgen/makovian/episode_001065/tracks.npz",
+   "episode": "episode_001065",
+   "gt": {
+    "mass_kg": 0.2,
+    "mu": 0.4,
+    "n_frames_scored": 99,
+    "unexplained_mean": 0.7983582787627475,
+    "unexplained_p95": 1.0940529281684206,
+    "unexplained_max": 1.1394152161159075,
+    "unexplained_vert_mean": 0.7963429174810113,
+    "unexplained_horz_mean": 0.04209602173204868,
+    "lift_bias": 0.7963429174810112,
+    "n_contacts_mean": 1.6565656565656566,
+    "contact_frac_gripper": 0.1919191919191919,
+    "contact_frac_support": 0.030303030303030304,
+    "unsupported_frac": 0.797979797979798,
+    "n_mu_tried": 4,
+    "worst_mu_unexplained_mean": 0.7985480284179471,
+    "lift": {
+     "scale_m_per_unit": 0.19635222536448474,
+     "scale_source": "object_size_prior_8cm",
+     "plane_inlier_frac": 0.5904331683168318,
+     "obj_valid_frac": 1.0,
+     "grip_valid_frac": 1.0,
+     "obj_half_m": [
+      0.02466126386198138,
+      0.04,
+      0.022419022777339804
+     ],
+     "support_z": -0.18468621057326978,
+     "fps": 16.0,
+     "n_frames": 101,
+     "notes": "gt lifted from metrics/sim2real_out/dense/humanoid_singleview_dreamgen/makovian/episode_001065/tracks.npz; normal_coherence=1.000; rest_frac=0.73; lift_range=0.0119 m; hold_frac=1.00"
+    }
+   },
+   "pred": {
+    "mass_kg": 0.2,
+    "mu": 0.4,
+    "n_frames_scored": 99,
+    "unexplained_mean": 0.8709876225338576,
+    "unexplained_p95": 1.0963304688503168,
+    "unexplained_max": 1.463589459949681,
+    "unexplained_vert_mean": 0.8646537359531407,
+    "unexplained_horz_mean": 0.07040590093649968,
+    "lift_bias": 0.8646537359531407,
+    "n_contacts_mean": 1.0101010101010102,
+    "contact_frac_gripper": 0.12121212121212122,
+    "contact_frac_support": 0.010101010101010102,
+    "unsupported_frac": 0.8686868686868687,
+    "n_mu_tried": 4,
+    "worst_mu_unexplained_mean": 0.8714311792221844,
+    "lift": {
+     "scale_m_per_unit": 0.17914003248970672,
+     "scale_source": "object_size_prior_8cm",
+     "plane_inlier_frac": 0.6119356435643565,
+     "obj_valid_frac": 1.0,
+     "grip_valid_frac": 1.0,
+     "obj_half_m": [
+      0.018144354959376028,
+      0.04,
+      0.021344237637495933
+     ],
+     "support_z": -0.1823681510502841,
+     "fps": 16.0,
+     "n_frames": 101,
+     "notes": "pred lifted from metrics/sim2real_out/dense/humanoid_singleview_dreamgen/makovian/episode_001065/tracks.npz; normal_coherence=1.000; rest_frac=0.10; lift_range=0.0227 m; hold_frac=1.00"
+    }
+   },
+   "residual_excess": 0.07262934377111019,
+   "lift_bias_excess": 0.0683108184721295,
+   "p95_excess": 0.0022775406818962285
+  },
+  {
+   "tracks": "metrics/sim2real_out/dense/humanoid_singleview_dreamgen/makovian/episode_002133/tracks.npz",
+   "episode": "episode_002133",
+   "gt": {
+    "mass_kg": 0.2,
+    "mu": 1.5,
+    "n_frames_scored": 86,
+    "unexplained_mean": 0.1054809496856961,
+    "unexplained_p95": 1.0005583040090262,
+    "unexplained_max": 1.1090246535173984,
+    "unexplained_vert_mean": 0.10531870462876572,
+    "unexplained_horz_mean": 0.0052597350069,
+    "lift_bias": 0.10531870462876564,
+    "n_contacts_mean": 7.255813953488372,
+    "contact_frac_gripper": 0.8953488372093024,
+    "contact_frac_support": 0.023255813953488372,
+    "unsupported_frac": 0.10465116279069768,
+    "n_mu_tried": 4,
+    "worst_mu_unexplained_mean": 0.10548094968569631,
+    "lift": {
+     "scale_m_per_unit": 0.1367602072667428,
+     "scale_source": "object_size_prior_8cm",
+     "plane_inlier_frac": 0.7023380681818181,
+     "obj_valid_frac": 1.0,
+     "grip_valid_frac": 1.0,
+     "obj_half_m": [
+      0.04,
+      0.02230413369899175,
+      0.01288851576208127
+     ],
+     "support_z": -0.11821751563754007,
+     "fps": 16.0,
+     "n_frames": 88,
+     "notes": "gt lifted from metrics/sim2real_out/dense/humanoid_singleview_dreamgen/makovian/episode_002133/tracks.npz; normal_coherence=1.000; rest_frac=0.26; lift_range=0.0287 m; hold_frac=1.00"
+    }
+   },
+   "pred": {
+    "mass_kg": 0.2,
+    "mu": 1.5,
+    "n_frames_scored": 86,
+    "unexplained_mean": 0.05862089899722152,
+    "unexplained_p95": 0.6106244318396116,
+    "unexplained_max": 1.1654083264144954,
+    "unexplained_vert_mean": 0.05788085506641198,
+    "unexplained_horz_mean": 0.0080448309028716,
+    "lift_bias": 0.05788085506641188,
+    "n_contacts_mean": 7.627906976744186,
+    "contact_frac_gripper": 0.9418604651162791,
+    "contact_frac_support": 0.023255813953488372,
+    "unsupported_frac": 0.05813953488372093,
+    "n_mu_tried": 4,
+    "worst_mu_unexplained_mean": 0.05862089899722178,
+    "lift": {
+     "scale_m_per_unit": 0.1689449364337766,
+     "scale_source": "object_size_prior_8cm",
+     "plane_inlier_frac": 0.6764488636363636,
+     "obj_valid_frac": 1.0,
+     "grip_valid_frac": 1.0,
+     "obj_half_m": [
+      0.04,
+      0.02585026996742018,
+      0.009144940736214462
+     ],
+     "support_z": -0.15426199423960382,
+     "fps": 16.0,
+     "n_frames": 88,
+     "notes": "pred lifted from metrics/sim2real_out/dense/humanoid_singleview_dreamgen/makovian/episode_002133/tracks.npz; normal_coherence=1.000; rest_frac=0.16; lift_range=0.0202 m; hold_frac=1.00"
+    }
+   },
+   "residual_excess": -0.04686005068847458,
+   "lift_bias_excess": -0.04743784956235376,
+   "p95_excess": -0.38993387216941466
+  },
+  {
+   "tracks": "metrics/sim2real_out/dense/humanoid_singleview_dreamgen/makovian/episode_002346/tracks.npz",
+   "episode": "episode_002346",
+   "gt": {
+    "mass_kg": 0.2,
+    "mu": 1.5,
+    "n_frames_scored": 121,
+    "unexplained_mean": 0.5727395792707302,
+    "unexplained_p95": 1.1010153133822806,
+    "unexplained_max": 1.4669884690356068,
+    "unexplained_vert_mean": 0.5677852616080814,
+    "unexplained_horz_mean": 0.04939159270662825,
+    "lift_bias": 0.5677852616080814,
+    "n_contacts_mean": 3.553719008264463,
+    "contact_frac_gripper": 0.4297520661157025,
+    "contact_frac_support": 0.024793388429752067,
+    "unsupported_frac": 0.5702479338842975,
+    "n_mu_tried": 4,
+    "worst_mu_unexplained_mean": 0.5727395792707304,
+    "lift": {
+     "scale_m_per_unit": 0.1690943393430748,
+     "scale_source": "object_size_prior_8cm",
+     "plane_inlier_frac": 0.5688983739837398,
+     "obj_valid_frac": 1.0,
+     "grip_valid_frac": 1.0,
+     "obj_half_m": [
+      0.020194837754034987,
+      0.04,
+      0.033332829598024125
+     ],
+     "support_z": -0.17278964878403555,
+     "fps": 16.0,
+     "n_frames": 123,
+     "notes": "gt lifted from metrics/sim2real_out/dense/humanoid_singleview_dreamgen/makovian/episode_002346/tracks.npz; normal_coherence=1.000; rest_frac=0.18; lift_range=0.0617 m; hold_frac=0.83"
+    }
+   },
+   "pred": {
+    "mass_kg": 0.2,
+    "mu": 1.5,
+    "n_frames_scored": 121,
+    "unexplained_mean": 0.15566492485817982,
+    "unexplained_p95": 1.0051489175763846,
+    "unexplained_max": 1.2977268475360701,
+    "unexplained_vert_mean": 0.15299503522244443,
+    "unexplained_horz_mean": 0.02124128723758191,
+    "lift_bias": 0.15299503522244431,
+    "n_contacts_mean": 6.859504132231405,
+    "contact_frac_gripper": 0.8429752066115702,
+    "contact_frac_support": 0.024793388429752067,
+    "unsupported_frac": 0.15702479338842976,
+    "n_mu_tried": 4,
+    "worst_mu_unexplained_mean": 0.15566492485818006,
+    "lift": {
+     "scale_m_per_unit": 0.15993785395589533,
+     "scale_source": "object_size_prior_8cm",
+     "plane_inlier_frac": 0.5442378048780487,
+     "obj_valid_frac": 1.0,
+     "grip_valid_frac": 1.0,
+     "obj_half_m": [
+      0.016462121663883868,
+      0.04,
+      0.03455533773541956
+     ],
+     "support_z": -0.17408437357351814,
+     "fps": 16.0,
+     "n_frames": 123,
+     "notes": "pred lifted from metrics/sim2real_out/dense/humanoid_singleview_dreamgen/makovian/episode_002346/tracks.npz; normal_coherence=1.000; rest_frac=0.23; lift_range=0.0642 m; hold_frac=1.00"
+    }
+   },
+   "residual_excess": -0.4170746544125503,
+   "lift_bias_excess": -0.4147902263856371,
+   "p95_excess": -0.09586639580589607
+  },
+  {
+   "tracks": "metrics/sim2real_out/dense/humanoid_singleview_dreamgen/makovian/episode_003085/tracks.npz",
+   "episode": "episode_003085",
+   "gt": {
+    "mass_kg": 0.2,
+    "mu": 1.5,
+    "n_frames_scored": 240,
+    "unexplained_mean": 0.19209589968563678,
+    "unexplained_p95": 1.0439005268867148,
+    "unexplained_max": 1.1289382588907082,
+    "unexplained_vert_mean": 0.19163844962867943,
+    "unexplained_horz_mean": 0.011673204702818194,
+    "lift_bias": 0.1916384496286794,
+    "n_contacts_mean": 6.55,
+    "contact_frac_gripper": 0.8083333333333333,
+    "contact_frac_support": 0.020833333333333332,
+    "unsupported_frac": 0.19166666666666668,
+    "n_mu_tried": 4,
+    "worst_mu_unexplained_mean": 0.19209589968563728,
+    "lift": {
+     "scale_m_per_unit": 0.37041716544511233,
+     "scale_source": "object_size_prior_8cm",
+     "plane_inlier_frac": 0.6614772727272726,
+     "obj_valid_frac": 1.0,
+     "grip_valid_frac": 1.0,
+     "obj_half_m": [
+      0.017312015664611446,
+      0.04,
+      0.01227490763885729
+     ],
+     "support_z": -0.2927000476105589,
+     "fps": 16.0,
+     "n_frames": 242,
+     "notes": "gt lifted from metrics/sim2real_out/dense/humanoid_singleview_dreamgen/makovian/episode_003085/tracks.npz; normal_coherence=1.000; rest_frac=0.14; lift_range=0.0293 m; hold_frac=1.00"
+    }
+   },
+   "pred": {
+    "mass_kg": 0.2,
+    "mu": 0.8,
+    "n_frames_scored": 240,
+    "unexplained_mean": 1.0152034221890929,
+    "unexplained_p95": 1.4566679088133117,
+    "unexplained_max": 1.7666133545863858,
+    "unexplained_vert_mean": 0.9758801884791022,
+    "unexplained_horz_mean": 0.1996800223307523,
+    "lift_bias": 0.9758801884791022,
+    "n_contacts_mean": 0.08333333333333333,
+    "contact_frac_gripper": 0.0,
+    "contact_frac_support": 0.020833333333333332,
+    "unsupported_frac": 0.9791666666666666,
+    "n_mu_tried": 4,
+    "worst_mu_unexplained_mean": 1.0161956417844717,
+    "lift": {
+     "scale_m_per_unit": 0.2341627623934101,
+     "scale_source": "object_size_prior_8cm",
+     "plane_inlier_frac": 0.621517561983471,
+     "obj_valid_frac": 1.0,
+     "grip_valid_frac": 1.0,
+     "obj_half_m": [
+      0.011914668004205355,
+      0.04,
+      0.0240280853241279
+     ],
+     "support_z": -0.2549771885225224,
+     "fps": 16.0,
+     "n_frames": 242,
+     "notes": "pred lifted from metrics/sim2real_out/dense/humanoid_singleview_dreamgen/makovian/episode_003085/tracks.npz; normal_coherence=1.000; rest_frac=0.05; lift_range=0.0533 m; hold_frac=1.00"
+    }
+   },
+   "residual_excess": 0.8231075225034561,
+   "lift_bias_excess": 0.7842417388504228,
+   "p95_excess": 0.4127673819265969
+  },
+  {
+   "tracks": "metrics/sim2real_out/dense/humanoid_singleview_dreamgen/makovian/episode_003151/tracks.npz",
+   "episode": "episode_003151",
+   "gt": {
+    "mass_kg": 0.2,
+    "mu": 0.8,
+    "n_frames_scored": 72,
+    "unexplained_mean": 0.20709984423881556,
+    "unexplained_p95": 1.154786484588006,
+    "unexplained_max": 1.8888996265071314,
+    "unexplained_vert_mean": 0.19298264316108346,
+    "unexplained_horz_mean": 0.05522027587714587,
+    "lift_bias": 0.19298264316108346,
+    "n_contacts_mean": 6.333333333333333,
+    "contact_frac_gripper": 0.7777777777777778,
+    "contact_frac_support": 0.027777777777777776,
+    "unsupported_frac": 0.19444444444444445,
+    "n_mu_tried": 4,
+    "worst_mu_unexplained_mean": 0.21371410343862574,
+    "lift": {
+     "scale_m_per_unit": 0.6711946266649861,
+     "scale_source": "object_size_prior_8cm",
+     "plane_inlier_frac": 0.7724662162162164,
+     "obj_valid_frac": 1.0,
+     "grip_valid_frac": 1.0,
+     "obj_half_m": [
+      0.03794365655639312,
+      0.04,
+      0.027368944601384684
+     ],
+     "support_z": -0.5654362748860018,
+     "fps": 16.0,
+     "n_frames": 74,
+     "notes": "gt lifted from metrics/sim2real_out/dense/humanoid_singleview_dreamgen/makovian/episode_003151/tracks.npz; normal_coherence=1.000; rest_frac=0.08; lift_range=0.0513 m; hold_frac=0.77"
+    }
+   },
+   "pred": {
+    "mass_kg": 0.2,
+    "mu": 0.8,
+    "n_frames_scored": 72,
+    "unexplained_mean": 0.08626488582322342,
+    "unexplained_p95": 0.8709521343927378,
+    "unexplained_max": 1.5324385041801996,
+    "unexplained_vert_mean": 0.0807896308512473,
+    "unexplained_horz_mean": 0.02589619681199791,
+    "lift_bias": 0.08078963085124727,
+    "n_contacts_mean": 7.444444444444445,
+    "contact_frac_gripper": 0.9166666666666666,
+    "contact_frac_support": 0.027777777777777776,
+    "unsupported_frac": 0.08333333333333333,
+    "n_mu_tried": 4,
+    "worst_mu_unexplained_mean": 0.08626488582322367,
+    "lift": {
+     "scale_m_per_unit": 0.676018186930629,
+     "scale_source": "object_size_prior_8cm",
+     "plane_inlier_frac": 0.7829222972972973,
+     "obj_valid_frac": 1.0,
+     "grip_valid_frac": 1.0,
+     "obj_half_m": [
+      0.03258345174736564,
+      0.04,
+      0.02399367873270212
+     ],
+     "support_z": -0.5841644174167329,
+     "fps": 16.0,
+     "n_frames": 74,
+     "notes": "pred lifted from metrics/sim2real_out/dense/humanoid_singleview_dreamgen/makovian/episode_003151/tracks.npz; normal_coherence=1.000; rest_frac=0.05; lift_range=0.0598 m; hold_frac=0.91"
+    }
+   },
+   "residual_excess": -0.12083495841559214,
+   "lift_bias_excess": -0.1121930123098362,
+   "p95_excess": -0.28383435019526826
+  }
+ ]
+}

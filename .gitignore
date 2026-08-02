@@ -227,3 +227,4 @@ webpage/*
 .cursor/*
 .jitcache/*
 metrics/motion_probe_out/
+metrics/sim2real_out/*
