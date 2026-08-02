@@ -34,10 +34,12 @@ def run_one(npz: str, stride: int, device: str, verbose: bool,
             use_fk_scale: bool = True) -> dict:
     rec: dict = {"tracks": npz, "episode": Path(npz).parent.name}
     gt_len = None
+    gt_rg = None
     if use_fk_scale:
         sc = resolve_from_tracks(npz)
         rec["fk_scale"] = sc
         gt_len = sc.get("path_len_m")
+        gt_rg = sc.get("rad_gyr_m")
         # The GT episode is longer than the tracked window when the cheap tier matched a
         # shorter prediction, so scale by frames actually used rather than the full path.
         if gt_len and sc.get("n_frames"):
@@ -51,7 +53,8 @@ def run_one(npz: str, stride: int, device: str, verbose: bool,
     ref_extent = None
     for which in ("gt", "pred"):
         L = lift_episode(npz, which=which, stride=stride, device=device, verbose=verbose,
-                         gt_path_len_m=gt_len, ref_obj_extent_m=ref_extent)
+                         gt_path_len_m=gt_len, gt_rad_gyr_m=gt_rg,
+                         ref_obj_extent_m=ref_extent)
         if which == "gt":
             ref_extent = 2.0 * float(max(L.obj_half))
         r = newton_feasibility(L.to_observation(), base=L.to_params())

@@ -399,8 +399,59 @@ by a control, so it cannot silently become a number later.
 | orientation from vision + aliasing guard | done — 0.0% on asymmetric objects, cubes flagged |
 | real gripper geometry instead of proxy boxes | pending (15 MJCFs fetched) |
 | batch driver across methods / embodiments | partial (`run_episodes.py`, one split) |
-| **real-data result** | done — grip demand direction 5/5, effect +0.179 (~1σ, n=5) |
+| **real-data result** | **retracted twice** — see the metric-scale section; not a physical result yet |
+| **real robot rendered in the scene** | done — `render_robot.py`, GR1 from robosuite, GT joints via FK |
 | **visualisation of the fitted scene** | done — `render_sim.py`, EGL headless; caught the scale bug |
+
+## The metric scale is not trustworthy on this data (measured)
+
+Rendering the real GR1 beside the proxy made the vision bridge falsifiable for the first time,
+and it failed. The chain of measurements, in the order they were forced:
+
+**1. The trajectory source was wrong.** `_gripper_contact_point` picks the 2% of gripper pixels
+nearest the object, so it slides over the arm's surface instead of tracking a material point.
+Against GT FK (rigid Procrustes, 200-sample time-shuffle control):
+
+| gripper point | rms | vs shuffle | recovered scale |
+|---|---|---|---|
+| contact point | 0.407 | 12.2% better | 1.96 |
+| **mask centroid** | **0.084** | **42.6% better** | **1.04** |
+
+**2. Path length is a biased ruler.** Independent per-frame noise adds a positive increment to
+every step, so path length grows without bound as the tracker degrades. Adding synthetic noise
+to a GT FK trajectory:
+
+| added noise | path length | bbox diag | radius of gyration |
+|---|---|---|---|
+| 5 mm | 1.91x | 1.05x | 0.998x |
+| 20 mm | **7.05x** | 1.29x | **1.009x** |
+
+The real track had `path/bbox = 8.1` against FK's `2.6` — travelling 0.85 m while spanning
+0.10 m. Switching to radius of gyration moved the recovered scale from 0.159 to 0.821 and cut
+the FK residual from 0.83x to **0.18x the object size**.
+
+**3. But the ruler itself is the wrong object.** The `gdino` "gripper" mask covers **10.56% of
+the frame** — the entire left arm from the elbow down, bbox 911x1079 (verified visually). Its
+centroid therefore does not follow the hand, and no choice of point fixes this, because the two
+available criteria disagree:
+
+| gripper point | FK affine residual | implied object size |
+|---|---|---|
+| whole mask | **11.7 px** (best) | 61.8 cm (absurd) |
+| top 5% nearest object | 57.7 px (worst) | **13.0 cm** (plausible) |
+
+A mustard bottle is 8-19 cm. The point that best tracks FK gives an absurd size; the point that
+gives a plausible size tracks FK worst.
+
+**4. Cross-check with a static ruler confirms the motion-based scale is wrong.** GR1's lower arm
+is a fixed 242 mm. Measuring it in-image along the arm mask's principal axis gives an object
+size of **7.9-10.2 cm** — the right answer, from geometry, with no dependence on motion,
+jitter, or point selection.
+
+**Conclusion: scale from gripper *motion* is not usable here, and grip demand is proportional
+to scale.** The `+0.179` grip excess reported below inherits this error and should not be
+treated as a physical result. Static geometric scale is the direction that works, and is not
+yet implemented.
 
 ## Visualising the scene that is being measured
 

@@ -75,6 +75,7 @@ def gt_ee_path_length(embodiment: str, view_type: str, split: str, episode_id: s
     # missing ones are skipped rather than assumed.
     cands = [spec.ee_body] + ["right_hand_eef", "left_hand_eefd", "right_eef", "left_eef"]
     lens: dict[str, float] = {}
+    rgs: dict[str, float] = {}
     for nm in dict.fromkeys(c for c in cands if c):
         bid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, nm)
         if bid < 0:
@@ -88,11 +89,53 @@ def gt_ee_path_length(embodiment: str, view_type: str, split: str, episode_id: s
             mujoco.mj_kinematics(model, data)
             P[t] = data.xpos[bid]
         lens[nm] = float(np.linalg.norm(np.diff(P, axis=0), axis=1).sum())
+        # Radius of gyration alongside path length. This is what the vision bridge matches
+        # against, because path length counts tracker jitter and so is biased upward by it
+        # (measured: 7.05x inflation under 20 mm of noise, versus 1.009x for this quantity).
+        # Path length is retained for reporting and for the older scale source.
+        rgs[nm] = float(np.sqrt(((P - P.mean(0)) ** 2).sum(1).mean()))
     if not lens:
         return {"error": "no end-effector body resolved in the MJCF"}
 
     best = max(lens, key=lens.get)
-    return {"path_len_m": lens[best], "ee_body": best, "all_bodies_m": lens,
+
+    # The vision bridge's ruler is the *segmentation mask's* centroid, and open-vocabulary
+    # detection returns the whole arm, not the fingertips. So the comparable FK quantity is the
+    # centroid of every moving body on that arm -- not the end-effector, which swings much
+    # further. Measured on GR1: EE radius of gyration 0.1160 m against arm-centroid 0.0438 m,
+    # a ratio of 2.65. Matching the mask centroid to the EE therefore inflated the metric scale
+    # by that factor and made a mustard bottle come out 37.5 cm across; against the arm
+    # centroid it lands at 14 cm.
+    side = "l_" if best.startswith(("left", "l_")) else "r_"
+    chain = []
+    for i in range(model.nbody):
+        nm = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_BODY, i) or ""
+        if not (nm.startswith(side) or nm.startswith(best[:4])):
+            continue
+        if any(k in nm for k in ("thigh", "shank", "foot", "leg")):
+            continue
+        chain.append(i)
+    arm_rg = None
+    if chain:
+        P = np.empty((len(q), len(chain), 3))
+        for t, qi in enumerate(q):
+            data.qpos[:] = 0.0
+            if model.nq > 6:
+                data.qpos[3] = 1.0
+            data.qpos[kin.qpos_index] = qi
+            mujoco.mj_kinematics(model, data)
+            P[t] = data.xpos[chain]
+        # Only bodies that actually move belong in the ruler: a body welded to the torso
+        # contributes a constant that shrinks the second moment without carrying information.
+        moving = [k for k in range(len(chain))
+                  if float(np.sqrt(((P[:, k] - P[:, k].mean(0)) ** 2).sum(1).mean())) > 1e-4]
+        if moving:
+            C = P[:, moving].mean(axis=1)
+            arm_rg = float(np.sqrt(((C - C.mean(0)) ** 2).sum(1).mean()))
+
+    return {"path_len_m": lens[best], "rad_gyr_m": rgs[best],
+            "arm_centroid_rad_gyr_m": arm_rg, "ee_body": best,
+            "all_bodies_m": lens, "all_bodies_rg_m": rgs,
             "n_frames": int(len(q)), "robot": robot, "parquet": hits[0]}
 
 

@@ -35,6 +35,34 @@ from dataclasses import dataclass
 import numpy as np
 
 
+def _radius_of_gyration(X: np.ndarray) -> float:
+    """RMS distance of a trajectory from its own centroid.
+
+    This is the scale estimator, in place of path length, because path length counts jitter
+    and this tracker's jitter is large. Measured by adding synthetic isotropic noise to a GT FK
+    trajectory and asking each candidate by what factor it inflates:
+
+    | added noise | path length | bbox diagonal | radius of gyration |
+    |---|---|---|---|
+    | 2 mm  | 1.30x | 1.02x | **1.000x** |
+    | 5 mm  | 1.91x | 1.05x | 0.998x |
+    | 10 mm | 3.57x | 1.15x | 1.016x |
+    | 20 mm | **7.05x** | 1.29x | 1.009x |
+
+    Path length is not merely noisier, it is *biased*: independent per-frame noise adds a
+    positive increment to every step, so the total grows without bound as the tracker degrades.
+    A second moment about the centroid has no such term. On real data the vision track had
+    ``path/bbox = 8.1`` against FK's ``2.6`` -- it travelled 0.85 m while spanning only 0.10 m
+    -- so the path-length fit under-estimated the metric scale by ~3x, and since grip demand is
+    proportional to scale that error went straight into the reported physics.
+
+    Smoothing first would also have worked (the recovered scale rose from 0.24 to 0.91 with a
+    15-frame window) but the window width is a tuned constant whose correct value depends on
+    the tracker. This estimator needs none.
+    """
+    return float(np.sqrt(((X - X.mean(0)) ** 2).sum(1).mean()))
+
+
 def unpack_masks(z, key: str, hw: tuple[int, int], num_frames: int) -> np.ndarray:
     """Undo the bit packing ``track_backend`` uses to store per-frame masks."""
     flat = np.unpackbits(z[key])
@@ -189,6 +217,11 @@ class LiftedEpisode:
     obj_valid_frac: float
     grip_valid_frac: float
     obj_quat: np.ndarray | None = None
+    # Gripper body centroid (T,3), metres. Distinct from `finger_pos`: this is the arm's own
+    # median 3D point, which tracks GT forward kinematics far better than the contact point
+    # (42.6% vs 12.2% better than a shuffle control, recovered scale 1.04 vs 1.96). It is what
+    # the metric scale is fitted from and the only trajectory that should be compared to FK.
+    grip_body_pos: np.ndarray | None = None
     notes: str = ""
 
     def to_observation(self):
@@ -260,7 +293,8 @@ def _interp_gaps(traj: np.ndarray, ok: np.ndarray) -> np.ndarray:
 
 def lift_episode(tracks_npz: str, which: str = "pred", view: int = 0, fps: float = 16.0,
                  device: str = "cuda", stride: int = 1, max_frames: int | None = None,
-                 gt_path_len_m: float | None = None, grip_reach_slack: float = 0.05,
+                 gt_path_len_m: float | None = None, gt_rad_gyr_m: float | None = None,
+                 grip_reach_slack: float = 0.05,
                  ref_obj_extent_m: float | None = None,
                  verbose: bool = True) -> LiftedEpisode:
     """Masks + video -> metric 3D trajectory in a gravity-aligned frame.
@@ -303,6 +337,7 @@ def lift_episode(tracks_npz: str, which: str = "pred", view: int = 0, fps: float
     model = MoGeModel.from_pretrained("Ruicheng/moge-vitl").to(device).eval()
 
     obj_raw, grip_raw = [], []
+    grip_body_raw = []
     plane_n, plane_d, plane_inl = [], [], []
     obj_clouds = []
     obj_cloud_seq = []
@@ -331,6 +366,20 @@ def lift_episode(tracks_npz: str, which: str = "pred", view: int = 0, fps: float
 
         obj_raw.append(_masked_point(pts, valid, mo))
         grip_raw.append(_gripper_contact_point(pts, valid, mg, mo))
+        # The gripper mask's own median point, kept *in addition to* the contact point.
+        # The contact point is the right thing for contact geometry but the wrong thing for a
+        # trajectory: it is the nearest-to-object 2% of gripper pixels, so it slides over the
+        # arm's surface as the configuration changes instead of following a fixed material
+        # point. Validated against GT forward kinematics on episode_002346 (rigid Procrustes,
+        # 200-sample time-shuffle control):
+        #
+        #   contact point   rms 0.407, only 12.2% better than a permuted path, scale 1.956
+        #   mask centroid   rms 0.084,      42.6% better,                      scale 1.036
+        #
+        # A recovered scale of 1.04 is the telling part: the centroid is consistent with the
+        # independently-derived metric scale, while the contact point is off by ~2x, which
+        # propagated straight into the path-length scale fit.
+        grip_body_raw.append(_masked_point(pts, valid, mg))
         cloud_t = None
         if mo.any():
             p = pts[mo & valid]
@@ -359,11 +408,14 @@ def lift_episode(tracks_npz: str, which: str = "pred", view: int = 0, fps: float
 
     ok_o = np.array([p is not None for p in obj_raw])
     ok_g = np.array([p is not None for p in grip_raw])
+    ok_gb = np.array([p is not None for p in grip_body_raw])
     fill = np.zeros(3)
     O = np.stack([p if p is not None else fill for p in obj_raw])
     Gp = np.stack([p if p is not None else fill for p in grip_raw])
+    Gb = np.stack([p if p is not None else fill for p in grip_body_raw])
     O = _interp_gaps(O, ok_o) @ R.T
     Gp = _interp_gaps(Gp, ok_g) @ R.T
+    Gb = _interp_gaps(Gb, ok_gb) @ R.T
 
     # Object extent measured *in the gravity frame*: rotate the point cloud first, then
     # take per-axis spread. Rotating a size vector instead (|R @ extent|) is not a valid
@@ -376,8 +428,14 @@ def lift_episode(tracks_npz: str, which: str = "pred", view: int = 0, fps: float
 
     # Metric scale: match the tracked gripper's 3D path length to the GT end-effector's.
     # One scalar, least-squares by construction, no hand-set constant.
-    step = np.linalg.norm(np.diff(Gp, axis=0), axis=1)
+    #
+    # The path length is taken from the gripper *body centroid*, not the contact point. Both
+    # were checked against GT FK: the centroid recovers a Procrustes scale of 1.04 (i.e. it
+    # agrees with this very scale fit) while the contact point recovers 1.96, because the
+    # contact point slides across the arm's surface and inflates the path it traces.
+    step = np.linalg.norm(np.diff(Gb, axis=0), axis=1)
     path_units = float(step.sum())
+    rg_units = _radius_of_gyration(Gb)
     if ref_obj_extent_m and ext_units is not None and float(ext_units.max()) > 1e-9:
         # Paired mode: the *same physical object* appears in GT and prediction, so its
         # largest true extent is one number shared by both. Anchoring both sides to it is
@@ -391,6 +449,12 @@ def lift_episode(tracks_npz: str, which: str = "pred", view: int = 0, fps: float
         # **r = +0.943** -- i.e. the headline was mostly a unit mismatch, not physics.
         scale = ref_obj_extent_m / float(ext_units.max())
         src = "paired_object_extent"
+    elif gt_rad_gyr_m and rg_units > 1e-9:
+        # Preferred single-video ruler: match the second moment of the tracked gripper about
+        # its own centroid to the same quantity from GT FK. Jitter-invariant (see
+        # `_radius_of_gyration`), unlike the path-length version below.
+        scale = gt_rad_gyr_m / rg_units
+        src = "paired_gt_ee_rad_gyr"
     elif gt_path_len_m and path_units > 1e-6:
         scale = gt_path_len_m / path_units
         src = "paired_gt_ee_path_len"
@@ -404,6 +468,7 @@ def lift_episode(tracks_npz: str, which: str = "pred", view: int = 0, fps: float
         scale, src = 1.0, "none"
     O *= scale
     Gp *= scale
+    Gb *= scale
 
     half = (tuple(float(max(v * scale / 2.0, 0.005)) for v in ext_units)
             if ext_units is not None else (0.03, 0.03, 0.03))
@@ -466,6 +531,7 @@ def lift_episode(tracks_npz: str, which: str = "pred", view: int = 0, fps: float
                          obj_half=half, scale_m_per_unit=scale, scale_source=src,
                          plane_inlier_frac=float(inl.mean()), obj_valid_frac=float(ok_o.mean()),
                          grip_valid_frac=float(ok_g.mean()), obj_quat=quat,
+                         grip_body_pos=Gb,
                          notes=(f"{which} lifted from {tracks_npz}; normal_coherence="
                                 f"{normal_spread:.3f}; rest_frac={rest_frac:.2f}; "
                                 f"lift_range={lift_range_m:.4f} m; hold_frac={hold_frac:.2f}"))

@@ -53,7 +53,8 @@ def _cache_path(out: str, which: str) -> str:
 
 def lift_cached(tracks_npz: str, which: str, out: str, stride: int, device: str,
                 gt_path_len_m: float | None, force: bool,
-                ref_obj_extent_m: float | None = None):
+                ref_obj_extent_m: float | None = None,
+                gt_rad_gyr_m: float | None = None):
     """Lift once, reuse forever. MoGe dominates the cost and is deterministic here."""
     from .lift_to_3d import LiftedEpisode
 
@@ -68,18 +69,23 @@ def lift_cached(tracks_npz: str, which: str, out: str, stride: int, device: str,
             plane_inlier_frac=float(z["plane_inlier_frac"]),
             obj_valid_frac=float(z["obj_valid_frac"]), grip_valid_frac=float(z["grip_valid_frac"]),
             obj_quat=(z["obj_quat"] if "obj_quat" in z and z["obj_quat"].ndim == 2 else None),
+            grip_body_pos=(z["grip_body_pos"] if "grip_body_pos" in z
+                           and z["grip_body_pos"].ndim == 2 else None),
             notes=str(z["notes"]))
 
     from .lift_to_3d import lift_episode
     L = lift_episode(tracks_npz, which=which, stride=stride, device=device, verbose=True,
-                     gt_path_len_m=gt_path_len_m, ref_obj_extent_m=ref_obj_extent_m)
+                     gt_path_len_m=gt_path_len_m, gt_rad_gyr_m=gt_rad_gyr_m,
+                     ref_obj_extent_m=ref_obj_extent_m)
     os.makedirs(os.path.dirname(cp) or ".", exist_ok=True)
     np.savez_compressed(
         cp, obj_pos=L.obj_pos, finger_pos=L.finger_pos, fps=L.fps, support_z=L.support_z,
         obj_half=np.array(L.obj_half), scale=L.scale_m_per_unit, scale_source=L.scale_source,
         plane_inlier_frac=L.plane_inlier_frac, obj_valid_frac=L.obj_valid_frac,
         grip_valid_frac=L.grip_valid_frac,
-        obj_quat=(L.obj_quat if L.obj_quat is not None else np.zeros(0)), notes=L.notes)
+        obj_quat=(L.obj_quat if L.obj_quat is not None else np.zeros(0)),
+        grip_body_pos=(L.grip_body_pos if L.grip_body_pos is not None else np.zeros(0)),
+        notes=L.notes)
     return L
 
 
@@ -219,10 +225,13 @@ def main():
     a = ap.parse_args()
 
     gt_len = None
+    gt_rg = None
     if not a.no_fk_scale:
         from .metric_scale import resolve_from_tracks
         try:
-            gt_len = (resolve_from_tracks(a.tracks) or {}).get("path_len_m")
+            _sc = resolve_from_tracks(a.tracks) or {}
+            gt_len = _sc.get("path_len_m")
+            gt_rg = _sc.get("rad_gyr_m")
         except Exception as e:
             print(f"[render] FK scale unavailable ({type(e).__name__}: {e}); "
                   f"falling back to the object-size prior")
@@ -236,7 +245,7 @@ def main():
     ref_extent = None
     for which in whichs:
         L = lift_cached(a.tracks, which, a.out, a.stride, a.device, gt_len, a.force_lift,
-                        ref_obj_extent_m=ref_extent)
+                        ref_obj_extent_m=ref_extent, gt_rad_gyr_m=gt_rg)
         if which == "gt" and a.which == "both":
             ref_extent = 2.0 * float(max(L.obj_half))
         params = L.to_params()
