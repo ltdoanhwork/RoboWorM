@@ -337,9 +337,6 @@ def _process_geometric_frame(
     intrinsic_cpu = intrinsic.detach().float().cpu()
     images_cpu = images.detach().float().cpu()
 
-    point_map = unproject_depth_map_to_point_map(
-        depth_cpu[0], extrinsic_cpu[0], intrinsic_cpu[0]
-    )
     depth_map_indep_aligned = align_depth_scale(depth_cpu_indep, depth_cpu, max_depth=1.0)
 
     point_map = unproject_depth_map_to_point_map(
@@ -348,7 +345,7 @@ def _process_geometric_frame(
 
     depth_rendered_np, rendered_valid_mask, rgb_rendered_np = render_depth_from_point_map(
         point_map_by_unprojection=point_map,
-        depth_map=depth_cpu,
+        depth_map=depth_map_indep_aligned,
         extrinsic=extrinsic_cpu,
         intrinsic=intrinsic_cpu,
         images=images_cpu,
