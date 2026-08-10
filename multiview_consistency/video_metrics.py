@@ -10,6 +10,7 @@ from .geometric_consistency import (
     geometric_calculation,
     geometric_consistency_metric,
     render_depth_from_point_map,
+    align_depth_scale,
 )
 from .utils import intersect_frames
 
@@ -188,8 +189,9 @@ def _forward_vggt(
         preds = ctx.model(images)  # type: ignore[misc]
         pose_enc = preds["pose_enc"]
         depth_map = preds["depth"]
+        depth_map_indep = preds["depth_single"]
         extrinsic, intrinsic = encoding_to_camera(pose_enc, preds["images"].shape[-2:])  # type: ignore[operator]
-        return extrinsic, intrinsic, depth_map
+        return extrinsic, intrinsic, depth_map, depth_map_indep
 
     # legacy VGGT
     from vggt.utils.pose_enc import pose_encoding_to_extri_intri  # local import
@@ -204,7 +206,7 @@ def _forward_vggt(
         depth_map, _ = ctx.model.depth_head(aggregated_tokens_list, images, ps_idx)  # type: ignore[union-attr]
 
     extrinsic, intrinsic = pose_encoding_to_extri_intri(pose_enc, images.shape[-2:])
-    return extrinsic, intrinsic, depth_map
+    return extrinsic, intrinsic, depth_map, depth_map_indep
 
 @torch.no_grad()
 def _iter_vggt_frames(
@@ -273,7 +275,7 @@ def _iter_vggt_frames(
                 )
 
             images = _images_cpu_to_device(images_cpu, ctx.device)
-            extrinsic, intrinsic, depth_map = _forward_vggt(ctx, images)
+            extrinsic, intrinsic, depth_map, depth_map_indep = _forward_vggt(ctx, images)
 
             for b, fi in enumerate(chunk):
                 yield (
@@ -281,6 +283,7 @@ def _iter_vggt_frames(
                     extrinsic[b : b + 1],
                     intrinsic[b : b + 1],
                     depth_map[b : b + 1],
+                    depth_map_indep[b : b + 1],
                     images[b : b + 1],
                 )
     finally:
@@ -318,6 +321,7 @@ def _process_geometric_frame(
     extrinsic: torch.Tensor,
     intrinsic: torch.Tensor,
     depth_map: torch.Tensor,
+    depth_map_indep: torch.Tensor,
     images: torch.Tensor,
 ) -> _GeometricFrameResult:
     """
@@ -328,6 +332,7 @@ def _process_geometric_frame(
       rgb_rendered: (1, S, H, W, 3)
     """
     depth_cpu = depth_map.detach().float().cpu()
+    depth_cpu_indep = depth_map_indep.detach().float().cpu()
     extrinsic_cpu = extrinsic.detach().float().cpu()
     intrinsic_cpu = intrinsic.detach().float().cpu()
     images_cpu = images.detach().float().cpu()
@@ -335,6 +340,12 @@ def _process_geometric_frame(
     point_map = unproject_depth_map_to_point_map(
         depth_cpu[0], extrinsic_cpu[0], intrinsic_cpu[0]
     )
+    depth_map_indep_aligned = align_depth_scale(depth_cpu_indep, depth_cpu, max_depth=1.0)
+
+    point_map = unproject_depth_map_to_point_map(
+        depth_map_indep_aligned[0], extrinsic.squeeze(0), intrinsic.squeeze(0)
+    )
+
     depth_rendered_np, rendered_valid_mask, rgb_rendered_np = render_depth_from_point_map(
         point_map_by_unprojection=point_map,
         depth_map=depth_cpu,
@@ -344,7 +355,7 @@ def _process_geometric_frame(
     )
 
     res = geometric_calculation(
-        depth=depth_cpu,
+        depth=depth_map_indep_aligned,
         depth_rendered=depth_rendered_np,
         images=images_cpu,
         rgb_rendered=rgb_rendered_np,
@@ -411,7 +422,7 @@ def compute_video_metrics(
     intrinsics_all: list[torch.Tensor] = []
     used_frame_ids: list[int] = []
 
-    for fi, extrinsic, intrinsic, depth_map, images in _iter_vggt_frames(
+    for fi, extrinsic, intrinsic, depth_map, depth_map_indep, images in _iter_vggt_frames(
         ctx,
         episode_dir=episode_dir,
         views=views,
@@ -427,6 +438,7 @@ def compute_video_metrics(
                 extrinsic=extrinsic,
                 intrinsic=intrinsic,
                 depth_map=depth_map,
+                depth_map_indep=depth_map_indep,
                 images=images,
             )
             per_frame.append({

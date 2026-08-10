@@ -38,8 +38,8 @@ class VGGTOmega(nn.Module):
 
         amp_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
         with torch.autocast(device_type="cuda", dtype=amp_dtype):
-            aggregated_tokens_list, patch_token_start = self.aggregator(images)
-
+            aggregated_tokens_list, aggregated_tokens_list_single, patch_token_start = self.aggregator(images)
+        
         final_tokens = aggregated_tokens_list[-1]
         if final_tokens is None:
             raise ValueError("Aggregator did not cache the final layer, which VGGTOmega needs.")
@@ -60,7 +60,13 @@ class VGGTOmega(nn.Module):
                     images=images,
                     patch_token_start=patch_token_start,
                 )
+                depth_single, _ = self.dense_head(
+                    aggregated_tokens_list_single,
+                    images=images,
+                    patch_token_start=patch_token_start,
+                )
                 predictions["depth"] = depth
+                predictions["depth_single"] = depth_single
                 predictions["depth_conf"] = depth_conf
 
             if self.text_alignment_head is not None:
