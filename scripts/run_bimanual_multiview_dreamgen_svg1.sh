@@ -49,10 +49,15 @@ SEED="${SEED:-0}"
 ITER_TAG="${ITER_TAG:-${ITER_NAME}}"
 
 # SVG1 parameters (seeded from singleview; sweep via env).
+# Tuned on bimanual multiview: sparsity 0.25 -> 1.45x at PSNR 12.71 (== dense).
+# Unlike single_arm singleview (where 0.25 gave NO speedup), 0.25 already wins here.
+# 0.15 is faster (1.60x) but SSIM drops 0.50 -> 0.45; 0.35 is slower (1.33x) with no
+# quality gain -> 0.25 is the knee. Small num_sampled_rows/dense_step_frac cut the
+# MSE-profiling overhead (paid once on the first segment).
 SVG_START_LAYER_IDX="${SVG_START_LAYER_IDX:-4}"
-SVG_DENSE_STEP_FRAC="${SVG_DENSE_STEP_FRAC:-0.1}"
+SVG_DENSE_STEP_FRAC="${SVG_DENSE_STEP_FRAC:-0.05}"
 SVG_SPARSITY="${SVG_SPARSITY:-0.25}"
-SVG_NUM_SAMPLED_ROWS="${SVG_NUM_SAMPLED_ROWS:-64}"
+SVG_NUM_SAMPLED_ROWS="${SVG_NUM_SAMPLED_ROWS:-16}"
 SVG_SAMPLE_MSE_MAX_ROW="${SVG_SAMPLE_MSE_MAX_ROW:-3000}"
 
 MULTIVIEW_ROOT="${MULTIVIEW_ROOT:-${ROOT}/datasets/bimanual/multiview}"

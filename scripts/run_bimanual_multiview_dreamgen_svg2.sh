@@ -54,12 +54,16 @@ SEED="${SEED:-0}"
 ITER_TAG="${ITER_TAG:-${ITER_NAME}}"
 
 # SVG2 parameters (seeded from singleview; sweep via env).
+# Tuned on bimanual multiview: top_p_kmeans 0.6 (min_kc 0.15) -> 1.40x at PSNR 12.81
+# / SSIM 0.536 (== dense). The old 0.9 default kept ~90% of key blocks (near-dense)
+# -> only 1.35x for the same quality; 0.6 and 0.7 are equal quality, 0.6 slightly
+# faster. Keep centroids at q32/k64 -> fewer centroids corrupt output.
 SVG_START_LAYER_IDX="${SVG_START_LAYER_IDX:-1}"
 SVG_DENSE_STEP_FRAC="${SVG_DENSE_STEP_FRAC:-0.3}"
 SVG_NUM_Q_CENTROIDS="${SVG_NUM_Q_CENTROIDS:-32}"
 SVG_NUM_K_CENTROIDS="${SVG_NUM_K_CENTROIDS:-64}"
-SVG_TOP_P_KMEANS="${SVG_TOP_P_KMEANS:-0.9}"
-SVG_MIN_KC_RATIO="${SVG_MIN_KC_RATIO:-0.10}"
+SVG_TOP_P_KMEANS="${SVG_TOP_P_KMEANS:-0.6}"
+SVG_MIN_KC_RATIO="${SVG_MIN_KC_RATIO:-0.15}"
 SVG_KMEANS_ITER_INIT="${SVG_KMEANS_ITER_INIT:-10}"
 SVG_KMEANS_ITER_STEP="${SVG_KMEANS_ITER_STEP:-1}"
 

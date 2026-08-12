@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # DreamGen bimanual MULTIVIEW (2x2 grid) FULL roll-out inference with PISA sparse
 # attention. Mirror of dense (NUM_GPUS=1, output -> sampling_dataset/pisa).
-# Uses stock .venv. Tuned edge from singleview: density 0.1 / start 0 (~1.14x).
+# Uses stock .venv.
+# Tuned edge from singleview: density 0.1 / start 0 (~1.14x). Re-tuned on bimanual
+# MULTIVIEW: density 0.2 / start 2 -> 1.46x at quality == dense (see
+# dreamgen-bimanual-multiview-sparse-attention-insights rule).
 #
 # Outputs: sampling_dataset/pisa/bimanual/output/multiview/dreamgen/<cat>/<iter>/<task>/episode_XXXXXX/
 # Usage: CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_multiview_dreamgen_pisa.sh
@@ -43,9 +46,12 @@ MAX_SEGMENTS="${MAX_SEGMENTS:-}"
 SEED="${SEED:-0}"
 ITER_TAG="${ITER_TAG:-${ITER_NAME}}"
 
-PISA_DENSITY="${PISA_DENSITY:-0.1}"
+# Tuned on bimanual multiview: density 0.2 / start 2 -> 1.46x at PSNR 13.05 (>= dense
+# 12.67), visually identical. density 0.15/0.1 are faster (1.59x/1.81x) but drop
+# SSIM 0.54 -> 0.50 (softening); 0.2 is the quality knee.
+PISA_DENSITY="${PISA_DENSITY:-0.2}"
 PISA_BLOCK_SIZE="${PISA_BLOCK_SIZE:-64}"
-PISA_START_LAYER_IDX="${PISA_START_LAYER_IDX:-0}"
+PISA_START_LAYER_IDX="${PISA_START_LAYER_IDX:-2}"
 
 MULTIVIEW_ROOT="${MULTIVIEW_ROOT:-${ROOT}/datasets/bimanual/multiview}"
 SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/pisa/bimanual/output/multiview/dreamgen}"

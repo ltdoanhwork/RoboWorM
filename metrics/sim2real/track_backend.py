@@ -612,6 +612,18 @@ def pick_referent(tracker, frames_dir, dets, motion, upscale, prefilter=4,
     measurable when ranking by interaction. An unmeasurable metric is not a safe
     metric, so contact leads.
 
+    A third filter, ``no_contact``, was added after a measured false pick: on
+    ``episode_000829`` the winner had ``contact_frac = 0.0`` and ``travel = 0.045`` over the
+    whole episode -- its own diagnostics stated that the object is never touched and never
+    moves -- yet it was still returned, and the metric scale fitted from it disagreed by 4.87x
+    with another episode of the same object. Since ranking is already interaction-first, a
+    winner with zero contact means *every* candidate had zero contact, i.e. the manipulated
+    object was never detected at all. The honest outcome there is "unmeasurable", so
+    ``all_no_contact`` is returned on the ranking and the caller can reject the episode instead
+    of silently measuring a bystander. It is a diagnosis, not a repair: what it prevents is a
+    wrong number, and what it cannot do is find the object GroundingDINO missed (its confidence
+    on these wrong picks was only 0.30-0.43).
+
     The one case interaction gets wrong is episode_001065, where a dragged crumb
     touches the arm more than the target toast does; that episode scores a
     false-clean 0.975 and is the known residual failure. It is contained by the two
@@ -647,6 +659,11 @@ def pick_referent(tracker, frames_dir, dets, motion, upscale, prefilter=4,
             "area_frac": area, "arm_iou": iou, "look": look,
             "travel": _mask_travel(mk), "contact_frac": contact_frac,
             "too_big": area > max_area_frac, "is_arm": iou > arm_iou_veto,
+            # Only meaningful when arm masks were available to measure a gap against; a NaN
+            # contact fraction means "not measured", which must not be conflated with
+            # "measured to be zero".
+            "no_contact": (arm_masks is not None and not np.isnan(contact_frac)
+                           and contact_frac <= 0.0),
         })
 
     ok = [r for r in ranked if not r["too_big"] and not r["is_arm"]] or ranked
@@ -657,20 +674,124 @@ def pick_referent(tracker, frames_dir, dets, motion, upscale, prefilter=4,
 
     ok.sort(key=key)
     ranked.sort(key=lambda r: (r["too_big"] or r["is_arm"], key(r)))
-    return [ok[0]["det"]], ranked
+    # Flag, do not silently drop: the caller decides whether an episode with no contacting
+    # candidate is rejected, and the winning box is still returned so the failure can be
+    # rendered and inspected rather than merely counted.
+    all_no_contact = bool(ranked) and all(r["no_contact"] for r in ranked)
+    return [ok[0]["det"]], ranked, all_no_contact
+
+
+def resolve_arm_object_pair(tracker, frames_dir, arm_dets, obj_dets, motion, upscale,
+                            role="object", prefilter=4, tau_gap=0.35,
+                            max_area_frac=0.04, arm_iou_veto=0.5,
+                            appearance=None, object_text=None, frames=None):
+    """Choose the (arm, object) pair jointly, by contact, instead of one then the other.
+
+    Selecting the arm first and the object second (or vice versa) is circular: the arm is
+    identified by which object it touches, and the object by which arm touches it. Doing it
+    sequentially forces an arbitrary tie-break in whichever step goes first, and that is exactly
+    what broke here -- picking the arm by motion energy discarded the arm that was holding the
+    object (measured on ``episode_003151``: holding arm 1.7 px/frame and contact 1.00, free arm
+    22.5 px/frame and contact 0.00), after which every object candidate necessarily scored zero
+    contact.
+
+    Resolving jointly removes the tie-break. Each arm candidate and each object candidate is
+    tracked **once** (so the cost is ``n_arm + n_obj`` propagations, not their product; the gap
+    computation on cached masks is cheap), and the pair with the highest contact fraction wins.
+
+    The object-side hard filters are unchanged and still applied per candidate, because they
+    encode facts about what a manipulable object is (small; not the arm itself) that do not
+    depend on which arm is chosen.
+
+    Returns ``(arm_dets_kept, [obj_det], ranked_pairs, all_no_contact)``.
+    """
+    if not obj_dets:
+        return arm_dets, obj_dets, [], False
+
+    obj_pool = sorted(obj_dets, key=lambda d: -d["conf"])[:max(1, prefilter)]
+    arm_pool = arm_dets or []
+
+    arm_masks = {}
+    for i, d in enumerate(arm_pool):
+        am, _ = tracker.track(frames_dir, {"gripper": [d["xyxy"]]}, roles=("gripper",))
+        arm_masks[i] = am["gripper"]
+
+    ranked = []
+    for d in obj_pool:
+        masks, _ = tracker.track(frames_dir, {role: [d["xyxy"]]}, roles=(role,))
+        mk = masks[role]
+        area = float(np.mean([m.mean() for m in mk]))
+        look = float("nan")
+        if appearance is not None and frames is not None and object_text:
+            look = appearance.score(frames, mk, object_text, APPEARANCE_NEGATIVES)
+        for ai, am in (arm_masks.items() or {}):
+            gap = _min_gap_series(mk, am)
+            cf = float(np.nanmean(gap < tau_gap)) if np.isfinite(gap).any() else float("nan")
+            n = min(len(mk), len(am))
+            iou = (float(np.median([_mask_iou(mk[i], am[i]) for i in range(n)]))
+                   if n else 0.0)
+            x0, y0, x1, y1 = [int(v / upscale) for v in arm_pool[ai]["xyxy"]]
+            sub = motion[max(0, y0):y1 + 1, max(0, x0):x1 + 1]
+            ranked.append({
+                "det": d, "arm_idx": ai, "arm_phrase": arm_pool[ai]["phrase"],
+                "arm_motion": float(sub.mean()) if sub.size else 0.0,
+                "conf": d["conf"], "phrase": d["phrase"], "area_frac": area,
+                "arm_iou": iou, "look": look, "travel": _mask_travel(mk),
+                "contact_frac": cf,
+                "too_big": area > max_area_frac, "is_arm": iou > arm_iou_veto,
+                "no_contact": (not np.isnan(cf)) and cf <= 0.0,
+            })
+        if not arm_masks:
+            ranked.append({
+                "det": d, "arm_idx": -1, "arm_phrase": None, "arm_motion": 0.0,
+                "conf": d["conf"], "phrase": d["phrase"], "area_frac": area,
+                "arm_iou": 0.0, "look": look, "travel": _mask_travel(mk),
+                "contact_frac": float("nan"),
+                "too_big": area > max_area_frac, "is_arm": False, "no_contact": False,
+            })
+
+    def key(r):
+        cf = 0.0 if np.isnan(r["contact_frac"]) else r["contact_frac"]
+        return (-cf, -r["travel"], -r["conf"])
+
+    ok = [r for r in ranked if not r["too_big"] and not r["is_arm"]] or ranked
+    ok.sort(key=key)
+    ranked.sort(key=lambda r: (r["too_big"] or r["is_arm"], key(r)))
+    win = ok[0]
+
+    # Keep every arm that contacts the winning object (a real bimanual grasp has two); if none
+    # does, keep what was passed in rather than inventing a choice, and let `all_no_contact`
+    # mark the episode.
+    contacting = [arm_pool[r["arm_idx"]] for r in ranked
+                  if r["det"] is win["det"] and r["arm_idx"] >= 0
+                  and not np.isnan(r["contact_frac"]) and r["contact_frac"] > 0.0]
+    arms_kept = contacting or arm_pool
+    all_no_contact = bool(ranked) and all(r["no_contact"] for r in ranked)
+    return arms_kept, [win["det"]], ranked, all_no_contact
 
 
 def pick_acting_arms(dets, motion, upscale, rel_thr=0.4):
-    """Keep only the arm(s) that actually move; drop the idle one.
+    """Keep the arm(s) that move; kept ONLY as the fallback when no object mask is available.
 
     In the GR1 ego view both arms are in frame from t=0, so detecting "robot arm"
     returns both and their union becomes one blob spanning the table. A bloated arm
     mask makes the gripper-object gap collapse to 0 everywhere, which silently
     fakes contact for any object it happens to sweep past.
 
-    Motion energy separates them cleanly (measured on episode_000829: acting right
-    arm 0.212 vs idle left arm 0.101). Arms within ``rel_thr`` of the best are kept
-    too, so bimanual episodes do not lose the second hand.
+    **Motion energy is not a sound criterion, and was measured to fail.** It was chosen
+    because on ``episode_000829`` the acting arm scores 0.212 against the idle arm's 0.101. But
+    on ``episode_003151`` the two quantities point opposite ways:
+
+    | arm component | motion (px/frame) | gap to object | contact frac |
+    |---|---|---|---|
+    | the one holding the object | **1.7** | 0.00 | **1.00** |
+    | the one with the most motion | **22.5** | 10.35 | 0.00 |
+
+    A hand that has already grasped and is holding steady barely moves, while the free arm
+    swings. So ranking by motion discards the contacting arm exactly when a grasp is in
+    progress -- the case the metric exists to measure. Raising ``rel_thr`` made this strictly
+    worse (it dropped the contacting arm more confidently), so it stays at 0.4 and
+    :func:`resolve_arm_object_pair` is what callers should use.
     """
     if len(dets) <= 1:
         return dets, []
@@ -683,6 +804,7 @@ def pick_acting_arms(dets, motion, upscale, rel_thr=0.4):
     best = scored[0][0]
     keep = [d for s, d in scored if best <= 0 or s >= rel_thr * best]
     return keep, [{"phrase": d["phrase"], "conf": d["conf"], "motion": s,
+                   "criterion": "motion",
                    "kept": (best <= 0 or s >= rel_thr * best)} for s, d in scored]
 
 
@@ -766,39 +888,65 @@ def track_episode(tracker, gt_video, pred_video, work_dir, instruction,
 
             arm_gt = None
             if gripper_mode == "gdino" and dets.get("gripper"):
-                if len(dets["gripper"]) > 1:
-                    dets["gripper"], arm_rank = pick_acting_arms(
-                        dets["gripper"], motion, upscale)
-                    for r in arm_rank:
-                        print(f"[track]   arm cand {r['phrase']!r} conf={r['conf']:.2f} "
-                              f"motion={r['motion']:.3f} "
-                              f"{'kept' if r['kept'] else 'dropped (idle)'}")
+                sel_arm_dets = [dict(d, xyxy=_down(d["xyxy"])) for d in dets["gripper"]]
+                sel_dets = [dict(d, xyxy=_down(d["xyxy"])) for d in dets["object"]]
+                # Arm and object are resolved together rather than one before the other: which
+                # arm is acting and which object is manipulated are the same question, and
+                # answering either first requires a tie-break that was measured to be wrong
+                # (motion energy discards the arm that is holding the object -- see
+                # `resolve_arm_object_pair`).
+                arms_kept, picked, referent, all_no_contact = resolve_arm_object_pair(
+                    tracker, sel_dir, sel_arm_dets, sel_dets, motion, upscale,
+                    prefilter=referent_prefilter, tau_gap=referent_tau_gap,
+                    appearance=tracker.appearance() if use_appearance else None,
+                    object_text=(f"a photo of {obj_phrase}" if obj_phrase else None),
+                    frames=gt_views[v][:T])
+                for r in referent:
+                    if r["arm_idx"] >= 0 and r["det"] is picked[0]:
+                        cf = r["contact_frac"]
+                        print(f"[track]   arm cand {r['arm_phrase']!r} "
+                              f"motion={r['arm_motion']:.3f} "
+                              f"contact={'nan' if np.isnan(cf) else format(cf, '.2f')} "
+                              f"{'kept' if any(a['xyxy'] == sel_arm_dets[r['arm_idx']]['xyxy'] for a in arms_kept) else 'dropped'}")
+                keep_arm = {tuple(a["xyxy"]) for a in arms_kept}
+                dets["gripper"] = [d for d, s in zip(dets["gripper"], sel_arm_dets)
+                                   if tuple(s["xyxy"]) in keep_arm] or dets["gripper"]
                 am, _ = tracker.track(
                     sel_dir, {"gripper": [_down(d["xyxy"]) for d in dets["gripper"]]},
                     roles=("gripper",))
                 arm_gt = am["gripper"]
-
-            sel_dets = [dict(d, xyxy=_down(d["xyxy"])) for d in dets["object"]]
-            picked, referent = pick_referent(
-                tracker, sel_dir, sel_dets, motion, 1,
-                prefilter=referent_prefilter, arm_masks=arm_gt,
-                tau_gap=referent_tau_gap,
-                appearance=tracker.appearance() if use_appearance else None,
-                object_text=(f"a photo of {obj_phrase}" if obj_phrase else None),
-                frames=gt_views[v][:T])
+            else:
+                sel_dets = [dict(d, xyxy=_down(d["xyxy"])) for d in dets["object"]]
+                picked, referent, all_no_contact = pick_referent(
+                    tracker, sel_dir, sel_dets, motion, 1,
+                    prefilter=referent_prefilter, arm_masks=arm_gt,
+                    tau_gap=referent_tau_gap,
+                    appearance=tracker.appearance() if use_appearance else None,
+                    object_text=(f"a photo of {obj_phrase}" if obj_phrase else None),
+                    frames=gt_views[v][:T])
             # map back: keep the ORIGINAL (upscaled) box of the winner
             keep_i = sel_dets.index(picked[0])
             dets["object"] = [dets["object"][keep_i]]
+            if all_no_contact:
+                # Every candidate went the whole episode without touching the arm, so the
+                # object the instruction names was not detected. Measured consequence of not
+                # saying so: a metric scale fitted from the bystander disagreed by 4.87x with
+                # another episode of the same object (metrics/real2sim/README.md).
+                print("[track]   WARNING: no candidate ever contacts the arm -> the "
+                      "manipulated object was not detected; episode should be treated as "
+                      "unmeasurable (referent_no_contact=True)")
             for r in referent:
                 mark = "<-- picked" if r["det"] is picked[0] else ""
                 flag = (" VETO(is arm)" if r["is_arm"]
-                        else " VETO(too big)" if r["too_big"] else "")
+                        else " VETO(too big)" if r["too_big"]
+                        else " NO-CONTACT" if r.get("no_contact") else "")
                 cf, lk = r["contact_frac"], r["look"]
+                arm_tag = (f" arm={r['arm_phrase']!r}" if r.get("arm_phrase") else "")
                 print(f"[track]   obj cand {r['phrase']!r} conf={r['conf']:.2f} "
                       f"area={r['area_frac']*100:.2f}% arm_iou={r['arm_iou']:.2f} "
                       f"look={'nan' if np.isnan(lk) else format(lk, '.2f')} "
                       f"contact={'nan' if np.isnan(cf) else format(cf, '.2f')} "
-                      f"travel={r['travel']:.2f}{flag} {mark}")
+                      f"travel={r['travel']:.2f}{arm_tag}{flag} {mark}")
             boxes = {k: [d["xyxy"] for d in v_] for k, v_ in dets.items()}
             won = referent[0] if referent and referent[0]["det"] is picked[0] else \
                 next((r for r in referent if r["det"] is picked[0]), None)
@@ -809,6 +957,14 @@ def track_episode(tracker, gt_video, pred_video, work_dir, instruction,
                     "phrase": won["phrase"], "conf": _f(won["conf"]),
                     "look": _f(won["look"]), "contact_frac": _f(won["contact_frac"]),
                     "travel": _f(won["travel"]), "n_candidates": len(referent),
+                    # Which arm the winning object was paired with, and how the pairing was
+                    # decided, so a cached run can be audited without re-tracking.
+                    "arm_phrase": won.get("arm_phrase"),
+                    "arm_motion": _f(won.get("arm_motion")),
+                    # Persisted so a cached tracks.npz carries its own verdict: downstream
+                    # tiers (metric scale, force feasibility) must be able to reject the
+                    # episode without re-running the tracker to find out.
+                    "all_no_contact": bool(all_no_contact),
                 }
             shutil.rmtree(sel_dir, ignore_errors=True)
 

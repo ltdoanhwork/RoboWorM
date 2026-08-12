@@ -9,9 +9,11 @@
 #   CKPT=/path/to/checkpoint-XXXXX.pt bash scripts/run_humanoid_multiview_ctrlworld.sh
 #
 # Env overrides:
+#   CONFIG (humanoid | humanoid_grid, default humanoid),
 #   CKPT, DATASET_NAME (default humanoid_multiview), DATASET_DIR, NUM_EPISODES,
 #   SPLIT (val|train|all), NUM_INFERENCE_STEPS, GUIDANCE, DOWN_SAMPLE (default 6),
-#   CUDA_VISIBLE_DEVICES
+#   NUM_SHARDS / SHARD_ID (split episodes across parallel GPU processes),
+#   OUTPUT_ROOT / INPUT_ROOT, CUDA_VISIBLE_DEVICES
 
 set -e
 
@@ -39,16 +41,18 @@ EXTRA=""
 if [ -n "${NUM_EPISODES:-}" ]; then EXTRA="${EXTRA} --num_episodes ${NUM_EPISODES}"; fi
 if [ -n "${NUM_INFERENCE_STEPS:-}" ]; then EXTRA="${EXTRA} --num_inference_steps ${NUM_INFERENCE_STEPS}"; fi
 if [ -n "${GUIDANCE:-}" ]; then EXTRA="${EXTRA} --guidance_scale ${GUIDANCE}"; fi
+if [ -n "${NUM_SHARDS:-}" ]; then EXTRA="${EXTRA} --num_shards ${NUM_SHARDS} --shard_id ${SHARD_ID:-0}"; fi
 
 echo "=========================================="
 echo "Ctrl-World Humanoid Multiview Inference"
+echo "  config=${CONFIG:-humanoid}"
 echo "  ckpt=${CKPT}"
 echo "  dataset=${DATASET_DIR}  split=${SPLIT:-all}  down_sample=${DOWN_SAMPLE}"
 echo "  output=${OUTPUT_BASE}"
 echo "=========================================="
 
 python scripts/infer_bimanual_multiview_ctrlworld.py \
-    --config humanoid \
+    --config "${CONFIG:-humanoid}" \
     --svd_model_path "${SVD_MODEL_PATH}" \
     --clip_model_path "${CLIP_MODEL_PATH}" \
     --ckpt_path "${CKPT}" \

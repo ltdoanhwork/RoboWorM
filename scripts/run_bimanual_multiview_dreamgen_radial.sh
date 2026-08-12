@@ -45,10 +45,14 @@ MAX_SEGMENTS="${MAX_SEGMENTS:-}"
 SEED="${SEED:-0}"
 ITER_TAG="${ITER_TAG:-${ITER_NAME}}"
 
+# Tuned on bimanual multiview: start 8 / wan -> 1.41x at PSNR 12.11 / SSIM 0.456,
+# the least-lossy Radial point. start4/hunyuan is faster (1.59x) but SSIM 0.436 and
+# visibly distorts the wrist views; start4/wan is worst (PSNR 11.81). Radial is the
+# weakest-quality sparse method here -> kept as a valid benchmark point.
 RADIAL_DECAY_FACTOR="${RADIAL_DECAY_FACTOR:-0.5}"
 RADIAL_BLOCK_SIZE="${RADIAL_BLOCK_SIZE:-64}"
-RADIAL_START_LAYER_IDX="${RADIAL_START_LAYER_IDX:-4}"
-RADIAL_MODEL_TYPE="${RADIAL_MODEL_TYPE:-hunyuan}"
+RADIAL_START_LAYER_IDX="${RADIAL_START_LAYER_IDX:-8}"
+RADIAL_MODEL_TYPE="${RADIAL_MODEL_TYPE:-wan}"
 
 MULTIVIEW_ROOT="${MULTIVIEW_ROOT:-${ROOT}/datasets/bimanual/multiview}"
 SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/radial/bimanual/output/multiview/dreamgen}"

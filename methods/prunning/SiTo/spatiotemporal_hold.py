@@ -41,6 +41,16 @@ _GEOMETRY_BY_TOKENS = {
     3840: (48, 80), 960: (24, 40), 240: (12, 20),
 }
 
+# Largest latent-row count per canvas layout, used to derive the true
+# per-stage downsample factor (top-stage-relative). The 3-view strip tops out
+# at 72 rows, the 4-view 2x2 grid at 48 rows. Hardcoding "72 //" (as the first
+# version did) mis-labels the grid's stages (e.g. 24-row stage -> 72//24=3
+# instead of the true 48//24=2), so max_downsample_ratio gated the wrong set.
+_TOP_ROWS_BY_TOKENS = {
+    2880: 72, 720: 72, 180: 72,
+    3840: 48, 960: 48, 240: 48,
+}
+
 
 class _SpatioTemporalPruner:
     """Builds and caches a token-keep plan for one TransformerSpatioTemporalModel."""
@@ -62,7 +72,8 @@ class _SpatioTemporalPruner:
         geom = _GEOMETRY_BY_TOKENS.get(num_tokens)
         if geom is None:
             return False
-        downsample = 72 // geom[0]
+        top_rows = _TOP_ROWS_BY_TOKENS.get(num_tokens, 72)
+        downsample = top_rows // geom[0]
         return downsample <= self.max_downsample_ratio
 
     def plan(self, hidden_states: torch.Tensor):

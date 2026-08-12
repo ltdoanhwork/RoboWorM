@@ -33,6 +33,8 @@ DATASET_DIR="${DATASET_DIR:-${ROOT}/models/Ctrl-World/dataset_example/${DATASET_
 META_INFO="${ROOT}/models/Ctrl-World/dataset_meta_info"
 DOWN_SAMPLE="${DOWN_SAMPLE:-6}"
 SPLIT="${SPLIT:-all}"
+# 3-view strip by default; the 4-view grid wrapper passes CONFIG=humanoid_grid.
+CONFIG="${CONFIG:-humanoid}"
 
 # DiCache parameters. TUNED for humanoid multiview Ctrl-World (ckpt-200000, 2 val
 # episodes; see .cursor/rules ctrlworld-humanoid-multiview-caching-insights).
@@ -51,17 +53,19 @@ EXTRA=""
 if [ -n "${NUM_EPISODES:-}" ]; then EXTRA="${EXTRA} --num_episodes ${NUM_EPISODES}"; fi
 if [ -n "${NUM_INFERENCE_STEPS:-}" ]; then EXTRA="${EXTRA} --num_inference_steps ${NUM_INFERENCE_STEPS}"; fi
 if [ -n "${GUIDANCE:-}" ]; then EXTRA="${EXTRA} --guidance_scale ${GUIDANCE}"; fi
+if [ -n "${NUM_SHARDS:-}" ]; then EXTRA="${EXTRA} --num_shards ${NUM_SHARDS} --shard_id ${SHARD_ID:-0}"; fi
 
 echo "=========================================================="
 echo "Ctrl-World + DiCache | Humanoid Multiview Inference"
 echo "  ckpt=${CKPT}"
+echo "  config=${CONFIG}"
 echo "  dataset=${DATASET_DIR}  split=${SPLIT}  down_sample=${DOWN_SAMPLE}"
 echo "  Params: thresh=${DICACHE_REL_L1_THRESH}, ret_ratio=${DICACHE_RET_RATIO}, probe_depth=${DICACHE_PROBE_DEPTH}"
 echo "  output=${OUTPUT_BASE}"
 echo "=========================================================="
 
 python scripts/infer_bimanual_multiview_ctrlworld.py \
-    --config humanoid \
+    --config "${CONFIG}" \
     --svd_model_path "${SVD_MODEL_PATH}" \
     --clip_model_path "${CLIP_MODEL_PATH}" \
     --ckpt_path "${CKPT}" \

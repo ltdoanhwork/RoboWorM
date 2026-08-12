@@ -46,7 +46,7 @@ MASTER_PORT="${MASTER_PORT:-29560}"
 ASPECT_RATIO="${ASPECT_RATIO:-16:9}"
 
 # --- Dataset / output ---
-INPUT_ROOT="${ROOT}/sampling_dataset/dense/bimanual/input/singleview/dreamgen"
+INPUT_ROOT="${INPUT_ROOT:-${ROOT}/sampling_dataset/dense/bimanual/input/singleview/dreamgen}"
 OUTPUT_ROOT="${OUTPUT_ROOT:-${ROOT}/sampling_dataset/dense/bimanual/output/singleview/dreamgen}"
 SPLITS="${SPLITS:-makovian non_makovian}"
 # "auto"  -> per-episode chunk count (matches GT length, recommended)

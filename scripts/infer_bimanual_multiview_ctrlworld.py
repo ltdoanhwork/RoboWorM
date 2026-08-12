@@ -43,6 +43,113 @@ from decord import VideoReader, cpu
 from accelerate import Accelerator
 
 
+def _install_attn_profiler(unet):
+    """Env-gated (CW_ATTN_PROFILE=1) per-attention-layer profiler.
+
+    Wraps every attention processor's __call__ to record, per layer:
+      - the sequence length (T_q, T_kv) and whether it is self-attention
+      - CUDA-synced wall time per call
+    Aggregated by (layer_name, T_q) and dumped at process exit. This is the
+    ground-truth for "where does UNet attention time go" and "does the sparse
+    backend actually fire on the big spatial layers" — read before trusting any
+    tuning claim. No-op unless CW_ATTN_PROFILE=1.
+    """
+    import os as _os
+    if _os.environ.get("CW_ATTN_PROFILE", "0") != "1":
+        return
+    import atexit as _atexit
+    from collections import defaultdict as _dd
+
+    stats = _dd(lambda: {"calls": 0, "ms": 0.0, "t_q": 0, "t_kv": 0, "self": False})
+
+    class _ProfWrap:
+        """Callable wrapper — diffusers invokes processor(attn, ...) which resolves
+        __call__ on the TYPE, so we must wrap with a real object, not patch the
+        instance's __call__ attribute (that would be ignored)."""
+        def __init__(self, name, inner):
+            self._name = name
+            self._inner = inner
+
+        def __getattr__(self, item):
+            return getattr(self._inner, item)
+
+        def __call__(self, attn, hidden_states, encoder_hidden_states=None, *a, **kw):
+            t_q = hidden_states.shape[1]
+            kv = encoder_hidden_states if encoder_hidden_states is not None else hidden_states
+            t_kv = kv.shape[1]
+            ev0 = torch.cuda.Event(enable_timing=True)
+            ev1 = torch.cuda.Event(enable_timing=True)
+            ev0.record()
+            out = self._inner(attn, hidden_states, encoder_hidden_states, *a, **kw)
+            ev1.record()
+            torch.cuda.synchronize()
+            s = stats[(self._name, t_q)]
+            s["calls"] += 1
+            s["ms"] += ev0.elapsed_time(ev1)
+            s["t_q"] = t_q
+            s["t_kv"] = t_kv
+            s["self"] = (t_q == t_kv)
+            return out
+
+    # Wrap the .processor on each Attention module in-place (avoids
+    # set_attn_processor type/key validation).
+    n_wrapped = 0
+    for _mname, _mod in unet.named_modules():
+        if hasattr(_mod, "processor") and hasattr(_mod, "to_q"):
+            _mod.processor = _ProfWrap(_mname, _mod.processor)
+            n_wrapped += 1
+
+    def _dump():
+        rows = sorted(stats.items(), key=lambda kv: -kv[1]["ms"])
+        total = sum(v["ms"] for _, v in rows)
+        print("\n===== [CW_ATTN_PROFILE] per-(layer,seqlen) attention time =====")
+        print(f"{'layer':<46}{'T_q':>7}{'T_kv':>7}{'self':>6}{'calls':>7}"
+              f"{'ms_tot':>10}{'ms/call':>9}{'%attn':>7}")
+        by_seq = _dd(lambda: {"ms": 0.0, "calls": 0})
+        for (name, _tq), v in rows:
+            by_seq[v["t_q"]]["ms"] += v["ms"]
+            by_seq[v["t_q"]]["calls"] += v["calls"]
+            short = name if len(name) <= 44 else "..." + name[-41:]
+            print(f"{short:<46}{v['t_q']:>7}{v['t_kv']:>7}{str(v['self']):>6}"
+                  f"{v['calls']:>7}{v['ms']:>10.1f}{v['ms']/max(v['calls'],1):>9.3f}"
+                  f"{100*v['ms']/max(total,1e-9):>7.1f}")
+        print(f"----- attention time grouped by T_q (total {total:.1f} ms) -----")
+        for tq, v in sorted(by_seq.items(), key=lambda kv: -kv[1]["ms"]):
+            print(f"  T_q={tq:>6}  calls={v['calls']:>6}  ms={v['ms']:>9.1f}"
+                  f"  ({100*v['ms']/max(total,1e-9):>5.1f}% of attn)")
+        print("================================================================\n")
+
+    _atexit.register(_dump)
+    print(f"[CW_ATTN_PROFILE] attention profiler installed on {n_wrapped} attn modules.")
+
+    # Also time the whole UNet forward so we can report attention-as-fraction-of-UNet.
+    _fwd = {"ms": 0.0, "calls": 0}
+    _orig_fwd = unet.forward
+
+    def _timed_fwd(*a, **kw):
+        ev0 = torch.cuda.Event(enable_timing=True)
+        ev1 = torch.cuda.Event(enable_timing=True)
+        ev0.record()
+        out = _orig_fwd(*a, **kw)
+        ev1.record()
+        torch.cuda.synchronize()
+        _fwd["ms"] += ev0.elapsed_time(ev1)
+        _fwd["calls"] += 1
+        return out
+
+    unet.forward = _timed_fwd
+
+    def _dump_fwd():
+        attn_ms = sum(v["ms"] for v in stats.values())
+        print(f"[CW_ATTN_PROFILE] UNet.forward total {_fwd['ms']:.1f} ms over "
+              f"{_fwd['calls']} calls; attention = {attn_ms:.1f} ms "
+              f"({100*attn_ms/max(_fwd['ms'],1e-9):.1f}% of UNet fwd). "
+              f"Non-attention (conv/resnet/temporal-mlp/proj) = "
+              f"{100*(1-attn_ms/max(_fwd['ms'],1e-9)):.1f}%.")
+
+    _atexit.register(_dump_fwd)
+
+
 class CtrlWorldAgent:
     def __init__(self, args):
         args.val_model_path = args.ckpt_path
@@ -524,6 +631,66 @@ def _enable_backend(agent, args, num_inference_steps):
             if guidance_scale <= 1.0:
                 guidance_scale = 2.0
                 print(f"[ITM] guidance_scale overridden to {guidance_scale} (ITM requires > 1.0)")
+
+    # ---- Sparse-attention backends (PISA / SVG / Radial) --------------------
+    # These inject attention processors into the SVD UNet via set_attn_processor.
+    # Geometry: the SVD UNet sees ONE stacked image. For the 3-view strip that is
+    # 3 rows x 1 col (num_views=3, H_per_view=24, W=40 -> 72x40 latent); for the
+    # 4-view 2x2 grid it is a single 48x80 canvas, which we pass as num_views=1,
+    # H_per_view=48, W=80 (the SAP/stripe masks operate on the flat token grid, so
+    # a single-canvas geometry is correct — there is no vertical view-stripe).
+    _grid_rows = int(getattr(agent, "grid_rows", 3) or 3)
+    _grid_cols = int(getattr(agent, "grid_cols", 1) or 1)
+    _h_per_view = 24 * _grid_rows          # 192px/8 = 24 latent rows per view row
+    _w = 40 * _grid_cols                   # 320px/8 = 40 latent cols per view col
+    _num_views = 1                         # treat the stacked canvas as one image
+
+    if getattr(args, "use_pisa", False):
+        import importlib as _il
+        _il.import_module("methods.sparse_attention.pisa.adapter").enable_pisa(
+            unet,
+            density=args.pisa_density,
+            block_size=args.pisa_block_size,
+            start_layer_idx=args.pisa_start_layer_idx,
+        )
+        print(f"[Sparse] PISA enabled: density={args.pisa_density}, "
+              f"block_size={args.pisa_block_size}, start_layer={args.pisa_start_layer_idx}")
+    if getattr(args, "use_svg", False):
+        import importlib as _il
+        _il.import_module("methods.sparse_attention.svg.adapter").enable_svg(
+            unet,
+            pattern=args.svg_pattern,
+            num_views=_num_views,
+            H_per_view=_h_per_view,
+            W=_w,
+            sparsity=args.svg_sparsity,
+            num_sampled_rows=args.svg_num_sampled_rows,
+            first_layers_fp=args.svg_first_layers_fp,
+            num_q_centroids=args.svg_num_q_centroids,
+            num_k_centroids=args.svg_num_k_centroids,
+            top_p_kmeans=args.svg_top_p_kmeans,
+            min_kc_ratio=getattr(args, "svg_min_kc_ratio", 0.0),
+            kmeans_iter_init=args.svg_kmeans_iter_init,
+            kmeans_iter_step=args.svg_kmeans_iter_step,
+        )
+        print(f"[Sparse] SVG {args.svg_pattern} enabled: sparsity={args.svg_sparsity}, "
+              f"geom={_num_views}x{_h_per_view}x{_w}")
+    if getattr(args, "use_radial", False):
+        import importlib as _il
+        _il.import_module("methods.sparse_attention.radial.adapter").enable_radial_attention(
+            unet,
+            decay_factor=args.radial_decay_factor,
+            block_size=args.radial_block_size,
+            pad_small_layers=args.radial_pad_small_layers,
+            first_layers_fp=args.radial_first_layers_fp,
+            num_views=_num_views,
+            H_per_view=_h_per_view,
+            W=_w,
+            model_type=args.radial_model_type,
+        )
+        print(f"[Sparse] Radial enabled: decay={args.radial_decay_factor}, "
+              f"block_size={args.radial_block_size}, model_type={args.radial_model_type}, "
+              f"geom={_num_views}x{_h_per_view}x{_w}")
     return guidance_scale
 
 
@@ -564,6 +731,12 @@ def main():
     _import_pruning_module("SiTo", "config").add_sito_args(parser)
     _import_pruning_module("importance_token_merge", "config").add_itm_args(parser)
 
+    # Sparse-attention backend args (PISA / SVG / Radial — SVD-UNet flavored)
+    import importlib as _il
+    _il.import_module("methods.sparse_attention.pisa.config").add_pisa_args(parser)
+    _il.import_module("methods.sparse_attention.svg.config").add_svg_args(parser)
+    _il.import_module("methods.sparse_attention.radial.config").add_radial_args(parser)
+
     args = parser.parse_args()
 
     from methods.cache_strategy.ctrl_world_utils import validate_ctrl_world_backend_args
@@ -599,6 +772,7 @@ def main():
     guidance_scale = _enable_backend(agent, args, model_args.num_inference_steps)
     if guidance_scale != model_args.guidance_scale:
         model_args.guidance_scale = guidance_scale
+    _install_attn_profiler(agent.model.unet)
 
     splits = ["val", "train"] if args.split == "all" else [args.split]
     episode_ids = []

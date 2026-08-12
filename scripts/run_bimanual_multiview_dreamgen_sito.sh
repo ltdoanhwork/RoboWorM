@@ -7,6 +7,15 @@
 #
 # Outputs: sampling_dataset/sito/bimanual/output/multiview/dreamgen/<cat>/<iter>/<task>/episode_XXXXXX/
 #
+# !!! EXISTING OUTPUT NOTE (2026-08-11) !!!
+# The 300 episodes already on disk under sampling_dataset/sito/bimanual/output/
+# multiview/dreamgen/.../iter_000120000/ were generated on Jul 27 with the OLD
+# default SITO_PRUNE_RATIO=0.30. The tuned default is now 0.20 (0.30 visually
+# smears the Pred on this 2x2-grid multiview — see the dreamgen-bimanual-pruning
+# -insights rule). Those 300 are KEPT as-is (not regenerated); the script SKIPS
+# existing files, so a plain re-run will NOT overwrite them. To regenerate at 0.20,
+# delete the iter_000120000 dirs first (or run with a fresh SAVE_ROOT).
+#
 # Usage:
 #   CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_multiview_dreamgen_dicache.sh
 #
@@ -49,10 +58,15 @@ MAX_SEGMENTS="${MAX_SEGMENTS:-}"
 SEED="${SEED:-0}"
 ITER_TAG="${ITER_TAG:-${ITER_NAME}}"
 
-# SiTo parameters. DreamGen 2B DiT self-attention pruning (see .cursor/rules
-# dreamgen pruning insights): prune_ratio 0.30 is the quality/speed knee on 2B DiT,
-# group_mode temporal, noise 0, start_layer 6, keep_last 2.
-SITO_PRUNE_RATIO="${SITO_PRUNE_RATIO:-0.30}"
+# SiTo parameters. TUNED on bimanual multiview 2x2 grid (2 ep, ckpt-120000) vs
+# dense 119.0s/seg:
+#   p0.20 -> 99.9s (1.19x)  Pred mostly coherent, mild speckle  <-- DEFAULT (knee)
+#   p0.30 -> 92.2s (1.29x)  PSNR 13.35 (>dense!) but full_merged Pred CORRUPTS
+#                           (arm dissolves into speckle, box melts) — PSNR misleads
+# Multiview 2x2 + autoregressive rollout degrades EARLY (same as humanoid multiview);
+# the blue-mat static bg inflates PSNR while the Pred views smear. Judge on
+# full_merged, not PSNR. group_mode temporal, noise 0, start 6, keep 2.
+SITO_PRUNE_RATIO="${SITO_PRUNE_RATIO:-0.20}"
 SITO_START_LAYER_IDX="${SITO_START_LAYER_IDX:-6}"
 SITO_KEEP_LAST_N_DENSE="${SITO_KEEP_LAST_N_DENSE:-2}"
 SITO_GROUP_MODE="${SITO_GROUP_MODE:-temporal}"
