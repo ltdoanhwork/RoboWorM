@@ -6,4 +6,4 @@
 
 2. overlay.py to write a mp4 video with overlay from 1
 
-# use point_picker.py to pick the initial keypoint to track (should run on a local machine - monitor available) -> it will write to the seed_points.json
+- use point_picker.py to pick the initial keypoint to track (should run on a local machine - monitor available) -> it will write to the seed_points.json
