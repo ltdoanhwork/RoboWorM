@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_single_arm_multiview",
+  "subset": "makovian",
+  "source_episode": "012605",
+  "variant": "v07_cyan",
+  "object": "orange towel",
+  "edit_instruction": "change the color of the orange towel to cyan, keep its shape and position",
+  "source_instruction": "Put the white plush bear on the orange towel",
+  "new_instruction": "Put the white plush bear on the cyan towel.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_bimanual_multiview",
+  "subset": "makovian",
+  "source_episode": "makovian_insert_washer_shaft_both_hands__000055",
+  "variant": "v04_purple",
+  "object": "washer",
+  "edit_instruction": "change the color of the washer to purple, keep its shape and position",
+  "source_instruction": "insert washer shaft both hands",
+  "new_instruction": "Insert purple washer shaft both hands.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

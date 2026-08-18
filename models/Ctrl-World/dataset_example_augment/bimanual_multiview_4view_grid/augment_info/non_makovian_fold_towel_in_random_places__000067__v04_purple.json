@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_bimanual_multiview_4view_grid",
+  "subset": "non_makovian",
+  "source_episode": "non_makovian_fold_towel_in_random_places__000067",
+  "variant": "v04_purple",
+  "object": "towel",
+  "edit_instruction": "change the color of the towel to purple, keep its shape and position",
+  "source_instruction": "fold towel in random places",
+  "new_instruction": "Fold purple towel in random places.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

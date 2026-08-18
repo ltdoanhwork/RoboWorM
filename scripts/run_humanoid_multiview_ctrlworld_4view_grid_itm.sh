@@ -41,10 +41,14 @@ INPUT_ROOT="${INPUT_ROOT:-${ROOT}/sampling_dataset/itm/humanoid/input/multiview/
 
 # ITM ST-hold parameters -- TUNED on the humanoid 4-VIEW GRID model (see
 # .cursor/rules/ctrlworld-humanoid-multiview-4view-grid-pruning-insights.mdc).
-# Like SiTo, ITM is a NET LOSS here (attention-only pruning can't beat dense on
-# this SVD UNet). DEFAULT = quality-safe knee k0.9/d1 (PSNR -0.18, 0.99x).
-ITM_ST_KEEP_RATIO="${ITM_ST_KEEP_RATIO:-0.9}"
-ITM_MAX_DOWNSAMPLE_RATIO="${ITM_MAX_DOWNSAMPLE_RATIO:-1}"
+# ITM ST-hold = SiTo ST-hold + similarity_recover (pruned tokens copy the most
+# SIMILAR kept token, not the nearest index), which preserves appearance better at
+# the same keep ratio. With max_downsample_ratio=4 (all 3 stages) it gives the
+# same ~1.11x as SiTo but marginally higher quality. DEFAULT = k0.85/d4
+# (PSNR -0.33, LPIPS 0.25 = best pruning quality at 1.11x). k0.9/d1 = quality-safe
+# (~1.0x); <=k0.8 corrupts.
+ITM_ST_KEEP_RATIO="${ITM_ST_KEEP_RATIO:-0.85}"
+ITM_MAX_DOWNSAMPLE_RATIO="${ITM_MAX_DOWNSAMPLE_RATIO:-4}"
 
 if [ ! -f "${CKPT}" ]; then
   echo "ERROR: checkpoint not found: ${CKPT}" >&2

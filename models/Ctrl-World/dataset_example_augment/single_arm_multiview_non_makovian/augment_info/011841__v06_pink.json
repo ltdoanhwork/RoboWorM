@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_single_arm_multiview",
+  "subset": "non_makovian",
+  "source_episode": "011841",
+  "variant": "v06_pink",
+  "object": "purple cup",
+  "edit_instruction": "change the color of the purple cup to pink, keep its shape and position",
+  "source_instruction": "Put the white and blue object inside the purple cup in the open upper cabinet.",
+  "new_instruction": "Put the white and blue object inside the pink cup in the open upper cabinet.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

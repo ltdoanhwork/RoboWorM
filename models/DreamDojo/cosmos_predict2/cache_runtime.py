@@ -54,6 +54,8 @@ def validate_runtime_backend_args(
         name
         for name, enabled in (
             ("SVG", setup_args.use_svg),
+            ("PISA", getattr(setup_args, "use_pisa", False)),
+            ("Radial", getattr(setup_args, "use_radial", False)),
             ("SiTo", setup_args.use_sito),
             ("ITM", setup_args.use_itm),
         )
@@ -75,12 +77,18 @@ def validate_runtime_backend_args(
         raise ValueError("[SiTo] DreamDojo SiTo v1 is single-GPU only; set context_parallel_size=1.")
     if setup_args.use_itm and setup_args.context_parallel_size > 1:
         raise ValueError("[ITM] DreamDojo ITM v1 is single-GPU only; set context_parallel_size=1.")
+    if getattr(setup_args, "use_pisa", False) and setup_args.context_parallel_size > 1:
+        raise ValueError("[PISA] DreamDojo PISA v1 is single-GPU only; set context_parallel_size=1.")
+    if getattr(setup_args, "use_radial", False) and setup_args.context_parallel_size > 1:
+        raise ValueError("[Radial] DreamDojo Radial v1 is single-GPU only; set context_parallel_size=1.")
     if setup_args.use_sito and setup_args.use_svg:
         raise ValueError("[SiTo] SiTo and SVG are mutually exclusive in DreamDojo.")
     if setup_args.use_itm and inference_args.guidance <= 0:
         raise ValueError("[ITM] DreamDojo ITM requires classifier-free guidance with `guidance > 0`.")
     if len(enabled_sparse) > 1:
-        raise ValueError("[ITM] DreamDojo sparse/token backends are mutually exclusive: SVG, SiTo, ITM.")
+        raise ValueError(
+            "[Sparse] DreamDojo sparse/token backends are mutually exclusive: SVG, PISA, Radial, SiTo, ITM."
+        )
     if len(enabled_cache) > 1:
         raise ValueError("[Cache] DreamDojo cache backends are mutually exclusive: WorldCache, DiCache, FasterCache.")
     if enabled_cache and setup_args.context_parallel_size > 1:

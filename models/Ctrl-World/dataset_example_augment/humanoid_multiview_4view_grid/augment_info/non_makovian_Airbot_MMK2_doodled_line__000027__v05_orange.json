@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_humanoid_multiview_4view_grid",
+  "subset": "non_makovian",
+  "source_episode": "non_makovian_Airbot_MMK2_doodled_line__000027",
+  "variant": "v05_orange",
+  "object": "pen",
+  "edit_instruction": "change the color of the pen to orange, keep its shape and position",
+  "source_instruction": "Pick up the ballpoint pen and leave your handwriting on the paper.",
+  "new_instruction": "Pick up the ballpoint orange pen and leave your handwriting on the paper.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

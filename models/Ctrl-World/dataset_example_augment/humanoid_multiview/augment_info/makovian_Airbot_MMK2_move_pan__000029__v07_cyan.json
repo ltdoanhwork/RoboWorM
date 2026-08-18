@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_humanoid_multiview",
+  "subset": "makovian",
+  "source_episode": "makovian_Airbot_MMK2_move_pan__000029",
+  "variant": "v07_cyan",
+  "object": "pan",
+  "edit_instruction": "change the color of the pan to cyan, keep its shape and position",
+  "source_instruction": "push the pan to the edge of the table with your left hand and place it on the building block with your right hand.",
+  "new_instruction": "Push the cyan pan to the edge of the table with your left hand and place it on the building block with your right hand.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

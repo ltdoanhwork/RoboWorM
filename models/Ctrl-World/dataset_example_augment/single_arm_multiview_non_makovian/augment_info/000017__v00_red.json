@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_single_arm_multiview",
+  "subset": "non_makovian",
+  "source_episode": "000017",
+  "variant": "v00_red",
+  "object": "green block",
+  "edit_instruction": "change the color of the green block to red, keep its shape and position",
+  "source_instruction": "Put the green block on top of the other blocks",
+  "new_instruction": "Put the red block on top of the other blocks.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

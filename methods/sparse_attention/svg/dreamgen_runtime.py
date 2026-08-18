@@ -169,11 +169,22 @@ def _build_svg1_attention_mask(mask_name: str, *, sample_mse_max_row: int, conte
 
 
 class DreamGenSVG1Runtime:
-    def __init__(self, *, sparsity: float, num_sampled_rows: int, sample_mse_max_row: int):
+    def __init__(
+        self,
+        *,
+        sparsity: float,
+        num_sampled_rows: int,
+        sample_mse_max_row: int,
+        profile_recompute_every: int = 1,
+    ):
         if not 0 < sparsity <= 1:
             raise ValueError(f"[SVG1] `sparsity` must be in (0, 1], got {sparsity}.")
         if num_sampled_rows <= 0 or sample_mse_max_row <= 0:
             raise ValueError("[SVG1] `num_sampled_rows` and `sample_mse_max_row` must be positive.")
+        if profile_recompute_every <= 0:
+            raise ValueError(
+                f"[SVG1] `profile_recompute_every` must be >= 1, got {profile_recompute_every}."
+            )
         if flex_attention is None or create_block_mask is None:
             raise RuntimeError(
                 "[SVG1] This Torch build does not provide `torch.nn.attention.flex_attention`. "
@@ -184,9 +195,37 @@ class DreamGenSVG1Runtime:
         self.sparsity = float(sparsity)
         self.num_sampled_rows = int(num_sampled_rows)
         self.sample_mse_max_row = int(sample_mse_max_row)
+        # The spatial-vs-temporal head assignment is near-constant across diffusion
+        # steps, but `_sample_mse_profile` costs ~0.58ms/call at S=4800 (~47% of a
+        # dense flash-attention call), so recomputing it every call wipes out the
+        # sparse saving. Cache it and refresh every N calls instead.
+        self.profile_recompute_every = int(profile_recompute_every)
+        self._profile_call_count = 0
+        self._cached_best_mask_idx: torch.Tensor | None = None
         self._mask_metadata_cache: dict[tuple[int, int, int], dict[str, int]] = {}
         self._attention_mask_cache: dict[tuple[int, int, int, torch.device], tuple[torch.Tensor, torch.Tensor]] = {}
         self._block_mask_cache: dict[tuple[torch.dtype, torch.device, int, int, int, int, int], Any] = {}
+
+    def _best_mask_idx(
+        self,
+        query: torch.Tensor,
+        key: torch.Tensor,
+        value: torch.Tensor,
+        *,
+        attention_masks: tuple[torch.Tensor, torch.Tensor],
+    ) -> torch.Tensor:
+        cached = self._cached_best_mask_idx
+        reuse = (
+            cached is not None
+            and self._profile_call_count % self.profile_recompute_every != 0
+            and cached.shape[-1] == query.shape[1]
+        )
+        self._profile_call_count += 1
+        if reuse:
+            return cached
+        best = self._sample_mse_profile(query, key, value, attention_masks=attention_masks)
+        self._cached_best_mask_idx = best
+        return best
 
     def _validate(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, *, video_size) -> None:
         if not query.is_cuda:
@@ -316,7 +355,7 @@ class DreamGenSVG1Runtime:
             frame_size=frame_size,
             device=q.device,
         )
-        best_mask_idx = self._sample_mse_profile(q, k, v, attention_masks=attention_masks)
+        best_mask_idx = self._best_mask_idx(q, k, v, attention_masks=attention_masks)
 
         modules = _load_svg1_modules()
         placement_mod = modules["placement_mod"]
@@ -509,6 +548,7 @@ class DreamGenSVGRuntime:
                 sparsity=kwargs["sparsity"],
                 num_sampled_rows=kwargs["num_sampled_rows"],
                 sample_mse_max_row=kwargs["sample_mse_max_row"],
+                profile_recompute_every=int(kwargs.get("profile_recompute_every", 1)),
             )
         elif variant == "svg2":
             self.runtime = DreamGenSVG2Runtime(

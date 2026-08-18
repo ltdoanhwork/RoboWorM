@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_humanoid_multiview",
+  "subset": "non_makovian",
+  "source_episode": "non_makovian_Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate__000012",
+  "variant": "v03_yellow",
+  "object": "pomegranate",
+  "edit_instruction": "change the color of the pomegranate to yellow, keep its shape and position",
+  "source_instruction": "pick up the pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box.",
+  "new_instruction": "Pick up the yellow pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

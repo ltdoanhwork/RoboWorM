@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_single_arm_multiview",
+  "subset": "non_makovian",
+  "source_episode": "008724",
+  "variant": "v05_orange",
+  "object": "lid",
+  "edit_instruction": "change the color of the lid to orange, keep its shape and position",
+  "source_instruction": "Pick the lid from the table and place it on top of the jar",
+  "new_instruction": "Pick the orange lid from the table and place it on top of the jar.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

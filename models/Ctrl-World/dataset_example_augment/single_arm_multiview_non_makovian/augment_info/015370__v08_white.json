@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_single_arm_multiview",
+  "subset": "non_makovian",
+  "source_episode": "015370",
+  "variant": "v08_white",
+  "object": "white plate",
+  "edit_instruction": "change the color of the white plate to white, keep its shape and position",
+  "source_instruction": "Remove the white plate from the dishwasher and place it on top of the white plates on the counter",
+  "new_instruction": "Remove the white plate from the dishwasher and place it on top of the white plates on the counter.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

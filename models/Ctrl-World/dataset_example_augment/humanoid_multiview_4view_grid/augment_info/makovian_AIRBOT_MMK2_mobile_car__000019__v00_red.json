@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_humanoid_multiview_4view_grid",
+  "subset": "makovian",
+  "source_episode": "makovian_AIRBOT_MMK2_mobile_car__000019",
+  "variant": "v00_red",
+  "object": "yellow cart",
+  "edit_instruction": "change the color of the yellow cart to red, keep its shape and position",
+  "source_instruction": "push the yellow cart to the right with your left hand.",
+  "new_instruction": "Push the red cart to the right with your left hand.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

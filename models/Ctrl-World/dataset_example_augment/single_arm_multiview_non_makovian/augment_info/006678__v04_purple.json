@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_single_arm_multiview",
+  "subset": "non_makovian",
+  "source_episode": "006678",
+  "variant": "v04_purple",
+  "object": "orange circle",
+  "edit_instruction": "change the color of the orange circle to purple, keep its shape and position",
+  "source_instruction": "Remove the orange circle from the wooden object.",
+  "new_instruction": "Remove the purple circle from the wooden object.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

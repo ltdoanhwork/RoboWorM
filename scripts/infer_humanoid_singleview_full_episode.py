@@ -15,6 +15,7 @@ are skipped.
 
 import argparse
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -68,7 +69,97 @@ def parse_args():
     parser.add_argument("--dicache-ret-ratio", type=float, default=0.2)
     parser.add_argument("--dicache-probe-depth", type=int, default=2)
 
+    # SVG (Sparse-VideoGen 1 / 2)
+    parser.add_argument("--use-svg", action="store_true")
+    parser.add_argument("--svg-variant", type=str, default="svg1", choices=["svg1", "svg2"])
+    parser.add_argument("--svg-start-layer-idx", type=int, default=None)
+    parser.add_argument("--svg-dense-step-frac", type=float, default=None)
+    parser.add_argument("--svg-sparsity", type=float, default=None)
+    parser.add_argument("--svg-num-sampled-rows", type=int, default=None)
+    parser.add_argument("--svg-sample-mse-max-row", type=int, default=None)
+    parser.add_argument(
+        "--svg-profile-recompute-every",
+        type=int,
+        default=None,
+        help="SVG1: recompute the spatial/temporal head MSE profile every N attention "
+        "calls (1 = every call, the upstream behaviour). The profile costs ~0.58ms at "
+        "S=4800 (~47%% of a dense call), so caching it is what makes SVG1 beat dense.",
+    )
+    parser.add_argument("--svg-num-q-centroids", type=int, default=None)
+    parser.add_argument("--svg-num-k-centroids", type=int, default=None)
+    parser.add_argument("--svg-top-p-kmeans", type=float, default=None)
+    parser.add_argument("--svg-min-kc-ratio", type=float, default=None)
+    parser.add_argument("--svg-kmeans-iter-init", type=int, default=None)
+    parser.add_argument("--svg-kmeans-iter-step", type=int, default=None)
+
+    # PISA (piecewise sparse attention)
+    parser.add_argument("--use-pisa", action="store_true")
+    parser.add_argument("--pisa-density", type=float, default=0.2)
+    parser.add_argument("--pisa-block-size", type=int, default=64)
+    parser.add_argument("--pisa-start-layer-idx", type=int, default=2)
+    parser.add_argument("--pisa-use-bias", action="store_true")
+
+    # Radial Attention
+    parser.add_argument("--use-radial", action="store_true")
+    parser.add_argument("--radial-decay-factor", type=float, default=1.0)
+    parser.add_argument("--radial-block-size", type=int, default=64, choices=[64, 128])
+    parser.add_argument("--radial-start-layer-idx", type=int, default=4)
+    parser.add_argument("--radial-model-type", type=str, default="hunyuan", choices=["hunyuan", "wan"])
+
     return parser.parse_args()
+
+
+def build_experiment_opts(args):
+    """Build hydra experiment overrides for the sparse-attention backends."""
+    opts = []
+    if getattr(args, "use_svg", False):
+        opts += [
+            "model.config.net.self_attention_backend=svg",
+            "model.config.net.cross_attention_backend=minimal_a2a",
+            f"model.config.net.svg_variant={args.svg_variant}",
+        ]
+        for flag, key in (
+            ("svg_start_layer_idx", "svg_start_layer_idx"),
+            ("svg_dense_step_frac", "svg_dense_step_frac"),
+            ("svg_sparsity", "svg_sparsity"),
+            ("svg_num_sampled_rows", "svg_num_sampled_rows"),
+            ("svg_sample_mse_max_row", "svg_sample_mse_max_row"),
+            ("svg_profile_recompute_every", "svg_profile_recompute_every"),
+            ("svg_num_q_centroids", "svg_num_q_centroids"),
+            ("svg_num_k_centroids", "svg_num_k_centroids"),
+            ("svg_top_p_kmeans", "svg_top_p_kmeans"),
+            ("svg_min_kc_ratio", "svg_min_kc_ratio"),
+            ("svg_kmeans_iter_init", "svg_kmeans_iter_init"),
+            ("svg_kmeans_iter_step", "svg_kmeans_iter_step"),
+        ):
+            value = getattr(args, flag, None)
+            if value is not None:
+                opts.append(f"model.config.net.{key}={value}")
+    if getattr(args, "use_pisa", False):
+        opts += [
+            "model.config.net.self_attention_backend=pisa",
+            "model.config.net.cross_attention_backend=minimal_a2a",
+            f"model.config.net.pisa_density={args.pisa_density}",
+            f"model.config.net.pisa_block_size={args.pisa_block_size}",
+            f"model.config.net.pisa_start_layer_idx={args.pisa_start_layer_idx}",
+            f"model.config.net.pisa_use_bias={str(args.pisa_use_bias).lower()}",
+        ]
+    if getattr(args, "use_radial", False):
+        opts += [
+            "model.config.net.self_attention_backend=radial",
+            "model.config.net.cross_attention_backend=minimal_a2a",
+            f"model.config.net.radial_decay_factor={args.radial_decay_factor}",
+            f"model.config.net.radial_block_size={args.radial_block_size}",
+            f"model.config.net.radial_start_layer_idx={args.radial_start_layer_idx}",
+            f"model.config.net.radial_model_type={args.radial_model_type}",
+        ]
+
+    enabled = sum(
+        bool(getattr(args, flag, False)) for flag in ("use_svg", "use_pisa", "use_radial")
+    )
+    if enabled > 1:
+        raise ValueError("SVG / PISA / Radial are mutually exclusive; enable at most one.")
+    return opts
 
 
 def build_cache_config_from_args(args):
@@ -148,7 +239,7 @@ def build_model(args):
         s3_credential_path="",
         context_parallel_size=setup_args.context_parallel_size,
         config_file=setup_args.config_file,
-        experiment_opts=[],
+        experiment_opts=build_experiment_opts(args),
         cache_config=cache_config,
     )
 
@@ -324,6 +415,27 @@ def main():
         "dicache_rel_l1_thresh": getattr(args, "dicache_rel_l1_thresh", None),
         "dicache_ret_ratio": getattr(args, "dicache_ret_ratio", None),
         "dicache_probe_depth": getattr(args, "dicache_probe_depth", None),
+        "use_svg": getattr(args, "use_svg", False),
+        "svg_variant": getattr(args, "svg_variant", None),
+        "svg_start_layer_idx": getattr(args, "svg_start_layer_idx", None),
+        "svg_dense_step_frac": getattr(args, "svg_dense_step_frac", None),
+        "svg_sparsity": getattr(args, "svg_sparsity", None),
+        "svg_num_sampled_rows": getattr(args, "svg_num_sampled_rows", None),
+        "svg_sample_mse_max_row": getattr(args, "svg_sample_mse_max_row", None),
+        "svg_profile_recompute_every": getattr(args, "svg_profile_recompute_every", None),
+        "svg_num_q_centroids": getattr(args, "svg_num_q_centroids", None),
+        "svg_num_k_centroids": getattr(args, "svg_num_k_centroids", None),
+        "svg_top_p_kmeans": getattr(args, "svg_top_p_kmeans", None),
+        "svg_min_kc_ratio": getattr(args, "svg_min_kc_ratio", None),
+        "use_pisa": getattr(args, "use_pisa", False),
+        "pisa_density": getattr(args, "pisa_density", None),
+        "pisa_block_size": getattr(args, "pisa_block_size", None),
+        "pisa_start_layer_idx": getattr(args, "pisa_start_layer_idx", None),
+        "use_radial": getattr(args, "use_radial", False),
+        "radial_decay_factor": getattr(args, "radial_decay_factor", None),
+        "radial_block_size": getattr(args, "radial_block_size", None),
+        "radial_start_layer_idx": getattr(args, "radial_start_layer_idx", None),
+        "radial_model_type": getattr(args, "radial_model_type", None),
     }
     with open(save_root / "run_config.json", "w") as f:
         json.dump(run_config, f, indent=2)
@@ -472,6 +584,18 @@ def main():
     else:
         with open(save_root / "all_summary.json", "w") as f:
             json.dump({"psnr": None, "ssim": None, "lpips": None, **timing_summary}, f, indent=2)
+
+    if os.environ.get("DD_ATTN_PROFILE") == "1":
+        from cosmos_predict2._src.predict2.networks.minimal_v4_dit import _ATTN_PROFILE_STATS
+
+        total = sum(v[1] for v in _ATTN_PROFILE_STATS.values())
+        print(f"\n=== Attention profile (total {total:.2f}s of {sum(all_gen_times):.2f}s gen) ===")
+        for key, (calls, secs) in sorted(_ATTN_PROFILE_STATS.items(), key=lambda kv: -kv[1][1]):
+            backend, kind, shape = key
+            print(
+                f"{backend:>10} {kind:>5} q={shape}: {calls:6d} calls, {secs:7.2f}s "
+                f"({secs / calls * 1000:.3f} ms/call)"
+            )
 
     cleanup_environment()
 

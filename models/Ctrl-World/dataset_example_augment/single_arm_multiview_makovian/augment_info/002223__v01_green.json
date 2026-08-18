@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_single_arm_multiview",
+  "subset": "makovian",
+  "source_episode": "002223",
+  "variant": "v01_green",
+  "object": "marker",
+  "edit_instruction": "change the color of the marker to green, keep its shape and position",
+  "source_instruction": "Put the marker in the cup",
+  "new_instruction": "Put the green marker in the cup.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

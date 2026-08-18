@@ -48,19 +48,28 @@ def enable_pisa(
         Layers with very short sequences (e.g. temporal T=25) are skipped
         automatically inside the processor regardless of this setting.
     """
-    existing_processors = unet.attn_processors
+    # Enumerate attention modules directly via named_modules and assign the
+    # processor in-place. We deliberately do NOT use unet.attn_processors /
+    # set_attn_processor here: on the Ctrl-World custom
+    # UNetSpatioTemporalConditionModel that property returns an EMPTY dict (its
+    # Attention modules don't expose get_processor the way the diffusers property
+    # expects), so the old code silently injected PISA into ZERO layers and ran
+    # pure dense (verified via CW_ATTN_PROFILE: T=3840 attn1 stayed at the dense
+    # 1.49 ms/call). named_modules finds every real Attention module.
     new_processors = {}
-
-    for layer_idx, name in enumerate(existing_processors.keys()):
-        new_processors[name] = SVDPISAAttnProcessor(
-            attn_fn=piecewise_sparse_attention,
-            density=density,
-            block_size=block_size,
-            layer_idx=layer_idx,
-            start_layer_idx=start_layer_idx,
-        )
-
-    unet.set_attn_processor(new_processors)
+    layer_idx = 0
+    for name, module in unet.named_modules():
+        if hasattr(module, "processor") and hasattr(module, "to_q"):
+            proc = SVDPISAAttnProcessor(
+                attn_fn=piecewise_sparse_attention,
+                density=density,
+                block_size=block_size,
+                layer_idx=layer_idx,
+                start_layer_idx=start_layer_idx,
+            )
+            module.processor = proc
+            new_processors[name] = proc
+            layer_idx += 1
     print(
         f"[PISA] Enabled on {len(new_processors)} attention layers "
         f"(density={density}, block_size={block_size}, "

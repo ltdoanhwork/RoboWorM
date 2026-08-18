@@ -40,11 +40,15 @@ INPUT_ROOT="${INPUT_ROOT:-${ROOT}/sampling_dataset/sito/humanoid/input/multiview
 
 # SiTo ST-hold parameters -- TUNED on the humanoid 4-VIEW GRID model (see
 # .cursor/rules/ctrlworld-humanoid-multiview-4view-grid-pruning-insights.mdc).
-# On this SVD UNet spatial-attention pruning is a NET LOSS (attention ~= 7% of
-# wall), so there is NO config faster than dense. DEFAULT = the quality-safe knee
-# k0.9/d1 (PSNR -0.09 vs dense, 1.00x). k0.7/d4 and below smear + corrupt.
-SITO_ST_KEEP_RATIO="${SITO_ST_KEEP_RATIO:-0.9}"
-SITO_MAX_DOWNSAMPLE_RATIO="${SITO_MAX_DOWNSAMPLE_RATIO:-1}"
+# ST-hold prunes spatial tokens ONCE and holds them compressed through BOTH the
+# spatial and the temporal block, so it shrinks the temporal-attn batch (H*W) too
+# -- the temporal block is 57% of attention. With max_downsample_ratio=4 it prunes
+# all 3 spatial stages (3840/960/240), giving a REAL ~1.11x wall speedup (dense
+# 139s -> 125s, 2 val eps). DEFAULT = k0.8/d4 (PSNR -0.39, mild haze on the large
+# view = faster-but-lossy knee). Use k0.9/d1 for quality-safe (~1.0x, no speedup);
+# k0.7/d4 and below corrupt (PSNR -0.9, LPIPS 0.33).
+SITO_ST_KEEP_RATIO="${SITO_ST_KEEP_RATIO:-0.8}"
+SITO_MAX_DOWNSAMPLE_RATIO="${SITO_MAX_DOWNSAMPLE_RATIO:-4}"
 
 if [ ! -f "${CKPT}" ]; then
   echo "ERROR: checkpoint not found: ${CKPT}" >&2

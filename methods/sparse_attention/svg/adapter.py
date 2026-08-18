@@ -44,6 +44,7 @@ def enable_svg(
     num_sampled_rows: int = 64,
     first_layers_fp: int = 2,
     sample_mse_max_row: int = 3000,
+    plan_recompute_every: int = 0,
     # SVG2 / SAP params
     num_q_centroids: int = 50,
     num_k_centroids: int = 200,
@@ -90,6 +91,9 @@ def enable_svg(
     ProcessorCls.sparsity = sparsity
     ProcessorCls.num_sampled_rows = num_sampled_rows
     ProcessorCls.first_layers_fp = first_layers_fp
+    # Hold the SVG1 MSE mask-selection plan after the first call (prune-once-hold).
+    # SVG1 only; harmless attribute on SVG2.
+    ProcessorCls.plan_recompute_every = plan_recompute_every
     # Geometry: stored so the processor can reconstruct the view-stripe mask
     # for T=T_full and a fallback wider band for smaller T.
     ProcessorCls.num_views = num_views
@@ -105,13 +109,17 @@ def enable_svg(
         ProcessorCls.kmeans_iter_step = kmeans_iter_step
         ProcessorCls.logging_file = logging_file
 
-    # ── build per-layer processor dict and inject ───────────────────────────
-    num_layers = len(unet.attn_processors)
-    processors = {
-        name: ProcessorCls(layer_idx=idx, num_layers=num_layers)
-        for idx, name in enumerate(unet.attn_processors.keys())
-    }
-    unet.set_attn_processor(processors)
+    # ── build per-layer processor and inject via named_modules ──────────────
+    # NOT unet.attn_processors — that property returns EMPTY on the Ctrl-World
+    # custom UNet, so the old code injected 0 processors and ran pure dense
+    # (verified via CW_ATTN_PROFILE). named_modules finds every Attention module.
+    attn_modules = [
+        (name, module) for name, module in unet.named_modules()
+        if hasattr(module, "processor") and hasattr(module, "to_q")
+    ]
+    num_layers = len(attn_modules)
+    for idx, (name, module) in enumerate(attn_modules):
+        module.processor = ProcessorCls(layer_idx=idx, num_layers=num_layers)
 
     # ── summary ─────────────────────────────────────────────────────────────
     H_total = num_views * H_per_view

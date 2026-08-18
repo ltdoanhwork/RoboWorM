@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_bimanual_multiview",
+  "subset": "non_makovian",
+  "source_episode": "non_makovian_handover_metallic_zip_bag_upright__000075",
+  "variant": "v06_pink",
+  "object": "metallic zip bag",
+  "edit_instruction": "change the color of the metallic zip bag to pink, keep its shape and position",
+  "source_instruction": "handover metallic zip bag upright",
+  "new_instruction": "Handover pink zip bag upright.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

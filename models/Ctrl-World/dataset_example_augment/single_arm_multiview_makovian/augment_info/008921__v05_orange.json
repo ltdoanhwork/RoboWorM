@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_single_arm_multiview",
+  "subset": "makovian",
+  "source_episode": "008921",
+  "variant": "v05_orange",
+  "object": "pink cup",
+  "edit_instruction": "change the color of the pink cup to orange, keep its shape and position",
+  "source_instruction": "Move the pink cup to the right section of the plate rack",
+  "new_instruction": "Move the orange cup to the right section of the plate rack.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

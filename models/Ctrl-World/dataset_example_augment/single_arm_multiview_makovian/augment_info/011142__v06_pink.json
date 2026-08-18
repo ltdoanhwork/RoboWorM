@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_single_arm_multiview",
+  "subset": "makovian",
+  "source_episode": "011142",
+  "variant": "v06_pink",
+  "object": "door",
+  "edit_instruction": "change the color of the door to pink, keep its shape and position",
+  "source_instruction": "Open the door of the washing machine on the top right",
+  "new_instruction": "Open the pink door of the washing machine on the top right.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

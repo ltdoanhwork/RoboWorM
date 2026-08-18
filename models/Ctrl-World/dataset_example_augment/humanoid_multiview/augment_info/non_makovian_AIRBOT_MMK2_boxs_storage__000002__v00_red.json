@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_humanoid_multiview",
+  "subset": "non_makovian",
+  "source_episode": "non_makovian_AIRBOT_MMK2_boxs_storage__000002",
+  "variant": "v00_red",
+  "object": "pomegranate",
+  "edit_instruction": "change the color of the pomegranate to red, keep its shape and position",
+  "source_instruction": "throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand.",
+  "new_instruction": "Throw the red pomegranate into the left square with your left hand and the mango into the right square with your right hand.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

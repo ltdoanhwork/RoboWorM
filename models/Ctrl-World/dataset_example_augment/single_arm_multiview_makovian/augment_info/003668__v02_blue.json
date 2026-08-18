@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_single_arm_multiview",
+  "subset": "makovian",
+  "source_episode": "003668",
+  "variant": "v02_blue",
+  "object": "block",
+  "edit_instruction": "change the color of the block to blue, keep its shape and position",
+  "source_instruction": "Put the square block on the cylindrical block",
+  "new_instruction": "Put the blue square block on the cylindrical block.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

@@ -19,7 +19,7 @@ DOWN_SAMPLE="${DOWN_SAMPLE:-6}"; SPLIT="${SPLIT:-all}"
 OUTPUT_ROOT="${OUTPUT_ROOT:-${ROOT}/sampling_dataset/radial/humanoid/output/multiview/ctrlworld_4view_grid}"
 INPUT_ROOT="${INPUT_ROOT:-${ROOT}/sampling_dataset/radial/humanoid/input/multiview/ctrlworld_4view_grid}"
 RADIAL_DECAY="${RADIAL_DECAY:-1.0}"; RADIAL_BLOCK_SIZE="${RADIAL_BLOCK_SIZE:-64}"
-RADIAL_FIRST_LAYERS_FP="${RADIAL_FIRST_LAYERS_FP:-4}"; RADIAL_MODEL_TYPE="${RADIAL_MODEL_TYPE:-wan}"
+RADIAL_FIRST_LAYERS_FP="${RADIAL_FIRST_LAYERS_FP:-2}"; RADIAL_MODEL_TYPE="${RADIAL_MODEL_TYPE:-hunyuan}"
 
 [ -f "${CKPT}" ] || { echo "ERROR: checkpoint not found: ${CKPT}" >&2; exit 1; }
 [ -d "${DATASET_DIR}/annotation" ] || { echo "ERROR: annotation dir not found: ${DATASET_DIR}/annotation" >&2; exit 1; }

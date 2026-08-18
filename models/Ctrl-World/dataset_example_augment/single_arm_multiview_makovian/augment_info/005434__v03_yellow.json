@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_single_arm_multiview",
+  "subset": "makovian",
+  "source_episode": "005434",
+  "variant": "v03_yellow",
+  "object": "coffee pod",
+  "edit_instruction": "change the color of the coffee pod to yellow, keep its shape and position",
+  "source_instruction": "Remove the coffee pod from the top of the coffeemaker.",
+  "new_instruction": "Remove the yellow coffee pod from the top of the coffeemaker.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

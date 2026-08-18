@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_bimanual_multiview_4view_grid",
+  "subset": "makovian",
+  "source_episode": "makovian_spoon_red_block_bowl__000115",
+  "variant": "v05_orange",
+  "object": "spoon",
+  "edit_instruction": "change the color of the spoon to orange, keep its shape and position",
+  "source_instruction": "spoon red block bowl",
+  "new_instruction": "Orange spoon red block bowl.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

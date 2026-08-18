@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_single_arm_multiview",
+  "subset": "makovian",
+  "source_episode": "000255",
+  "variant": "v00_red",
+  "object": "orange marker",
+  "edit_instruction": "change the color of the orange marker to red, keep its shape and position",
+  "source_instruction": "Put the orange marker inside the white mug",
+  "new_instruction": "Put the red marker inside the white mug.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

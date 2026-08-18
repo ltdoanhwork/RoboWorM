@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_single_arm_multiview",
+  "subset": "makovian",
+  "source_episode": "007483",
+  "variant": "v04_purple",
+  "object": "tap",
+  "edit_instruction": "change the color of the tap to purple, keep its shape and position",
+  "source_instruction": "Slide the tap to the left",
+  "new_instruction": "Slide the purple tap to the left.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

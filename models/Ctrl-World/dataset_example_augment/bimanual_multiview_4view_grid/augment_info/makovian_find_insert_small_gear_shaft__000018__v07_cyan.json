@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_bimanual_multiview_4view_grid",
+  "subset": "makovian",
+  "source_episode": "makovian_find_insert_small_gear_shaft__000018",
+  "variant": "v07_cyan",
+  "object": "small gear",
+  "edit_instruction": "change the color of the small gear to cyan, keep its shape and position",
+  "source_instruction": "find insert small gear shaft",
+  "new_instruction": "Find insert cyan small gear shaft.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

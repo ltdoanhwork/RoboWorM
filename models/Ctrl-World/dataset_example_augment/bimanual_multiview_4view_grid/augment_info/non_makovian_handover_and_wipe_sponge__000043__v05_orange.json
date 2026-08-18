@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_bimanual_multiview_4view_grid",
+  "subset": "non_makovian",
+  "source_episode": "non_makovian_handover_and_wipe_sponge__000043",
+  "variant": "v05_orange",
+  "object": "sponge",
+  "edit_instruction": "change the color of the sponge to orange, keep its shape and position",
+  "source_instruction": "handover and wipe sponge",
+  "new_instruction": "Handover and wipe orange sponge.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

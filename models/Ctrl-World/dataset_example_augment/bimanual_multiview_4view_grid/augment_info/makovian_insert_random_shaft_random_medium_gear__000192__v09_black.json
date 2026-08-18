@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_bimanual_multiview_4view_grid",
+  "subset": "makovian",
+  "source_episode": "makovian_insert_random_shaft_random_medium_gear__000192",
+  "variant": "v09_black",
+  "object": "medium gear",
+  "edit_instruction": "change the color of the medium gear to black, keep its shape and position",
+  "source_instruction": "insert random shaft random medium gear",
+  "new_instruction": "Insert random shaft random black medium gear.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

@@ -120,23 +120,32 @@ class SVDRadialAttnProcessor:
                 v = F.pad(v, (0, 0, 0, pad_len))
 
         padded_T = T + pad_len
-        
-        if padded_T not in self._mask_map_cache:
-            # Recreate mask map for this sequence length
-            self._mask_map_cache[padded_T] = MaskMap(video_token_num=padded_T, num_frame=self.num_views)
-            
-        mask_map = self._mask_map_cache[padded_T]
-        
+
+        # Build the MaskMap, the radial log-decay boolean mask, AND the flashinfer
+        # block-sparse (BSR) wrapper ONCE per padded_T, then HOLD them across all
+        # 450 UNet forwards. Rebuilding queryLogMask + get_bsr_wrapper every call
+        # (as the original did) was pure repeated overhead — on Ctrl-World's short
+        # sequences that overhead exceeds the attention it saves. The mask depends
+        # only on geometry/decay/block_size (all fixed per run), so holding it is
+        # exact, not an approximation.
+        cache = self._mask_map_cache
+        if padded_T not in cache:
+            mask_map = MaskMap(video_token_num=padded_T, num_frame=self.num_views)
+            video_mask = mask_map.queryLogMask(
+                q.transpose(1, 2).contiguous(), "radial",
+                block_size=self.block_size, decay_factor=self.decay_factor,
+                model_type=self.model_type,
+            )
+            video_mask = video_mask[:padded_T // self.block_size, :padded_T // self.block_size]
+            cache[padded_T] = (mask_map, video_mask)
+        mask_map, video_mask = cache[padded_T]
+
         # RadialAttention expects (batch, seq_len, heads, dim)
         q = q.transpose(1, 2).contiguous()
         k = k.transpose(1, 2).contiguous()
         v = v.transpose(1, 2).contiguous()
 
-        # Extract boolean mask
-        video_mask = mask_map.queryLogMask(q, "radial", block_size=self.block_size, decay_factor=self.decay_factor, model_type=self.model_type)
-        video_mask = video_mask[:padded_T // self.block_size, :padded_T // self.block_size]
-        
-        # Get flashinfer wrapper for this geometry
+        # BSR wrapper is built from the held mask + current q/k geometry.
         bsr_wrapper = mask_map.get_bsr_wrapper(video_mask, q, k, self.block_size)
 
         # Process each batch item (Fixes a bug in the native RadialAttention implementation where batch elements are dropped)

@@ -3,10 +3,12 @@
 # attention on humanoid/multiview. Mirrors run_humanoid_multiview_ctrlworld.sh
 # (dense), swapping sampling_dataset/dense -> svg2 and adding SVG2 flags.
 #
-# NOTE: SVG2's block-sparse path wants flashinfer. The Ctrl-World .venv has triton
-# but NOT flashinfer, so SVG2 may fall back to a dense-mask SDPA path (slower, and
-# can OOM on long sequences). Kept runnable as a valid benchmark point
-# (acceleration-benchmark rule). VENV overridable if a .venv_svg is ever built.
+# NOTE: env DOES have flashinfer (0.3.1) + triton (3.3.1) — verified 2026-08-17.
+# SVG2 genuinely runs the flashinfer block-sparse path (`dynamic_block_sparse_fwd_
+# flashinfer`; log prints "Installed SVG FlashInfer gated monkey patch"), NOT an
+# SDPA fallback. Kept runnable as a valid benchmark point (acceleration-benchmark
+# rule); it is still net-negative on Ctrl-World because the seq (T<=3840) is too
+# short for block-sparse to beat dense SDPA. VENV overridable if needed.
 #
 # Output: sampling_dataset/svg2/humanoid/{output,input}/multiview/ctrlworld[...]/{category}/
 #

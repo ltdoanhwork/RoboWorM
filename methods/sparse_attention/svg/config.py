@@ -193,6 +193,7 @@ def _dreamdojo_svg_defaults(num_blocks: int, variant: str) -> dict[str, Any]:
             "sparsity": 0.40,
             "num_sampled_rows": 32,
             "sample_mse_max_row": 1200,
+            "profile_recompute_every": 1,
         }
 
     return {
@@ -216,6 +217,7 @@ def build_dreamdojo_svg_parameters(
     sparsity: float | None = None,
     num_sampled_rows: int | None = None,
     sample_mse_max_row: int | None = None,
+    profile_recompute_every: int | None = None,
     num_q_centroids: int | None = None,
     num_k_centroids: int | None = None,
     top_p_kmeans: float | None = None,
@@ -260,11 +262,22 @@ def build_dreamdojo_svg_parameters(
                 raise ValueError(
                     f"`sample_mse_max_row` must be positive, got {resolved_sample_mse_max_row}."
                 )
+            resolved_profile_recompute_every = (
+                defaults["profile_recompute_every"]
+                if profile_recompute_every is None
+                else profile_recompute_every
+            )
+            if resolved_profile_recompute_every <= 0:
+                raise ValueError(
+                    "`profile_recompute_every` must be >= 1, got "
+                    f"{resolved_profile_recompute_every}."
+                )
             params.update(
                 {
                     "sparsity": resolved_sparsity,
                     "num_sampled_rows": resolved_num_sampled_rows,
                     "sample_mse_max_row": resolved_sample_mse_max_row,
+                    "profile_recompute_every": resolved_profile_recompute_every,
                 }
             )
         else:

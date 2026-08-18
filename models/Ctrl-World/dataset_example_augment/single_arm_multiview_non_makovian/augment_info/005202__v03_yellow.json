@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_single_arm_multiview",
+  "subset": "non_makovian",
+  "source_episode": "005202",
+  "variant": "v03_yellow",
+  "object": "lid",
+  "edit_instruction": "change the color of the lid to yellow, keep its shape and position",
+  "source_instruction": "Pick up the lid from the pot and put it on the table, then pick up the orange object from the pot and put it on the table, then pick up the lid and put it back on the pot",
+  "new_instruction": "Pick up the yellow lid from the pot and put it on the table, then pick up the orange object from the pot and put it on the table, then pick up the lid and put it back on the pot.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}
