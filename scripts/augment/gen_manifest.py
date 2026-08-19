@@ -50,6 +50,105 @@ BIMANUAL_SV_BRANCHES = BRANCHES + ("task_swap",)
 PER_BRANCH = 5
 CW_PER_CONFIG = 10
 
+# Hand-curated "loose object -> container" prompts, applied to every DreamGen
+# config EXCEPT humanoid (out of scope, see module docstring). Frame kept
+# untouched (same mechanics as bimanual singleview's task_swap: no edit, dense
+# frame reused), but the prompt references a REAL, clearly-visible loose object
+# and a clearly-visible container/destination already in that episode's own
+# frame 0 — found by visual inspection, not automatable like task_swap's
+# donor-task borrowing. Probes actionable "pick X, place in Y" following on a
+# scene that plausibly supports it. Verified end-to-end (3 cases, all correct):
+# tape->open box, tape->on closed box, spoon->bowl — see augment-track-layout.mdc.
+# Variable count per config/split — NOT required to hit PER_BRANCH.
+#
+# key = (config_suffix, split, task_or_None, episode) -> prompt (task_phrase,
+# no leading "A ... robot performing the task:" — that's added by the compose
+# helpers per config). config_suffix in {"bimanual_sv", "single_arm_sv",
+# "single_arm_mv", "bimanual_mv"}; task is None for single_arm (no task dirs).
+OBJECT_RELOCATION: dict[tuple[str, str, str | None, int], str] = {
+    # -------------------------------------------------- bimanual singleview
+    # close_cardboard_box ep 26: box open with 3 spools inside, a loose tape
+    # roll sits on the table outside the box.
+    ("bimanual_sv", "makovian", "close_cardboard_box", 26): (
+        "pick up the roll of tape from the table and place it inside the "
+        "cardboard box"
+    ),
+    # tape_closed_cardboard ep 46: box already taped shut, a second loose tape
+    # roll sits beside it — asks the model to place ON TOP instead of inside.
+    ("bimanual_sv", "makovian", "tape_closed_cardboard", 46): (
+        "pick up the roll of tape from the table and place it on top of the "
+        "closed cardboard box"
+    ),
+    # spoon_red_block_bowl ep 1: pink spoon on its own dish, empty white bowl.
+    ("bimanual_sv", "makovian", "spoon_red_block_bowl", 1): (
+        "pick up the pink spoon and place it inside the white bowl"
+    ),
+    # close_toolbox ep 2: open toolbox with items already inside, PLUS a loose
+    # screwdriver and pliers on the table outside it.
+    ("bimanual_sv", "makovian", "close_toolbox", 2): (
+        "pick up the screwdriver from the table and place it inside the open "
+        "toolbox"
+    ),
+    # spoon_yellow_block_bowl ep 63: same shape as spoon_red_block_bowl but a
+    # different episode/dish — a second scene for the same relocation pattern.
+    ("bimanual_sv", "makovian", "spoon_yellow_block_bowl", 63): (
+        "pick up the pink spoon and place it inside the white bowl"
+    ),
+    # place_the_chinese_spoons_on_the_cloth ep 23: two loose spoons flank an
+    # empty bowl sitting on a cloth.
+    ("bimanual_sv", "non_makovian", "place_the_chinese_spoons_on_the_cloth", 23): (
+        "pick up the white spoon and place it inside the bowl"
+    ),
+    # -------------------------------------------------- single_arm singleview
+    # This config's scenes are extremely repetitive (only 2 unique tasks per
+    # split, same desk every episode). makovian (cup+coaster / light switch)
+    # has no THIRD object to relocate. non_makovian's tissue/trash-bin task
+    # LOOKS like it has one (a soy-sauce bottle sits loose on the table) but
+    # that bottle sits at the far-right edge of the 16:9 dense frame and gets
+    # cropped OUT when the pipeline center/left-crops to this config's 4:3
+    # aspect ratio (verified: the actual model input has no bottle at all, and
+    # the generated video just continues the tissue-wipe task) — so this
+    # config gets 0 curated entries (honest, not forced; NOT a model-following
+    # failure, the object was never visible to the model).
+    # -------------------------------------------------- single_arm multiview
+    # ep255: orange marker loose next to an empty white mug on a bin lid.
+    ("single_arm_mv", "makovian", None, 255): (
+        "picks up the orange marker and places it inside the white mug"
+    ),
+    # ep7394: bowl of fruit (banana/orange/mango/pomegranate) on a round table,
+    # green bowl free-standing beside it (dense task uses a yellow ball instead).
+    ("single_arm_mv", "makovian", None, 7394): (
+        "picks up the orange from the table and places it inside the green bowl"
+    ),
+    # ep9622: red/blue/yellow dice loose on the table next to a black bowl that
+    # already holds a few rings (dense task uses the rings, not the dice).
+    ("single_arm_mv", "makovian", None, 9622): (
+        "picks up the red die from the table and places it inside the black bowl"
+    ),
+    # ep5333 (makovian): a green tissue-box-like packet sits loose next to an
+    # open cardboard box on the counter.
+    ("single_arm_mv", "makovian", None, 5333): (
+        "picks up the green packet from the counter and places it inside the "
+        "cardboard box"
+    ),
+    # -------------------------------------------------- bimanual multiview
+    # Same curated scenes as bimanual singleview (identical episodes exist
+    # with all 4 cameras), reused here so the two views are benchmarked on the
+    # same relocation prompts.
+    ("bimanual_mv", "makovian", "close_cardboard_box", 26): (
+        "pick up the roll of tape from the table and place it inside the "
+        "cardboard box"
+    ),
+    ("bimanual_mv", "makovian", "close_toolbox", 2): (
+        "pick up the screwdriver from the table and place it inside the open "
+        "toolbox"
+    ),
+    ("bimanual_mv", "makovian", "tape_closed_cardboard", 46): (
+        "pick up the roll of tape from the table and place it on top of the "
+        "closed cardboard box"
+    ),
+}
+
 # Distinct, unambiguous recolor targets (avoid near-duplicates like "grey"/"gray").
 COLORS = ["red", "green", "blue", "yellow", "purple", "orange", "pink", "cyan", "white", "black"]
 
@@ -390,6 +489,56 @@ def dreamgen_bimanual(view: str, split: str) -> dict:
     return out
 
 
+# Maps a manifest config key to the OBJECT_RELOCATION config_suffix + how to
+# format the curated phrase into the "prompt" field `augment_prompt.compose()`
+# expects for that config (see OBJECT_RELOCATION comment for the phrase style
+# each suffix wants).
+_OBJ_RELOC_CONFIG = {
+    "dreamgen_bimanual_singleview": "bimanual_sv",
+    "dreamgen_bimanual_multiview": "bimanual_mv",
+    "dreamgen_single_arm_singleview": "single_arm_sv",
+    "dreamgen_single_arm_multiview": "single_arm_mv",
+}
+
+
+def dreamgen_object_relocation(config: str, split: str) -> list[dict]:
+    """Hand-curated `object_relocation` entries for one config/split.
+
+    May legitimately be empty (some scenes have no genuine second loose
+    object + container combo — see the single_arm_sv comment above
+    OBJECT_RELOCATION). Frame stays untouched; prompt names a loose object AND
+    a container both visible in that episode's own frame 0.
+    """
+    suffix = _OBJ_RELOC_CONFIG[config]
+    embodiment = "bimanual" if suffix.startswith("bimanual") else "single_arm"
+    view = "multiview" if suffix.endswith("_mv") else "singleview"
+    out = []
+    for (sfx, sp, task, ep), phrase in OBJECT_RELOCATION.items():
+        if sfx != suffix or sp != split:
+            continue
+        if task:
+            meta_dir = DATASETS / embodiment / view / split / task / "meta"
+        else:
+            meta_dir = DATASETS / embodiment / view / split / "meta"
+        instr = _read_episodes_jsonl(meta_dir).get(ep, "").strip()
+        entry = {"episode": f"{ep:06d}", "source_instruction": instr}
+        if task:
+            entry["task"] = task
+        if suffix == "bimanual_sv":
+            entry["prompt"] = (f"A bimanual robot performing the task: "
+                                f"{phrase[0].upper()}{phrase[1:]}.")
+        elif suffix == "single_arm_sv":
+            entry["prompt"] = f"A robot arm {phrase}."
+        else:
+            # multiview: compose() injects this through task_phrase() into the
+            # grid template's {task} slot, so it must read as a bare task
+            # phrase (no leading agent words) — same style as the real dense
+            # instructions for that config.
+            entry["prompt"] = phrase
+        out.append(entry)
+    return out
+
+
 # =================================================================== Ctrl-World
 
 
@@ -488,6 +637,14 @@ def build() -> dict:
             for split in SPLITS:
                 fn = dreamgen_single_arm if embodiment == "single_arm" else dreamgen_bimanual
                 section[split] = fn(view, split)
+            if key in _OBJ_RELOC_CONFIG:
+                # Extra hand-curated branch: variable count, NOT PER_BRANCH-sized
+                # (see OBJECT_RELOCATION). Kept as its own key rather than forced
+                # into the 5-per-branch grid. Applies to every DreamGen config
+                # (both embodiments, both views) EXCEPT humanoid (out of scope).
+                for split in SPLITS:
+                    section[split]["object_relocation"] = (
+                        dreamgen_object_relocation(key, split))
             manifest[key] = section
 
     for embodiment in ("single_arm", "bimanual", "humanoid"):
@@ -540,7 +697,10 @@ def summarize(manifest: dict) -> bool:
                 total = sum(counts.values())
                 bad = "" if total == PER_BRANCH * len(branches_here) else "  <-- WRONG COUNT"
                 ok = ok and not bad
-                print(f"  {key}/{split}: {counts} total={total}{bad}")
+                extra = ""
+                if "object_relocation" in entries:
+                    extra = f"  +object_relocation={len(entries['object_relocation'])} (hand-curated, variable)"
+                print(f"  {key}/{split}: {counts} total={total}{bad}{extra}")
             else:
                 n = len(entries or [])
                 uniq = len({e["episode"] for e in (entries or [])})

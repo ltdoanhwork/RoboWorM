@@ -124,7 +124,7 @@ echo "=========================================================="
 edit_frames() {
   local split="$1" branch="$2"
   case "${branch}" in
-    prompt_only|task_swap) return 0 ;;   # frame is deliberately untouched
+    prompt_only|task_swap|object_relocation) return 0 ;;   # frame is deliberately untouched
   esac
   [ "${SKIP_EDIT}" = "1" ] && return 0
   echo "  [edit] ${split}/${branch}: recoloring conditioning first frames..."

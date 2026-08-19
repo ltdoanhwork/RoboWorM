@@ -1,5 +1,6 @@
 #!/bin/bash
-# DreamGen single_arm MULTIVIEW AUGMENT run — 3 branches x 5 videos per category.
+# DreamGen single_arm MULTIVIEW AUGMENT run — 3 branches x 5 videos per category,
+# plus a hand-curated object_relocation branch (variable count, see gen_manifest.py).
 #
 # Mirrors run_single_arm_multiview_dreamgen_batch.sh (same base GR00T DROID 14B
 # checkpoint, single-shot `examples.video2world_gr00t`, FPS 10, 2x2 grid first
@@ -11,6 +12,9 @@
 #                the grid caption's task slot (the 2x2-layout sentences MUST stay,
 #                or the model stops emitting a grid), refiner on.
 #   combo        recolored grid + perturbed task phrase naming the new color.
+#   object_relocation  grid frame untouched, hand-curated task phrase naming a
+#                REAL loose object AND a REAL container both visible in the
+#                grid's frame 0 (injected into the same task slot as prompt_only).
 #
 # Output (leaf gains a __{branch} tag; drop it to get the dense path):
 #   sampling_dataset/augment/single_arm/output/multiview/dreamgen/{split}/
@@ -33,4 +37,5 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT}"
 
 CONFIG_KEY="dreamgen_single_arm_multiview"
+BRANCHES="${BRANCHES:-edit_only prompt_only combo object_relocation}"
 source "${ROOT}/scripts/augment/_dreamgen_augment_core.sh"

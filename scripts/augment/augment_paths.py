@@ -32,8 +32,9 @@ AUGMENT_ROOT = REPO_ROOT / "sampling_dataset" / "augment"
 DENSE_ROOT = REPO_ROOT / "sampling_dataset" / "dense"
 
 # Branch tags used by the DreamGen configs (5 videos each -> 15 per config, 20
-# for dreamgen_bimanual_singleview which additionally has task_swap).
-DREAMGEN_BRANCHES = ("edit_only", "prompt_only", "combo", "task_swap")
+# for dreamgen_bimanual_singleview which additionally has task_swap, plus a
+# variable-count hand-curated object_relocation branch on that same config).
+DREAMGEN_BRANCHES = ("edit_only", "prompt_only", "combo", "task_swap", "object_relocation")
 
 
 @dataclass(frozen=True)

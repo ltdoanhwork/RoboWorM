@@ -11,6 +11,9 @@
 #                grid caption's task slot (the 2x2-layout sentences MUST stay, or the
 #                model stops emitting a grid), refiner on.
 #   combo        recolored grid + perturbed task phrase naming the new color, refiner on.
+#   object_relocation  grid frame untouched, hand-curated task phrase naming a REAL
+#                loose object AND a REAL container both visible in the grid's frame 0
+#                (injected into the same task slot as prompt_only), refiner on.
 #
 # This config differs from the other three DreamGen configs: it is a segment
 # rollout, so the manifest is read by the inference script itself (there is no
@@ -41,7 +44,7 @@ CONFIG_KEY="dreamgen_bimanual_multiview"
 PATHS="${ROOT}/scripts/augment/augment_paths.py"
 
 SPLITS="${SPLITS:-makovian non_makovian}"
-BRANCHES="${BRANCHES:-edit_only prompt_only combo}"
+BRANCHES="${BRANCHES:-edit_only prompt_only combo object_relocation}"
 MANIFEST="${MANIFEST:-${ROOT}/augment_manifest.json}"
 SKIP_EDIT="${SKIP_EDIT:-0}"
 SKIP_INFER="${SKIP_INFER:-0}"
@@ -118,6 +121,7 @@ if [ "${SKIP_EDIT}" != "1" ]; then
   for split in ${SPLITS}; do
     for branch in ${BRANCHES}; do
       [ "${branch}" = "prompt_only" ] && continue   # frame deliberately untouched
+    [ "${branch}" = "object_relocation" ] && continue   # frame deliberately untouched
       echo ""
       echo "[edit] ${split}/${branch}: recoloring 2x2 grid first frames..."
       (
@@ -172,8 +176,9 @@ for branch in ${BRANCHES}; do
   # The refiner rewrites the prompt, so enable it only where a rewritten prompt IS
   # the perturbation; edit_only must keep the dense text path exactly.
   [ "${branch}" != "edit_only" ] && PY_ARGS+=(--prompt-refine)
-  # prompt_only keeps the original GT first frame -> no edited-frames lookup.
-  [ "${branch}" != "prompt_only" ] && PY_ARGS+=(--edited-frames-root "${EDITED_ROOT}")
+  # prompt_only / object_relocation keep the original GT first frame -> no
+  # edited-frames lookup.
+  [ "${branch}" != "prompt_only" ] && [ "${branch}" != "object_relocation" ] && PY_ARGS+=(--edited-frames-root "${EDITED_ROOT}")
   [ -n "${MAX_EPISODES:-}" ] && PY_ARGS+=(--max-episodes "${MAX_EPISODES}")
   [ -n "${MAX_SEGMENTS:-}" ] && PY_ARGS+=(--max-segments "${MAX_SEGMENTS}")
 

@@ -205,8 +205,11 @@ def parse_args() -> argparse.Namespace:
                         "with the manifest prompt overriding the dataset instruction.")
     p.add_argument("--manifest-config", default="dreamgen_bimanual_multiview",
                    help="Manifest section to read (see scripts/augment/augment_paths.py).")
-    p.add_argument("--branch", default="", choices=["", "edit_only", "prompt_only", "combo"],
-                   help="Augment branch. Also becomes the episode dir's __tag suffix.")
+    p.add_argument("--branch", default="",
+                   choices=["", "edit_only", "prompt_only", "combo", "object_relocation"],
+                   help="Augment branch. Also becomes the episode dir's __tag suffix. "
+                        "object_relocation is hand-curated (see gen_manifest.py) and, like "
+                        "prompt_only, keeps the dense frame untouched.")
     p.add_argument("--edited-frames-root", dest="edited_frames_root", default="",
                    help="Augment INPUT base for this config, i.e. sampling_dataset/"
                         "augment/bimanual/input/multiview/dreamgen. The recolored grid "
@@ -501,7 +504,8 @@ def main() -> None:
     manifest_sel: dict[tuple[str, int], dict] = {}
     if args.manifest:
         if not args.branch:
-            raise SystemExit("--manifest requires --branch (edit_only|prompt_only|combo)")
+            raise SystemExit(
+                "--manifest requires --branch (edit_only|prompt_only|combo|object_relocation)")
         _mf = json.loads(Path(args.manifest).read_text())
         _section = _mf.get(args.manifest_config, {})
         for _cat, _branches in _section.items():
@@ -575,7 +579,7 @@ def main() -> None:
             # 2x2 grid of specific views, so dropping it would change the output
             # FORMAT instead of just the described behaviour. edit_only keeps the
             # dense caption byte-identical (only the image changed).
-            if entry and args.branch in ("prompt_only", "combo") and entry.get("prompt"):
+            if entry and args.branch in ("prompt_only", "combo", "object_relocation") and entry.get("prompt"):
                 prompt = PROMPT_4VIEW.format(task=PR.task_phrase(entry["prompt"]))
 
             with tempfile.TemporaryDirectory() as td:

@@ -29,14 +29,22 @@ SAVE_MODE="${SAVE_MODE:-video_only}"
 SVG_START_LAYER_IDX="${SVG_START_LAYER_IDX:-4}"
 SVG_DENSE_STEP_FRAC="${SVG_DENSE_STEP_FRAC:-0.05}"
 # Tuned (1 makovian ep, iter_000050000): sparsity 0.25 is the best point measured
-# -> 65.96s vs dense 56.41s = 0.86x (SLOWER than dense) at PSNR 18.82 / SSIM 0.733.
-# SVG1 never beats dense here: flex_attention/torch.compile + MSE-profiling overhead
-# exceeds the attention it saves (self-attn is only ~15% of gen time).
-# BREAK POINT is sparsity <= 0.10: PSNR 16.90 @0.10 and 11.83 @0.05 (destroyed), and
-# it gets even slower (0.77x / 0.83x). Kept runnable as a negative benchmark point.
+# -> 60.63s vs dense 56.41s = 0.93x (still SLOWER) at PSNR 18.42 / SSIM 0.708.
+# SVG1 cannot beat dense on this target, and stage-level profiling explains why
+# (scripts/_diag_dreamdojo_svg.py, at B=1/H=16/S=4800/D=128):
+#   dense flash              1.241 ms/call   <-- must beat this
+#   compiled flex_attention  1.027 ms (0.83x dense)  <-- the real sparse win
+#   rearrange + placement    0.276 ms        <-- unavoidable, eats the win
+# BREAK POINT is sparsity <= 0.15 (PSNR 17.91 @0.15, 17.06 @0.10). Lowering sparsity
+# barely adds speed because T=4 caps the diagonal mask width: blocks kept only drops
+# 51.4% -> 36.8% going from sparsity 0.25 -> 0.10.
 SVG_SPARSITY="${SVG_SPARSITY:-0.25}"
 SVG_NUM_SAMPLED_ROWS="${SVG_NUM_SAMPLED_ROWS:-16}"
 SVG_SAMPLE_MSE_MAX_ROW="${SVG_SAMPLE_MSE_MAX_ROW:-1200}"
+# BUG FIX: upstream re-ran the spatial/temporal MSE head profile on EVERY attention
+# call (0.589 ms = ~47% of a dense call). Caching it recovered 0.86x -> 0.93x.
+# 999999 = profile once per episode. Set to 1 to restore upstream behaviour.
+SVG_PROFILE_RECOMPUTE_EVERY="${SVG_PROFILE_RECOMPUTE_EVERY:-999999}"
 
 ep_flag=()
 if [[ -n "${NUM_EPISODES}" ]]; then
@@ -71,6 +79,7 @@ for split in ${SPLITS}; do
     --svg-sparsity "${SVG_SPARSITY}" \
     --svg-num-sampled-rows "${SVG_NUM_SAMPLED_ROWS}" \
     --svg-sample-mse-max-row "${SVG_SAMPLE_MSE_MAX_ROW}" \
+    --svg-profile-recompute-every "${SVG_PROFILE_RECOMPUTE_EVERY}" \
     "${ep_flag[@]}" "${save_flag[@]}"
 done
 

@@ -126,6 +126,73 @@ def main():
     print(f"  -> flex_attention alone is    : {flex_ms / dense_ms:.2f}x dense")
     print(f"  -> overhead (non-attn stages) : {total - flex_ms:.3f} ms ({(total - flex_ms) / dense_ms:.2f}x dense)")
 
+    # ---- SVG2 stage breakdown ----
+    print("\n--- where SVG2's 6.72 ms/call goes (q32/k64, top_p 0.6) ---")
+    try:
+        from methods.sparse_attention.svg.dreamgen_runtime import (
+            DreamGenSVG2Runtime,
+            _load_svg2_modules,
+        )
+
+        rt2 = DreamGenSVG2Runtime(
+            num_q_centroids=32,
+            num_k_centroids=64,
+            top_p_kmeans=0.6,
+            min_kc_ratio=0.15,
+            kmeans_iter_init=8,
+            kmeans_iter_step=2,
+        )
+        mods = _load_svg2_modules()
+        kmeans_utils = mods["kmeans_utils"]
+        permute_mod = mods["permute_mod"]
+
+        bsz, nh, sl, hd = qb.shape
+        qf = qb.reshape(bsz * nh, sl, hd)
+        kf = kb.reshape(bsz * nh, sl, hd)
+
+        # warm the centroids so we measure the steady-state iter_step cost
+        rt2._cluster(qf, kf)
+        km_ms = _bench(lambda: rt2._cluster(qf, kf), warmup=2, iters=10)
+        print(f"  kmeans _cluster (warm)       : {km_ms:.3f} ms")
+
+        ql, qc, qcs, kl, kc, kcs = rt2._cluster(qf, kf)
+        dmap = kmeans_utils.identify_dynamic_map(
+            qc.view(bsz, nh, 32, hd), kc.view(bsz, nh, 64, hd),
+            qcs.view(bsz, nh, 32), kcs.view(bsz, nh, 64), 0.6, 0.15,
+        )
+        idm_ms = _bench(
+            lambda: kmeans_utils.identify_dynamic_map(
+                qc.view(bsz, nh, 32, hd), kc.view(bsz, nh, 64, hd),
+                qcs.view(bsz, nh, 32), kcs.view(bsz, nh, 64), 0.6, 0.15,
+            ), warmup=2, iters=10,
+        )
+        print(f"  identify_dynamic_map         : {idm_ms:.3f} ms")
+
+        def _perm():
+            permute_mod.permute_tensor_by_labels_triton(qb, ql.view(bsz, nh, sl), dim=2)
+            permute_mod.permute_tensor_by_labels_triton(kb, kl.view(bsz, nh, sl), dim=2)
+
+        perm_ms = _bench(_perm, warmup=2, iters=10)
+        print(f"  2x permute_by_labels         : {perm_ms:.3f} ms")
+
+        qp, qsi = permute_mod.permute_tensor_by_labels_triton(qb, ql.view(bsz, nh, sl), dim=2)
+        kp, ksi = permute_mod.permute_tensor_by_labels_triton(kb, kl.view(bsz, nh, sl), dim=2)
+        vp, _ = permute_mod.permute_tensor_by_labels_triton(vb, kl.view(bsz, nh, sl), dim=2, sorted_indices=ksi)
+
+        bs_ms = _bench(
+            lambda: kmeans_utils.dynamic_block_sparse_fwd_flashinfer(
+                qp, kp, vp, dmap, qcs.view(bsz, nh, 32), kcs.view(bsz, nh, 64), is_cpu=False,
+            ), warmup=2, iters=10,
+        )
+        print(f"  dynamic_block_sparse (attn)  : {bs_ms:.3f} ms")
+        kept = float(dmap.float().mean().item()) * 100
+        print(f"  -> dynamic_map blocks kept   : {kept:.1f}%")
+        tot2 = km_ms + idm_ms + perm_ms + bs_ms + lay_ms
+        print(f"\n  SUM of SVG2 stages           : {tot2:.3f} ms  vs dense {dense_ms:.3f} ms")
+        print(f"  -> non-attn overhead         : {tot2 - bs_ms:.3f} ms ({(tot2 - bs_ms) / dense_ms:.2f}x dense)")
+    except Exception as exc:  # pragma: no cover - diagnostic only
+        print(f"  SVG2 breakdown unavailable: {type(exc).__name__}: {exc}")
+
 
 if __name__ == "__main__":
     main()

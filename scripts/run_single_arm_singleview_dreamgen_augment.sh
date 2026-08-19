@@ -1,5 +1,6 @@
 #!/bin/bash
-# DreamGen single_arm SINGLEVIEW AUGMENT run — 3 branches x 5 videos per category.
+# DreamGen single_arm SINGLEVIEW AUGMENT run — 3 branches x 5 videos per category,
+# plus a hand-curated object_relocation branch (variable count, see gen_manifest.py).
 #
 # Mirrors run_single_arm_singleview_dreamgen_static16fps.sh (same ckpt
 # single_arm_static_singleview_16fps_v2, global static view, video2world_gr00t_lvg,
@@ -11,6 +12,10 @@
 #   prompt_only  the frame is untouched, the prompt describes something the
 #                recorded actions do not do, refiner on.
 #   combo        recolored frame + prompt naming the new color, refiner on.
+#   object_relocation  frame untouched, hand-curated prompt naming a REAL loose
+#                object AND a REAL container both visible in that frame — this
+#                config's scenes are repetitive (2 tasks/split), so the count is
+#                small/variable (0 for makovian, 1 for non_makovian). Refiner on.
 #
 # Output (leaf gains a __{branch} tag; drop it to get the dense path):
 #   sampling_dataset/augment/single_arm/output/singleview/dreamgen/{split}/
@@ -32,4 +37,5 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT}"
 
 CONFIG_KEY="dreamgen_single_arm_singleview"
+BRANCHES="${BRANCHES:-edit_only prompt_only combo object_relocation}"
 source "${ROOT}/scripts/augment/_dreamgen_augment_core.sh"

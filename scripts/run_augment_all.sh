@@ -1,15 +1,17 @@
 #!/bin/bash
-# Launch the FULL augment generation (230 videos) sharded across GPUs.
+# Launch the FULL augment generation (243 videos) sharded across GPUs.
 #
 # 4 shards, balanced by measured cost rather than by episode count — episode cost
 # is driven by chunk/segment count, not by how many episodes a config has:
 #
 #   shard 0  bimanual singleview      170 chunks              ~7.6h (4 branches:
-#                                                                    +task_swap, 20/category)
+#                                                                    +task_swap, 20/category,
+#                                                                    +6 object_relocation)
 #   shard 1  single_arm singleview    118 chunks              ~5.2h  + ctrlworld single_arm
-#   shard 2  bimanual multiview       segment rollout         ~6h
+#   shard 2  bimanual multiview       segment rollout         ~6h  (+3 object_relocation)
 #   shard 3  single_arm multiview     14B single-shot         ~4.1h  + ctrlworld bimanual+humanoid
 #                                                                    (3-view AND 4-view-grid)
+#                                                                    (+4 object_relocation)
 #
 # Every runner is resumable (skips episodes whose output already exists), so a
 # shard that dies can simply be relaunched — that is why the cheap Ctrl-World
@@ -18,6 +20,13 @@
 # from the 3-view ctrlworld configs (dense keeps them as separate method dirs
 # too — see .cursor/rules/ctrlworld-*-4view-grid-*-insights.mdc), not a
 # replacement, so they add 20+20=40 videos on top of the original 180.
+#
+# object_relocation (hand-curated, see gen_manifest.py::OBJECT_RELOCATION)
+# applies to every DreamGen config except humanoid; default BRANCHES in each
+# run_*_dreamgen_augment.sh already includes it, so a plain shard re-run
+# regenerates/covers it automatically. single_arm_singleview has 0 curated
+# entries in this dataset (see augment-track-layout.mdc) — that is expected,
+# not a bug.
 #
 # Usage:
 #   bash scripts/run_augment_all.sh            # launch all 4 shards in background
@@ -33,7 +42,7 @@ cd "${ROOT}"
 
 # ---------------------------------------------------------------- --status mode
 if [ "${1:-}" = "--status" ]; then
-  echo "augment videos generated (target 230):"
+  echo "augment videos generated (target 243):"
   python3 - <<'PY'
 import json, sys
 from pathlib import Path
@@ -110,7 +119,7 @@ if [ -n "${1:-}" ]; then
 fi
 
 echo "=========================================================="
-echo "AUGMENT full generation — 230 videos, 4 shards"
+echo "AUGMENT full generation — 243 videos, 4 shards"
 echo "  logs: ${LOGDIR}"
 echo "  GPUs: ${GPUS[*]}"
 echo "=========================================================="

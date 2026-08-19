@@ -108,7 +108,8 @@
           "edit_instruction": "change the color of the light switch to purple, keep its shape and position",
           "prompt": "Turn on the purple light switch."
         }
-      ]
+      ],
+      "object_relocation": []
     },
     "non_makovian": {
       "edit_only": [
@@ -216,7 +217,8 @@
           "edit_instruction": "change the color of the tissue to purple, keep its shape and position",
           "prompt": "Pull out a purple tissue, wipe the stains on the table clean, and then discard the tissue into the trash bin."
         }
-      ]
+      ],
+      "object_relocation": []
     }
   },
   "dreamgen_single_arm_multiview": {
@@ -327,6 +329,28 @@
           "edit_instruction": "change the color of the drawer to purple, keep its shape and position",
           "prompt": "Open the purple drawer."
         }
+      ],
+      "object_relocation": [
+        {
+          "episode": "000255",
+          "source_instruction": "Put the orange marker inside the white mug",
+          "prompt": "picks up the orange marker and places it inside the white mug"
+        },
+        {
+          "episode": "007394",
+          "source_instruction": "Put the yellow ball into the bowl",
+          "prompt": "picks up the orange from the table and places it inside the green bowl"
+        },
+        {
+          "episode": "009622",
+          "source_instruction": "Put the rings inside the black bowl",
+          "prompt": "picks up the red die from the table and places it inside the black bowl"
+        },
+        {
+          "episode": "005333",
+          "source_instruction": "Move the tea bag from the mug to the box",
+          "prompt": "picks up the green packet from the counter and places it inside the cardboard box"
+        }
       ]
     },
     "non_makovian": {
@@ -435,7 +459,8 @@
           "edit_instruction": "change the color of the pink bowl to purple, keep its shape and position",
           "prompt": "Pick the purple bowl and put it in the sink."
         }
-      ]
+      ],
+      "object_relocation": []
     }
   },
   "dreamgen_bimanual_singleview": {
@@ -608,6 +633,38 @@
           "swap_instruction": "hook cable narrow 8pin",
           "prompt": "A bimanual robot performing the task: Hook cable narrow 8pin."
         }
+      ],
+      "object_relocation": [
+        {
+          "episode": "000026",
+          "source_instruction": "close cardboard box",
+          "task": "close_cardboard_box",
+          "prompt": "A bimanual robot performing the task: Pick up the roll of tape from the table and place it inside the cardboard box."
+        },
+        {
+          "episode": "000046",
+          "source_instruction": "tape closed cardboard",
+          "task": "tape_closed_cardboard",
+          "prompt": "A bimanual robot performing the task: Pick up the roll of tape from the table and place it on top of the closed cardboard box."
+        },
+        {
+          "episode": "000001",
+          "source_instruction": "spoon red block bowl",
+          "task": "spoon_red_block_bowl",
+          "prompt": "A bimanual robot performing the task: Pick up the pink spoon and place it inside the white bowl."
+        },
+        {
+          "episode": "000002",
+          "source_instruction": "close toolbox",
+          "task": "close_toolbox",
+          "prompt": "A bimanual robot performing the task: Pick up the screwdriver from the table and place it inside the open toolbox."
+        },
+        {
+          "episode": "000063",
+          "source_instruction": "spoon yellow block bowl",
+          "task": "spoon_yellow_block_bowl",
+          "prompt": "A bimanual robot performing the task: Pick up the pink spoon and place it inside the white bowl."
+        }
       ]
     },
     "non_makovian": {
@@ -778,6 +835,14 @@
           "swap_instruction": "fold towel in random places",
           "prompt": "A bimanual robot performing the task: Fold towel in random places."
         }
+      ],
+      "object_relocation": [
+        {
+          "episode": "000023",
+          "source_instruction": "place the chinese spoons on the cloth",
+          "task": "place_the_chinese_spoons_on_the_cloth",
+          "prompt": "A bimanual robot performing the task: Pick up the white spoon and place it inside the bowl."
+        }
       ]
     }
   },
@@ -904,6 +969,26 @@
           "edit_instruction": "change the color of the medium gear to purple, keep its shape and position",
           "prompt": "Insert random shaft random purple medium gear."
         }
+      ],
+      "object_relocation": [
+        {
+          "episode": "000026",
+          "source_instruction": "close cardboard box",
+          "task": "close_cardboard_box",
+          "prompt": "pick up the roll of tape from the table and place it inside the cardboard box"
+        },
+        {
+          "episode": "000002",
+          "source_instruction": "close toolbox",
+          "task": "close_toolbox",
+          "prompt": "pick up the screwdriver from the table and place it inside the open toolbox"
+        },
+        {
+          "episode": "000046",
+          "source_instruction": "tape closed cardboard",
+          "task": "tape_closed_cardboard",
+          "prompt": "pick up the roll of tape from the table and place it on top of the closed cardboard box"
+        }
       ]
     },
     "non_makovian": {
@@ -1027,7 +1112,8 @@
           "edit_instruction": "change the color of the cloth to purple, keep its shape and position",
           "prompt": "Place the chinese spoons on the purple cloth."
         }
-      ]
+      ],
+      "object_relocation": []
     }
   },
   "ctrlworld_single_arm_multiview": {

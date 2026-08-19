@@ -39,7 +39,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import augment_paths as AP  # noqa: E402
 import augment_prompt as PR  # noqa: E402
-from edit_dreamgen_first_frames import _dense_frame, edited_dir  # noqa: E402
+from edit_dreamgen_first_frames import _dense_frame, _rebuild_dense_frame, edited_dir  # noqa: E402
 
 # Configs that consume a batch json (i.e. everything except the rollout config).
 BATCH_CONFIGS = [k for k in AP.CONFIGS
@@ -111,8 +111,15 @@ def main() -> None:
         stem = AP.episode_stem(args.config, entry)
         leaf = AP.leaf_name(args.config, entry, args.branch)
 
-        if args.branch in ("prompt_only", "task_swap"):
+        if args.branch in ("prompt_only", "task_swap", "object_relocation"):
             frame = _dense_frame(args.config, args.split, entry)
+            # object_relocation may hand-curate an episode the dense pipeline
+            # never prepared a frame for (e.g. a fresh multiview grid) — build
+            # it on the fly with the same geometry the dense prep uses, same as
+            # edit_dreamgen_first_frames.py does for edit_only/combo.
+            if not frame.exists() and not args.finalize:
+                if _rebuild_dense_frame(args.config, args.split, entry, frame):
+                    print(f"  [build] rebuilt dense frame for {leaf}")
         else:
             frame = edited_dir(args.config, args.split, entry) / f"{leaf}.png"
         if not frame.exists() and not args.finalize:

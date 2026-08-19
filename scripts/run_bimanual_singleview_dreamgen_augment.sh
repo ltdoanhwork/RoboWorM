@@ -41,5 +41,5 @@ CONFIG_KEY="dreamgen_bimanual_singleview"
 # This is the ONLY config with a 4th branch (task_swap) — default it here so
 # every other config sourcing _dreamgen_augment_core.sh keeps its own 3-branch
 # default untouched.
-BRANCHES="${BRANCHES:-edit_only prompt_only combo task_swap}"
+BRANCHES="${BRANCHES:-edit_only prompt_only combo task_swap object_relocation}"
 source "${ROOT}/scripts/augment/_dreamgen_augment_core.sh"

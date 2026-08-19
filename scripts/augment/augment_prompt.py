@@ -12,6 +12,11 @@ branches must respect that:
                frame, but the prompt is a DIFFERENT real task's caption
                (borrowed from elsewhere in the dataset) — tests whether the
                model follows the text or just continues what it saw in frame 0.
+  object_relocation  (dreamgen_bimanual_singleview ONLY, hand-curated, few
+               entries) frame stays the dense frame, prompt names a REAL loose
+               object AND a REAL container both visible in that same frame —
+               tests actionable "pick X, place in Y" following on a scene that
+               plausibly supports it.
 
 For the multiview configs the caption also tells the model that the frame is a
 2x2 grid of specific camera views. Dropping that would change the OUTPUT FORMAT
@@ -145,7 +150,7 @@ def compose(config: str, entry: dict, branch: str) -> str:
     """Prompt for one manifest entry on one branch."""
     if branch == "edit_only":
         return dense_prompt(config, entry)
-    if branch in ("prompt_only", "combo", "task_swap"):
+    if branch in ("prompt_only", "combo", "task_swap", "object_relocation"):
         return perturbed_prompt(config, entry)
     raise ValueError(f"unknown branch {branch!r}")
 
