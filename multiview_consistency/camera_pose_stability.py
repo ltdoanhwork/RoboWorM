@@ -70,8 +70,6 @@ def compute_pose_stability_metric(
 def main() -> None:
     import os
     import sys
-    from vggt.utils.load_fn import load_and_preprocess_images
-
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     _this_dir = os.path.dirname(os.path.abspath(__file__))

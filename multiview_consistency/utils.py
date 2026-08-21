@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 import torch
 import numpy as np
+
 def save_depth_maps(depth_map, output_dir="output_depth", prefix="frame", vmin=None, vmax=None):
     """Save depth maps. Expects (B, S, H, W, 1) or (B, S, H, W)."""
     os.makedirs(output_dir, exist_ok=True)

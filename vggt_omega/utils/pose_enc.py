@@ -6,25 +6,7 @@
 
 import torch
 
-from .rotation import mat_to_quat, quat_to_mat
-
-
-def extri_intri_to_pose_encoding(extrinsics, intrinsics, image_size_hw):
-    """Convert camera extrinsics and intrinsics to VGGT-Omega pose encoding.
-
-    The released checkpoints use a 9D camera encoding:
-    translation (3), quaternion rotation (4), and vertical/horizontal FoV (2).
-    Extrinsics are camera-from-world matrices in OpenCV coordinates.
-    """
-    R = extrinsics[:, :, :3, :3]
-    T = extrinsics[:, :, :3, 3]
-
-    H, W = image_size_hw
-    quat = mat_to_quat(R)
-    fov_h = 2 * torch.atan((H / 2) / intrinsics[..., 1, 1])
-    fov_w = 2 * torch.atan((W / 2) / intrinsics[..., 0, 0])
-    return torch.cat([T, quat, fov_h[..., None], fov_w[..., None]], dim=-1).float()
-
+from .rotation import quat_to_mat
 
 def encoding_to_camera(pose_encoding, image_size_hw, build_intrinsics=True):
     """Decode VGGT-Omega pose encoding into extrinsics and intrinsics."""

@@ -8,6 +8,9 @@ import traceback
 from multiprocessing.connection import Listener
 from typing import Any
 
+# Suppress benign Triton/gcc macro-redefinition noise during torch.compile.
+os.environ.setdefault("CFLAGS", "-Wno-macro-redefined")
+
 import torch
 
 _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -24,9 +27,7 @@ def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="VGGT model service (loads model once, computes metrics per request).")
     p.add_argument("--host", default="127.0.0.1")
     p.add_argument("--port", type=int, default=6111)
-    p.add_argument("--authkey", default="vggt")
-    p.add_argument("--backend", default="vggt", choices=["vggt", "vggt_omega"])
-    p.add_argument("--model", default="facebook/VGGT-1B", help="Legacy VGGT HF model name (backend=vggt).")
+    p.add_argument("--authkey", default="vggt_omega")
     p.add_argument(
         "--omega_checkpoint",
         default=None,
@@ -34,7 +35,6 @@ def _parse_args() -> argparse.Namespace:
     )
     p.add_argument("--omega_image_resolution", type=int, default=512)
     p.add_argument("--omega_patch_size", type=int, default=16)
-    p.add_argument("--device", default=None, help='e.g. "cuda" or "cpu" (default: auto)')
     p.add_argument("--dtype", default=None, help='e.g. "bfloat16", "float16", "float32" (default: auto)')
     return p.parse_args()
 
@@ -51,12 +51,6 @@ def _dtype_from_str(s: str | None) -> torch.dtype | None:
         return torch.float32
     raise ValueError(f"Unknown dtype: {s!r}")
 
-
-def _maybe_empty_cuda_cache(device: str) -> None:
-    if device == "cuda" and torch.cuda.is_available():
-        torch.cuda.empty_cache()
-
-
 def _handle_request(msg: dict, ctx: Any) -> tuple[dict, str | None]:
     """
     Handle one request message.
@@ -70,7 +64,7 @@ def _handle_request(msg: dict, ctx: Any) -> tuple[dict, str | None]:
     cmd = msg.get("cmd")
 
     if cmd == "ping":
-        return {"ok": True, "ts": time.time(), "device": ctx.device}, None
+        return {"ok": True, "ts": time.time()}, None
 
     if cmd == "close_session":
         return {"ok": True, "message": "session closed"}, "close_session"
@@ -81,21 +75,17 @@ def _handle_request(msg: dict, ctx: Any) -> tuple[dict, str | None]:
     if cmd == "compute_video_metrics":
         episode_dir = msg["episode_dir"]
         views = msg.get("views", ["view1", "view2"])
-        stride = int(msg.get("stride", 1))
-        max_frames = msg.get("max_frames", None)
-        include_per_frame = bool(msg.get("include_per_frame", False))
         frame_batch_size = int(msg.get("frame_batch_size", 4))
+        profile = bool(msg.get("profile", False))
 
         out = compute_video_metrics(
             ctx,
             episode_dir=str(episode_dir),
             views=list(views),
-            stride=stride,
-            max_frames=None if max_frames is None else int(max_frames),
-            include_per_frame=include_per_frame,
             frame_batch_size=frame_batch_size,
+            profile=profile,
         )
-        _maybe_empty_cuda_cache(ctx.device)
+        torch.cuda.empty_cache()
         return {"ok": True, "result": out}, None
 
     return {"ok": False, "error": f"Unknown cmd={cmd!r}"}, None
@@ -131,28 +121,23 @@ def _serve_connection(conn, ctx: Any) -> bool:
                     conn.send({"ok": False, "error": repr(e)})
                 except Exception:
                     break
-                _maybe_empty_cuda_cache(ctx.device)
+                torch.cuda.empty_cache()
     finally:
         conn.close()
 
     return False
 
-
 def serve_forever() -> None:
     args = _parse_args()
     ctx = init_model_context(
-        device=args.device,
         autocast_dtype=_dtype_from_str(args.dtype),
-        model_name=args.model,
-        backend=args.backend,
         omega_checkpoint=args.omega_checkpoint,
         omega_image_resolution=args.omega_image_resolution,
         omega_patch_size=args.omega_patch_size,
     )
 
     addr = (args.host, int(args.port))
-    print(f"[model_service] Listening on {addr} (device={ctx.device}, dtype={ctx.autocast_dtype})")
-    print("[model_service] Model loaded; ready for requests (multi-request sessions supported).")
+    print(f"[model_service] Listening on {addr}, dtype={ctx.autocast_dtype})")
 
     listener = Listener(addr, authkey=args.authkey.encode("utf-8"))
     try:

@@ -15,23 +15,24 @@ if _VGGT_ROOT not in sys.path:
 
 from multiview_consistency.utils import discover_episode_dirs
 
-
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description="Client to request multiview metrics from model_service (single episode or batch)."
     )
     p.add_argument("--host", default="127.0.0.1")
     p.add_argument("--port", type=int, default=6111)
-    p.add_argument("--authkey", default="vggt")
+    p.add_argument("--authkey", default="vggt_omega")
     p.add_argument("--views", default="view1,view2", help='Comma-separated, e.g. "view1,view2"')
-    p.add_argument("--stride", type=int, default=1)
-    p.add_argument("--max_frames", type=int, default=None)
-    p.add_argument("--include_per_frame", action="store_true")
     p.add_argument(
         "--frame_batch_size",
         type=int,
         default=1,
         help="VGGT batch size B: number of timesteps per forward (views stay in S).",
+    )
+    p.add_argument(
+        "--profile",
+        action="store_true",
+        help="Print per-stage timing breakdown (output on model_service stderr).",
     )
     mode = p.add_mutually_exclusive_group(required=True)
     mode.add_argument(
@@ -53,7 +54,6 @@ def _parse_args() -> argparse.Namespace:
 def _connect(host: str, port: int, authkey: str) -> Client:
     return Client((host, int(port)), authkey=authkey.encode("utf-8"))
 
-
 def _close_session(conn: Client) -> None:
     try:
         conn.send({"cmd": "close_session"})
@@ -63,26 +63,21 @@ def _close_session(conn: Client) -> None:
     except Exception as e:
         print(f"[run_video_metrics] close_session warning: {e!r}", file=sys.stderr)
 
-
 def _request_metrics(
     conn: Client,
     *,
     episode_dir: str,
     views: list[str],
-    stride: int,
-    max_frames: int | None,
-    include_per_frame: bool,
-    frame_batch_size: int
+    frame_batch_size: int,
+    profile: bool = False,
 ) -> dict:
     conn.send(
         {
             "cmd": "compute_video_metrics",
             "episode_dir": episode_dir,
             "views": views,
-            "stride": int(stride),
-            "max_frames": None if max_frames is None else int(max_frames),
-            "include_per_frame": bool(include_per_frame),
-            "frame_batch_size": int(frame_batch_size)
+            "frame_batch_size": int(frame_batch_size),
+            "profile": bool(profile),
         }
     )
     resp = conn.recv()
@@ -119,10 +114,8 @@ def _run_single(args: argparse.Namespace, views: list[str]) -> None:
             conn,
             episode_dir=args.episode_dir,
             views=views,
-            stride=args.stride,
-            max_frames=args.max_frames,
-            include_per_frame=args.include_per_frame,
-            frame_batch_size=args.frame_batch_size
+            frame_batch_size=args.frame_batch_size,
+            profile=args.profile,
         )
     finally:
         _close_session(conn)
@@ -162,17 +155,14 @@ def _run_batch(args: argparse.Namespace, views: list[str]) -> None:
     import time
     try:
         for name, episode_dir in episodes:
-            # print(f"[run_video_metrics] {name} ...", file=sys.stderr)
             try:
                 time_start = time.time()
                 result = _request_metrics(
                     conn,
                     episode_dir=episode_dir,
                     views=views,
-                    stride=args.stride,
-                    max_frames=args.max_frames,
-                    include_per_frame=args.include_per_frame,
-                    frame_batch_size=args.frame_batch_size
+                    frame_batch_size=args.frame_batch_size,
+                    profile=args.profile,
                 )
                 time_end = time.time()
                 print(f"[run_video_metrics] {name} took {time_end - time_start} seconds", file=sys.stderr)

@@ -1,10 +1,14 @@
 import os
+import sys
+import threading
+import time
+from collections import defaultdict
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Iterator
 
 import torch
-from vggt.utils.geometry import unproject_depth_map_to_point_map
+from vggt_omega.utils.geometry import unproject_depth_map_to_point_map
 from .camera_pose_stability import compute_pose_stability_metric
 from .geometric_consistency import (
     geometric_calculation,
@@ -14,13 +18,71 @@ from .geometric_consistency import (
 )
 from .utils import intersect_frames
 
+def _print_profile(
+    times: dict[str, float],
+    *,
+    episode_dir: str,
+    num_frames: int,
+    wall_s: float,
+) -> None:
+    if wall_s <= 0:
+        return
+    labels = {
+        "intersect_frames": "intersect_frames",
+        "load_images": "load_images (CPU)",
+        "h2d": "cpu_to_gpu",
+        "model_forward": "model_forward (GPU)",
+        "geo_gpu_to_cpu": "geo: gpu_to_cpu",
+        "geo_align": "geo: align_depth",
+        "geo_unproject": "geo: unproject",
+        "geo_render": "geo: render_depth",
+        "geo_metric": "geo: metric_calc",
+        "pose_stability": "pose_stability",
+    }
+    print(f"\n[profile] {episode_dir} ({num_frames} frames, wall={wall_s:.2f}s)", file=sys.stderr)
+    accounted = 0.0
+    for key in labels:
+        sec = times.get(key, 0.0)
+        if sec <= 0:
+            continue
+        accounted += sec
+        print(f"  {labels[key]:24s} {sec:7.2f}s  ({100.0 * sec / wall_s:5.1f}%)", file=sys.stderr)
+
+def _configure_torch_for_inference() -> None:
+    """Reduce inductor compile cost and enable TF32 matmul on CUDA."""
+    os.environ.setdefault("CFLAGS", "-Wno-macro-redefined")
+    if torch.cuda.is_available():
+        torch.set_float32_matmul_precision("high")
+    try:
+        import torch._inductor.config as inductor_config
+
+        inductor_config.max_autotune = False
+        inductor_config.max_autotune_gemm = False
+    except Exception:
+        pass
+
+def _compile_model(model: torch.nn.Module) -> torch.nn.Module:
+    _configure_torch_for_inference()
+
+    aggregator = getattr(model, "aggregator", None)
+    if aggregator is None:
+        return model
+
+    try:
+        model.aggregator = torch.compile(aggregator, mode="reduce-overhead")  # type: ignore[method-assign]
+        print(
+            "[video_metrics] torch.compile enabled on aggregator (mode=reduce-overhead)",
+            file=sys.stderr,
+        )
+    except Exception as exc:
+        print(f"[video_metrics] torch.compile skipped: {exc}", file=sys.stderr)
+    return model
+
 @dataclass(frozen=True)
 class ModelContext:
-    # VGGT (legacy) or VGGT-Omega (new).
-    model: object
-    device: str
-    autocast_dtype: torch.dtype
-    backend: str = "vggt-omega"  # "vggt" | "vggt_omega"
+    model: torch.nn.Module
+    device: str = "cuda"
+    autocast_dtype: torch.dtype | None = None
     omega_checkpoint: str | None = None
     omega_image_resolution: int = 512
     omega_patch_size: int = 16
@@ -44,41 +106,15 @@ def _load_vggt_omega_modules() -> tuple[object, object, object]:
     from vggt_omega.utils.load_fn import load_and_preprocess_images as load_and_preprocess_images_omega  # type: ignore
     from vggt_omega.utils.pose_enc import encoding_to_camera  # type: ignore
     return VGGTOmega, load_and_preprocess_images_omega, encoding_to_camera
-    
-def default_device_dtype() -> tuple[str, torch.dtype]:
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    if device == "cuda" and torch.cuda.get_device_capability()[0] >= 8:
-        dtype = torch.bfloat16
-    else:
-        dtype = torch.float16 if device == "cuda" else torch.float32
-    return device, dtype
-
 
 def init_model_context(
     *,
-    device: str | None = None,
     autocast_dtype: torch.dtype | None = None,
-    model_name: str = "facebook/VGGT-1B",
-    backend: str = "vggt",
     omega_checkpoint: str | None = None,
     omega_image_resolution: int = 512,
     omega_patch_size: int = 16,
 ) -> ModelContext:
-    if device is None or autocast_dtype is None:
-        d, dt = default_device_dtype()
-        device = d if device is None else device
-        autocast_dtype = dt if autocast_dtype is None else autocast_dtype
-
-    backend = str(backend).strip().lower()
-    if backend not in {"vggt", "vggt_omega"}:
-        raise ValueError(f"Unknown backend={backend!r}; expected 'vggt' or 'vggt_omega'")
-
-    if backend == "vggt":
-        from vggt.models.vggt import VGGT  
-        model = VGGT.from_pretrained(model_name).to(device)
-        model.eval()
-        return ModelContext(model=model, device=device, autocast_dtype=autocast_dtype, backend="vggt")
-
+    device = "cuda"
     if omega_checkpoint is None:
         raise ValueError("omega_checkpoint is required when backend='vggt_omega'")
     VGGTOmega, load_fn, encoding_to_camera = _load_vggt_omega_modules()
@@ -86,12 +122,12 @@ def init_model_context(
     model = VGGTOmega(patch_size=int(omega_patch_size)).to(device).eval()
     state = torch.load(str(omega_checkpoint), map_location="cpu")
     model.load_state_dict(state)
+    model = _compile_model(model)
 
     return ModelContext(
         model=model,
         device=device,
         autocast_dtype=autocast_dtype,
-        backend="vggt_omega",
         omega_checkpoint=str(omega_checkpoint),
         omega_image_resolution=int(omega_image_resolution),
         omega_patch_size=int(omega_patch_size),
@@ -103,11 +139,9 @@ def init_model_context(
 def _frame_image_paths(episode_dir: str, views: list[str], fi: int) -> list[str]:
     return [os.path.join(episode_dir, v, f"frame_{fi:04d}.png") for v in views]
 
-
 def _chunk_list(items: list[int], chunk_size: int) -> list[list[int]]:
     size = max(1, int(chunk_size))
     return [items[i : i + size] for i in range(0, len(items), size)]
-
 
 def _load_images_chunk_cpu(
     ctx: ModelContext,
@@ -128,18 +162,15 @@ def _load_images_chunk_cpu(
         raise ValueError("frame_ids must not be empty")
 
     s = len(views)
-    if ctx.backend == "vggt_omega":
-        load_fn_omega = ctx.omega_load_fn
-        if load_fn_omega is None:
-            _, load_fn_omega, _ = _load_vggt_omega_modules()
-        preprocess = lambda paths: load_fn_omega(  # noqa: E731
-            paths,
-            image_resolution=int(ctx.omega_image_resolution),
-            patch_size=int(ctx.omega_patch_size),
-        )
-    else:
-        from vggt.utils.load_fn import load_and_preprocess_images  # local import
-        preprocess = load_and_preprocess_images
+    
+    load_fn_omega = ctx.omega_load_fn
+    if load_fn_omega is None:
+        _, load_fn_omega, _ = _load_vggt_omega_modules()
+    preprocess = lambda paths: load_fn_omega(  # noqa: E731
+        paths,
+        image_resolution=int(ctx.omega_image_resolution),
+        patch_size=int(ctx.omega_patch_size),
+    )
 
     if parallel_frames and len(frame_ids) > 1:
         workers = max(1, min(int(load_workers), len(frame_ids)))
@@ -160,16 +191,11 @@ def _load_images_chunk_cpu(
     return flat.view(b, s, *flat.shape[1:])
 
 
-def _images_cpu_to_device(images_cpu: torch.Tensor, device: str) -> torch.Tensor:
-    if device == "cuda" and torch.cuda.is_available():
-        return images_cpu.pin_memory().to(device, non_blocking=True)
-    return images_cpu.to(device)
-
 @torch.no_grad()
 def _forward_vggt(
     ctx: ModelContext,
     images: torch.Tensor,
-) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """
     Args:
       images: (B, S, 3, H, W)
@@ -178,35 +204,21 @@ def _forward_vggt(
       extrinsic: (B,S,3,4)
       intrinsic: (B,S,3,3)
       depth_map: (B,S,H,W,1)
+      depth_map_indep: (B,S,H,W,1)
     """
     if images.ndim != 5:
         raise ValueError(f"Expected images (B,S,3,H,W), got {tuple(images.shape)}")
 
-    if ctx.backend == "vggt_omega":
-        encoding_to_camera = ctx.omega_encoding_to_camera
-        if encoding_to_camera is None:
-            _, _, encoding_to_camera = _load_vggt_omega_modules()
-        preds = ctx.model(images)  # type: ignore[misc]
-        pose_enc = preds["pose_enc"]
-        depth_map = preds["depth"]
-        depth_map_indep = preds["depth_single"]
-        extrinsic, intrinsic = encoding_to_camera(pose_enc, preds["images"].shape[-2:])  # type: ignore[operator]
-        return extrinsic, intrinsic, depth_map, depth_map_indep
-
-    # legacy VGGT
-    from vggt.utils.pose_enc import pose_encoding_to_extri_intri  # local import
-    if ctx.device == "cuda":
-        with torch.cuda.amp.autocast(dtype=ctx.autocast_dtype):
-            aggregated_tokens_list, ps_idx = ctx.model.aggregator(images)  # type: ignore[assignment]
-            pose_enc = ctx.model.camera_head(aggregated_tokens_list)[-1]  # type: ignore[union-attr]
-            depth_map, _ = ctx.model.depth_head(aggregated_tokens_list, images, ps_idx)  # type: ignore[union-attr]
-    else:
-        aggregated_tokens_list, ps_idx = ctx.model.aggregator(images)  # type: ignore[assignment]
-        pose_enc = ctx.model.camera_head(aggregated_tokens_list)[-1]  # type: ignore[union-attr]
-        depth_map, _ = ctx.model.depth_head(aggregated_tokens_list, images, ps_idx)  # type: ignore[union-attr]
-
-    extrinsic, intrinsic = pose_encoding_to_extri_intri(pose_enc, images.shape[-2:])
+    encoding_to_camera = ctx.omega_encoding_to_camera
+    if encoding_to_camera is None:
+        _, _, encoding_to_camera = _load_vggt_omega_modules()
+    preds = ctx.model(images)  # type: ignore[misc]
+    pose_enc = preds["pose_enc"]
+    depth_map = preds["depth"]
+    depth_map_indep = preds["depth_single"]
+    extrinsic, intrinsic = encoding_to_camera(pose_enc, preds["images"].shape[-2:])  # type: ignore[operator]
     return extrinsic, intrinsic, depth_map, depth_map_indep
+
 
 @torch.no_grad()
 def _iter_vggt_frames(
@@ -219,6 +231,7 @@ def _iter_vggt_frames(
     prefetch_chunks: bool = True,
     parallel_frame_load: bool = True,
     load_workers: int = 4,
+    times: dict[str, float] | None = None,
 ) -> Iterator[tuple[int, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]]:
     """
     Yield per-frame VGGT outputs using batch dimension B for multiple timesteps.
@@ -250,6 +263,7 @@ def _iter_vggt_frames(
             )
 
         for chunk_idx, chunk in enumerate(chunks):
+            t_load = time.perf_counter()
             if prefetch_chunks and pending_load is not None:
                 images_cpu = pending_load.result()
                 if chunk_idx + 1 < len(chunks):
@@ -273,9 +287,27 @@ def _iter_vggt_frames(
                     parallel_frames=parallel_frame_load,
                     load_workers=load_workers,
                 )
+            if times is not None:
+                times["load_images"] += time.perf_counter() - t_load
 
-            images = _images_cpu_to_device(images_cpu, ctx.device)
+            t_h2d = time.perf_counter()
+
+            # def _images_cpu_to_device(images_cpu: torch.Tensor, device: str) -> torch.Tensor:
+            #     if device == "cuda" and torch.cuda.is_available():
+            #         return images_cpu.pin_memory().to(device, non_blocking=True)
+            #     return images_cpu.to(device)
+
+            # images = _images_cpu_to_device(images_cpu, ctx.device)
+            images = images_cpu.pin_memory().to(ctx.device, non_blocking=True)
+            if times is not None:
+                times["h2d"] += time.perf_counter() - t_h2d
+
+            t_fwd = time.perf_counter()
             extrinsic, intrinsic, depth_map, depth_map_indep = _forward_vggt(ctx, images)
+            torch.cuda.synchronize()
+
+            if times is not None:
+                times["model_forward"] += time.perf_counter() - t_fwd
 
             for b, fi in enumerate(chunk):
                 yield (
@@ -291,28 +323,78 @@ def _iter_vggt_frames(
             load_executor.shutdown(wait=True)
 
 
-def _select_frame_ids(
-    episode_dir: str,
-    views: list[str],
-    *,
-    stride: int = 1,
-    max_frames: int | None = None,
-) -> list[int]:
-    frame_ids = intersect_frames(list(views), episode_dir)
-    if not frame_ids:
-        raise ValueError(f"No common frames found in {episode_dir} for views={views}")
-    frame_ids = frame_ids[:: max(1, int(stride))]
-    if max_frames is not None:
-        frame_ids = frame_ids[: int(max_frames)]
-    return frame_ids
-
-
 @dataclass(frozen=True)
 class _GeometricFrameResult:
     frame: int
     geometric_consistency: float
     disjoint: bool
     details: dict | None
+
+
+def _snapshot_frame_tensors(
+    extrinsic: torch.Tensor,
+    intrinsic: torch.Tensor,
+    depth_map: torch.Tensor,
+    depth_map_indep: torch.Tensor,
+    images: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """CPU copies for async geometric post-processing (GPU tensors may be reused)."""
+    return (
+        extrinsic.detach().float().cpu(),
+        intrinsic.detach().float().cpu(),
+        depth_map.detach().float().cpu(),
+        depth_map_indep.detach().float().cpu(),
+        images.detach().float().cpu(),
+    )
+
+def _record_time(times: dict[str, float] | None, key: str, dt: float, lock: threading.Lock | None) -> None:
+    if times is None:
+        return
+    if lock is not None:
+        with lock:
+            times[key] += dt
+    else:
+        times[key] += dt
+
+
+def _collect_geometric_result(
+    fi: int,
+    gf: _GeometricFrameResult,
+    extrinsic_cpu: torch.Tensor,
+    intrinsic_cpu: torch.Tensor,
+    *,
+    per_frame: list[dict],
+    pose_buffer: list[tuple[int, torch.Tensor, torch.Tensor]],
+) -> None:
+    per_frame.append({
+        "frame": gf.frame,
+        "geometric_consistency": gf.geometric_consistency,
+        "disjoint": gf.disjoint,
+        "details": gf.details,
+    })
+    if not gf.disjoint:
+        pose_buffer.append((int(fi), extrinsic_cpu, intrinsic_cpu))
+
+
+def _drain_geometric_futures(
+    pending: list[tuple[int, Future, torch.Tensor, torch.Tensor]],
+    *,
+    per_frame: list[dict],
+    pose_buffer: list[tuple[int, torch.Tensor, torch.Tensor]],
+    block: bool,
+) -> list[tuple[int, Future, torch.Tensor, torch.Tensor]]:
+    remaining: list[tuple[int, Future, torch.Tensor, torch.Tensor]] = []
+    for fi, fut, extrinsic_cpu, intrinsic_cpu in pending:
+        if block or fut.done():
+            gf = fut.result()
+            _collect_geometric_result(
+                fi, gf, extrinsic_cpu, intrinsic_cpu,
+                per_frame=per_frame, pose_buffer=pose_buffer,
+            )
+        else:
+            remaining.append((fi, fut, extrinsic_cpu, intrinsic_cpu))
+    return remaining
+
 
 @torch.no_grad()
 def _process_geometric_frame(
@@ -323,6 +405,8 @@ def _process_geometric_frame(
     depth_map: torch.Tensor,
     depth_map_indep: torch.Tensor,
     images: torch.Tensor,
+    times: dict[str, float] | None = None,
+    times_lock: threading.Lock | None = None,
 ) -> _GeometricFrameResult:
     """
     Fixed layouts:
@@ -331,18 +415,32 @@ def _process_geometric_frame(
       depth_rendered / valid_mask: (1, S, H, W)
       rgb_rendered: (1, S, H, W, 3)
     """
-    depth_cpu = depth_map.detach().float().cpu()
-    depth_cpu_indep = depth_map_indep.detach().float().cpu()
-    extrinsic_cpu = extrinsic.detach().float().cpu()
-    intrinsic_cpu = intrinsic.detach().float().cpu()
-    images_cpu = images.detach().float().cpu()
+    if depth_map.is_cuda:
+        t0 = time.perf_counter()
+        depth_cpu = depth_map.detach().float().cpu()
+        depth_cpu_indep = depth_map_indep.detach().float().cpu()
+        extrinsic_cpu = extrinsic.detach().float().cpu()
+        intrinsic_cpu = intrinsic.detach().float().cpu()
+        images_cpu = images.detach().float().cpu()
+        _record_time(times, "geo_gpu_to_cpu", time.perf_counter() - t0, times_lock)
+    else:
+        depth_cpu = depth_map.detach().float()
+        depth_cpu_indep = depth_map_indep.detach().float()
+        extrinsic_cpu = extrinsic.detach().float()
+        intrinsic_cpu = intrinsic.detach().float()
+        images_cpu = images.detach().float()
 
+    t0 = time.perf_counter()
     depth_map_indep_aligned = align_depth_scale(depth_cpu_indep, depth_cpu, max_depth=1.0)
+    _record_time(times, "geo_align", time.perf_counter() - t0, times_lock)
 
+    t0 = time.perf_counter()
     point_map = unproject_depth_map_to_point_map(
-        depth_map_indep_aligned[0], extrinsic.squeeze(0), intrinsic.squeeze(0)
+        depth_map_indep_aligned[0], extrinsic_cpu.squeeze(0), intrinsic_cpu.squeeze(0)
     )
+    _record_time(times, "geo_unproject", time.perf_counter() - t0, times_lock)
 
+    t0 = time.perf_counter()
     depth_rendered_np, rendered_valid_mask, rgb_rendered_np = render_depth_from_point_map(
         point_map_by_unprojection=point_map,
         depth_map=depth_map_indep_aligned,
@@ -350,7 +448,9 @@ def _process_geometric_frame(
         intrinsic=intrinsic_cpu,
         images=images_cpu,
     )
+    _record_time(times, "geo_render", time.perf_counter() - t0, times_lock)
 
+    t0 = time.perf_counter()
     res = geometric_calculation(
         depth=depth_map_indep_aligned,
         depth_rendered=depth_rendered_np,
@@ -358,6 +458,7 @@ def _process_geometric_frame(
         rgb_rendered=rgb_rendered_np,
         valid_mask=rendered_valid_mask,
     )
+    _record_time(times, "geo_metric", time.perf_counter() - t0, times_lock)
     score = float(geometric_consistency_metric(res))
     if res["view0_shape"]["valid_ratio"] < 0.02 or res["view1_shape"]["valid_ratio"] < 0.02:
         return _GeometricFrameResult(
@@ -402,70 +503,105 @@ def compute_video_metrics(
     *,
     episode_dir: str,
     views: list[str],
-    stride: int = 1,
-    max_frames: int | None = None,
-    include_per_frame: bool = False,
     frame_batch_size: int = 4,
     prefetch_chunks: bool = True,
     parallel_frame_load: bool = True,
     load_workers: int = 4,
+    profile: bool = False,
 ) -> dict:
-    frame_ids = _select_frame_ids(episode_dir, views, stride=stride, max_frames=max_frames)
+    wall_start = time.perf_counter()
+    times: dict[str, float] = defaultdict(float)
+
+    t0 = time.perf_counter()
+    frame_ids = intersect_frames(list(views), episode_dir)
+    if not frame_ids:
+        raise ValueError(f"No common frames found in {episode_dir} for views={views}")
+    if profile:
+        times["intersect_frames"] = time.perf_counter() - t0
     geo_frame_ids = [fi for fi in frame_ids if fi > 0]
 
     per_frame: list[dict] = []
-    disjoint_frame_ids: set[int] = set()
-    extrinsics_all: list[torch.Tensor] = []
-    intrinsics_all: list[torch.Tensor] = []
-    used_frame_ids: list[int] = []
+    pose_buffer: list[tuple[int, torch.Tensor, torch.Tensor]] = []
+    pending_geo: list[tuple[int, Future, torch.Tensor, torch.Tensor]] = []
+    times_lock = threading.Lock() if profile else None
 
-    for fi, extrinsic, intrinsic, depth_map, depth_map_indep, images in _iter_vggt_frames(
-        ctx,
-        episode_dir=episode_dir,
-        views=views,
-        frame_ids=frame_ids,
-        frame_batch_size=frame_batch_size,
-        prefetch_chunks=prefetch_chunks,
-        parallel_frame_load=parallel_frame_load,
-        load_workers=load_workers,
-    ):
-        if fi > 0:
-            gf = _process_geometric_frame(
-                fi,
-                extrinsic=extrinsic,
-                intrinsic=intrinsic,
-                depth_map=depth_map,
-                depth_map_indep=depth_map_indep,
-                images=images,
+    geo_executor = ThreadPoolExecutor(max_workers=2)
+    try:
+        for fi, extrinsic, intrinsic, depth_map, depth_map_indep, images in _iter_vggt_frames(
+            ctx,
+            episode_dir=episode_dir,
+            views=views,
+            frame_ids=frame_ids,
+            frame_batch_size=frame_batch_size,
+            prefetch_chunks=prefetch_chunks,
+            parallel_frame_load=parallel_frame_load,
+            load_workers=load_workers,
+            times=times if profile else None,
+        ):
+            pending_geo = _drain_geometric_futures(
+                pending_geo,
+                per_frame=per_frame,
+                pose_buffer=pose_buffer,
+                block=False,
             )
-            per_frame.append({
-                "frame": gf.frame,
-                "geometric_consistency": gf.geometric_consistency,
-                "disjoint": gf.disjoint,
-                "details": gf.details,
-            })
-            if gf.disjoint:
-                disjoint_frame_ids.add(int(fi))
 
-        if fi not in disjoint_frame_ids:
-            extrinsics_all.append(extrinsic.detach().float().cpu())
-            intrinsics_all.append(intrinsic.detach().float().cpu())
-            used_frame_ids.append(int(fi))
+            if fi == 0:
+                ext0, intr0, _, _, _ = _snapshot_frame_tensors(
+                    extrinsic, intrinsic, depth_map, depth_map_indep, images,
+                )
+                pose_buffer.append((0, ext0, intr0))
+            else:
+                t0 = time.perf_counter()
+                ext_cpu, intr_cpu, d_cpu, d_ind_cpu, img_cpu = _snapshot_frame_tensors(
+                    extrinsic, intrinsic, depth_map, depth_map_indep, images,
+                )
+                _record_time(times, "geo_gpu_to_cpu", time.perf_counter() - t0, times_lock)
+                pending_geo.append((
+                    int(fi),
+                    geo_executor.submit(
+                        _process_geometric_frame,
+                        fi,
+                        extrinsic=ext_cpu,
+                        intrinsic=intr_cpu,
+                        depth_map=d_cpu,
+                        depth_map_indep=d_ind_cpu,
+                        images=img_cpu,
+                        times=times if profile else None,
+                        times_lock=times_lock,
+                    ),
+                    ext_cpu,
+                    intr_cpu,
+                ))
+
+        while pending_geo:
+            pending_geo = _drain_geometric_futures(
+                pending_geo,
+                per_frame=per_frame,
+                pose_buffer=pose_buffer,
+                block=True,
+            )
+    finally:
+        geo_executor.shutdown(wait=True)
+
+    pose_buffer.sort(key=lambda item: item[0])
+    extrinsics_all = [ext for _, ext, _ in pose_buffer]
+    intrinsics_all = [intr for _, _, intr in pose_buffer]
+    used_frame_ids = [fi for fi, _, _ in pose_buffer]
 
     geo = _aggregate_geometric_results(per_frame)
+    t0 = time.perf_counter()
     pose_stability = 0.0 if (not used_frame_ids or used_frame_ids == [0]) else float(compute_pose_stability_metric(extrinsics_all, intrinsics_all))
+    if profile:
+        times["pose_stability"] = time.perf_counter() - t0
+        _print_profile(times, episode_dir=episode_dir, num_frames=len(frame_ids), wall_s=time.perf_counter() - wall_start)
     out = {
         "episode_dir": str(episode_dir),
         "views": list(views),
-        "stride": int(stride),
-        "max_frames": None if max_frames is None else int(max_frames),
         "pose_stability": pose_stability,
         "geometric_consistency": geo["geometric_consistency"],
         "num_frames": int(min(len(frame_ids), len(geo_frame_ids))),
         "num_disjoint_frames": geo["num_disjoint_frames"],
         "disjoint_frame_ratio": geo["disjoint_frame_ratio"],
     }
-    if include_per_frame:
-        out["geometric_consistency_per_frame"] = geo["geometric_consistency_per_frame"]
     return out
 

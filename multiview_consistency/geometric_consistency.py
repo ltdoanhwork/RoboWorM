@@ -2,17 +2,7 @@ import math
 
 import numpy as np
 import torch
-
-# Canonical layouts for this pipeline (B may be 1):
-#   images          (B, S, 3, H, W) float [0, 1]
-#   depth           (B, S, H, W, 1)
-#   extrinsic       (B, S, 3, 4)
-#   intrinsic       (B, S, 3, 3)
-#   point_map       (S, H, W, 3)   # after unproject on batch item 0
-#   depth_rendered  (B, S, H, W)
-#   valid_mask      (B, S, H, W) bool
-#   rgb_rendered    (B, S, H, W, 3) float [0, 1]
-
+from numba import njit
 def align_depth_scale(
     d_single: torch.Tensor,   # (B,S,H,W,1)
     d_joint: torch.Tensor,    # (B,S,H,W,1)
@@ -59,7 +49,6 @@ def align_depth_scale(
             m = valid[b, s]
             n_valid = int(m.sum())
             if n_valid < 10:
-                print(f"⚠️ Cảnh báo: (b={b}, s={s}) chỉ có {n_valid} pixels hợp lệ trong vùng center. Giữ scale=1.0.")
                 continue
 
             x = ds_crop[b, s][m].double()
@@ -86,134 +75,6 @@ def _images_b_s_hwc(images: torch.Tensor | np.ndarray) -> np.ndarray:
     img = np.transpose(img, (0, 1, 3, 4, 2))
     return np.clip(img, 0.0, 1.0)
 
-
-# @torch.no_grad()
-# def render_depth_from_point_map(
-#     point_map_by_unprojection: np.ndarray,
-#     depth_map: torch.Tensor | np.ndarray,
-#     extrinsic: torch.Tensor | np.ndarray,
-#     intrinsic: torch.Tensor | np.ndarray,
-#     images: torch.Tensor | np.ndarray,
-# ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-#     """
-#     Project multi-view unprojected points into each camera (z-buffer).
-
-#     Args:
-#       point_map_by_unprojection: (S, H, W, 3)
-#       depth_map: (B, S, H, W, 1)
-#       extrinsic: (B, S, 3, 4)
-#       intrinsic: (B, S, 3, 3)
-#       images: (B, S, 3, H, W) in [0, 1]
-
-#     Returns:
-#       depth_rendered: (B, S, H, W) float32
-#       fov_overlap_mask: (B, S, H, W) bool
-#       rgb_rendered: (B, S, H, W, 3) float32 in [0, 1]
-#     """
-#     S_pm, H, W, _ = point_map_by_unprojection.shape
-
-#     d = _as_numpy(depth_map)[..., 0]  # (B, S, H, W)
-#     d0 = d[0]  # (S, H, W) — point_map is from batch 0
-
-#     rgb_maps = _images_b_s_hwc(images)[0]  # (S, H, W, 3)
-
-#     E = _as_numpy(extrinsic)  # (B, S, 3, 4)
-#     K = _as_numpy(intrinsic)  # (B, S, 3, 3)
-#     B = E.shape[0]
-#     S_cam = E.shape[1]
-
-#     pts = []
-#     cols = []
-#     for s in range(S_pm):
-#         ds_ = d0[s]
-#         m = np.isfinite(ds_) & (ds_ > 1e-6)
-#         if np.any(m):
-#             pts.append(point_map_by_unprojection[s][m])
-#             cols.append(rgb_maps[s][m])
-
-#     out = np.zeros((B, S_cam, H, W), dtype=np.float32)
-#     fov_overlap_geom = np.zeros((B, S_cam, H, W), dtype=bool)
-#     rgb_out = np.zeros((B, S_cam, H, W, 3), dtype=np.float32)
-
-#     if len(pts) > 0:
-#         P = np.concatenate(pts, axis=0).astype(np.float32)
-#         Pwh = np.concatenate([P, np.ones((P.shape[0], 1), dtype=np.float32)], axis=1)
-#         C = np.concatenate(cols, axis=0).astype(np.float32)
-
-#         for b in range(B):
-#             for s in range(S_cam):
-#                 Eb = E[b, s].astype(np.float32)
-#                 Kb = K[b, s].astype(np.float32)
-
-#                 Pc = (Eb @ Pwh.T).T
-#                 z = Pc[:, 2]
-#                 valid = z > 0.01
-#                 Pc_v = Pc[valid]
-#                 z_v = z[valid]
-#                 C_v = C[valid]
-
-#                 if z_v.size > 0:
-#                     pix = (Kb @ Pc_v.T).T
-#                     u = pix[:, 0] / (pix[:, 2] + 1e-5)
-#                     v = pix[:, 1] / (pix[:, 2] + 1e-5)
-
-#                     ui_all = np.rint(u)
-#                     vi_all = np.rint(v)
-#                     inb = (
-#                         (ui_all >= 0)
-#                         & (ui_all < W)
-#                         & (vi_all >= 0)
-#                         & (vi_all < H)
-#                         & np.isfinite(ui_all)
-#                         & np.isfinite(vi_all)
-#                     )
-
-#                     ui_b = ui_all[inb].astype(np.int32)
-#                     vi_b = vi_all[inb].astype(np.int32)
-#                     z_b = z_v[inb].astype(np.float32)
-#                     C_b = C_v[inb]
-
-#                     if z_b.size > 0:
-#                         depth_min_buf = np.full((H, W), np.inf, dtype=np.float32)
-#                         np.minimum.at(depth_min_buf, (vi_b, ui_b), z_b)
-
-#                         hit_count = np.zeros((H, W), dtype=np.int32)
-#                         np.add.at(hit_count, (vi_b, ui_b), 1)
-
-#                         hit = hit_count > 0
-#                         depth_min_buf[~hit] = 0.0
-#                         out[b, s] = depth_min_buf
-
-#                         # Far → near so closer points overwrite RGB.
-#                         order = np.argsort(-z_b)
-#                         rgb_out[b, s, vi_b[order], ui_b[order]] = C_b[order]
-
-#                 pm_s = point_map_by_unprojection[s].reshape(-1, 3).astype(np.float32)
-#                 Pwh_s = np.concatenate(
-#                     [pm_s, np.ones((pm_s.shape[0], 1), dtype=np.float32)], axis=1
-#                 )
-#                 acc_geom = np.zeros(H * W, dtype=bool)
-#                 for src in range(S_cam):
-#                     if src == s:
-#                         continue
-#                     Esrc = E[b, src].astype(np.float32)
-#                     Ksrc = K[b, src].astype(np.float32)
-
-#                     Pc_g = (Esrc @ Pwh_s.T).T
-#                     z_g = Pc_g[:, 2]
-#                     pix_g = (Ksrc @ Pc_g.T).T
-#                     u_g = pix_g[:, 0] / (pix_g[:, 2] + 1e-6)
-#                     v_g = pix_g[:, 1] / (pix_g[:, 2] + 1e-6)
-
-#                     in_front = z_g > 0.01
-#                     in_bounds = (u_g >= 0) & (u_g < W) & (v_g >= 0) & (v_g < H)
-#                     overlap_flat = in_front & in_bounds & np.isfinite(u_g) & np.isfinite(v_g)
-#                     acc_geom |= overlap_flat
-
-#                 fov_overlap_geom[b, s] = acc_geom.reshape(H, W)
-
-#     return out, fov_overlap_geom, rgb_out
-
 def _detect_flying_pixels(depth: np.ndarray, rel_thresh: float = 0.1) -> np.ndarray:
     d = depth
     disc = np.zeros_like(d, dtype=np.float32)
@@ -227,133 +88,224 @@ def _detect_flying_pixels(depth: np.ndarray, rel_thresh: float = 0.1) -> np.ndar
     safe_mask[0, :] = safe_mask[-1, :] = safe_mask[:, 0] = safe_mask[:, -1] = False
     return safe_mask
 
-# @torch.no_grad()
-# def render_depth_from_point_map(
-#     point_map_by_unprojection: np.ndarray,
-#     depth_map: torch.Tensor | np.ndarray,
-#     extrinsic: torch.Tensor | np.ndarray,
-#     intrinsic: torch.Tensor | np.ndarray,
-#     images: torch.Tensor | np.ndarray,
-# ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-#     """
-#     Project multi-view unprojected points into each camera (z-buffer).
 
-#     Args:
-#       point_map_by_unprojection: (S, H, W, 3)
-#       depth_map: (B, S, H, W, 1)
-#       extrinsic: (B, S, 3, 4)
-#       intrinsic: (B, S, 3, 3)
-#       images: (B, S, 3, H, W) in [0, 1]
+@njit(cache=True)
+def _zbuffer_scatter_numba(
+    ui: np.ndarray,
+    vi: np.ndarray,
+    z: np.ndarray,
+    C: np.ndarray,
+    H: int,
+    W: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Z-buffer + RGB with closest-z wins.
 
-#     Returns:
-#       depth_rendered: (B, S, H, W) float32
-#       fov_overlap_mask: (B, S, H, W) bool
-#       rgb_rendered: (B, S, H, W, 3) float32 in [0, 1]
-#     """
-#     S_pm, H, W, _ = point_map_by_unprojection.shape
+    Depth matches ``np.minimum.at``. RGB matches far→near overwrite for distinct z
+    (equal-z ties are vanishingly rare with float32 network depths).
+    """
+    depth_min = np.full((H, W), np.inf, dtype=np.float32)
+    rgb_out = np.zeros((H, W, 3), dtype=np.float32)
+    n = z.shape[0]
+    for i in range(n):
+        uii = ui[i]
+        vii = vi[i]
+        zf = z[i]
+        if zf < depth_min[vii, uii]:
+            depth_min[vii, uii] = zf
+            rgb_out[vii, uii, 0] = C[i, 0]
+            rgb_out[vii, uii, 1] = C[i, 1]
+            rgb_out[vii, uii, 2] = C[i, 2]
+    for vii in range(H):
+        for uii in range(W):
+            if not np.isfinite(depth_min[vii, uii]):
+                depth_min[vii, uii] = 0.0
+    return depth_min, rgb_out
 
-#     d = _as_numpy(depth_map)[..., 0]  # (B, S, H, W)
-#     d0 = d[0]  # (S, H, W) — point_map is from batch 0
 
-#     rgb_maps = _images_b_s_hwc(images)[0]  # (S, H, W, 3)
+@njit(cache=True)
+def _scatter_hits_numba(u: np.ndarray, v: np.ndarray, valid: np.ndarray, H: int, W: int) -> np.ndarray:
+    """other→own FOV scatter: rint + clip, same as NumPy path."""
+    hit = np.zeros((H, W), dtype=np.bool_)
+    n = valid.shape[0]
+    for i in range(n):
+        if not valid[i]:
+            continue
+        ui = int(np.rint(u[i]))
+        vi = int(np.rint(v[i]))
+        if ui < 0:
+            ui = 0
+        elif ui > W - 1:
+            ui = W - 1
+        if vi < 0:
+            vi = 0
+        elif vi > H - 1:
+            vi = H - 1
+        hit[vi, ui] = True
+    return hit
 
-#     E = _as_numpy(extrinsic)  # (B, S, 3, 4)
-#     K = _as_numpy(intrinsic)  # (B, S, 3, 3)
-#     B = E.shape[0]
-#     S_cam = E.shape[1]
 
-#     pts = []
-#     cols = []
-#     for s in range(S_pm):
-#         ds_ = d0[s]
-#         m = np.isfinite(ds_) & (ds_ > 1e-6)
-#         safe = _detect_flying_pixels(ds_, rel_thresh=0.1)
-#         m = m & safe
-#         if np.any(m):
-#             pts.append(point_map_by_unprojection[s][m])
-#             cols.append(rgb_maps[s][m])
+def _project_points_to_camera(
+    pm_hw3: np.ndarray,
+    E: np.ndarray,
+    K: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Project (H,W,3) world points with extrinsic E into pixel u,v and depth z."""
+    H, W, _ = pm_hw3.shape
+    P = np.ascontiguousarray(pm_hw3.reshape(-1, 3), dtype=np.float32)
+    ones = np.ones((P.shape[0], 1), dtype=np.float32)
+    Pwh = np.concatenate([P, ones], axis=1)
+    Pc = (E.astype(np.float32, copy=False) @ Pwh.T).T
+    z = Pc[:, 2]
+    pix = (K.astype(np.float32, copy=False) @ Pc.T).T
+    u = pix[:, 0] / (pix[:, 2] + 1e-6)
+    v = pix[:, 1] / (pix[:, 2] + 1e-6)
+    return u, v, z
 
-#     out = np.zeros((B, S_cam, H, W), dtype=np.float32)
-#     fov_overlap_geom = np.zeros((B, S_cam, H, W), dtype=bool)
-#     rgb_out = np.zeros((B, S_cam, H, W, 3), dtype=np.float32)
 
-#     if len(pts) > 0:
-#         P = np.concatenate(pts, axis=0).astype(np.float32)
-#         Pwh = np.concatenate([P, np.ones((P.shape[0], 1), dtype=np.float32)], axis=1)
-#         C = np.concatenate(cols, axis=0).astype(np.float32)
+def _fov_overlap(
+    point_maps: np.ndarray,  # (S, H, W, 3)
+    E: np.ndarray,  # (B, S, 3, 4)
+    K: np.ndarray,  # (B, S, 3, 3)
+    b: int,
+) -> np.ndarray:
+    """
+    Bidirectional FOV overlap for all views.
 
-#         for b in range(B):
-#             for s in range(S_cam):
-#                 Eb = E[b, s].astype(np.float32)
-#                 Kb = K[b, s].astype(np.float32)
+    Same results as the nested NumPy loops, but each directed projection
+    (view i → camera j) is computed once and reused.
+    """
+    S_cam, H, W, _ = point_maps.shape
+    out = np.zeros((S_cam, H, W), dtype=bool)
 
-#                 Pc = (Eb @ Pwh.T).T
-#                 z = Pc[:, 2]
-#                 valid = z > 0.01
-#                 Pc_v = Pc[valid]
-#                 z_v = z[valid]
-#                 C_v = C[valid]
+    # projections[(i, j)] = (u, v, z) of view-i points in camera j
+    projections: dict[tuple[int, int], tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
+    for i in range(S_cam):
+        for j in range(S_cam):
+            if i == j:
+                continue
+            projections[(i, j)] = _project_points_to_camera(
+                point_maps[i], E[b, j], K[b, j]
+            )
 
-#                 if z_v.size > 0:
-#                     pix = (Kb @ Pc_v.T).T
-#                     u = pix[:, 0] / (pix[:, 2] + 1e-5)
-#                     v = pix[:, 1] / (pix[:, 2] + 1e-5)
+    for s in range(S_cam):
+        acc = np.zeros(H * W, dtype=bool)
+        for src in range(S_cam):
+            if src == s:
+                continue
+            # own → other: view-s points visible in camera src
+            u, v, z = projections[(s, src)]
+            own_to_other = (
+                (z > 0.01)
+                & (u >= 0) & (u < W) & (v >= 0) & (v < H)
+                & np.isfinite(u) & np.isfinite(v)
+            )
+            acc |= own_to_other
 
-#                     ui_all = np.rint(u)
-#                     vi_all = np.rint(v)
-#                     inb = (
-#                         (ui_all >= 0)
-#                         & (ui_all < W)
-#                         & (vi_all >= 0)
-#                         & (vi_all < H)
-#                         & np.isfinite(ui_all)
-#                         & np.isfinite(vi_all)
-#                     )
+            # other → own: view-src points that hit camera s (scatter)
+            u2, v2, z2 = projections[(src, s)]
+            valid2 = (
+                (z2 > 0.01)
+                & (u2 >= 0) & (u2 < W) & (v2 >= 0) & (v2 < H)
+                & np.isfinite(u2) & np.isfinite(v2)
+            )
+            hit = _scatter_hits_numba(
+                u2.astype(np.float32, copy=False),
+                v2.astype(np.float32, copy=False),
+                valid2.astype(np.bool_, copy=False),
+                H,
+                W,
+            )
+            acc |= hit.reshape(-1)
+        out[s] = acc.reshape(H, W)
+    return out
 
-#                     ui_b = ui_all[inb].astype(np.int32)
-#                     vi_b = vi_all[inb].astype(np.int32)
-#                     z_b = z_v[inb].astype(np.float32)
-#                     C_b = C_v[inb]
+def _render_depth(
+    point_map_by_unprojection: np.ndarray,
+    d0: np.ndarray,
+    rgb_maps: np.ndarray,
+    E: np.ndarray,
+    K: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Same algorithm as ``_render_depth_numpy``, faster system path:
+      - FOV projections computed once per directed pair (half the matmuls for S=2)
+      - Numba z-buffer scatter (avoids ``argsort`` + ``minimum.at`` overhead)
+      - Numba scatter for other→own FOV hits
+    """
+    S_pm, H, W, _ = point_map_by_unprojection.shape
+    B = E.shape[0]
+    S_cam = E.shape[1]
 
-#                     if z_b.size > 0:
-#                         depth_min_buf = np.full((H, W), np.inf, dtype=np.float32)
-#                         np.minimum.at(depth_min_buf, (vi_b, ui_b), z_b)
+    pts = []
+    cols = []
+    for s in range(S_pm):
+        ds_ = d0[s]
+        m = np.isfinite(ds_) & (ds_ > 1e-6)
+        safe = _detect_flying_pixels(ds_, rel_thresh=0.1)
+        m = m & safe
+        if np.any(m):
+            pts.append(np.ascontiguousarray(point_map_by_unprojection[s][m], dtype=np.float32))
+            cols.append(np.ascontiguousarray(rgb_maps[s][m], dtype=np.float32))
 
-#                         hit_count = np.zeros((H, W), dtype=np.int32)
-#                         np.add.at(hit_count, (vi_b, ui_b), 1)
+    out = np.zeros((B, S_cam, H, W), dtype=np.float32)
+    fov_overlap_geom = np.zeros((B, S_cam, H, W), dtype=bool)
+    rgb_out = np.zeros((B, S_cam, H, W, 3), dtype=np.float32)
 
-#                         hit = hit_count > 0
-#                         depth_min_buf[~hit] = 0.0
-#                         out[b, s] = depth_min_buf
+    point_maps_f = np.ascontiguousarray(point_map_by_unprojection, dtype=np.float32)
+    E_f = np.ascontiguousarray(E, dtype=np.float32)
+    K_f = np.ascontiguousarray(K, dtype=np.float32)
 
-#                         order = np.argsort(-z_b)
-#                         rgb_out[b, s, vi_b[order], ui_b[order]] = C_b[order]
+    if len(pts) == 0:
+        return out, fov_overlap_geom, rgb_out
 
-#                 pm_s = point_map_by_unprojection[s].reshape(-1, 3).astype(np.float32)
-#                 Pwh_s = np.concatenate(
-#                     [pm_s, np.ones((pm_s.shape[0], 1), dtype=np.float32)], axis=1
-#                 )
-#                 acc_geom = np.zeros(H * W, dtype=bool)
-#                 for src in range(S_cam):
-#                     if src == s:
-#                         continue
-#                     Esrc = E[b, src].astype(np.float32)
-#                     Ksrc = K[b, src].astype(np.float32)
+    P = np.concatenate(pts, axis=0)
+    Pwh = np.concatenate([P, np.ones((P.shape[0], 1), dtype=np.float32)], axis=1)
+    C = np.concatenate(cols, axis=0)
+    Pwh = np.ascontiguousarray(Pwh)
+    C = np.ascontiguousarray(C)
 
-#                     Pc_g = (Esrc @ Pwh_s.T).T
-#                     z_g = Pc_g[:, 2]
-#                     pix_g = (Ksrc @ Pc_g.T).T
-#                     u_g = pix_g[:, 0] / (pix_g[:, 2] + 1e-6)
-#                     v_g = pix_g[:, 1] / (pix_g[:, 2] + 1e-6)
+    for b in range(B):
+        for s in range(S_cam):
+            Eb = E_f[b, s]
+            Kb = K_f[b, s]
+            Pc = (Eb @ Pwh.T).T
+            z = Pc[:, 2]
+            valid = z > 0.01
+            Pc_v = Pc[valid]
+            z_v = z[valid]
+            C_v = C[valid]
+            if z_v.size > 0:
+                pix = (Kb @ Pc_v.T).T
+                u = pix[:, 0] / (pix[:, 2] + 1e-5)
+                v = pix[:, 1] / (pix[:, 2] + 1e-5)
+                ui_all = np.rint(u)
+                vi_all = np.rint(v)
+                inb = (
+                    (ui_all >= 0) & (ui_all < W) & (vi_all >= 0) & (vi_all < H)
+                    & np.isfinite(ui_all) & np.isfinite(vi_all)
+                )
+                ui_b = ui_all[inb].astype(np.int32)
+                vi_b = vi_all[inb].astype(np.int32)
+                z_b = z_v[inb].astype(np.float32)
+                C_b = C_v[inb]
+                if z_b.size > 0:
+                    depth_s, rgb_s = _zbuffer_scatter_numba(
+                        np.ascontiguousarray(ui_b),
+                        np.ascontiguousarray(vi_b),
+                        np.ascontiguousarray(z_b),
+                        np.ascontiguousarray(C_b),
+                        H,
+                        W,
+                    )
+                    out[b, s] = depth_s
+                    rgb_out[b, s] = rgb_s
+                    
 
-#                     in_front = z_g > 0.01
-#                     in_bounds = (u_g >= 0) & (u_g < W) & (v_g >= 0) & (v_g < H)
-#                     overlap_flat = in_front & in_bounds & np.isfinite(u_g) & np.isfinite(v_g)
-#                     acc_geom |= overlap_flat
+        fov_overlap_geom[b] = _fov_overlap(point_maps_f, E_f, K_f, b)
 
-#                 fov_overlap_geom[b, s] = acc_geom.reshape(H, W)
+    return out, fov_overlap_geom, rgb_out
 
-#     return out, fov_overlap_geom, rgb_out
 
 @torch.no_grad()
 def render_depth_from_point_map(
@@ -378,220 +330,15 @@ def render_depth_from_point_map(
       fov_overlap_mask: (B, S, H, W) bool
       rgb_rendered: (B, S, H, W, 3) float32 in [0, 1]
     """
-    S_pm, H, W, _ = point_map_by_unprojection.shape
-
     d = _as_numpy(depth_map)[..., 0]  # (B, S, H, W)
     d0 = d[0]  # (S, H, W) — point_map is from batch 0
-
     rgb_maps = _images_b_s_hwc(images)[0]  # (S, H, W, 3)
-
     E = _as_numpy(extrinsic)  # (B, S, 3, 4)
     K = _as_numpy(intrinsic)  # (B, S, 3, 3)
-    B = E.shape[0]
-    S_cam = E.shape[1]
+    pm = np.asarray(point_map_by_unprojection)
 
-    pts = []
-    cols = []
-    for s in range(S_pm):
-        ds_ = d0[s]
-        m = np.isfinite(ds_) & (ds_ > 1e-6)
-        safe = _detect_flying_pixels(ds_, rel_thresh=0.1)
-        m = m & safe
-        if np.any(m):
-            pts.append(point_map_by_unprojection[s][m])
-            cols.append(rgb_maps[s][m])
+    return _render_depth(pm, d0, rgb_maps, E, K)
 
-    out = np.zeros((B, S_cam, H, W), dtype=np.float32)
-    fov_overlap_geom = np.zeros((B, S_cam, H, W), dtype=bool)
-    rgb_out = np.zeros((B, S_cam, H, W, 3), dtype=np.float32)
-
-    if len(pts) > 0:
-        P = np.concatenate(pts, axis=0).astype(np.float32)
-        Pwh = np.concatenate([P, np.ones((P.shape[0], 1), dtype=np.float32)], axis=1)
-        C = np.concatenate(cols, axis=0).astype(np.float32)
-
-        for b in range(B):
-            for s in range(S_cam):
-                Eb = E[b, s].astype(np.float32)
-                Kb = K[b, s].astype(np.float32)
-
-                Pc = (Eb @ Pwh.T).T
-                z = Pc[:, 2]
-                valid = z > 0.01
-                Pc_v = Pc[valid]
-                z_v = z[valid]
-                C_v = C[valid]
-
-                if z_v.size > 0:
-                    pix = (Kb @ Pc_v.T).T
-                    u = pix[:, 0] / (pix[:, 2] + 1e-5)
-                    v = pix[:, 1] / (pix[:, 2] + 1e-5)
-
-                    ui_all = np.rint(u)
-                    vi_all = np.rint(v)
-                    inb = (
-                        (ui_all >= 0)
-                        & (ui_all < W)
-                        & (vi_all >= 0)
-                        & (vi_all < H)
-                        & np.isfinite(ui_all)
-                        & np.isfinite(vi_all)
-                    )
-
-                    ui_b = ui_all[inb].astype(np.int32)
-                    vi_b = vi_all[inb].astype(np.int32)
-                    z_b = z_v[inb].astype(np.float32)
-                    C_b = C_v[inb]
-
-                    if z_b.size > 0:
-                        depth_min_buf = np.full((H, W), np.inf, dtype=np.float32)
-                        np.minimum.at(depth_min_buf, (vi_b, ui_b), z_b)
-
-                        hit_count = np.zeros((H, W), dtype=np.int32)
-                        np.add.at(hit_count, (vi_b, ui_b), 1)
-
-                        hit = hit_count > 0
-                        depth_min_buf[~hit] = 0.0
-                        out[b, s] = depth_min_buf
-
-                        order = np.argsort(-z_b)
-                        rgb_out[b, s, vi_b[order], ui_b[order]] = C_b[order]
-
-                pm_s = point_map_by_unprojection[s].reshape(-1, 3).astype(np.float32)
-                Pwh_s = np.concatenate(
-                    [pm_s, np.ones((pm_s.shape[0], 1), dtype=np.float32)], axis=1
-                )
-                acc_geom = np.zeros(H * W, dtype=bool)
-                for src in range(S_cam):
-                    if src == s:
-                        continue
-                    Esrc = E[b, src].astype(np.float32)
-                    Ksrc = K[b, src].astype(np.float32)
-                    Es = E[b, s].astype(np.float32)
-                    Ks = K[b, s].astype(np.float32)
-
-                    Pc_g = (Esrc @ Pwh_s.T).T
-                    z_g = Pc_g[:, 2]
-                    pix_g = (Ksrc @ Pc_g.T).T
-                    u_g = pix_g[:, 0] / (pix_g[:, 2] + 1e-6)
-                    v_g = pix_g[:, 1] / (pix_g[:, 2] + 1e-6)
-                    in_front = z_g > 0.01
-                    in_bounds = (u_g >= 0) & (u_g < W) & (v_g >= 0) & (v_g < H)
-                    overlap_own_to_other = in_front & in_bounds & np.isfinite(u_g) & np.isfinite(v_g)
-
-                    pm_src = point_map_by_unprojection[src].reshape(-1, 3).astype(np.float32)
-                    Pwh_src = np.concatenate(
-                        [pm_src, np.ones((pm_src.shape[0], 1), dtype=np.float32)], axis=1
-                    )
-                    Pc_g2 = (Es @ Pwh_src.T).T
-                    z_g2 = Pc_g2[:, 2]
-                    pix_g2 = (Ks @ Pc_g2.T).T
-                    u_g2 = pix_g2[:, 0] / (pix_g2[:, 2] + 1e-6)
-                    v_g2 = pix_g2[:, 1] / (pix_g2[:, 2] + 1e-6)
-                    in_front2 = z_g2 > 0.01
-                    in_bounds2 = (u_g2 >= 0) & (u_g2 < W) & (v_g2 >= 0) & (v_g2 < H)
-                    valid2 = in_front2 & in_bounds2 & np.isfinite(u_g2) & np.isfinite(v_g2)
-
-                    if np.any(valid2):
-                        ui2 = np.clip(np.rint(u_g2[valid2]), 0, W - 1).astype(np.int32)
-                        vi2 = np.clip(np.rint(v_g2[valid2]), 0, H - 1).astype(np.int32)
-                        hit_from_src = np.zeros((H, W), dtype=bool)
-                        hit_from_src[vi2, ui2] = True
-                        overlap_other_to_own = hit_from_src.reshape(-1)
-                    else:
-                        overlap_other_to_own = np.zeros(H * W, dtype=bool)
-                    acc_geom |= overlap_own_to_other | overlap_other_to_own
-
-                fov_overlap_geom[b, s] = acc_geom.reshape(H, W)
-
-    return out, fov_overlap_geom, rgb_out
-
-# def geometric_calculation(
-#     depth: torch.Tensor | np.ndarray,
-#     depth_rendered: torch.Tensor | np.ndarray,
-#     *,
-#     eps: float = 1e-6,
-#     valid_mask: torch.Tensor | np.ndarray,
-#     images: torch.Tensor | np.ndarray,
-#     rgb_rendered: torch.Tensor | np.ndarray,
-# ) -> dict:
-#     """
-#     Args:
-#       depth: (B, S, H, W, 1)
-#       depth_rendered: (B, S, H, W)
-#       valid_mask: (B, S, H, W) bool
-#       images: (B, S, 3, H, W) in [0, 1]
-#       rgb_rendered: (B, S, H, W, 3) in [0, 1]
-#     """
-#     dj = _as_numpy(depth)[..., 0]  # (B, S, H, W)
-#     di = _as_numpy(depth_rendered)  # (B, S, H, W)
-
-#     vm = _as_numpy(valid_mask).astype(bool, copy=False)
-
-#     B, S, H, W = dj.shape
-
-#     rgb_src = _images_b_s_hwc(images)  # (B, S, H, W, 3)
-#     rgb_ren = np.clip(_as_numpy(rgb_rendered).astype(np.float32, copy=False), 0.0, 1.0)
-
-#     def _shape_stats_1view(
-#         y_bhw: np.ndarray,
-#         x_bhw: np.ndarray,
-#         m_bhw: np.ndarray,
-#         rgb_src_bhw3: np.ndarray,
-#         rgb_ren_bhw3: np.ndarray,
-#     ) -> dict | list[dict]:
-#         out = []
-#         for b in range(B):
-#             y = y_bhw[b]
-#             x = x_bhw[b]
-#             roi = np.isfinite(y) & np.isfinite(x) & (y > eps) & (x > eps) & m_bhw[b]
-#             cnt = int(roi.sum())
-#             if cnt == 0:
-#                 out.append({
-#                     "residual": float("nan"),
-#                     "count": 0,
-#                     "scale_ref": float("nan"),
-#                     "valid_ratio": float(roi.mean()),
-#                     "rgb_rmse": float("nan"),
-#                 })
-#                 continue
-
-#             xv = x.astype(np.float64)
-#             yv = y.astype(np.float64)
-#             scale_ref = float(np.median(yv))
-#             r = np.abs(yv - xv)
-
-#             src_pix = rgb_src_bhw3[b].astype(np.float64)
-#             ren_pix = rgb_ren_bhw3[b].astype(np.float64)
-#             rgb_rmse = float(np.sqrt(np.mean(np.square(src_pix - ren_pix))))
-
-#             out.append({
-#                 "residual": float(np.percentile(r, 90.0)), 
-#                 "count": cnt,
-#                 "scale_ref": scale_ref,
-#                 "valid_ratio": float(roi.mean()),
-#                 "rgb_rmse": rgb_rmse,
-#             })
-
-#         return out[0] if B == 1 else out
-
-#     result: dict = {}
-#     for s in range(S):
-#         result[f"view{s}_shape"] = _shape_stats_1view(
-#             dj[:, s], di[:, s], vm[:, s], rgb_src[:, s], rgb_ren[:, s]
-#         )
-
-#     diffs = []
-#     for s in range(S):
-#         for b in range(B):
-#             diffs.append(rgb_src[b, s] - rgb_ren[b, s])
-#     if diffs:
-#         all_diff = np.concatenate(diffs, axis=0).astype(np.float64)
-#         result["rgb_rmse"] = float(np.sqrt(np.mean(np.square(all_diff))))
-#     else:
-#         result["rgb_rmse"] = 0.0
-
-#     return result
 
 def geometric_calculation(
     depth: torch.Tensor | np.ndarray,
@@ -708,7 +455,7 @@ if __name__ == "__main__":
     if _physics_root not in sys.path:
         sys.path.insert(0, _physics_root)
 
-    from vggt.utils.geometry import unproject_depth_map_to_point_map
+    from vggt_omega.utils.geometry import unproject_depth_map_to_point_map
     from vggt_omega.models import VGGTOmega
     from vggt_omega.utils.load_fn import load_and_preprocess_images
     from vggt_omega.utils.pose_enc import encoding_to_camera
