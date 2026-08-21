@@ -2,7 +2,6 @@ import os
 import sys
 import threading
 import time
-from collections import defaultdict
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Iterator
@@ -17,36 +16,6 @@ from .geometric_consistency import (
     align_depth_scale,
 )
 from .utils import intersect_frames
-
-def _print_profile(
-    times: dict[str, float],
-    *,
-    episode_dir: str,
-    num_frames: int,
-    wall_s: float,
-) -> None:
-    if wall_s <= 0:
-        return
-    labels = {
-        "intersect_frames": "intersect_frames",
-        "load_images": "load_images (CPU)",
-        "h2d": "cpu_to_gpu",
-        "model_forward": "model_forward (GPU)",
-        "geo_gpu_to_cpu": "geo: gpu_to_cpu",
-        "geo_align": "geo: align_depth",
-        "geo_unproject": "geo: unproject",
-        "geo_render": "geo: render_depth",
-        "geo_metric": "geo: metric_calc",
-        "pose_stability": "pose_stability",
-    }
-    print(f"\n[profile] {episode_dir} ({num_frames} frames, wall={wall_s:.2f}s)", file=sys.stderr)
-    accounted = 0.0
-    for key in labels:
-        sec = times.get(key, 0.0)
-        if sec <= 0:
-            continue
-        accounted += sec
-        print(f"  {labels[key]:24s} {sec:7.2f}s  ({100.0 * sec / wall_s:5.1f}%)", file=sys.stderr)
 
 def _configure_torch_for_inference() -> None:
     """Reduce inductor compile cost and enable TF32 matmul on CUDA."""
@@ -230,8 +199,7 @@ def _iter_vggt_frames(
     frame_batch_size: int = 4,
     prefetch_chunks: bool = True,
     parallel_frame_load: bool = True,
-    load_workers: int = 4,
-    times: dict[str, float] | None = None,
+    load_workers: int = 4
 ) -> Iterator[tuple[int, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]]:
     """
     Yield per-frame VGGT outputs using batch dimension B for multiple timesteps.
@@ -263,7 +231,6 @@ def _iter_vggt_frames(
             )
 
         for chunk_idx, chunk in enumerate(chunks):
-            t_load = time.perf_counter()
             if prefetch_chunks and pending_load is not None:
                 images_cpu = pending_load.result()
                 if chunk_idx + 1 < len(chunks):
@@ -287,27 +254,13 @@ def _iter_vggt_frames(
                     parallel_frames=parallel_frame_load,
                     load_workers=load_workers,
                 )
-            if times is not None:
-                times["load_images"] += time.perf_counter() - t_load
 
-            t_h2d = time.perf_counter()
-
-            # def _images_cpu_to_device(images_cpu: torch.Tensor, device: str) -> torch.Tensor:
-            #     if device == "cuda" and torch.cuda.is_available():
-            #         return images_cpu.pin_memory().to(device, non_blocking=True)
-            #     return images_cpu.to(device)
-
-            # images = _images_cpu_to_device(images_cpu, ctx.device)
             images = images_cpu.pin_memory().to(ctx.device, non_blocking=True)
-            if times is not None:
-                times["h2d"] += time.perf_counter() - t_h2d
 
-            t_fwd = time.perf_counter()
+
             extrinsic, intrinsic, depth_map, depth_map_indep = _forward_vggt(ctx, images)
             torch.cuda.synchronize()
 
-            if times is not None:
-                times["model_forward"] += time.perf_counter() - t_fwd
 
             for b, fi in enumerate(chunk):
                 yield (
@@ -346,16 +299,6 @@ def _snapshot_frame_tensors(
         depth_map_indep.detach().float().cpu(),
         images.detach().float().cpu(),
     )
-
-def _record_time(times: dict[str, float] | None, key: str, dt: float, lock: threading.Lock | None) -> None:
-    if times is None:
-        return
-    if lock is not None:
-        with lock:
-            times[key] += dt
-    else:
-        times[key] += dt
-
 
 def _collect_geometric_result(
     fi: int,
@@ -404,9 +347,7 @@ def _process_geometric_frame(
     intrinsic: torch.Tensor,
     depth_map: torch.Tensor,
     depth_map_indep: torch.Tensor,
-    images: torch.Tensor,
-    times: dict[str, float] | None = None,
-    times_lock: threading.Lock | None = None,
+    images: torch.Tensor
 ) -> _GeometricFrameResult:
     """
     Fixed layouts:
@@ -416,13 +357,11 @@ def _process_geometric_frame(
       rgb_rendered: (1, S, H, W, 3)
     """
     if depth_map.is_cuda:
-        t0 = time.perf_counter()
         depth_cpu = depth_map.detach().float().cpu()
         depth_cpu_indep = depth_map_indep.detach().float().cpu()
         extrinsic_cpu = extrinsic.detach().float().cpu()
         intrinsic_cpu = intrinsic.detach().float().cpu()
         images_cpu = images.detach().float().cpu()
-        _record_time(times, "geo_gpu_to_cpu", time.perf_counter() - t0, times_lock)
     else:
         depth_cpu = depth_map.detach().float()
         depth_cpu_indep = depth_map_indep.detach().float()
@@ -430,17 +369,12 @@ def _process_geometric_frame(
         intrinsic_cpu = intrinsic.detach().float()
         images_cpu = images.detach().float()
 
-    t0 = time.perf_counter()
     depth_map_indep_aligned = align_depth_scale(depth_cpu_indep, depth_cpu, max_depth=1.0)
-    _record_time(times, "geo_align", time.perf_counter() - t0, times_lock)
 
-    t0 = time.perf_counter()
     point_map = unproject_depth_map_to_point_map(
         depth_map_indep_aligned[0], extrinsic_cpu.squeeze(0), intrinsic_cpu.squeeze(0)
     )
-    _record_time(times, "geo_unproject", time.perf_counter() - t0, times_lock)
 
-    t0 = time.perf_counter()
     depth_rendered_np, rendered_valid_mask, rgb_rendered_np = render_depth_from_point_map(
         point_map_by_unprojection=point_map,
         depth_map=depth_map_indep_aligned,
@@ -448,9 +382,6 @@ def _process_geometric_frame(
         intrinsic=intrinsic_cpu,
         images=images_cpu,
     )
-    _record_time(times, "geo_render", time.perf_counter() - t0, times_lock)
-
-    t0 = time.perf_counter()
     res = geometric_calculation(
         depth=depth_map_indep_aligned,
         depth_rendered=depth_rendered_np,
@@ -458,7 +389,6 @@ def _process_geometric_frame(
         rgb_rendered=rgb_rendered_np,
         valid_mask=rendered_valid_mask,
     )
-    _record_time(times, "geo_metric", time.perf_counter() - t0, times_lock)
     score = float(geometric_consistency_metric(res))
     if res["view0_shape"]["valid_ratio"] < 0.02 or res["view1_shape"]["valid_ratio"] < 0.02:
         return _GeometricFrameResult(
@@ -506,24 +436,16 @@ def compute_video_metrics(
     frame_batch_size: int = 4,
     prefetch_chunks: bool = True,
     parallel_frame_load: bool = True,
-    load_workers: int = 4,
-    profile: bool = False,
+    load_workers: int = 4
 ) -> dict:
-    wall_start = time.perf_counter()
-    times: dict[str, float] = defaultdict(float)
-
-    t0 = time.perf_counter()
     frame_ids = intersect_frames(list(views), episode_dir)
     if not frame_ids:
         raise ValueError(f"No common frames found in {episode_dir} for views={views}")
-    if profile:
-        times["intersect_frames"] = time.perf_counter() - t0
     geo_frame_ids = [fi for fi in frame_ids if fi > 0]
 
     per_frame: list[dict] = []
     pose_buffer: list[tuple[int, torch.Tensor, torch.Tensor]] = []
     pending_geo: list[tuple[int, Future, torch.Tensor, torch.Tensor]] = []
-    times_lock = threading.Lock() if profile else None
 
     geo_executor = ThreadPoolExecutor(max_workers=2)
     try:
@@ -536,7 +458,6 @@ def compute_video_metrics(
             prefetch_chunks=prefetch_chunks,
             parallel_frame_load=parallel_frame_load,
             load_workers=load_workers,
-            times=times if profile else None,
         ):
             pending_geo = _drain_geometric_futures(
                 pending_geo,
@@ -551,11 +472,9 @@ def compute_video_metrics(
                 )
                 pose_buffer.append((0, ext0, intr0))
             else:
-                t0 = time.perf_counter()
                 ext_cpu, intr_cpu, d_cpu, d_ind_cpu, img_cpu = _snapshot_frame_tensors(
                     extrinsic, intrinsic, depth_map, depth_map_indep, images,
                 )
-                _record_time(times, "geo_gpu_to_cpu", time.perf_counter() - t0, times_lock)
                 pending_geo.append((
                     int(fi),
                     geo_executor.submit(
@@ -566,8 +485,6 @@ def compute_video_metrics(
                         depth_map=d_cpu,
                         depth_map_indep=d_ind_cpu,
                         images=img_cpu,
-                        times=times if profile else None,
-                        times_lock=times_lock,
                     ),
                     ext_cpu,
                     intr_cpu,
@@ -589,11 +506,8 @@ def compute_video_metrics(
     used_frame_ids = [fi for fi, _, _ in pose_buffer]
 
     geo = _aggregate_geometric_results(per_frame)
-    t0 = time.perf_counter()
     pose_stability = 0.0 if (not used_frame_ids or used_frame_ids == [0]) else float(compute_pose_stability_metric(extrinsics_all, intrinsics_all))
-    if profile:
-        times["pose_stability"] = time.perf_counter() - t0
-        _print_profile(times, episode_dir=episode_dir, num_frames=len(frame_ids), wall_s=time.perf_counter() - wall_start)
+
     out = {
         "episode_dir": str(episode_dir),
         "views": list(views),

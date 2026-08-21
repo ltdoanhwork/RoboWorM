@@ -29,11 +29,7 @@ def _parse_args() -> argparse.Namespace:
         default=1,
         help="VGGT batch size B: number of timesteps per forward (views stay in S).",
     )
-    p.add_argument(
-        "--profile",
-        action="store_true",
-        help="Print per-stage timing breakdown (output on model_service stderr).",
-    )
+
     mode = p.add_mutually_exclusive_group(required=True)
     mode.add_argument(
         "--episode_dir",
@@ -69,7 +65,6 @@ def _request_metrics(
     episode_dir: str,
     views: list[str],
     frame_batch_size: int,
-    profile: bool = False,
 ) -> dict:
     conn.send(
         {
@@ -77,7 +72,6 @@ def _request_metrics(
             "episode_dir": episode_dir,
             "views": views,
             "frame_batch_size": int(frame_batch_size),
-            "profile": bool(profile),
         }
     )
     resp = conn.recv()
@@ -115,7 +109,6 @@ def _run_single(args: argparse.Namespace, views: list[str]) -> None:
             episode_dir=args.episode_dir,
             views=views,
             frame_batch_size=args.frame_batch_size,
-            profile=args.profile,
         )
     finally:
         _close_session(conn)
@@ -162,7 +155,6 @@ def _run_batch(args: argparse.Namespace, views: list[str]) -> None:
                     episode_dir=episode_dir,
                     views=views,
                     frame_batch_size=args.frame_batch_size,
-                    profile=args.profile,
                 )
                 time_end = time.time()
                 print(f"[run_video_metrics] {name} took {time_end - time_start} seconds", file=sys.stderr)

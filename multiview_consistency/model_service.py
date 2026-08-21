@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-import time
 import traceback
 from multiprocessing.connection import Listener
 from typing import Any
@@ -64,7 +63,7 @@ def _handle_request(msg: dict, ctx: Any) -> tuple[dict, str | None]:
     cmd = msg.get("cmd")
 
     if cmd == "ping":
-        return {"ok": True, "ts": time.time()}, None
+        return {"ok": True}, None
 
     if cmd == "close_session":
         return {"ok": True, "message": "session closed"}, "close_session"
@@ -76,14 +75,12 @@ def _handle_request(msg: dict, ctx: Any) -> tuple[dict, str | None]:
         episode_dir = msg["episode_dir"]
         views = msg.get("views", ["view1", "view2"])
         frame_batch_size = int(msg.get("frame_batch_size", 4))
-        profile = bool(msg.get("profile", False))
 
         out = compute_video_metrics(
             ctx,
             episode_dir=str(episode_dir),
             views=list(views),
             frame_batch_size=frame_batch_size,
-            profile=profile,
         )
         torch.cuda.empty_cache()
         return {"ok": True, "result": out}, None
