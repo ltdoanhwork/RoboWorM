@@ -30,8 +30,11 @@ def _configure_torch_for_inference() -> None:
     except Exception:
         pass
 
-def _compile_model(model: torch.nn.Module) -> torch.nn.Module:
+def _compile_model(model: torch.nn.Module, *, enabled: bool = True) -> torch.nn.Module:
     _configure_torch_for_inference()
+    if not enabled:
+        print("[video_metrics] torch.compile disabled", file=sys.stderr, flush=True)
+        return model
 
     aggregator = getattr(model, "aggregator", None)
     if aggregator is None:
@@ -42,9 +45,10 @@ def _compile_model(model: torch.nn.Module) -> torch.nn.Module:
         print(
             "[video_metrics] torch.compile enabled on aggregator (mode=reduce-overhead)",
             file=sys.stderr,
+            flush=True,
         )
     except Exception as exc:
-        print(f"[video_metrics] torch.compile skipped: {exc}", file=sys.stderr)
+        print(f"[video_metrics] torch.compile skipped: {exc}", file=sys.stderr, flush=True)
     return model
 
 @dataclass(frozen=True)
@@ -82,6 +86,7 @@ def init_model_context(
     omega_checkpoint: str | None = None,
     omega_image_resolution: int = 512,
     omega_patch_size: int = 16,
+    enable_compile: bool = True,
 ) -> ModelContext:
     device = "cuda"
     if omega_checkpoint is None:
@@ -91,7 +96,7 @@ def init_model_context(
     model = VGGTOmega(patch_size=int(omega_patch_size)).to(device).eval()
     state = torch.load(str(omega_checkpoint), map_location="cpu")
     model.load_state_dict(state)
-    model = _compile_model(model)
+    model = _compile_model(model, enabled=bool(enable_compile))
 
     return ModelContext(
         model=model,

@@ -36,7 +36,8 @@ Example:
 ```bash
 python -m multiview_consistency.model_service --host 127.0.0.1 --port 6111 --dtype float16 --omega_checkpoint "path/to/checkpoint/vggt_omega_1b_512.pt" --omega_image_resolution 512 --omega_patch_size 16
 ```
-
+* `--compile` *(default)*: Enable `torch.compile` on the aggregator for lower steady-state latency after the first few runs. Best for batch evaluation of many episodes on a long-lived service.
+* `--no-compile`: Run the model eagerly (no `torch.compile`). Avoids first-run compile overhead; better for single-episode execution.
 ### 2) Compute metrics for one episode/video or a folder containing multiple episodes
 
 An episode (a folder)

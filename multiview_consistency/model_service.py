@@ -35,6 +35,15 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--omega_image_resolution", type=int, default=512)
     p.add_argument("--omega_patch_size", type=int, default=16)
     p.add_argument("--dtype", default=None, help='e.g. "bfloat16", "float16", "float32" (default: auto)')
+    p.add_argument(
+        "--compile",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "torch.compile aggregator (mode=reduce-overhead). "
+            "Use --no-compile for faster first single-episode runs (default: compile on)."
+        ),
+    )
     return p.parse_args()
 
 
@@ -131,6 +140,7 @@ def serve_forever() -> None:
         omega_checkpoint=args.omega_checkpoint,
         omega_image_resolution=args.omega_image_resolution,
         omega_patch_size=args.omega_patch_size,
+        enable_compile=bool(args.compile),
     )
 
     addr = (args.host, int(args.port))
