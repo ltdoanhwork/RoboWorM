@@ -10,8 +10,8 @@ index.html   labeling UI (1-5 score), personal queue, syncs to Supabase
 admin.html   cross-rater progress + CSV/JSON export
 vgp.js       shared logic: queue assignment, Supabase REST calls
 catalog.json blind public catalog (400 items; no method/role/path fields)
-build-config.js  generates config.js from Vercel env vars at build time
-config.example.js  template — copy to config.js for LOCAL testing only
+config.js    Supabase URL + publishable key + passcode — committed on purpose (see below)
+config.example.js  same template, kept for reference
 ```
 
 Video files are **not** hosted here — `catalog.json`'s `video` field points at
@@ -44,18 +44,17 @@ anything sensitive in this table, and rotate the passcode if it leaks.
 
 ## 2. Vercel (free static hosting)
 
-1. Push this repo (or just `webpage/labeling/`) to a Git remote, import it in
-   Vercel as a new project, **Root Directory = `webpage/labeling`**,
-   Framework Preset = **Other**.
-2. Project -> Settings -> Environment Variables, add:
-   - `SUPABASE_URL` = your Project URL
-   - `SUPABASE_PUBLISHABLE_KEY` = your anon public key
-   - `ACCESS_PASSCODE` = whatever passcode you'll share with raters
-3. Deploy. `vercel.json`'s `buildCommand` (`node build-config.js`) generates
-   `config.js` from those env vars at build time — the real secrets never go
-   into git (`config.js` is gitignored; only `config.example.js` is tracked).
-4. Share `https://<your-project>.vercel.app/gate.html` + the passcode with
-   raters. Admin dashboard: `/admin.html` (same passcode gate).
+Already done for you: a Vercel project `vgp-labeling` is linked to this repo's
+`main` branch (root directory `webpage/labeling`), auto-deploying on every
+push. `config.js` is committed directly (see design note below) so there is
+no build step and nothing to configure in the Vercel dashboard.
+
+To change the passcode or point at a different Supabase project: edit
+`webpage/labeling/config.js` and push to `main` — Vercel redeploys
+automatically.
+
+Share `https://<project>.vercel.app/gate.html` + the passcode with raters.
+Admin dashboard: `/admin.html` (same passcode gate).
 
 Cost note: Vercel Hobby is free but restricted to **non-commercial personal
 use** per its Fair Use Guidelines — fine for an internal research study, not
@@ -84,8 +83,15 @@ out as more raters join — no backend assignment table needed.
 - No Supabase Auth -> shared passcode instead (avoids the 2 email/hour cap).
 - No video hosting on Vercel -> videos on the HuggingFace dataset CDN.
 - No server -> plain `fetch()` to Supabase's REST API (PostgREST) from the
-  browser using the anon key; RLS policies are the only guard, and they are
-  intentionally open (any passcode holder can write any rater's rows).
+  browser using the publishable key; RLS policies are the only guard, and
+  they are intentionally open (any passcode holder can write any rater's rows).
+- `config.js` is committed to git (unusual for a "config" file, but correct
+  here): Supabase's publishable key is explicitly designed to be public
+  (equivalent to the old anon key), and the passcode is a soft gate that
+  ships in the JS bundle on any static deploy anyway — putting it in a
+  gitignored env var would not add real security, only an extra manual step
+  in the Vercel dashboard. Do NOT put the `sb_secret_...` key here or
+  anywhere client-side.
 - `catalog.json` in this folder is a **different, blind** file from
   `sampling_dataset/data_for_web/catalog.json` (the internal one, which does
   not leak the method either but lives next to the full manifest with method
