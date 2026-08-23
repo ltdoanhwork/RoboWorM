@@ -26,7 +26,7 @@ os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
 from huggingface_hub import CommitOperationAdd, HfApi  # noqa: E402
 from huggingface_hub.utils import HfHubHTTPError  # noqa: E402
 
-SKIP_DIRS = {"__pycache__", ".git", ".venv", ".venv_svg", ".cache", ".ipynb_checkpoints"}
+SKIP_DIRS = {"__pycache__", ".git", ".venv", ".venv_svg", ".cache", ".ipynb_checkpoints", "tmp"}
 SKIP_FILES = {".env", ".DS_Store"}
 
 
@@ -61,6 +61,8 @@ def main() -> int:
     ap.add_argument("--sleep-between", type=float, default=45.0,
                     help="pause between commits; the Hub also rate-limits LFS "
                          "object verification, which 429s on sustained bursts")
+    ap.add_argument("--prefix", default="",
+                    help="Prepend this path to every file in the repo (e.g. data_for_web)")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
 
@@ -70,7 +72,12 @@ def main() -> int:
     src = a.src.rstrip("/")
     api = HfApi()
 
-    print(f"=== content upload: {src}/* -> {a.repo_id} ({a.repo_type}) ===")
+    prefix = a.prefix.strip("/")
+    def repo_path(rel: str) -> str:
+        return f"{prefix}/{rel}" if prefix else rel
+
+    print(f"=== content upload: {src}/* -> {a.repo_id} ({a.repo_type})"
+          f"{' prefix='+prefix if prefix else ''} ===")
     api.create_repo(a.repo_id, repo_type=a.repo_type, exist_ok=True)
 
     print("[1/3] scanning local files")
@@ -87,7 +94,7 @@ def main() -> int:
     print(f"      {len(remote)} files already on the Hub")
 
     # Skip only when the remote size matches; -1 means the Hub reported no size.
-    todo = [(p, s) for p, s in local if remote.get(p, None) not in (s, -1)]
+    todo = [(p, s) for p, s in local if remote.get(repo_path(p), None) not in (s, -1)]
     skipped = len(local) - len(todo)
     print(f"      {skipped} unchanged, {len(todo)} to upload "
           f"({sum(s for _, s in todo) / 1024**3:.1f}G)")
@@ -117,7 +124,7 @@ def main() -> int:
         # Build the operations ourselves: passing thousands of allow_patterns to
         # upload_folder makes it match every file against every pattern (quadratic
         # and unusably slow at 100k files x 3000 patterns).
-        ops = [CommitOperationAdd(path_in_repo=p, path_or_fileobj=os.path.join(src, p))
+        ops = [CommitOperationAdd(path_in_repo=repo_path(p), path_or_fileobj=os.path.join(src, p))
                for p in batch]
         for attempt in range(1, 8):
             try:

@@ -12,7 +12,9 @@ Output: full_gt.mp4, full_pred.mp4, full_merged.mp4, metrics.json.
 
 import argparse
 import json
+import os
 import sys
+import time
 from pathlib import Path
 
 import mediapy
@@ -63,7 +65,101 @@ def parse_args():
     parser.add_argument("--dicache-ret-ratio", type=float, default=0.2)
     parser.add_argument("--dicache-probe-depth", type=int, default=2)
 
+    # SVG (Sparse-VideoGen 1 / 2)
+    parser.add_argument("--use-svg", action="store_true")
+    parser.add_argument("--svg-variant", type=str, default="svg1", choices=["svg1", "svg2"])
+    parser.add_argument("--svg-start-layer-idx", type=int, default=None)
+    parser.add_argument("--svg-dense-step-frac", type=float, default=None)
+    parser.add_argument("--svg-sparsity", type=float, default=None)
+    parser.add_argument("--svg-num-sampled-rows", type=int, default=None)
+    parser.add_argument("--svg-sample-mse-max-row", type=int, default=None)
+    parser.add_argument(
+        "--svg-profile-recompute-every",
+        type=int,
+        default=None,
+        help="SVG1: recompute the spatial/temporal head MSE profile every N attention "
+        "calls (1 = every call, the upstream behaviour). Caching this is what makes "
+        "SVG1 competitive (see dreamdojo-humanoid-singleview-sparse-attention rule).",
+    )
+    parser.add_argument("--svg-num-q-centroids", type=int, default=None)
+    parser.add_argument("--svg-num-k-centroids", type=int, default=None)
+    parser.add_argument("--svg-top-p-kmeans", type=float, default=None)
+    parser.add_argument("--svg-min-kc-ratio", type=float, default=None)
+    parser.add_argument("--svg-kmeans-iter-init", type=int, default=None)
+    parser.add_argument("--svg-kmeans-iter-step", type=int, default=None)
+
+    # PISA (piecewise sparse attention)
+    parser.add_argument("--use-pisa", action="store_true")
+    parser.add_argument("--pisa-density", type=float, default=0.2)
+    parser.add_argument("--pisa-block-size", type=int, default=64)
+    parser.add_argument("--pisa-start-layer-idx", type=int, default=2)
+    parser.add_argument("--pisa-use-bias", action="store_true")
+
+    # Radial Attention
+    parser.add_argument("--use-radial", action="store_true")
+    parser.add_argument("--radial-decay-factor", type=float, default=1.0)
+    parser.add_argument("--radial-block-size", type=int, default=64, choices=[64, 128])
+    parser.add_argument("--radial-start-layer-idx", type=int, default=4)
+    parser.add_argument("--radial-model-type", type=str, default="hunyuan", choices=["hunyuan", "wan"])
+
     return parser.parse_args()
+
+
+def build_experiment_opts(args):
+    """Build hydra experiment overrides for the sparse-attention backends.
+
+    Mirrors infer_humanoid_singleview_full_episode.py exactly — the SVG/PISA/Radial
+    runtimes are shape-driven (not embodiment-specific), so this logic is identical.
+    """
+    opts = []
+    if getattr(args, "use_svg", False):
+        opts += [
+            "model.config.net.self_attention_backend=svg",
+            "model.config.net.cross_attention_backend=minimal_a2a",
+            f"model.config.net.svg_variant={args.svg_variant}",
+        ]
+        for flag, key in (
+            ("svg_start_layer_idx", "svg_start_layer_idx"),
+            ("svg_dense_step_frac", "svg_dense_step_frac"),
+            ("svg_sparsity", "svg_sparsity"),
+            ("svg_num_sampled_rows", "svg_num_sampled_rows"),
+            ("svg_sample_mse_max_row", "svg_sample_mse_max_row"),
+            ("svg_profile_recompute_every", "svg_profile_recompute_every"),
+            ("svg_num_q_centroids", "svg_num_q_centroids"),
+            ("svg_num_k_centroids", "svg_num_k_centroids"),
+            ("svg_top_p_kmeans", "svg_top_p_kmeans"),
+            ("svg_min_kc_ratio", "svg_min_kc_ratio"),
+            ("svg_kmeans_iter_init", "svg_kmeans_iter_init"),
+            ("svg_kmeans_iter_step", "svg_kmeans_iter_step"),
+        ):
+            value = getattr(args, flag, None)
+            if value is not None:
+                opts.append(f"model.config.net.{key}={value}")
+    if getattr(args, "use_pisa", False):
+        opts += [
+            "model.config.net.self_attention_backend=pisa",
+            "model.config.net.cross_attention_backend=minimal_a2a",
+            f"model.config.net.pisa_density={args.pisa_density}",
+            f"model.config.net.pisa_block_size={args.pisa_block_size}",
+            f"model.config.net.pisa_start_layer_idx={args.pisa_start_layer_idx}",
+            f"model.config.net.pisa_use_bias={str(args.pisa_use_bias).lower()}",
+        ]
+    if getattr(args, "use_radial", False):
+        opts += [
+            "model.config.net.self_attention_backend=radial",
+            "model.config.net.cross_attention_backend=minimal_a2a",
+            f"model.config.net.radial_decay_factor={args.radial_decay_factor}",
+            f"model.config.net.radial_block_size={args.radial_block_size}",
+            f"model.config.net.radial_start_layer_idx={args.radial_start_layer_idx}",
+            f"model.config.net.radial_model_type={args.radial_model_type}",
+        ]
+
+    enabled = sum(
+        bool(getattr(args, flag, False)) for flag in ("use_svg", "use_pisa", "use_radial")
+    )
+    if enabled > 1:
+        raise ValueError("SVG / PISA / Radial are mutually exclusive; enable at most one.")
+    return opts
 
 
 def build_cache_config_from_args(args):
@@ -141,7 +237,7 @@ def build_model(args):
         s3_credential_path="",
         context_parallel_size=setup_args.context_parallel_size,
         config_file=setup_args.config_file,
-        experiment_opts=[],
+        experiment_opts=build_experiment_opts(args),
         cache_config=cache_config,
     )
 
@@ -242,6 +338,7 @@ def main():
     save_root.mkdir(parents=True, exist_ok=True)
 
     all_psnr, all_ssim, all_lpips = [], [], []
+    all_gen_times = []
 
     for ep_idx in range(num_episodes):
         ep_info = plan[ep_idx]
@@ -254,9 +351,13 @@ def main():
             ep_dir_name = f"episode_{traj_id:06d}"
         ep_save_dir = save_root / ep_dir_name
 
-        if (ep_save_dir / "full_pred.mp4").exists():
+        pred_path = ep_save_dir / "full_pred.mp4"
+        if pred_path.exists() and pred_path.stat().st_size > 1024:
             print(f"[{ep_idx}] {ep_dir_name} already exists, skipping.")
             continue
+        if pred_path.exists():
+            print(f"[{ep_idx}] {ep_dir_name} truncated pred ({pred_path.stat().st_size}B), regenerating.")
+            pred_path.unlink()
 
         num_chunks = len(ep_info["segment_data_ids"])
         print(f"[{ep_idx}] {ep_dir_name} traj_id={traj_id}, traj_length={ep_info['traj_length']}, "
@@ -276,6 +377,7 @@ def main():
         chunk_videos = []
         first_round = True
 
+        gen_start_time = time.time()
         for chunk_idx, data_id in enumerate(ep_info["segment_data_ids"]):
             sample = dataset[data_id]
 
@@ -338,6 +440,10 @@ def main():
         if not chunk_videos:
             continue
 
+        gen_elapsed = time.time() - gen_start_time
+        all_gen_times.append(gen_elapsed)
+        print(f"  [Timing] Episode {ep_idx}: generation took {gen_elapsed:.2f}s")
+
         chunk_list = [chunk_videos[0]] + [
             chunk_videos[i][:args.chunk_size] for i in range(1, len(chunk_videos))
         ]
@@ -352,7 +458,7 @@ def main():
             gt_total = min(len(concat_pred), expected_frames)
             concat_pred = concat_pred[:gt_total]
             mediapy.write_video(str(ep_save_dir / "full_pred.mp4"), concat_pred, fps=args.save_fps)
-            print(f"  -> saved {len(concat_pred)} frames (video only)")
+            print(f"  -> saved {len(concat_pred)} frames (video only), gen {gen_elapsed:.2f}s")
             continue
 
         gt_list = [gt_frames[0]] + [
@@ -383,6 +489,7 @@ def main():
                 "total_frames_gt": ep_info["traj_length"],
                 "trajectory_id": traj_id,
                 "task_name": task_name,
+                "gen_time_s": round(gen_elapsed, 2),
                 "mode": "single_segment_full_rollout",
             }, f, indent=2)
 
@@ -405,6 +512,24 @@ def main():
         print(f"PSNR: {summary['mean_psnr']:.3f}")
         print(f"SSIM: {summary['mean_ssim']:.4f}")
         print(f"LPIPS: {summary['mean_lpips']:.4f}")
+
+    if all_gen_times:
+        mean_gen_time = sum(all_gen_times) / len(all_gen_times)
+        total_gen_time = sum(all_gen_times)
+        print(f"\n[Timing] Generated {len(all_gen_times)} episodes in {total_gen_time:.2f}s total")
+        print(f"[Timing] Average generation time per episode: {mean_gen_time:.2f}s")
+
+    if os.environ.get("DD_ATTN_PROFILE") == "1":
+        from cosmos_predict2._src.predict2.networks.minimal_v4_dit import _ATTN_PROFILE_STATS
+
+        total = sum(v[1] for v in _ATTN_PROFILE_STATS.values())
+        print(f"\n=== Attention profile (total {total:.2f}s of {sum(all_gen_times):.2f}s gen) ===")
+        for key, (calls, secs) in sorted(_ATTN_PROFILE_STATS.items(), key=lambda kv: -kv[1][1]):
+            backend, kind, shape = key
+            print(
+                f"{backend:>10} {kind:>5} q={shape}: {calls:6d} calls, {secs:7.2f}s "
+                f"({secs / calls * 1000:.3f} ms/call)"
+            )
 
     cleanup_environment()
 

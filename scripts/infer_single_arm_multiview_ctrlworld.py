@@ -15,6 +15,7 @@ import os
 import importlib
 import json
 import datetime
+import time
 from pathlib import Path
 from argparse import ArgumentParser
 
@@ -388,6 +389,11 @@ def main():
     _import_pruning_module("SiTo", "config").add_sito_args(parser)
     _import_pruning_module("importance_token_merge", "config").add_itm_args(parser)
 
+    # Sparse-attention backend args (PISA / SVG / Radial — SVD-UNet flavored)
+    importlib.import_module("methods.sparse_attention.pisa.config").add_pisa_args(parser)
+    importlib.import_module("methods.sparse_attention.svg.config").add_svg_args(parser)
+    importlib.import_module("methods.sparse_attention.radial.config").add_radial_args(parser)
+
     args = parser.parse_args()
 
     from methods.cache_strategy.ctrl_world_utils import validate_ctrl_world_backend_args
@@ -542,6 +548,59 @@ def main():
                 model_args.guidance_scale = 2.0
                 print(f"[ITM] guidance_scale overridden to {model_args.guidance_scale} (ITM requires > 1.0)")
 
+    # ---- Sparse-attention backends (PISA / SVG / Radial) --------------------
+    # 3-view strip stacked as ONE canvas: 576x320 px -> 72x40 latent (T=2880).
+    # Same geometry as humanoid 3-view in infer_bimanual_multiview_ctrlworld.py
+    # (grid_rows=3, grid_cols=1, treat stacked canvas as num_views=1).
+    unet = agent.model.unet
+    _h_per_view = 24 * 3
+    _w = 40
+    _num_views = 1
+
+    if getattr(args, "use_pisa", False):
+        importlib.import_module("methods.sparse_attention.pisa.adapter").enable_pisa(
+            unet,
+            density=args.pisa_density,
+            block_size=args.pisa_block_size,
+            start_layer_idx=args.pisa_start_layer_idx,
+        )
+        print(f"[Sparse] PISA enabled: density={args.pisa_density}, "
+              f"block_size={args.pisa_block_size}, start_layer={args.pisa_start_layer_idx}")
+    if getattr(args, "use_svg", False):
+        importlib.import_module("methods.sparse_attention.svg.adapter").enable_svg(
+            unet,
+            pattern=args.svg_pattern,
+            num_views=_num_views,
+            H_per_view=_h_per_view,
+            W=_w,
+            sparsity=args.svg_sparsity,
+            num_sampled_rows=args.svg_num_sampled_rows,
+            first_layers_fp=args.svg_first_layers_fp,
+            num_q_centroids=args.svg_num_q_centroids,
+            num_k_centroids=args.svg_num_k_centroids,
+            top_p_kmeans=args.svg_top_p_kmeans,
+            min_kc_ratio=getattr(args, "svg_min_kc_ratio", 0.0),
+            kmeans_iter_init=args.svg_kmeans_iter_init,
+            kmeans_iter_step=args.svg_kmeans_iter_step,
+        )
+        print(f"[Sparse] SVG {args.svg_pattern} enabled: sparsity={args.svg_sparsity}, "
+              f"geom={_num_views}x{_h_per_view}x{_w}")
+    if getattr(args, "use_radial", False):
+        importlib.import_module("methods.sparse_attention.radial.adapter").enable_radial_attention(
+            unet,
+            decay_factor=args.radial_decay_factor,
+            block_size=args.radial_block_size,
+            pad_small_layers=args.radial_pad_small_layers,
+            first_layers_fp=args.radial_first_layers_fp,
+            num_views=_num_views,
+            H_per_view=_h_per_view,
+            W=_w,
+            model_type=args.radial_model_type,
+        )
+        print(f"[Sparse] Radial enabled: decay={args.radial_decay_factor}, "
+              f"block_size={args.radial_block_size}, model_type={args.radial_model_type}, "
+              f"geom={_num_views}x{_h_per_view}x{_w}")
+
     # Find all episodes
     anno_dir = Path(val_dataset_dir) / "annotation" / "val"
     episode_ids = sorted([f.stem for f in anno_dir.glob("*.json")])
@@ -563,11 +622,15 @@ def main():
             continue
 
         print(f"[{ep_idx+1}/{len(episode_ids)}] Episode {episode_id}")
+        _t0 = time.time()
         metrics = run_episode(agent, episode_id, args.save_dir, input_save_dir=args.input_save_dir)
+        _dt = time.time() - _t0
         if metrics:
+            metrics["wall_time_s"] = _dt
             all_metrics.append(metrics)
             print(f"  -> {metrics['num_frames_pred']} frames, "
-                  f"PSNR={metrics['psnr']:.2f}, SSIM={metrics['ssim']:.4f}, LPIPS={metrics['lpips']:.4f}")
+                  f"PSNR={metrics['psnr']:.2f}, SSIM={metrics['ssim']:.4f}, LPIPS={metrics['lpips']:.4f} "
+                  f"| {_dt:.1f}s")
 
     # Save summary
     if all_metrics:
@@ -578,6 +641,9 @@ def main():
             "num_episodes": len(all_metrics),
             "subset": args.subset,
         }
+        _times = [m["wall_time_s"] for m in all_metrics if "wall_time_s" in m]
+        if _times:
+            summary["mean_wall_time_s"] = sum(_times) / len(_times)
         summary_path = Path(args.save_dir) / "all_summary.json"
         summary_path.parent.mkdir(parents=True, exist_ok=True)
         with open(summary_path, "w") as f:
@@ -586,6 +652,8 @@ def main():
         print(f"PSNR: {summary['mean_psnr']:.3f}")
         print(f"SSIM: {summary['mean_ssim']:.4f}")
         print(f"LPIPS: {summary['mean_lpips']:.4f}")
+        if "mean_wall_time_s" in summary:
+            print(f"time: {summary['mean_wall_time_s']:.1f}s")
 
 
 if __name__ == "__main__":
