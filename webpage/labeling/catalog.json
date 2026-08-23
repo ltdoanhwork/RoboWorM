@@ -1,0 +1,3606 @@
+{
+  "n": 400,
+  "hf_repo": "doanh25032004/video_gen_physics",
+  "items": [
+    {
+      "id": "00000",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00000.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "insert_washer_shaft_both_hands"
+    },
+    {
+      "id": "00001",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00001.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "spoon_red_block_bowl"
+    },
+    {
+      "id": "00002",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00002.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "tape_closed_cardboard"
+    },
+    {
+      "id": "00003",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00003.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "find_insert_small_gear_shaft"
+    },
+    {
+      "id": "00004",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00004.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "fit_large_gear_shaft"
+    },
+    {
+      "id": "00005",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00005.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "fit_small_gear_shaft"
+    },
+    {
+      "id": "00006",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00006.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "insert_rod_board"
+    },
+    {
+      "id": "00007",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00007.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "insert_rod_moved_board"
+    },
+    {
+      "id": "00008",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00008.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "insert_usb_pcbox"
+    },
+    {
+      "id": "00009",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00009.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "insert_washer_shaft"
+    },
+    {
+      "id": "00010",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00010.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "insert_washer_shaft_both_hands"
+    },
+    {
+      "id": "00011",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00011.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "tape_closed_cardboard"
+    },
+    {
+      "id": "00012",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00012.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "turn_towel_over"
+    },
+    {
+      "id": "00013",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00013.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "wipe_the_desk_with_a_blue_cloth"
+    },
+    {
+      "id": "00014",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00014.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "insert_rod_moved_board"
+    },
+    {
+      "id": "00015",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00015.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "spoon_red_block_bowl"
+    },
+    {
+      "id": "00016",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00016.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "wipe_the_desk_with_a_blue_cloth"
+    },
+    {
+      "id": "00017",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00017.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "fold_towel_in_random_places"
+    },
+    {
+      "id": "00018",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00018.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "handover_and_wipe_sponge"
+    },
+    {
+      "id": "00019",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00019.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "handover_metallic_zip_bag_upright"
+    },
+    {
+      "id": "00020",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00020.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "brush_screws_into_dustpan_human_brush_left_hold"
+    },
+    {
+      "id": "00021",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00021.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "brush_screws_into_dustpan_left_brush_human_hold"
+    },
+    {
+      "id": "00022",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00022.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "fold_light_blue_towel"
+    },
+    {
+      "id": "00023",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00023.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "fold_orange_towel"
+    },
+    {
+      "id": "00024",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00024.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "fold_towel_assist"
+    },
+    {
+      "id": "00025",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00025.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "fold_yellow_towel"
+    },
+    {
+      "id": "00026",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00026.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "handover_and_wipe_sponge"
+    },
+    {
+      "id": "00027",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00027.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "handover_clear_zip_bag_upright"
+    },
+    {
+      "id": "00028",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00028.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "handover_metallic_zip_bag_upright"
+    },
+    {
+      "id": "00029",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00029.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "place_the_chinese_spoons_on_the_cloth"
+    },
+    {
+      "id": "00030",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00030.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "put_tape_white_case_alternating_arms"
+    },
+    {
+      "id": "00031",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00031.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "fold_light_blue_towel"
+    },
+    {
+      "id": "00032",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00032.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "handover_metallic_zip_bag_upright"
+    },
+    {
+      "id": "00033",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00033.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "take_out_reel_clear_zip_bag"
+    },
+    {
+      "id": "00034",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00034.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "close_cardboard_box"
+    },
+    {
+      "id": "00035",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00035.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "close_toolbox"
+    },
+    {
+      "id": "00036",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00036.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "find_hole_and_insert_into_gear"
+    },
+    {
+      "id": "00037",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00037.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "find_insert_large_gear_shaft"
+    },
+    {
+      "id": "00038",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00038.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "hit_mark_with_hammer"
+    },
+    {
+      "id": "00039",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00039.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "tape_closed_cardboard"
+    },
+    {
+      "id": "00040",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00040.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "close_toolbox"
+    },
+    {
+      "id": "00041",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00041.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "find_hole_and_insert_into_gear"
+    },
+    {
+      "id": "00042",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00042.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "fit_small_gear_shaft"
+    },
+    {
+      "id": "00043",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00043.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "hook_cable_narrow_8pin"
+    },
+    {
+      "id": "00044",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00044.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "insert_rod_board"
+    },
+    {
+      "id": "00045",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00045.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "insert_shaft_into_gear"
+    },
+    {
+      "id": "00046",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00046.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "insert_small_gear_shaft"
+    },
+    {
+      "id": "00047",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00047.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "insert_washer_shaft_both_hands"
+    },
+    {
+      "id": "00048",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00048.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "spoon_yellow_block_bowl"
+    },
+    {
+      "id": "00049",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00049.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "hit_mark_with_hammer"
+    },
+    {
+      "id": "00050",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00050.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "insert_small_gear_shaft"
+    },
+    {
+      "id": "00051",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00051.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "fold_bath_towel"
+    },
+    {
+      "id": "00052",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00052.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "fold_yellow_towel"
+    },
+    {
+      "id": "00053",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00053.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "handover_and_wipe_sponge"
+    },
+    {
+      "id": "00054",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00054.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "brush_screws_into_dustpan_human_brush_left_hold"
+    },
+    {
+      "id": "00055",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00055.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "fold_bath_towel"
+    },
+    {
+      "id": "00056",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00056.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "fold_big_towel"
+    },
+    {
+      "id": "00057",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00057.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "fold_blue_towel"
+    },
+    {
+      "id": "00058",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00058.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "fold_green_towel"
+    },
+    {
+      "id": "00059",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00059.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "fold_light_blue_towel"
+    },
+    {
+      "id": "00060",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00060.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "fold_yellow_towel"
+    },
+    {
+      "id": "00061",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00061.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "handover_and_wipe_sponge"
+    },
+    {
+      "id": "00062",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00062.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "handover_metallic_zip_bag_upright"
+    },
+    {
+      "id": "00063",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00063.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "place_the_chinese_spoons_on_the_cloth"
+    },
+    {
+      "id": "00064",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00064.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "take_out_reel_clear_zip_bag"
+    },
+    {
+      "id": "00065",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00065.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "fold_bath_towel"
+    },
+    {
+      "id": "00066",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00066.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "fold_big_towel"
+    },
+    {
+      "id": "00067",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00067.mp4",
+      "embodiment": "bimanual",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "fold_blue_towel"
+    },
+    {
+      "id": "00068",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00068.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "close_toolbox"
+    },
+    {
+      "id": "00069",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00069.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "find_hole_and_insert_into_gear"
+    },
+    {
+      "id": "00070",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00070.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "find_insert_large_gear_shaft"
+    },
+    {
+      "id": "00071",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00071.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "find_insert_small_gear_shaft"
+    },
+    {
+      "id": "00072",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00072.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "fit_small_gear_shaft"
+    },
+    {
+      "id": "00073",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00073.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "hook_cable_narrow_8pin"
+    },
+    {
+      "id": "00074",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00074.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "hook_rubber_shaft"
+    },
+    {
+      "id": "00075",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00075.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "insert_large_gear_shaft"
+    },
+    {
+      "id": "00076",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00076.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "insert_rod_moved_board"
+    },
+    {
+      "id": "00077",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00077.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "insert_usb_cable_fix_parts"
+    },
+    {
+      "id": "00078",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00078.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "insert_usb_pcbox"
+    },
+    {
+      "id": "00079",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00079.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "insert_washer_shaft"
+    },
+    {
+      "id": "00080",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00080.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "spoon_red_block_bowl"
+    },
+    {
+      "id": "00081",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00081.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "find_hole_and_insert_into_gear"
+    },
+    {
+      "id": "00082",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00082.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "insert_washer_shaft"
+    },
+    {
+      "id": "00083",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00083.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "insert_washer_shaft_both_hands"
+    },
+    {
+      "id": "00084",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00084.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "tape_closed_cardboard"
+    },
+    {
+      "id": "00085",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00085.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "brush_screws_into_dustpan_human_brush_left_hold"
+    },
+    {
+      "id": "00086",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00086.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "fold_big_towel"
+    },
+    {
+      "id": "00087",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00087.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "fold_blue_towel"
+    },
+    {
+      "id": "00088",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00088.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "fold_green_towel"
+    },
+    {
+      "id": "00089",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00089.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "fold_light_blue_towel"
+    },
+    {
+      "id": "00090",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00090.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "fold_orange_towel"
+    },
+    {
+      "id": "00091",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00091.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "fold_towel_in_random_places"
+    },
+    {
+      "id": "00092",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00092.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "fold_yellow_towel"
+    },
+    {
+      "id": "00093",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00093.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "handover_and_wipe_sponge"
+    },
+    {
+      "id": "00094",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00094.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "handover_clear_zip_bag_upright"
+    },
+    {
+      "id": "00095",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00095.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "handover_metallic_zip_bag_upright"
+    },
+    {
+      "id": "00096",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00096.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "place_the_chinese_spoons_on_the_cloth"
+    },
+    {
+      "id": "00097",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00097.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "put_tape_white_case_alternating_arms"
+    },
+    {
+      "id": "00098",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00098.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "fold_green_towel"
+    },
+    {
+      "id": "00099",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00099.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "fold_towel_assist"
+    },
+    {
+      "id": "00100",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00100.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "fold_yellow_towel"
+    },
+    {
+      "id": "00101",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00101.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "handover_metallic_zip_bag_upright"
+    },
+    {
+      "id": "00102",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00102.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "close_cardboard_box"
+    },
+    {
+      "id": "00103",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00103.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "close_toolbox"
+    },
+    {
+      "id": "00104",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00104.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "find_insert_large_gear_shaft"
+    },
+    {
+      "id": "00105",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00105.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "insert_lan_cable_into_the_hub"
+    },
+    {
+      "id": "00106",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00106.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "insert_random_shaft_random_small_gear"
+    },
+    {
+      "id": "00107",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00107.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "insert_rod_board"
+    },
+    {
+      "id": "00108",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00108.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "insert_rod_moved_board"
+    },
+    {
+      "id": "00109",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00109.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "insert_shaft_into_gear"
+    },
+    {
+      "id": "00110",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00110.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "insert_small_gear_shaft"
+    },
+    {
+      "id": "00111",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00111.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "spoon_red_block_bowl"
+    },
+    {
+      "id": "00112",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00112.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "spoon_yellow_block_bowl"
+    },
+    {
+      "id": "00113",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00113.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "tape_closed_cardboard"
+    },
+    {
+      "id": "00114",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00114.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "fit_large_gear_shaft"
+    },
+    {
+      "id": "00115",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00115.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "insert_large_gear_shaft"
+    },
+    {
+      "id": "00116",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00116.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "put_cup_moved_red_handle_holder"
+    },
+    {
+      "id": "00117",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00117.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "tape_closed_cardboard"
+    },
+    {
+      "id": "00118",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00118.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "remove_box_from_case_right_arm"
+    },
+    {
+      "id": "00119",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00119.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "brush_screws_into_dustpan_human_brush_left_hold"
+    },
+    {
+      "id": "00120",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00120.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "brush_screws_into_dustpan_left_brush_human_hold"
+    },
+    {
+      "id": "00121",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00121.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "fold_bath_towel"
+    },
+    {
+      "id": "00122",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00122.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "fold_big_towel"
+    },
+    {
+      "id": "00123",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00123.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "handover_clear_zip_bag_upright"
+    },
+    {
+      "id": "00124",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00124.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "place_the_chinese_spoons_on_the_cloth"
+    },
+    {
+      "id": "00125",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00125.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "put_tape_white_case_alternating_arms"
+    },
+    {
+      "id": "00126",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00126.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "take_out_reel_clear_zip_bag"
+    },
+    {
+      "id": "00127",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00127.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "brush_screws_into_dustpan_human_brush_left_hold"
+    },
+    {
+      "id": "00128",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00128.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "fold_light_blue_towel"
+    },
+    {
+      "id": "00129",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00129.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "fold_towel_assist"
+    },
+    {
+      "id": "00130",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00130.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "fold_towel_in_random_places"
+    },
+    {
+      "id": "00131",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00131.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "handover_and_wipe_sponge"
+    },
+    {
+      "id": "00132",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00132.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "handover_metallic_zip_bag_upright"
+    },
+    {
+      "id": "00133",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00133.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "put_tape_white_case_alternating_arms"
+    },
+    {
+      "id": "00134",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00134.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "fold_blue_towel"
+    },
+    {
+      "id": "00135",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00135.mp4",
+      "embodiment": "bimanual",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "fold_yellow_towel"
+    },
+    {
+      "id": "00136",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00136.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "AIRBOT_MMK2_mobile_car"
+    },
+    {
+      "id": "00137",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00137.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "Airbot_MMK2_move_pan"
+    },
+    {
+      "id": "00138",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00138.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "AIRBOT_MMK2_mobile_car"
+    },
+    {
+      "id": "00139",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00139.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "AIRBOT_MMK2_mobile_car"
+    },
+    {
+      "id": "00140",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00140.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "AIRBOT_MMK2_mobile_car"
+    },
+    {
+      "id": "00141",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00141.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "AIRBOT_MMK2_mobile_car"
+    },
+    {
+      "id": "00142",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00142.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "AIRBOT_MMK2_mobile_car"
+    },
+    {
+      "id": "00143",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00143.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "AIRBOT_MMK2_mobile_car"
+    },
+    {
+      "id": "00144",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00144.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "Airbot_MMK2_move_pan"
+    },
+    {
+      "id": "00145",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00145.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "Airbot_MMK2_move_pan"
+    },
+    {
+      "id": "00146",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00146.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "Airbot_MMK2_move_pan"
+    },
+    {
+      "id": "00147",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00147.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "Airbot_MMK2_move_pan"
+    },
+    {
+      "id": "00148",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00148.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "Airbot_MMK2_move_pan"
+    },
+    {
+      "id": "00149",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00149.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "Airbot_MMK2_move_pan"
+    },
+    {
+      "id": "00150",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00150.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "AIRBOT_MMK2_mobile_car"
+    },
+    {
+      "id": "00151",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00151.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "AIRBOT_MMK2_mobile_car"
+    },
+    {
+      "id": "00152",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00152.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "makovian",
+      "task": "Airbot_MMK2_move_pan"
+    },
+    {
+      "id": "00153",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00153.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate"
+    },
+    {
+      "id": "00154",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00154.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_doodled_line"
+    },
+    {
+      "id": "00155",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00155.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "AIRBOT_MMK2_boxs_storage"
+    },
+    {
+      "id": "00156",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00156.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "AIRBOT_MMK2_boxs_storage"
+    },
+    {
+      "id": "00157",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00157.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "AIRBOT_MMK2_boxs_storage"
+    },
+    {
+      "id": "00158",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00158.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate"
+    },
+    {
+      "id": "00159",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00159.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate"
+    },
+    {
+      "id": "00160",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00160.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate"
+    },
+    {
+      "id": "00161",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00161.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_doodled_line"
+    },
+    {
+      "id": "00162",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00162.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_doodled_line"
+    },
+    {
+      "id": "00163",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00163.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_doodled_line"
+    },
+    {
+      "id": "00164",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00164.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_storage_bottle_part"
+    },
+    {
+      "id": "00165",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00165.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_storage_bottle_part"
+    },
+    {
+      "id": "00166",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00166.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_storage_bottle_part"
+    },
+    {
+      "id": "00167",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00167.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "AIRBOT_MMK2_boxs_storage"
+    },
+    {
+      "id": "00168",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00168.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate"
+    },
+    {
+      "id": "00169",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00169.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "ctrlworld_4view_grid",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_storage_bottle_part"
+    },
+    {
+      "id": "00170",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00170.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "AIRBOT_MMK2_mobile_car"
+    },
+    {
+      "id": "00171",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00171.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "AIRBOT_MMK2_mobile_car"
+    },
+    {
+      "id": "00172",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00172.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "AIRBOT_MMK2_mobile_car"
+    },
+    {
+      "id": "00173",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00173.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "AIRBOT_MMK2_mobile_car"
+    },
+    {
+      "id": "00174",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00174.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "AIRBOT_MMK2_mobile_car"
+    },
+    {
+      "id": "00175",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00175.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "AIRBOT_MMK2_mobile_car"
+    },
+    {
+      "id": "00176",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00176.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "Airbot_MMK2_move_pan"
+    },
+    {
+      "id": "00177",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00177.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "Airbot_MMK2_move_pan"
+    },
+    {
+      "id": "00178",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00178.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "Airbot_MMK2_move_pan"
+    },
+    {
+      "id": "00179",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00179.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "Airbot_MMK2_move_pan"
+    },
+    {
+      "id": "00180",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00180.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "Airbot_MMK2_move_pan"
+    },
+    {
+      "id": "00181",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00181.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "Airbot_MMK2_move_pan"
+    },
+    {
+      "id": "00182",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00182.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "Airbot_MMK2_move_pan"
+    },
+    {
+      "id": "00183",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00183.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "AIRBOT_MMK2_mobile_car"
+    },
+    {
+      "id": "00184",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00184.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "AIRBOT_MMK2_mobile_car"
+    },
+    {
+      "id": "00185",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00185.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "Airbot_MMK2_move_pan"
+    },
+    {
+      "id": "00186",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00186.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "Airbot_MMK2_move_pan"
+    },
+    {
+      "id": "00187",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00187.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "AIRBOT_MMK2_boxs_storage"
+    },
+    {
+      "id": "00188",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00188.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "AIRBOT_MMK2_boxs_storage"
+    },
+    {
+      "id": "00189",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00189.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "AIRBOT_MMK2_boxs_storage"
+    },
+    {
+      "id": "00190",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00190.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate"
+    },
+    {
+      "id": "00191",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00191.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate"
+    },
+    {
+      "id": "00192",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00192.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate"
+    },
+    {
+      "id": "00193",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00193.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate"
+    },
+    {
+      "id": "00194",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00194.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_doodled_line"
+    },
+    {
+      "id": "00195",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00195.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_doodled_line"
+    },
+    {
+      "id": "00196",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00196.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_doodled_line"
+    },
+    {
+      "id": "00197",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00197.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_storage_bottle_part"
+    },
+    {
+      "id": "00198",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00198.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_storage_bottle_part"
+    },
+    {
+      "id": "00199",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00199.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_storage_bottle_part"
+    },
+    {
+      "id": "00200",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00200.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "AIRBOT_MMK2_boxs_storage"
+    },
+    {
+      "id": "00201",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00201.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate"
+    },
+    {
+      "id": "00202",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00202.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_doodled_line"
+    },
+    {
+      "id": "00203",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00203.mp4",
+      "embodiment": "humanoid",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "Airbot_MMK2_storage_bottle_part"
+    },
+    {
+      "id": "00204",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00204.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00205",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00205.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00206",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00206.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00207",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00207.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00208",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00208.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00209",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00209.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00210",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00210.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00211",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00211.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00212",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00212.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00213",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00213.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00214",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00214.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00215",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00215.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00216",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00216.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00217",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00217.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00218",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00218.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00219",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00219.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00220",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00220.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00221",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00221.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00222",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00222.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00223",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00223.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00224",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00224.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00225",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00225.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00226",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00226.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00227",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00227.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00228",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00228.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00229",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00229.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00230",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00230.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00231",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00231.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00232",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00232.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00233",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00233.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00234",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00234.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00235",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00235.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00236",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00236.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00237",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00237.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00238",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00238.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00239",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00239.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00240",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00240.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00241",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00241.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00242",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00242.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00243",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00243.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00244",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00244.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00245",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00245.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00246",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00246.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00247",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00247.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00248",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00248.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00249",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00249.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00250",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00250.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00251",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00251.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00252",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00252.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00253",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00253.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00254",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00254.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00255",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00255.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00256",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00256.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00257",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00257.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00258",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00258.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00259",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00259.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00260",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00260.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00261",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00261.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00262",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00262.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00263",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00263.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00264",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00264.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00265",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00265.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00266",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00266.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00267",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00267.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00268",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00268.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00269",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00269.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00270",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00270.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00271",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00271.mp4",
+      "embodiment": "humanoid",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00272",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00272.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00273",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00273.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00274",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00274.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00275",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00275.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00276",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00276.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00277",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00277.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00278",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00278.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00279",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00279.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00280",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00280.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00281",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00281.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00282",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00282.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00283",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00283.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00284",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00284.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00285",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00285.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00286",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00286.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00287",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00287.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00288",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00288.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "non_makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00289",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00289.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "non_makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00290",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00290.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "non_makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00291",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00291.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "non_makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00292",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00292.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "non_makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00293",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00293.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "non_makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00294",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00294.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "non_makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00295",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00295.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "non_makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00296",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00296.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "non_makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00297",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00297.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "non_makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00298",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00298.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "non_makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00299",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00299.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "non_makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00300",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00300.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "non_makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00301",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00301.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "non_makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00302",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00302.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "non_makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00303",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00303.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "ctrlworld",
+      "split": "non_makovian",
+      "task": "multiview/ctrlworld"
+    },
+    {
+      "id": "00304",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00304.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00305",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00305.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00306",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00306.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00307",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00307.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00308",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00308.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00309",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00309.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00310",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00310.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00311",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00311.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00312",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00312.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00313",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00313.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00314",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00314.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00315",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00315.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00316",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00316.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00317",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00317.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00318",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00318.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00319",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00319.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00320",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00320.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00321",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00321.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00322",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00322.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00323",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00323.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00324",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00324.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00325",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00325.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00326",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00326.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00327",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00327.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00328",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00328.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00329",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00329.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00330",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00330.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00331",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00331.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00332",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00332.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00333",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00333.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00334",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00334.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00335",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00335.mp4",
+      "embodiment": "single_arm",
+      "view": "multiview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "multiview/dreamgen"
+    },
+    {
+      "id": "00336",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00336.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00337",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00337.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00338",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00338.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00339",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00339.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00340",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00340.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00341",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00341.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00342",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00342.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00343",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00343.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00344",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00344.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00345",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00345.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00346",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00346.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00347",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00347.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00348",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00348.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00349",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00349.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00350",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00350.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00351",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00351.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00352",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00352.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00353",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00353.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00354",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00354.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00355",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00355.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00356",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00356.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00357",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00357.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00358",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00358.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00359",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00359.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00360",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00360.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00361",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00361.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00362",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00362.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00363",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00363.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00364",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00364.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00365",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00365.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00366",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00366.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00367",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00367.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamdojo",
+      "split": "non_makovian",
+      "task": "singleview/dreamdojo"
+    },
+    {
+      "id": "00368",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00368.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00369",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00369.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00370",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00370.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00371",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00371.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00372",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00372.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00373",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00373.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00374",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00374.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00375",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00375.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00376",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00376.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00377",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00377.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00378",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00378.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00379",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00379.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00380",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00380.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00381",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00381.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00382",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00382.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00383",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00383.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00384",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00384.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00385",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00385.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00386",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00386.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00387",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00387.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00388",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00388.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00389",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00389.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00390",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00390.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00391",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00391.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00392",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00392.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00393",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00393.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00394",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00394.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00395",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00395.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00396",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00396.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00397",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00397.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00398",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00398.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    },
+    {
+      "id": "00399",
+      "video": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/00399.mp4",
+      "embodiment": "single_arm",
+      "view": "singleview",
+      "model": "dreamgen",
+      "split": "non_makovian",
+      "task": "singleview/dreamgen"
+    }
+  ]
+}

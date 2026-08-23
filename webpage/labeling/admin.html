@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video World — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f8f9fa;--card:#fff;--border:#e2e5e9;--text:#1a1a2e;--muted:#7a7a96;--accent:#4f46e5}
+body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);padding:2rem}
+main{max-width:900px;margin:0 auto}
+h1{font-weight:800;margin-bottom:.3rem}
+.sub{color:var(--muted);margin-bottom:1.5rem;font-size:.9rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.2rem;margin-bottom:1rem}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:.5rem .6rem;border-bottom:1px solid var(--border)}
+th{color:var(--muted);font-weight:600;font-size:.78rem;text-transform:uppercase}
+.btn{border:1px solid var(--border);background:#fff;border-radius:8px;padding:.55rem 1rem;font-weight:600;font-size:.85rem;color:var(--text);cursor:pointer;margin-right:.5rem}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.mono{font-family:'JetBrains Mono',monospace;font-size:.82rem}
+.stat{display:flex;gap:2rem;flex-wrap:wrap}
+.stat div b{display:block;font-size:1.6rem}
+.stat div span{color:var(--muted);font-size:.78rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>Video World — Labeling Admin</h1>
+  <p class="sub">Cross-rater progress + export. Same passcode gate as the labeling page.</p>
+
+  <div class="card stat" id="stats">Loading…</div>
+
+  <div class="card">
+    <button class="btn primary" id="btnCsv">Download CSV</button>
+    <button class="btn" id="btnJson">Download JSON</button>
+    <button class="btn" id="btnRefresh">Refresh</button>
+  </div>
+
+  <div class="card">
+    <table id="table"><thead><tr><th>Rater</th><th>Labeled</th><th>Mean score</th><th>Last update</th></tr></thead><tbody></tbody></table>
+  </div>
+</main>
+<script src="config.js"></script>
+<script src="vgp.js"></script>
+<script>
+if (VGP.requireGate()) {
+  let rows = [];
+
+  function byRater(rows){
+    const m = new Map();
+    for (const r of rows){
+      if (!m.has(r.rater_name)) m.set(r.rater_name, { n: 0, sum: 0, last: r.updated_at });
+      const e = m.get(r.rater_name);
+      e.n += 1; e.sum += r.score;
+      if (r.updated_at > e.last) e.last = r.updated_at;
+    }
+    return [...m.entries()].map(([rater, v]) => ({
+      rater, n: v.n, mean: (v.sum / v.n).toFixed(2), last: v.last,
+    })).sort((a,b) => b.n - a.n);
+  }
+
+  function render(){
+    const perRater = byRater(rows);
+    const totalLabels = rows.length;
+    const uniqueItems = new Set(rows.map(r => r.item_id)).size;
+    document.getElementById('stats').innerHTML = `
+      <div><b>${perRater.length}</b><span>raters</span></div>
+      <div><b>${totalLabels}</b><span>total labels</span></div>
+      <div><b>${uniqueItems}</b><span>unique clips covered</span></div>`;
+    const tbody = document.querySelector('#table tbody');
+    tbody.innerHTML = perRater.map(r =>
+      `<tr><td>${r.rater}</td><td>${r.n}</td><td>${r.mean}</td><td class="mono">${new Date(r.last).toLocaleString()}</td></tr>`
+    ).join('') || '<tr><td colspan="4">No labels yet.</td></tr>';
+  }
+
+  function toCsv(rows){
+    const header = 'rater_name,item_id,score,updated_at';
+    const lines = rows.map(r => [r.rater_name, r.item_id, r.score, r.updated_at].join(','));
+    return [header, ...lines].join('\n');
+  }
+
+  function download(filename, content, type){
+    const blob = new Blob([content], { type });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+  }
+
+  async function refresh(){
+    document.getElementById('stats').textContent = 'Loading…';
+    rows = await VGP.sbLoadAllLabels();
+    render();
+  }
+
+  document.getElementById('btnRefresh').onclick = refresh;
+  document.getElementById('btnCsv').onclick = () => download('vgp_labels.csv', toCsv(rows), 'text/csv');
+  document.getElementById('btnJson').onclick = () => download('vgp_labels.json', JSON.stringify(rows, null, 2), 'application/json');
+
+  refresh().catch(err => { document.getElementById('stats').textContent = 'Failed to load — check config.js.'; console.error(err); });
+}
+</script>
+</body>
+</html>
