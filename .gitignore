@@ -228,3 +228,9 @@ webpage/*
 .jitcache/*
 metrics/motion_probe_out/
 metrics/sim2real_out/*
+
+# Deployable labeling site (tracked despite webpage/* above); real Supabase
+# keys/passcode live in config.js which is NOT committed (see config.example.js)
+!webpage/labeling/
+!webpage/labeling/**
+webpage/labeling/config.js
