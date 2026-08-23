@@ -67,6 +67,7 @@ def main() -> int:
                 "model": it["model"],
                 "split": it["split"],
                 "task": it["task"],
+                "prompt": it.get("prompt", ""),
             }
         )
 

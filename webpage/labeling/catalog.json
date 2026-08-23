@@ -9,7 +9,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "insert_washer_shaft_both_hands"
+      "task": "insert_washer_shaft_both_hands",
+      "prompt": "Insert purple washer shaft both hands."
     },
     {
       "id": "00001",
@@ -18,7 +19,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "spoon_red_block_bowl"
+      "task": "spoon_red_block_bowl",
+      "prompt": "Orange spoon red block bowl."
     },
     {
       "id": "00002",
@@ -27,7 +29,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "tape_closed_cardboard"
+      "task": "tape_closed_cardboard",
+      "prompt": "Tape pink closed cardboard."
     },
     {
       "id": "00003",
@@ -36,7 +39,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "find_insert_small_gear_shaft"
+      "task": "find_insert_small_gear_shaft",
+      "prompt": "find insert small gear shaft"
     },
     {
       "id": "00004",
@@ -45,7 +49,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "fit_large_gear_shaft"
+      "task": "fit_large_gear_shaft",
+      "prompt": "fit large gear shaft"
     },
     {
       "id": "00005",
@@ -54,7 +59,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "fit_small_gear_shaft"
+      "task": "fit_small_gear_shaft",
+      "prompt": "fit small gear shaft"
     },
     {
       "id": "00006",
@@ -63,7 +69,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "insert_rod_board"
+      "task": "insert_rod_board",
+      "prompt": "insert rod board"
     },
     {
       "id": "00007",
@@ -72,7 +79,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "insert_rod_moved_board"
+      "task": "insert_rod_moved_board",
+      "prompt": "insert rod moved board"
     },
     {
       "id": "00008",
@@ -81,7 +89,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "insert_usb_pcbox"
+      "task": "insert_usb_pcbox",
+      "prompt": "insert usb pcbox"
     },
     {
       "id": "00009",
@@ -90,7 +99,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "insert_washer_shaft"
+      "task": "insert_washer_shaft",
+      "prompt": "insert washer shaft"
     },
     {
       "id": "00010",
@@ -99,7 +109,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "insert_washer_shaft_both_hands"
+      "task": "insert_washer_shaft_both_hands",
+      "prompt": "insert washer shaft both hands"
     },
     {
       "id": "00011",
@@ -108,7 +119,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "tape_closed_cardboard"
+      "task": "tape_closed_cardboard",
+      "prompt": "tape closed cardboard"
     },
     {
       "id": "00012",
@@ -117,7 +129,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "turn_towel_over"
+      "task": "turn_towel_over",
+      "prompt": "turn towel over"
     },
     {
       "id": "00013",
@@ -126,7 +139,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "wipe_the_desk_with_a_blue_cloth"
+      "task": "wipe_the_desk_with_a_blue_cloth",
+      "prompt": "wipe the desk with a blue cloth"
     },
     {
       "id": "00014",
@@ -135,7 +149,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "insert_rod_moved_board"
+      "task": "insert_rod_moved_board",
+      "prompt": "insert rod moved board"
     },
     {
       "id": "00015",
@@ -144,7 +159,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "spoon_red_block_bowl"
+      "task": "spoon_red_block_bowl",
+      "prompt": "spoon red block bowl"
     },
     {
       "id": "00016",
@@ -153,7 +169,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "wipe_the_desk_with_a_blue_cloth"
+      "task": "wipe_the_desk_with_a_blue_cloth",
+      "prompt": "wipe the desk with a blue cloth"
     },
     {
       "id": "00017",
@@ -162,7 +179,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "fold_towel_in_random_places"
+      "task": "fold_towel_in_random_places",
+      "prompt": "Fold purple towel in random places."
     },
     {
       "id": "00018",
@@ -171,7 +189,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "handover_and_wipe_sponge"
+      "task": "handover_and_wipe_sponge",
+      "prompt": "Handover and wipe orange sponge."
     },
     {
       "id": "00019",
@@ -180,7 +199,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "handover_metallic_zip_bag_upright"
+      "task": "handover_metallic_zip_bag_upright",
+      "prompt": "Handover pink zip bag upright."
     },
     {
       "id": "00020",
@@ -189,7 +209,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "brush_screws_into_dustpan_human_brush_left_hold"
+      "task": "brush_screws_into_dustpan_human_brush_left_hold",
+      "prompt": "brush screws into dustpan human brush left hold"
     },
     {
       "id": "00021",
@@ -198,7 +219,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "brush_screws_into_dustpan_left_brush_human_hold"
+      "task": "brush_screws_into_dustpan_left_brush_human_hold",
+      "prompt": "brush screws into dustpan left brush human hold"
     },
     {
       "id": "00022",
@@ -207,7 +229,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "fold_light_blue_towel"
+      "task": "fold_light_blue_towel",
+      "prompt": "fold light blue towel"
     },
     {
       "id": "00023",
@@ -216,7 +239,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "fold_orange_towel"
+      "task": "fold_orange_towel",
+      "prompt": "fold orange towel"
     },
     {
       "id": "00024",
@@ -225,7 +249,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "fold_towel_assist"
+      "task": "fold_towel_assist",
+      "prompt": "fold towel assist"
     },
     {
       "id": "00025",
@@ -234,7 +259,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "fold_yellow_towel"
+      "task": "fold_yellow_towel",
+      "prompt": "fold yellow towel"
     },
     {
       "id": "00026",
@@ -243,7 +269,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "handover_and_wipe_sponge"
+      "task": "handover_and_wipe_sponge",
+      "prompt": "handover and wipe sponge"
     },
     {
       "id": "00027",
@@ -252,7 +279,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "handover_clear_zip_bag_upright"
+      "task": "handover_clear_zip_bag_upright",
+      "prompt": "handover clear zip bag upright"
     },
     {
       "id": "00028",
@@ -261,7 +289,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "handover_metallic_zip_bag_upright"
+      "task": "handover_metallic_zip_bag_upright",
+      "prompt": "handover metallic zip bag upright"
     },
     {
       "id": "00029",
@@ -270,7 +299,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "place_the_chinese_spoons_on_the_cloth"
+      "task": "place_the_chinese_spoons_on_the_cloth",
+      "prompt": "place the chinese spoons on the cloth"
     },
     {
       "id": "00030",
@@ -279,7 +309,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "put_tape_white_case_alternating_arms"
+      "task": "put_tape_white_case_alternating_arms",
+      "prompt": "put tape white case alternating arms"
     },
     {
       "id": "00031",
@@ -288,7 +319,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "fold_light_blue_towel"
+      "task": "fold_light_blue_towel",
+      "prompt": "fold light blue towel"
     },
     {
       "id": "00032",
@@ -297,7 +329,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "handover_metallic_zip_bag_upright"
+      "task": "handover_metallic_zip_bag_upright",
+      "prompt": "handover metallic zip bag upright"
     },
     {
       "id": "00033",
@@ -306,7 +339,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "take_out_reel_clear_zip_bag"
+      "task": "take_out_reel_clear_zip_bag",
+      "prompt": "take out reel clear zip bag"
     },
     {
       "id": "00034",
@@ -315,7 +349,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "close_cardboard_box"
+      "task": "close_cardboard_box",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: close cardboard box. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00035",
@@ -324,7 +359,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "close_toolbox"
+      "task": "close_toolbox",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: close toolbox. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00036",
@@ -333,7 +369,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "find_hole_and_insert_into_gear"
+      "task": "find_hole_and_insert_into_gear",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: find hole and insert into gear. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00037",
@@ -342,7 +379,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "find_insert_large_gear_shaft"
+      "task": "find_insert_large_gear_shaft",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: close toolbox. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00038",
@@ -351,7 +389,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "hit_mark_with_hammer"
+      "task": "hit_mark_with_hammer",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: hit mark with hammer. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00039",
@@ -360,7 +399,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "tape_closed_cardboard"
+      "task": "tape_closed_cardboard",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: spoon yellow block bowl. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00040",
@@ -369,7 +409,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "close_toolbox"
+      "task": "close_toolbox",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: close toolbox. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00041",
@@ -378,7 +419,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "find_hole_and_insert_into_gear"
+      "task": "find_hole_and_insert_into_gear",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: find hole and insert into gear. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00042",
@@ -387,7 +429,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "fit_small_gear_shaft"
+      "task": "fit_small_gear_shaft",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fit small gear shaft. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00043",
@@ -396,7 +439,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "hook_cable_narrow_8pin"
+      "task": "hook_cable_narrow_8pin",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: hook cable narrow 8pin. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00044",
@@ -405,7 +449,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "insert_rod_board"
+      "task": "insert_rod_board",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: insert rod board. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00045",
@@ -414,7 +459,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "insert_shaft_into_gear"
+      "task": "insert_shaft_into_gear",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: insert shaft into gear. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00046",
@@ -423,7 +469,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "insert_small_gear_shaft"
+      "task": "insert_small_gear_shaft",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: insert small gear shaft. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00047",
@@ -432,7 +479,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "insert_washer_shaft_both_hands"
+      "task": "insert_washer_shaft_both_hands",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: insert washer shaft both hands. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00048",
@@ -441,7 +489,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "spoon_yellow_block_bowl"
+      "task": "spoon_yellow_block_bowl",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: spoon yellow block bowl. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00049",
@@ -450,7 +499,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "hit_mark_with_hammer"
+      "task": "hit_mark_with_hammer",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: hit mark with hammer. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00050",
@@ -459,7 +509,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "insert_small_gear_shaft"
+      "task": "insert_small_gear_shaft",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: insert small gear shaft. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00051",
@@ -468,7 +519,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "fold_bath_towel"
+      "task": "fold_bath_towel",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold bath towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00052",
@@ -477,7 +529,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "fold_yellow_towel"
+      "task": "fold_yellow_towel",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold green towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00053",
@@ -486,7 +539,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "handover_and_wipe_sponge"
+      "task": "handover_and_wipe_sponge",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold blue towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00054",
@@ -495,7 +549,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "brush_screws_into_dustpan_human_brush_left_hold"
+      "task": "brush_screws_into_dustpan_human_brush_left_hold",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: brush screws into dustpan human brush left hold. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00055",
@@ -504,7 +559,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "fold_bath_towel"
+      "task": "fold_bath_towel",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold bath towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00056",
@@ -513,7 +569,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "fold_big_towel"
+      "task": "fold_big_towel",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold big towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00057",
@@ -522,7 +579,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "fold_blue_towel"
+      "task": "fold_blue_towel",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold yellow towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00058",
@@ -531,7 +589,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "fold_green_towel"
+      "task": "fold_green_towel",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold green towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00059",
@@ -540,7 +599,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "fold_light_blue_towel"
+      "task": "fold_light_blue_towel",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold light blue towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00060",
@@ -549,7 +609,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "fold_yellow_towel"
+      "task": "fold_yellow_towel",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold orange towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00061",
@@ -558,7 +619,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "handover_and_wipe_sponge"
+      "task": "handover_and_wipe_sponge",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold big towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00062",
@@ -567,7 +629,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "handover_metallic_zip_bag_upright"
+      "task": "handover_metallic_zip_bag_upright",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold towel in random places. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00063",
@@ -576,7 +639,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "place_the_chinese_spoons_on_the_cloth"
+      "task": "place_the_chinese_spoons_on_the_cloth",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold bath towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00064",
@@ -585,7 +649,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "take_out_reel_clear_zip_bag"
+      "task": "take_out_reel_clear_zip_bag",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: take out reel clear zip bag. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00065",
@@ -594,7 +659,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "fold_bath_towel"
+      "task": "fold_bath_towel",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold towel assist. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00066",
@@ -603,7 +669,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "fold_big_towel"
+      "task": "fold_big_towel",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold big towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00067",
@@ -612,7 +679,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "fold_blue_towel"
+      "task": "fold_blue_towel",
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold orange towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00068",
@@ -621,7 +689,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "close_toolbox"
+      "task": "close_toolbox",
+      "prompt": "Close toolbox"
     },
     {
       "id": "00069",
@@ -630,7 +699,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "find_hole_and_insert_into_gear"
+      "task": "find_hole_and_insert_into_gear",
+      "prompt": "Find hole and insert into gear"
     },
     {
       "id": "00070",
@@ -639,7 +709,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "find_insert_large_gear_shaft"
+      "task": "find_insert_large_gear_shaft",
+      "prompt": "Find insert large gear shaft"
     },
     {
       "id": "00071",
@@ -648,7 +719,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "find_insert_small_gear_shaft"
+      "task": "find_insert_small_gear_shaft",
+      "prompt": "Find insert small gear shaft"
     },
     {
       "id": "00072",
@@ -657,7 +729,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "fit_small_gear_shaft"
+      "task": "fit_small_gear_shaft",
+      "prompt": "Fit small gear shaft"
     },
     {
       "id": "00073",
@@ -666,7 +739,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "hook_cable_narrow_8pin"
+      "task": "hook_cable_narrow_8pin",
+      "prompt": "Hook cable narrow 8pin"
     },
     {
       "id": "00074",
@@ -675,7 +749,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "hook_rubber_shaft"
+      "task": "hook_rubber_shaft",
+      "prompt": "Hook rubber shaft"
     },
     {
       "id": "00075",
@@ -684,7 +759,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "insert_large_gear_shaft"
+      "task": "insert_large_gear_shaft",
+      "prompt": "Insert large gear shaft"
     },
     {
       "id": "00076",
@@ -693,7 +769,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "insert_rod_moved_board"
+      "task": "insert_rod_moved_board",
+      "prompt": "Insert rod moved board"
     },
     {
       "id": "00077",
@@ -702,7 +779,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "insert_usb_cable_fix_parts"
+      "task": "insert_usb_cable_fix_parts",
+      "prompt": "Insert usb cable fix parts"
     },
     {
       "id": "00078",
@@ -711,7 +789,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "insert_usb_pcbox"
+      "task": "insert_usb_pcbox",
+      "prompt": "Insert usb pcbox"
     },
     {
       "id": "00079",
@@ -720,7 +799,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "insert_washer_shaft"
+      "task": "insert_washer_shaft",
+      "prompt": "Insert washer shaft"
     },
     {
       "id": "00080",
@@ -729,7 +809,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "spoon_red_block_bowl"
+      "task": "spoon_red_block_bowl",
+      "prompt": "Spoon red block bowl"
     },
     {
       "id": "00081",
@@ -738,7 +819,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "find_hole_and_insert_into_gear"
+      "task": "find_hole_and_insert_into_gear",
+      "prompt": "Find hole and insert into gear"
     },
     {
       "id": "00082",
@@ -747,7 +829,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "insert_washer_shaft"
+      "task": "insert_washer_shaft",
+      "prompt": "Insert washer shaft"
     },
     {
       "id": "00083",
@@ -756,7 +839,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "insert_washer_shaft_both_hands"
+      "task": "insert_washer_shaft_both_hands",
+      "prompt": "Insert washer shaft both hands"
     },
     {
       "id": "00084",
@@ -765,7 +849,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "tape_closed_cardboard"
+      "task": "tape_closed_cardboard",
+      "prompt": "Tape closed cardboard"
     },
     {
       "id": "00085",
@@ -774,7 +859,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "brush_screws_into_dustpan_human_brush_left_hold"
+      "task": "brush_screws_into_dustpan_human_brush_left_hold",
+      "prompt": "Brush screws into dustpan human brush left hold"
     },
     {
       "id": "00086",
@@ -783,7 +869,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "fold_big_towel"
+      "task": "fold_big_towel",
+      "prompt": "Fold big towel"
     },
     {
       "id": "00087",
@@ -792,7 +879,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "fold_blue_towel"
+      "task": "fold_blue_towel",
+      "prompt": "Fold blue towel"
     },
     {
       "id": "00088",
@@ -801,7 +889,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "fold_green_towel"
+      "task": "fold_green_towel",
+      "prompt": "Fold green towel"
     },
     {
       "id": "00089",
@@ -810,7 +899,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "fold_light_blue_towel"
+      "task": "fold_light_blue_towel",
+      "prompt": "Fold light blue towel"
     },
     {
       "id": "00090",
@@ -819,7 +909,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "fold_orange_towel"
+      "task": "fold_orange_towel",
+      "prompt": "Fold orange towel"
     },
     {
       "id": "00091",
@@ -828,7 +919,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "fold_towel_in_random_places"
+      "task": "fold_towel_in_random_places",
+      "prompt": "Fold towel in random places"
     },
     {
       "id": "00092",
@@ -837,7 +929,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "fold_yellow_towel"
+      "task": "fold_yellow_towel",
+      "prompt": "Fold yellow towel"
     },
     {
       "id": "00093",
@@ -846,7 +939,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "handover_and_wipe_sponge"
+      "task": "handover_and_wipe_sponge",
+      "prompt": "Handover and wipe sponge"
     },
     {
       "id": "00094",
@@ -855,7 +949,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "handover_clear_zip_bag_upright"
+      "task": "handover_clear_zip_bag_upright",
+      "prompt": "Handover clear zip bag upright"
     },
     {
       "id": "00095",
@@ -864,7 +959,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "handover_metallic_zip_bag_upright"
+      "task": "handover_metallic_zip_bag_upright",
+      "prompt": "Handover metallic zip bag upright"
     },
     {
       "id": "00096",
@@ -873,7 +969,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "place_the_chinese_spoons_on_the_cloth"
+      "task": "place_the_chinese_spoons_on_the_cloth",
+      "prompt": "Place the chinese spoons on the cloth"
     },
     {
       "id": "00097",
@@ -882,7 +979,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "put_tape_white_case_alternating_arms"
+      "task": "put_tape_white_case_alternating_arms",
+      "prompt": "Put tape white case alternating arms"
     },
     {
       "id": "00098",
@@ -891,7 +989,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "fold_green_towel"
+      "task": "fold_green_towel",
+      "prompt": "Fold green towel"
     },
     {
       "id": "00099",
@@ -900,7 +999,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "fold_towel_assist"
+      "task": "fold_towel_assist",
+      "prompt": "Fold towel assist"
     },
     {
       "id": "00100",
@@ -909,7 +1009,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "fold_yellow_towel"
+      "task": "fold_yellow_towel",
+      "prompt": "Fold yellow towel"
     },
     {
       "id": "00101",
@@ -918,7 +1019,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "handover_metallic_zip_bag_upright"
+      "task": "handover_metallic_zip_bag_upright",
+      "prompt": "Handover metallic zip bag upright"
     },
     {
       "id": "00102",
@@ -927,7 +1029,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "close_cardboard_box"
+      "task": "close_cardboard_box",
+      "prompt": "A bimanual robot performing the task: Pick up the roll of tape from the table and place it inside the cardboard box."
     },
     {
       "id": "00103",
@@ -936,7 +1039,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "close_toolbox"
+      "task": "close_toolbox",
+      "prompt": "A bimanual robot performing the task: Pick up the screwdriver from the table and place it inside the open toolbox."
     },
     {
       "id": "00104",
@@ -945,7 +1049,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "find_insert_large_gear_shaft"
+      "task": "find_insert_large_gear_shaft",
+      "prompt": "A bimanual robot performing the task: Find insert large gear shaft."
     },
     {
       "id": "00105",
@@ -954,7 +1059,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "insert_lan_cable_into_the_hub"
+      "task": "insert_lan_cable_into_the_hub",
+      "prompt": "Insert blue lan cable into the hub."
     },
     {
       "id": "00106",
@@ -963,7 +1069,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "insert_random_shaft_random_small_gear"
+      "task": "insert_random_shaft_random_small_gear",
+      "prompt": "A bimanual robot performing the task: Fit large gear shaft."
     },
     {
       "id": "00107",
@@ -972,7 +1079,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "insert_rod_board"
+      "task": "insert_rod_board",
+      "prompt": "A bimanual robot performing the task: Fit small gear shaft."
     },
     {
       "id": "00108",
@@ -981,7 +1089,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "insert_rod_moved_board"
+      "task": "insert_rod_moved_board",
+      "prompt": "A bimanual robot performing the task: Hit mark with hammer."
     },
     {
       "id": "00109",
@@ -990,7 +1099,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "insert_shaft_into_gear"
+      "task": "insert_shaft_into_gear",
+      "prompt": "A bimanual robot performing the task: Hook cable 8pin."
     },
     {
       "id": "00110",
@@ -999,7 +1109,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "insert_small_gear_shaft"
+      "task": "insert_small_gear_shaft",
+      "prompt": "A bimanual robot performing the task: Hook cable narrow 8pin."
     },
     {
       "id": "00111",
@@ -1008,7 +1119,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "spoon_red_block_bowl"
+      "task": "spoon_red_block_bowl",
+      "prompt": "A bimanual robot performing the task: Pick up the pink spoon and place it inside the white bowl."
     },
     {
       "id": "00112",
@@ -1017,7 +1129,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "spoon_yellow_block_bowl"
+      "task": "spoon_yellow_block_bowl",
+      "prompt": "A bimanual robot performing the task: Pick up the pink spoon and place it inside the white bowl."
     },
     {
       "id": "00113",
@@ -1026,7 +1139,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "tape_closed_cardboard"
+      "task": "tape_closed_cardboard",
+      "prompt": "A bimanual robot performing the task: Pick up the roll of tape from the table and place it on top of the closed cardboard box."
     },
     {
       "id": "00114",
@@ -1035,7 +1149,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "fit_large_gear_shaft"
+      "task": "fit_large_gear_shaft",
+      "prompt": "A bimanual robot performing the task: Fit large gear shaft."
     },
     {
       "id": "00115",
@@ -1044,7 +1159,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "insert_large_gear_shaft"
+      "task": "insert_large_gear_shaft",
+      "prompt": "A bimanual robot performing the task: Insert large gear shaft."
     },
     {
       "id": "00116",
@@ -1053,7 +1169,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "put_cup_moved_red_handle_holder"
+      "task": "put_cup_moved_red_handle_holder",
+      "prompt": "A bimanual robot performing the task: Put cup moved red handle holder."
     },
     {
       "id": "00117",
@@ -1062,7 +1179,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "tape_closed_cardboard"
+      "task": "tape_closed_cardboard",
+      "prompt": "A bimanual robot performing the task: Tape closed cardboard."
     },
     {
       "id": "00118",
@@ -1071,7 +1189,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "remove_box_from_case_right_arm"
+      "task": "remove_box_from_case_right_arm",
+      "prompt": "A bimanual robot performing the task: Remove box from case right arm."
     },
     {
       "id": "00119",
@@ -1080,7 +1199,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "brush_screws_into_dustpan_human_brush_left_hold"
+      "task": "brush_screws_into_dustpan_human_brush_left_hold",
+      "prompt": "A bimanual robot performing the task: Fold orange towel."
     },
     {
       "id": "00120",
@@ -1089,7 +1209,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "brush_screws_into_dustpan_left_brush_human_hold"
+      "task": "brush_screws_into_dustpan_left_brush_human_hold",
+      "prompt": "A bimanual robot performing the task: Fold towel assist."
     },
     {
       "id": "00121",
@@ -1098,7 +1219,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "fold_bath_towel"
+      "task": "fold_bath_towel",
+      "prompt": "A bimanual robot performing the task: Fold towel in random places."
     },
     {
       "id": "00122",
@@ -1107,7 +1229,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "fold_big_towel"
+      "task": "fold_big_towel",
+      "prompt": "A bimanual robot performing the task: Fold big towel."
     },
     {
       "id": "00123",
@@ -1116,7 +1239,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "handover_clear_zip_bag_upright"
+      "task": "handover_clear_zip_bag_upright",
+      "prompt": "Handover blue zip bag upright."
     },
     {
       "id": "00124",
@@ -1125,7 +1249,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "place_the_chinese_spoons_on_the_cloth"
+      "task": "place_the_chinese_spoons_on_the_cloth",
+      "prompt": "A bimanual robot performing the task: Pick up the white spoon and place it inside the bowl."
     },
     {
       "id": "00125",
@@ -1134,7 +1259,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "put_tape_white_case_alternating_arms"
+      "task": "put_tape_white_case_alternating_arms",
+      "prompt": "A bimanual robot performing the task: Fold green towel."
     },
     {
       "id": "00126",
@@ -1143,7 +1269,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "take_out_reel_clear_zip_bag"
+      "task": "take_out_reel_clear_zip_bag",
+      "prompt": "A bimanual robot performing the task: Fold light blue towel."
     },
     {
       "id": "00127",
@@ -1152,7 +1279,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "brush_screws_into_dustpan_human_brush_left_hold"
+      "task": "brush_screws_into_dustpan_human_brush_left_hold",
+      "prompt": "A bimanual robot performing the task: Brush screws into dustpan human brush left hold."
     },
     {
       "id": "00128",
@@ -1161,7 +1289,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "fold_light_blue_towel"
+      "task": "fold_light_blue_towel",
+      "prompt": "A bimanual robot performing the task: Fold light blue towel."
     },
     {
       "id": "00129",
@@ -1170,7 +1299,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "fold_towel_assist"
+      "task": "fold_towel_assist",
+      "prompt": "A bimanual robot performing the task: Fold towel assist."
     },
     {
       "id": "00130",
@@ -1179,7 +1309,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "fold_towel_in_random_places"
+      "task": "fold_towel_in_random_places",
+      "prompt": "A bimanual robot performing the task: Fold towel in random places."
     },
     {
       "id": "00131",
@@ -1188,7 +1319,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "handover_and_wipe_sponge"
+      "task": "handover_and_wipe_sponge",
+      "prompt": "A bimanual robot performing the task: Handover and wipe sponge."
     },
     {
       "id": "00132",
@@ -1197,7 +1329,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "handover_metallic_zip_bag_upright"
+      "task": "handover_metallic_zip_bag_upright",
+      "prompt": "A bimanual robot performing the task: Handover metallic zip bag upright."
     },
     {
       "id": "00133",
@@ -1206,7 +1339,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "put_tape_white_case_alternating_arms"
+      "task": "put_tape_white_case_alternating_arms",
+      "prompt": "A bimanual robot performing the task: Put tape white case alternating arms."
     },
     {
       "id": "00134",
@@ -1215,7 +1349,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "fold_blue_towel"
+      "task": "fold_blue_towel",
+      "prompt": "A bimanual robot performing the task: Fold blue towel."
     },
     {
       "id": "00135",
@@ -1224,7 +1359,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "fold_yellow_towel"
+      "task": "fold_yellow_towel",
+      "prompt": "A bimanual robot performing the task: Fold yellow towel."
     },
     {
       "id": "00136",
@@ -1233,7 +1369,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "AIRBOT_MMK2_mobile_car"
+      "task": "AIRBOT_MMK2_mobile_car",
+      "prompt": "Push the black cart to the right with your left hand."
     },
     {
       "id": "00137",
@@ -1242,7 +1379,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "Airbot_MMK2_move_pan"
+      "task": "Airbot_MMK2_move_pan",
+      "prompt": "Push the pink pan to the edge of the table with your left hand and place it on the building block with your right hand."
     },
     {
       "id": "00138",
@@ -1251,7 +1389,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "AIRBOT_MMK2_mobile_car"
+      "task": "AIRBOT_MMK2_mobile_car",
+      "prompt": "push the yellow cart to the right with your left hand."
     },
     {
       "id": "00139",
@@ -1260,7 +1399,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "AIRBOT_MMK2_mobile_car"
+      "task": "AIRBOT_MMK2_mobile_car",
+      "prompt": "push the yellow cart to the right with your left hand."
     },
     {
       "id": "00140",
@@ -1269,7 +1409,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "AIRBOT_MMK2_mobile_car"
+      "task": "AIRBOT_MMK2_mobile_car",
+      "prompt": "push the yellow cart to the right with your left hand."
     },
     {
       "id": "00141",
@@ -1278,7 +1419,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "AIRBOT_MMK2_mobile_car"
+      "task": "AIRBOT_MMK2_mobile_car",
+      "prompt": "push the yellow cart to the right with your left hand."
     },
     {
       "id": "00142",
@@ -1287,7 +1429,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "AIRBOT_MMK2_mobile_car"
+      "task": "AIRBOT_MMK2_mobile_car",
+      "prompt": "push the yellow cart to the right with your left hand."
     },
     {
       "id": "00143",
@@ -1296,7 +1439,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "AIRBOT_MMK2_mobile_car"
+      "task": "AIRBOT_MMK2_mobile_car",
+      "prompt": "push the yellow cart to the right with your left hand."
     },
     {
       "id": "00144",
@@ -1305,7 +1449,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "Airbot_MMK2_move_pan"
+      "task": "Airbot_MMK2_move_pan",
+      "prompt": "push the pan to the edge of the table with your left hand and place it on the building block with your right hand."
     },
     {
       "id": "00145",
@@ -1314,7 +1459,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "Airbot_MMK2_move_pan"
+      "task": "Airbot_MMK2_move_pan",
+      "prompt": "push the pan to the edge of the table with your left hand and place it on the building block with your right hand."
     },
     {
       "id": "00146",
@@ -1323,7 +1469,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "Airbot_MMK2_move_pan"
+      "task": "Airbot_MMK2_move_pan",
+      "prompt": "push the pan to the edge of the table with your left hand and place it on the building block with your right hand."
     },
     {
       "id": "00147",
@@ -1332,7 +1479,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "Airbot_MMK2_move_pan"
+      "task": "Airbot_MMK2_move_pan",
+      "prompt": "push the pan to the edge of the table with your left hand and place it on the building block with your right hand."
     },
     {
       "id": "00148",
@@ -1341,7 +1489,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "Airbot_MMK2_move_pan"
+      "task": "Airbot_MMK2_move_pan",
+      "prompt": "push the pan to the edge of the table with your left hand and place it on the building block with your right hand."
     },
     {
       "id": "00149",
@@ -1350,7 +1499,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "Airbot_MMK2_move_pan"
+      "task": "Airbot_MMK2_move_pan",
+      "prompt": "push the pan to the edge of the table with your left hand and place it on the building block with your right hand."
     },
     {
       "id": "00150",
@@ -1359,7 +1509,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "AIRBOT_MMK2_mobile_car"
+      "task": "AIRBOT_MMK2_mobile_car",
+      "prompt": "push the yellow cart to the right with your left hand."
     },
     {
       "id": "00151",
@@ -1368,7 +1519,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "AIRBOT_MMK2_mobile_car"
+      "task": "AIRBOT_MMK2_mobile_car",
+      "prompt": "push the yellow cart to the right with your left hand."
     },
     {
       "id": "00152",
@@ -1377,7 +1529,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "makovian",
-      "task": "Airbot_MMK2_move_pan"
+      "task": "Airbot_MMK2_move_pan",
+      "prompt": "push the pan to the edge of the table with your left hand and place it on the building block with your right hand."
     },
     {
       "id": "00153",
@@ -1386,7 +1539,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate"
+      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate",
+      "prompt": "Pick up the yellow pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box."
     },
     {
       "id": "00154",
@@ -1395,7 +1549,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_doodled_line"
+      "task": "Airbot_MMK2_doodled_line",
+      "prompt": "Pick up the ballpoint orange pen and leave your handwriting on the paper."
     },
     {
       "id": "00155",
@@ -1404,7 +1559,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "AIRBOT_MMK2_boxs_storage"
+      "task": "AIRBOT_MMK2_boxs_storage",
+      "prompt": "throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand."
     },
     {
       "id": "00156",
@@ -1413,7 +1569,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "AIRBOT_MMK2_boxs_storage"
+      "task": "AIRBOT_MMK2_boxs_storage",
+      "prompt": "put the calculator box in the yellow bucket with your left hand and the power bank box in the yellow bucket with your right hand."
     },
     {
       "id": "00157",
@@ -1422,7 +1579,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "AIRBOT_MMK2_boxs_storage"
+      "task": "AIRBOT_MMK2_boxs_storage",
+      "prompt": "put the calculator box in the yellow bucket with your left hand and the power bank box in the yellow bucket with your right hand."
     },
     {
       "id": "00158",
@@ -1431,7 +1589,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate"
+      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate",
+      "prompt": "pick up the pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box."
     },
     {
       "id": "00159",
@@ -1440,7 +1599,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate"
+      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate",
+      "prompt": "pick up the pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box."
     },
     {
       "id": "00160",
@@ -1449,7 +1609,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate"
+      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate",
+      "prompt": "pick up the pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box."
     },
     {
       "id": "00161",
@@ -1458,7 +1619,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_doodled_line"
+      "task": "Airbot_MMK2_doodled_line",
+      "prompt": "Pick up the ballpoint pen and leave your handwriting on the paper."
     },
     {
       "id": "00162",
@@ -1467,7 +1629,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_doodled_line"
+      "task": "Airbot_MMK2_doodled_line",
+      "prompt": "Pick up the ballpoint pen and leave your handwriting on the paper."
     },
     {
       "id": "00163",
@@ -1476,7 +1639,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_doodled_line"
+      "task": "Airbot_MMK2_doodled_line",
+      "prompt": "Pick up the ballpoint pen and leave your handwriting on the paper."
     },
     {
       "id": "00164",
@@ -1485,7 +1649,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_storage_bottle_part"
+      "task": "Airbot_MMK2_storage_bottle_part",
+      "prompt": "put the water bottle and handle into the cardboard box."
     },
     {
       "id": "00165",
@@ -1494,7 +1659,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_storage_bottle_part"
+      "task": "Airbot_MMK2_storage_bottle_part",
+      "prompt": "put the water bottle and handle into the cardboard box."
     },
     {
       "id": "00166",
@@ -1503,7 +1669,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_storage_bottle_part"
+      "task": "Airbot_MMK2_storage_bottle_part",
+      "prompt": "put the water bottle and handle into the cardboard box."
     },
     {
       "id": "00167",
@@ -1512,7 +1679,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "AIRBOT_MMK2_boxs_storage"
+      "task": "AIRBOT_MMK2_boxs_storage",
+      "prompt": "throw the potato into the left square with your left hand and the pumpkin into the right square with your right hand."
     },
     {
       "id": "00168",
@@ -1521,7 +1689,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate"
+      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate",
+      "prompt": "pick up the pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box."
     },
     {
       "id": "00169",
@@ -1530,7 +1699,8 @@
       "view": "multiview",
       "model": "ctrlworld_4view_grid",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_storage_bottle_part"
+      "task": "Airbot_MMK2_storage_bottle_part",
+      "prompt": "put the water bottle and handle into the cardboard box."
     },
     {
       "id": "00170",
@@ -1539,7 +1709,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "AIRBOT_MMK2_mobile_car"
+      "task": "AIRBOT_MMK2_mobile_car",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00171",
@@ -1548,7 +1719,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "AIRBOT_MMK2_mobile_car"
+      "task": "AIRBOT_MMK2_mobile_car",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00172",
@@ -1557,7 +1729,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "AIRBOT_MMK2_mobile_car"
+      "task": "AIRBOT_MMK2_mobile_car",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00173",
@@ -1566,7 +1739,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "AIRBOT_MMK2_mobile_car"
+      "task": "AIRBOT_MMK2_mobile_car",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00174",
@@ -1575,7 +1749,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "AIRBOT_MMK2_mobile_car"
+      "task": "AIRBOT_MMK2_mobile_car",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00175",
@@ -1584,7 +1759,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "AIRBOT_MMK2_mobile_car"
+      "task": "AIRBOT_MMK2_mobile_car",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00176",
@@ -1593,7 +1769,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "Airbot_MMK2_move_pan"
+      "task": "Airbot_MMK2_move_pan",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00177",
@@ -1602,7 +1779,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "Airbot_MMK2_move_pan"
+      "task": "Airbot_MMK2_move_pan",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00178",
@@ -1611,7 +1789,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "Airbot_MMK2_move_pan"
+      "task": "Airbot_MMK2_move_pan",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00179",
@@ -1620,7 +1799,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "Airbot_MMK2_move_pan"
+      "task": "Airbot_MMK2_move_pan",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00180",
@@ -1629,7 +1809,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "Airbot_MMK2_move_pan"
+      "task": "Airbot_MMK2_move_pan",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00181",
@@ -1638,7 +1819,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "Airbot_MMK2_move_pan"
+      "task": "Airbot_MMK2_move_pan",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00182",
@@ -1647,7 +1829,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "Airbot_MMK2_move_pan"
+      "task": "Airbot_MMK2_move_pan",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00183",
@@ -1656,7 +1839,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "AIRBOT_MMK2_mobile_car"
+      "task": "AIRBOT_MMK2_mobile_car",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00184",
@@ -1665,7 +1849,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "AIRBOT_MMK2_mobile_car"
+      "task": "AIRBOT_MMK2_mobile_car",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00185",
@@ -1674,7 +1859,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "Airbot_MMK2_move_pan"
+      "task": "Airbot_MMK2_move_pan",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00186",
@@ -1683,7 +1869,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "Airbot_MMK2_move_pan"
+      "task": "Airbot_MMK2_move_pan",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00187",
@@ -1692,7 +1879,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "AIRBOT_MMK2_boxs_storage"
+      "task": "AIRBOT_MMK2_boxs_storage",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the potato into the left square with your left hand and the pumpkin into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00188",
@@ -1701,7 +1889,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "AIRBOT_MMK2_boxs_storage"
+      "task": "AIRBOT_MMK2_boxs_storage",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: put the calculator box in the yellow bucket with your left hand and the power bank box in the yellow bucket with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00189",
@@ -1710,7 +1899,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "AIRBOT_MMK2_boxs_storage"
+      "task": "AIRBOT_MMK2_boxs_storage",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: put the calculator box in the yellow bucket with your left hand and the power bank box in the yellow bucket with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00190",
@@ -1719,7 +1909,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate"
+      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00191",
@@ -1728,7 +1919,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate"
+      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00192",
@@ -1737,7 +1929,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate"
+      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: pick up the pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the front view, top-right shows the head view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00193",
@@ -1746,7 +1939,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate"
+      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the potato into the left square with your left hand and the pumpkin into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00194",
@@ -1755,7 +1949,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_doodled_line"
+      "task": "Airbot_MMK2_doodled_line",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: Pick up the ballpoint pen and leave your handwriting on the paper. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the front view, top-right shows the head view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00195",
@@ -1764,7 +1959,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_doodled_line"
+      "task": "Airbot_MMK2_doodled_line",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the potato into the left square with your left hand and the pumpkin into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00196",
@@ -1773,7 +1969,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_doodled_line"
+      "task": "Airbot_MMK2_doodled_line",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: Pick up the ballpoint pen and leave your handwriting on the paper. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the front view, top-right shows the head view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00197",
@@ -1782,7 +1979,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_storage_bottle_part"
+      "task": "Airbot_MMK2_storage_bottle_part",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: Pick up the ballpoint pen and leave your handwriting on the paper. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the front view, top-right shows the head view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00198",
@@ -1791,7 +1989,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_storage_bottle_part"
+      "task": "Airbot_MMK2_storage_bottle_part",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00199",
@@ -1800,7 +1999,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_storage_bottle_part"
+      "task": "Airbot_MMK2_storage_bottle_part",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00200",
@@ -1809,7 +2009,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "AIRBOT_MMK2_boxs_storage"
+      "task": "AIRBOT_MMK2_boxs_storage",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the potato into the left square with your left hand and the pumpkin into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00201",
@@ -1818,7 +2019,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate"
+      "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00202",
@@ -1827,7 +2029,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_doodled_line"
+      "task": "Airbot_MMK2_doodled_line",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00203",
@@ -1836,7 +2039,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "Airbot_MMK2_storage_bottle_part"
+      "task": "Airbot_MMK2_storage_bottle_part",
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
     },
     {
       "id": "00204",
@@ -1845,7 +2049,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "locked waist: pick up light red fruit to bottom level of wire basket"
     },
     {
       "id": "00205",
@@ -1854,7 +2059,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "unlocked waist: pick up yellow pear to bottom white tray"
     },
     {
       "id": "00206",
@@ -1863,7 +2069,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "unlocked waist: pick up red apple to bottom white shelf"
     },
     {
       "id": "00207",
@@ -1872,7 +2079,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "unlocked waist: pick up yellow pear to bottom level of metal shelf"
     },
     {
       "id": "00208",
@@ -1881,7 +2089,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "locked waist: pick up red apple to bottom layer of wooden shelf"
     },
     {
       "id": "00209",
@@ -1890,7 +2099,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "unlocked waist: pick up green bell pepper to center of rectangle table"
     },
     {
       "id": "00210",
@@ -1899,7 +2109,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "unlocked waist: pick up plastic potato to lower level of white shelf"
     },
     {
       "id": "00211",
@@ -1908,7 +2119,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "locked waist: pick up yellow starfruit from gray basket to middle of table"
     },
     {
       "id": "00212",
@@ -1917,7 +2129,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "unlocked waist: pick up brown glass to gray basket"
     },
     {
       "id": "00213",
@@ -1926,7 +2139,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "locked waist: pick up rubik's cube to top layer of shelf"
     },
     {
       "id": "00214",
@@ -1935,7 +2149,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "unlocked waist: pick up yellow starfruit to lower level of wooden shelf"
     },
     {
       "id": "00215",
@@ -1944,7 +2159,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "locked waist: pick up avocado to lower level of black basket"
     },
     {
       "id": "00216",
@@ -1953,7 +2169,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "unlocked waist: pick up green bell pepper to bottom level of wooden shelf"
     },
     {
       "id": "00217",
@@ -1962,7 +2179,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "unlocked waist: pick up green cucumber to lower white basket"
     },
     {
       "id": "00218",
@@ -1971,7 +2189,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "locked waist: pick up yellow lemon to blue plate"
     },
     {
       "id": "00219",
@@ -1980,7 +2199,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "locked waist: pick up rubik's cube to bottom level of brown wooden shelf"
     },
     {
       "id": "00220",
@@ -1989,7 +2209,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "unlocked waist: pick up yellow pear to lower level of steel basket"
     },
     {
       "id": "00221",
@@ -1998,7 +2219,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "locked waist: grid_Bar"
     },
     {
       "id": "00222",
@@ -2007,7 +2229,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "unlocked waist: pick up and move red nectarine to right side of tan table"
     },
     {
       "id": "00223",
@@ -2016,7 +2239,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "locked waist:"
     },
     {
       "id": "00224",
@@ -2025,7 +2249,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "unlocked waist: invalid"
     },
     {
       "id": "00225",
@@ -2034,7 +2259,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "unlocked waist: pick up red apple to lower level of plastic shelf"
     },
     {
       "id": "00226",
@@ -2043,7 +2269,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "unlocked waist: pick up orange mango to bottom tier of wooden basket"
     },
     {
       "id": "00227",
@@ -2052,7 +2279,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "locked waist: pick up tall red glass to bright blue plate and return"
     },
     {
       "id": "00228",
@@ -2061,7 +2289,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "unlocked waist: pick up red apple to white shelf and return"
     },
     {
       "id": "00229",
@@ -2070,7 +2299,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "unlocked waist: pick up green pepper to bottom level of wooden shelf"
     },
     {
       "id": "00230",
@@ -2079,7 +2309,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "locked waist: invalid"
     },
     {
       "id": "00231",
@@ -2088,7 +2319,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "unlocked waist:"
     },
     {
       "id": "00232",
@@ -2097,7 +2329,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "unlocked waist: move blue glass to bottom level of wooden shelf"
     },
     {
       "id": "00233",
@@ -2106,7 +2339,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "unlocked waist: pick up and move potato from top left center of table to bottom center of table"
     },
     {
       "id": "00234",
@@ -2115,7 +2349,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "unlocked waist: pick up water bottle from blue plate to seafoam bowl"
     },
     {
       "id": "00235",
@@ -2124,7 +2359,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "locked waist: pick up milk carton to wooden shelf and plate"
     },
     {
       "id": "00236",
@@ -2133,7 +2369,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "unlocked waist: pick up potato to right side of beige table"
     },
     {
       "id": "00237",
@@ -2142,7 +2379,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "unlocked waist: invalid"
     },
     {
       "id": "00238",
@@ -2151,7 +2389,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The right robotic hand picks up the green bok choy from the table."
     },
     {
       "id": "00239",
@@ -2160,7 +2399,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The right robotic hand picks up a potato from the table and places it into the basket."
     },
     {
       "id": "00240",
@@ -2169,7 +2409,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The robot's right hand picks up the yellow starfruit and places it into the lower wooden basket."
     },
     {
       "id": "00241",
@@ -2178,7 +2419,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The left robotic arm picks up the blue glass and places it into the brown basket."
     },
     {
       "id": "00242",
@@ -2187,7 +2429,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The right robotic hand picks up the red apple and places it into the bottom layer of the wooden crate."
     },
     {
       "id": "00243",
@@ -2196,7 +2439,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The robot's right hand picks up a ripe mango from the table and places it on the bottom wooden shelf."
     },
     {
       "id": "00244",
@@ -2205,7 +2449,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The robot's right hand picks up the yellow starfruit from the table and places it into the wooden basket."
     },
     {
       "id": "00245",
@@ -2214,7 +2459,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The robot's right hand picks up the yellow starfruit from the table and places it into the bottom level of the wooden shelf."
     },
     {
       "id": "00246",
@@ -2223,7 +2469,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The right robotic hand picks up the green bell pepper from the table and moves it to the center."
     },
     {
       "id": "00247",
@@ -2232,7 +2479,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The right robotic arm picks up a green bok choy and places it into a brown paper bag."
     },
     {
       "id": "00248",
@@ -2241,7 +2489,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The right robotic hand picks up the dark green avocado from the table and places it on the bottom shelf."
     },
     {
       "id": "00249",
@@ -2250,7 +2499,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The right robotic arm picks up the red apple from the table and places it into the lower compartment of the steel container."
     },
     {
       "id": "00250",
@@ -2259,7 +2509,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The left robotic arm picks up the white clock and places it on the bottom shelf of the wooden rack."
     },
     {
       "id": "00251",
@@ -2268,7 +2519,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The left robotic arm picks up the yellow starfruit from the table and places it on the bottom level of the wooden shelf."
     },
     {
       "id": "00252",
@@ -2277,7 +2529,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The right robotic arm picks up the Rubik's cube and places it on the bottom shelf."
     },
     {
       "id": "00253",
@@ -2286,7 +2539,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The right robotic arm picks up a brown potato from the table and places it on the bottom shelf of the metal cart."
     },
     {
       "id": "00254",
@@ -2295,7 +2549,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The right robotic hand picks up a red plum from the table and places it on the lower shelf."
     },
     {
       "id": "00255",
@@ -2304,7 +2559,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The right robotic hand picks up the white clock from the table and places it on the grey plate."
     },
     {
       "id": "00256",
@@ -2313,7 +2569,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The robot's right hand picks up a red apple from the table and places it in the lower tray."
     },
     {
       "id": "00257",
@@ -2322,7 +2579,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The right robotic hand places the orange into the bottom shelf compartment."
     },
     {
       "id": "00258",
@@ -2331,7 +2589,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The robot's right hand picks up the yellow mango from the table and places it in the wooden crate."
     },
     {
       "id": "00259",
@@ -2340,7 +2599,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The right robotic arm picks up the orange drill from the table, moves it toward the toaster, then returns it to the center of the table."
     },
     {
       "id": "00260",
@@ -2349,7 +2609,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The robot's left hand reaches toward a basket containing a milk carton on the table."
     },
     {
       "id": "00261",
@@ -2358,7 +2619,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The right robotic arm lifts a green and yellow cup from a blue plate and places it into a beige bowl."
     },
     {
       "id": "00262",
@@ -2367,7 +2629,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The right robotic arm picks up a beige potato from the table and places it on the lower shelf."
     },
     {
       "id": "00263",
@@ -2376,7 +2639,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The right robotic hand picks up the pink dragon fruit and places it into the black fruit basket, then returns to the starting position."
     },
     {
       "id": "00264",
@@ -2385,7 +2649,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The robot's right hand pushes the cucumber to the center of the table, then returns to its starting position."
     },
     {
       "id": "00265",
@@ -2394,7 +2659,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The right robotic arm picks up a zucchini and places it into the white basket with a black cover."
     },
     {
       "id": "00266",
@@ -2403,7 +2669,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The right robotic arm lifts the water bottle from the blue plate and places it into the seafoam bowl."
     },
     {
       "id": "00267",
@@ -2412,7 +2679,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The left robotic arm lifts the blue glass and places it on the top layer of the wooden shelf."
     },
     {
       "id": "00268",
@@ -2421,7 +2689,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The right robotic arm moves a cardboard box on the table while the left arm remains stationary."
     },
     {
       "id": "00269",
@@ -2430,7 +2699,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The right robotic arm picks up the yellow mango from the table and places it on the top tier of the wooden basket."
     },
     {
       "id": "00270",
@@ -2439,7 +2709,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The robot uses its right hand to move the orange from the shelf to the center of the table."
     },
     {
       "id": "00271",
@@ -2448,7 +2719,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "The left robotic arm lifts the blue glass and places it on the top layer of the wooden shelf."
     },
     {
       "id": "00272",
@@ -2457,7 +2729,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Slide the purple tap to the left."
     },
     {
       "id": "00273",
@@ -2466,7 +2739,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Put the white plush bear on the cyan towel."
     },
     {
       "id": "00274",
@@ -2475,7 +2749,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Pick up the blue marker and put it in the cup"
     },
     {
       "id": "00275",
@@ -2484,7 +2759,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Put the red object on the table on the object on the right"
     },
     {
       "id": "00276",
@@ -2493,7 +2769,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Move the mug to the right."
     },
     {
       "id": "00277",
@@ -2502,7 +2779,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Push the tap lever backwards"
     },
     {
       "id": "00278",
@@ -2511,7 +2789,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Open the lid of the electric kettle"
     },
     {
       "id": "00279",
@@ -2520,7 +2799,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Wipe the arm of the chair"
     },
     {
       "id": "00280",
@@ -2529,7 +2809,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Open the storage bin"
     },
     {
       "id": "00281",
@@ -2538,7 +2819,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Press the lid ejector button of the clear electric kettle"
     },
     {
       "id": "00282",
@@ -2547,7 +2829,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Put the green can in the open upper cabinet."
     },
     {
       "id": "00283",
@@ -2556,7 +2839,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Place the lid on the pot"
     },
     {
       "id": "00284",
@@ -2565,7 +2849,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Remove the marker from the cup and put it on the table"
     },
     {
       "id": "00285",
@@ -2574,7 +2859,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Move the orange tape closer to the coat hanger"
     },
     {
       "id": "00286",
@@ -2583,7 +2869,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Wipe the table with the towel"
     },
     {
       "id": "00287",
@@ -2592,7 +2879,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Press the right button on the fridge"
     },
     {
       "id": "00288",
@@ -2601,7 +2889,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "non_makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Put the red block on top of the other blocks."
     },
     {
       "id": "00289",
@@ -2610,7 +2899,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "non_makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Remove the purple circle from the wooden object."
     },
     {
       "id": "00290",
@@ -2619,7 +2909,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "non_makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Remove the black pen from the box and put it on the table"
     },
     {
       "id": "00291",
@@ -2628,7 +2919,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "non_makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Remove the spoon from the yellow cup and put it on the counter top"
     },
     {
       "id": "00292",
@@ -2637,7 +2929,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "non_makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Pick up the pen from the white bowl and put it on the table."
     },
     {
       "id": "00293",
@@ -2646,7 +2939,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "non_makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Pour some of the contents of the clear lunchbox into the ceramic bowl on the left"
     },
     {
       "id": "00294",
@@ -2655,7 +2949,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "non_makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Take the marker from the brown bowl and put it on the table"
     },
     {
       "id": "00295",
@@ -2664,7 +2959,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "non_makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Remove the pen from the wooden plate and put it on the table"
     },
     {
       "id": "00296",
@@ -2673,7 +2969,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "non_makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Unhang one blue cloth from the hook on the bottom right drawer and place it on the countertop"
     },
     {
       "id": "00297",
@@ -2682,7 +2979,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "non_makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Pick up the blue pen from the table and put it in the cardboard box, pick up the black pen from the table and put it in the cardboard box"
     },
     {
       "id": "00298",
@@ -2691,7 +2989,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "non_makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Remove the marker from the mug and put it on the table"
     },
     {
       "id": "00299",
@@ -2700,7 +2999,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "non_makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Pick up the green block and put it on the orange block"
     },
     {
       "id": "00300",
@@ -2709,7 +3009,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "non_makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Pick up the objects and put them in the box"
     },
     {
       "id": "00301",
@@ -2718,7 +3019,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "non_makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Pick up the red fruit on the table and put it in the bowl"
     },
     {
       "id": "00302",
@@ -2727,7 +3029,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "non_makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Pick up the black spatula and put it on the right side of the kitchen counter, pick up the tongs and turn them ninety degrees anticlockwise, put the tongs on the kitchen counter next to the spatula"
     },
     {
       "id": "00303",
@@ -2736,7 +3039,8 @@
       "view": "multiview",
       "model": "ctrlworld",
       "split": "non_makovian",
-      "task": "multiview/ctrlworld"
+      "task": "multiview/ctrlworld",
+      "prompt": "Pick up the green grapes from the stove and place them inside the silver pot in the sink"
     },
     {
       "id": "00304",
@@ -2745,7 +3049,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "A multi-view video shows that a robot picks up the orange marker and places it inside the white mug. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot picks up the orange marker and places it inside the white mug."
     },
     {
       "id": "00305",
@@ -2754,7 +3059,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "A multi-view video shows that a robot Put the white object upright. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot Put the white object upright."
     },
     {
       "id": "00306",
@@ -2763,7 +3069,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "A multi-view video shows that a robot picks up the green packet from the counter and places it inside the cardboard box. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot picks up the green packet from the counter and places it inside the cardboard box."
     },
     {
       "id": "00307",
@@ -2772,7 +3079,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "A multi-view video shows that a robot picks up the orange from the table and places it inside the green bowl. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot picks up the orange from the table and places it inside the green bowl."
     },
     {
       "id": "00308",
@@ -2781,7 +3089,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "A multi-view video shows that a robot picks up the red die from the table and places it inside the black bowl. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot picks up the red die from the table and places it inside the black bowl."
     },
     {
       "id": "00309",
@@ -2790,7 +3099,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "A multi-view video shows that a robot Open the purple drawer. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot Open the purple drawer."
     },
     {
       "id": "00310",
@@ -2799,7 +3109,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "Multiview/dreamgen"
     },
     {
       "id": "00311",
@@ -2808,7 +3119,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "Multiview/dreamgen"
     },
     {
       "id": "00312",
@@ -2817,7 +3129,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "Multiview/dreamgen"
     },
     {
       "id": "00313",
@@ -2826,7 +3139,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "Multiview/dreamgen"
     },
     {
       "id": "00314",
@@ -2835,7 +3149,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "Multiview/dreamgen"
     },
     {
       "id": "00315",
@@ -2844,7 +3159,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "Multiview/dreamgen"
     },
     {
       "id": "00316",
@@ -2853,7 +3169,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "Multiview/dreamgen"
     },
     {
       "id": "00317",
@@ -2862,7 +3179,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "Multiview/dreamgen"
     },
     {
       "id": "00318",
@@ -2871,7 +3189,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "Multiview/dreamgen"
     },
     {
       "id": "00319",
@@ -2880,7 +3199,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "Multiview/dreamgen"
     },
     {
       "id": "00320",
@@ -2889,7 +3209,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "A multi-view video shows that a robot interacts with the red ll. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot interacts with the red ll."
     },
     {
       "id": "00321",
@@ -2898,7 +3219,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "A multi-view video shows that a robot Remove the blue plate from the dishwasher and place it on top of the white plates on the counter. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot Remove the blue plate from the dishwasher and place it on top of the white plates on the counter."
     },
     {
       "id": "00322",
@@ -2907,7 +3229,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "Multiview/dreamgen"
     },
     {
       "id": "00323",
@@ -2916,7 +3239,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "Multiview/dreamgen"
     },
     {
       "id": "00324",
@@ -2925,7 +3249,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "Multiview/dreamgen"
     },
     {
       "id": "00325",
@@ -2934,7 +3259,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "Multiview/dreamgen"
     },
     {
       "id": "00326",
@@ -2943,7 +3269,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "A multi-view video shows that a robot knocks the light blue cloth off the table onto the floor. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot knocks the light blue cloth off the table onto the floor."
     },
     {
       "id": "00327",
@@ -2952,7 +3279,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "Multiview/dreamgen"
     },
     {
       "id": "00328",
@@ -2961,7 +3289,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "Multiview/dreamgen"
     },
     {
       "id": "00329",
@@ -2970,7 +3299,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "Multiview/dreamgen"
     },
     {
       "id": "00330",
@@ -2979,7 +3309,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "Multiview/dreamgen"
     },
     {
       "id": "00331",
@@ -2988,7 +3319,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "Multiview/dreamgen"
     },
     {
       "id": "00332",
@@ -2997,7 +3329,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "A multi-view video shows that a robot Pick the purple bowl and put it in the sink. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot Pick the purple bowl and put it in the sink."
     },
     {
       "id": "00333",
@@ -3006,7 +3339,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "Multiview/dreamgen"
     },
     {
       "id": "00334",
@@ -3015,7 +3349,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "Multiview/dreamgen"
     },
     {
       "id": "00335",
@@ -3024,7 +3359,8 @@
       "view": "multiview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "multiview/dreamgen"
+      "task": "multiview/dreamgen",
+      "prompt": "Multiview/dreamgen"
     },
     {
       "id": "00336",
@@ -3033,7 +3369,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "place the cup on the coaster"
     },
     {
       "id": "00337",
@@ -3042,7 +3379,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "place the cup on the coaster"
     },
     {
       "id": "00338",
@@ -3051,7 +3389,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "place the cup on the coaster"
     },
     {
       "id": "00339",
@@ -3060,7 +3399,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "place the cup on the coaster"
     },
     {
       "id": "00340",
@@ -3069,7 +3409,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "place the cup on the coaster"
     },
     {
       "id": "00341",
@@ -3078,7 +3419,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "turn on the light switch"
     },
     {
       "id": "00342",
@@ -3087,7 +3429,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "turn on the light switch"
     },
     {
       "id": "00343",
@@ -3096,7 +3439,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "turn on the light switch"
     },
     {
       "id": "00344",
@@ -3105,7 +3449,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "turn on the light switch"
     },
     {
       "id": "00345",
@@ -3114,7 +3459,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "turn on the light switch"
     },
     {
       "id": "00346",
@@ -3123,7 +3469,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "turn on the light switch"
     },
     {
       "id": "00347",
@@ -3132,7 +3479,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "turn on the light switch"
     },
     {
       "id": "00348",
@@ -3141,7 +3489,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "place the cup on the coaster"
     },
     {
       "id": "00349",
@@ -3150,7 +3499,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "turn on the light switch"
     },
     {
       "id": "00350",
@@ -3159,7 +3509,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "turn on the light switch"
     },
     {
       "id": "00351",
@@ -3168,7 +3519,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "turn on the light switch"
     },
     {
       "id": "00352",
@@ -3177,7 +3529,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "press the pink, blue, and green buttons in sequence"
     },
     {
       "id": "00353",
@@ -3186,7 +3539,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "press the pink, blue, and green buttons in sequence"
     },
     {
       "id": "00354",
@@ -3195,7 +3549,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "press the pink, blue, and green buttons in sequence"
     },
     {
       "id": "00355",
@@ -3204,7 +3559,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "pull out a tissue, wipe the stains on the table clean, and then discard the tissue into the trash bin"
     },
     {
       "id": "00356",
@@ -3213,7 +3569,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "pull out a tissue, wipe the stains on the table clean, and then discard the tissue into the trash bin"
     },
     {
       "id": "00357",
@@ -3222,7 +3579,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "pull out a tissue, wipe the stains on the table clean, and then discard the tissue into the trash bin"
     },
     {
       "id": "00358",
@@ -3231,7 +3589,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "pull out a tissue, wipe the stains on the table clean, and then discard the tissue into the trash bin"
     },
     {
       "id": "00359",
@@ -3240,7 +3599,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "pull out a tissue, wipe the stains on the table clean, and then discard the tissue into the trash bin"
     },
     {
       "id": "00360",
@@ -3249,7 +3609,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "pull out a tissue, wipe the stains on the table clean, and then discard the tissue into the trash bin"
     },
     {
       "id": "00361",
@@ -3258,7 +3619,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "pull out a tissue, wipe the stains on the table clean, and then discard the tissue into the trash bin"
     },
     {
       "id": "00362",
@@ -3267,7 +3629,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "pull out a tissue, wipe the stains on the table clean, and then discard the tissue into the trash bin"
     },
     {
       "id": "00363",
@@ -3276,7 +3639,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "pull out a tissue, wipe the stains on the table clean, and then discard the tissue into the trash bin"
     },
     {
       "id": "00364",
@@ -3285,7 +3649,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "press the pink, blue, and green buttons in sequence"
     },
     {
       "id": "00365",
@@ -3294,7 +3659,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "pull out a tissue, wipe the stains on the table clean, and then discard the tissue into the trash bin"
     },
     {
       "id": "00366",
@@ -3303,7 +3669,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "pull out a tissue, wipe the stains on the table clean, and then discard the tissue into the trash bin"
     },
     {
       "id": "00367",
@@ -3312,7 +3679,8 @@
       "view": "singleview",
       "model": "dreamdojo",
       "split": "non_makovian",
-      "task": "singleview/dreamdojo"
+      "task": "singleview/dreamdojo",
+      "prompt": "pull out a tissue, wipe the stains on the table clean, and then discard the tissue into the trash bin"
     },
     {
       "id": "00368",
@@ -3321,7 +3689,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A robot arm knocks the light switch off the table onto the floor."
     },
     {
       "id": "00369",
@@ -3330,7 +3699,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "Turn on the yellow light switch."
     },
     {
       "id": "00370",
@@ -3339,7 +3709,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A tabletop robot arm places the cup on the coaster."
     },
     {
       "id": "00371",
@@ -3348,7 +3719,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A robot manipulator places the cup on the coaster."
     },
     {
       "id": "00372",
@@ -3357,7 +3729,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A single robotic arm places the cup on the coaster."
     },
     {
       "id": "00373",
@@ -3366,7 +3739,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A tabletop robot arm places the cup on the coaster."
     },
     {
       "id": "00374",
@@ -3375,7 +3749,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A single robotic arm places the cup on the coaster."
     },
     {
       "id": "00375",
@@ -3384,7 +3759,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A single robotic arm places the cup on the coaster."
     },
     {
       "id": "00376",
@@ -3393,7 +3769,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "Singleview/dreamgen"
     },
     {
       "id": "00377",
@@ -3402,7 +3779,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A robot arm turns on the light switch."
     },
     {
       "id": "00378",
@@ -3411,7 +3789,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A robot manipulator turns on the light switch."
     },
     {
       "id": "00379",
@@ -3420,7 +3799,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A tabletop robot arm turns on the light switch."
     },
     {
       "id": "00380",
@@ -3429,7 +3809,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A single robotic arm turns on the light switch."
     },
     {
       "id": "00381",
@@ -3438,7 +3819,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A tabletop robot arm places the cup on the coaster."
     },
     {
       "id": "00382",
@@ -3447,7 +3829,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A tabletop robot arm places the cup on the coaster."
     },
     {
       "id": "00383",
@@ -3456,7 +3839,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A single robotic arm turns on the light switch."
     },
     {
       "id": "00384",
@@ -3465,7 +3849,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A robot arm presses the pink, blue, and green buttons in sequence."
     },
     {
       "id": "00385",
@@ -3474,7 +3859,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A robot arm presses the pink, blue, and green buttons in sequence."
     },
     {
       "id": "00386",
@@ -3483,7 +3869,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A single robotic arm presses the pink, blue, and green buttons in sequence."
     },
     {
       "id": "00387",
@@ -3492,7 +3879,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A robot manipulator presses the pink, blue, and green buttons in sequence."
     },
     {
       "id": "00388",
@@ -3501,7 +3889,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A robot arm presses the pink, blue, and green buttons in sequence."
     },
     {
       "id": "00389",
@@ -3510,7 +3899,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A robot arm presses the pink, blue, and green buttons in sequence."
     },
     {
       "id": "00390",
@@ -3519,7 +3909,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A robot manipulator presses the pink, blue, and green buttons in sequence."
     },
     {
       "id": "00391",
@@ -3528,7 +3919,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A robot arm presses the pink, blue, and green buttons in sequence."
     },
     {
       "id": "00392",
@@ -3537,7 +3929,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A single robotic arm presses the pink, blue, and green buttons in sequence."
     },
     {
       "id": "00393",
@@ -3546,7 +3939,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A robot manipulator presses the pink, blue, and green buttons in sequence."
     },
     {
       "id": "00394",
@@ -3555,7 +3949,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A tabletop robot arm pulls out a tissue, wipes the stains on the table clean, and then discards the tissue into the trash bin."
     },
     {
       "id": "00395",
@@ -3564,7 +3959,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A robot arm pulls out a tissue, wipes the stains on the table clean, and then discards the tissue into the trash bin."
     },
     {
       "id": "00396",
@@ -3573,7 +3969,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A single robotic arm pulls out a tissue, wipes the stains on the table clean, and then discards the tissue into the trash bin."
     },
     {
       "id": "00397",
@@ -3582,7 +3979,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A robot manipulator pulls out a tissue, wipes the stains on the table clean, and then discards the tissue into the trash bin."
     },
     {
       "id": "00398",
@@ -3591,7 +3989,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A robot arm pulls out a tissue, wipes the stains on the table clean, and then discards the tissue into the trash bin."
     },
     {
       "id": "00399",
@@ -3600,7 +3999,8 @@
       "view": "singleview",
       "model": "dreamgen",
       "split": "non_makovian",
-      "task": "singleview/dreamgen"
+      "task": "singleview/dreamgen",
+      "prompt": "A robot arm pulls out a tissue, wipes the stains on the table clean, and then discards the tissue into the trash bin."
     }
   ]
 }
