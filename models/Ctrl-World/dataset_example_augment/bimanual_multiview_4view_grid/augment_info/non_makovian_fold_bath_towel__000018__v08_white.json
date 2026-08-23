@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_bimanual_multiview_4view_grid",
+  "subset": "non_makovian",
+  "source_episode": "non_makovian_fold_bath_towel__000018",
+  "variant": "v08_white",
+  "object": "bath towel",
+  "edit_instruction": "change the color of the bath towel to white, keep its shape and position",
+  "source_instruction": "fold bath towel",
+  "new_instruction": "Fold white bath towel.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

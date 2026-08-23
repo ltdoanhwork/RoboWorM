@@ -15,6 +15,7 @@ import os
 import importlib
 import json
 import datetime
+import time
 from pathlib import Path
 from argparse import ArgumentParser
 
@@ -388,6 +389,11 @@ def main():
     _import_pruning_module("SiTo", "config").add_sito_args(parser)
     _import_pruning_module("importance_token_merge", "config").add_itm_args(parser)
 
+    # Sparse-attention backend args (PISA / SVG / Radial — SVD-UNet flavored)
+    importlib.import_module("methods.sparse_attention.pisa.config").add_pisa_args(parser)
+    importlib.import_module("methods.sparse_attention.svg.config").add_svg_args(parser)
+    importlib.import_module("methods.sparse_attention.radial.config").add_radial_args(parser)
+
     args = parser.parse_args()
 
     from methods.cache_strategy.ctrl_world_utils import validate_ctrl_world_backend_args
@@ -475,35 +481,125 @@ def main():
         print(f"[Cache] FasterCache enabled: start_step={args.fastercache_start_step}, "
               f"model_interval={args.fastercache_model_interval}, block_interval={args.fastercache_block_interval}")
     if getattr(args, "use_sito", False):
-        adapter = _import_pruning_module("SiTo", "adapter")
-        adapter.enable_sito(
-            agent.model.unet,
-            start_layer_idx=args.sito_start_layer_idx or 0,
-            prune_ratio=args.sito_prune_ratio,
-            patch_h=args.sito_patch_h,
-            patch_w=args.sito_patch_w,
-            noise_alpha=args.sito_noise_alpha,
-            sim_beta=args.sito_sim_beta,
-            max_downsample_ratio=args.sito_max_downsample_ratio,
-        )
+        if getattr(args, "sito_spatiotemporal_hold", False):
+            st_hold = _import_pruning_module("SiTo", "spatiotemporal_hold")
+            st_hold.enable_spatiotemporal_hold(
+                agent.model.unet,
+                keep_ratio=args.sito_st_keep_ratio,
+                max_downsample_ratio=args.sito_max_downsample_ratio,
+                recompute_every=(args.sito_plan_recompute_every or 999999),
+            )
+        else:
+            adapter = _import_pruning_module("SiTo", "adapter")
+            adapter.enable_sito(
+                agent.model.unet,
+                start_layer_idx=args.sito_start_layer_idx or 0,
+                prune_ratio=args.sito_prune_ratio,
+                patch_h=args.sito_patch_h,
+                patch_w=args.sito_patch_w,
+                noise_alpha=args.sito_noise_alpha,
+                sim_beta=args.sito_sim_beta,
+                max_downsample_ratio=args.sito_max_downsample_ratio,
+                plan_recompute_every=getattr(args, "sito_plan_recompute_every", 0),
+            )
     if getattr(args, "use_itm", False):
-        adapter = _import_pruning_module("importance_token_merge", "adapter")
         itm_state = {}
-        adapter.enable_itm(
-            agent.model.unet,
-            itm_state=itm_state,
-            start_layer_idx=args.itm_start_layer_idx or 0,
-            compress_ratio=args.itm_compress_ratio,
-            prune_from_step=args.itm_prune_from_step,
-            merge_from_step=args.itm_merge_from_step,
-            merge_attn=args.itm_merge_attn,
-            merge_crossattn=args.itm_merge_crossattn,
-            merge_mlp=args.itm_merge_mlp,
-            max_downsample_ratio=args.itm_max_downsample_ratio,
+        if getattr(args, "itm_spatiotemporal_hold", False):
+            st_hold = _import_pruning_module("SiTo", "spatiotemporal_hold")
+            st_hold.enable_spatiotemporal_hold(
+                agent.model.unet,
+                keep_ratio=args.itm_st_keep_ratio,
+                max_downsample_ratio=args.itm_max_downsample_ratio,
+                recompute_every=(args.itm_plan_recompute_every or 999999),
+                similarity_recover=True,
+            )
+        elif getattr(args, "itm_block_hold", False):
+            block_hold = _import_pruning_module("importance_token_merge", "block_hold")
+            itm_state["prune_from_step"] = args.itm_prune_from_step
+            itm_state["merge_from_step"] = args.itm_merge_from_step
+            block_hold.enable_itm_block_hold(
+                agent.model.unet,
+                itm_state=itm_state,
+                start_layer_idx=args.itm_start_layer_idx or 0,
+                compress_ratio=args.itm_compress_ratio,
+                max_downsample_ratio=args.itm_max_downsample_ratio,
+                self_importance=True,
+                plan_recompute_every=getattr(args, "itm_plan_recompute_every", 0),
+            )
+            # Block-hold with self-importance derives token scores from the
+            # hidden states, so it does NOT need classifier-free guidance and
+            # can stay at guidance_scale=1 (single batch) — this is what keeps
+            # it faster than dense instead of paying the 2x CFG cost.
+        else:
+            adapter = _import_pruning_module("importance_token_merge", "adapter")
+            adapter.enable_itm(
+                agent.model.unet,
+                itm_state=itm_state,
+                start_layer_idx=args.itm_start_layer_idx or 0,
+                compress_ratio=args.itm_compress_ratio,
+                prune_from_step=args.itm_prune_from_step,
+                merge_from_step=args.itm_merge_from_step,
+                merge_attn=args.itm_merge_attn,
+                merge_crossattn=args.itm_merge_crossattn,
+                merge_mlp=args.itm_merge_mlp,
+                max_downsample_ratio=args.itm_max_downsample_ratio,
+            )
+            if model_args.guidance_scale <= 1.0:
+                model_args.guidance_scale = 2.0
+                print(f"[ITM] guidance_scale overridden to {model_args.guidance_scale} (ITM requires > 1.0)")
+
+    # ---- Sparse-attention backends (PISA / SVG / Radial) --------------------
+    # 3-view strip stacked as ONE canvas: 576x320 px -> 72x40 latent (T=2880).
+    # Same geometry as humanoid 3-view in infer_bimanual_multiview_ctrlworld.py
+    # (grid_rows=3, grid_cols=1, treat stacked canvas as num_views=1).
+    unet = agent.model.unet
+    _h_per_view = 24 * 3
+    _w = 40
+    _num_views = 1
+
+    if getattr(args, "use_pisa", False):
+        importlib.import_module("methods.sparse_attention.pisa.adapter").enable_pisa(
+            unet,
+            density=args.pisa_density,
+            block_size=args.pisa_block_size,
+            start_layer_idx=args.pisa_start_layer_idx,
         )
-        if model_args.guidance_scale <= 1.0:
-            model_args.guidance_scale = 2.0
-            print(f"[ITM] guidance_scale overridden to {model_args.guidance_scale} (ITM requires > 1.0)")
+        print(f"[Sparse] PISA enabled: density={args.pisa_density}, "
+              f"block_size={args.pisa_block_size}, start_layer={args.pisa_start_layer_idx}")
+    if getattr(args, "use_svg", False):
+        importlib.import_module("methods.sparse_attention.svg.adapter").enable_svg(
+            unet,
+            pattern=args.svg_pattern,
+            num_views=_num_views,
+            H_per_view=_h_per_view,
+            W=_w,
+            sparsity=args.svg_sparsity,
+            num_sampled_rows=args.svg_num_sampled_rows,
+            first_layers_fp=args.svg_first_layers_fp,
+            num_q_centroids=args.svg_num_q_centroids,
+            num_k_centroids=args.svg_num_k_centroids,
+            top_p_kmeans=args.svg_top_p_kmeans,
+            min_kc_ratio=getattr(args, "svg_min_kc_ratio", 0.0),
+            kmeans_iter_init=args.svg_kmeans_iter_init,
+            kmeans_iter_step=args.svg_kmeans_iter_step,
+        )
+        print(f"[Sparse] SVG {args.svg_pattern} enabled: sparsity={args.svg_sparsity}, "
+              f"geom={_num_views}x{_h_per_view}x{_w}")
+    if getattr(args, "use_radial", False):
+        importlib.import_module("methods.sparse_attention.radial.adapter").enable_radial_attention(
+            unet,
+            decay_factor=args.radial_decay_factor,
+            block_size=args.radial_block_size,
+            pad_small_layers=args.radial_pad_small_layers,
+            first_layers_fp=args.radial_first_layers_fp,
+            num_views=_num_views,
+            H_per_view=_h_per_view,
+            W=_w,
+            model_type=args.radial_model_type,
+        )
+        print(f"[Sparse] Radial enabled: decay={args.radial_decay_factor}, "
+              f"block_size={args.radial_block_size}, model_type={args.radial_model_type}, "
+              f"geom={_num_views}x{_h_per_view}x{_w}")
 
     # Find all episodes
     anno_dir = Path(val_dataset_dir) / "annotation" / "val"
@@ -526,11 +622,15 @@ def main():
             continue
 
         print(f"[{ep_idx+1}/{len(episode_ids)}] Episode {episode_id}")
+        _t0 = time.time()
         metrics = run_episode(agent, episode_id, args.save_dir, input_save_dir=args.input_save_dir)
+        _dt = time.time() - _t0
         if metrics:
+            metrics["wall_time_s"] = _dt
             all_metrics.append(metrics)
             print(f"  -> {metrics['num_frames_pred']} frames, "
-                  f"PSNR={metrics['psnr']:.2f}, SSIM={metrics['ssim']:.4f}, LPIPS={metrics['lpips']:.4f}")
+                  f"PSNR={metrics['psnr']:.2f}, SSIM={metrics['ssim']:.4f}, LPIPS={metrics['lpips']:.4f} "
+                  f"| {_dt:.1f}s")
 
     # Save summary
     if all_metrics:
@@ -541,6 +641,9 @@ def main():
             "num_episodes": len(all_metrics),
             "subset": args.subset,
         }
+        _times = [m["wall_time_s"] for m in all_metrics if "wall_time_s" in m]
+        if _times:
+            summary["mean_wall_time_s"] = sum(_times) / len(_times)
         summary_path = Path(args.save_dir) / "all_summary.json"
         summary_path.parent.mkdir(parents=True, exist_ok=True)
         with open(summary_path, "w") as f:
@@ -549,6 +652,8 @@ def main():
         print(f"PSNR: {summary['mean_psnr']:.3f}")
         print(f"SSIM: {summary['mean_ssim']:.4f}")
         print(f"LPIPS: {summary['mean_lpips']:.4f}")
+        if "mean_wall_time_s" in summary:
+            print(f"time: {summary['mean_wall_time_s']:.1f}s")
 
 
 if __name__ == "__main__":

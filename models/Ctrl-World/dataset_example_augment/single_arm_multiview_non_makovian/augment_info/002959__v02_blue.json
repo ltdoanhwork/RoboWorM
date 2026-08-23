@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_single_arm_multiview",
+  "subset": "non_makovian",
+  "source_episode": "002959",
+  "variant": "v02_blue",
+  "object": "silver spoon",
+  "edit_instruction": "change the color of the silver spoon to blue, keep its shape and position",
+  "source_instruction": "Put the orange objects on the silver spoon then use the spoon to place the objects in the small measuring cup.",
+  "new_instruction": "Put the orange objects on the blue spoon then use the spoon to place the objects in the small measuring cup.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

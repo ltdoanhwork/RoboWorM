@@ -201,4 +201,8 @@ class DreamGenRadialRuntime:
         output = torch.stack(outputs, dim=0).contiguous()
         if pad_len > 0:
             output = output[:, :seq_len]
+        # flashinfer's block-sparse wrapper can return fp16 even when planned with bf16;
+        # cast back so downstream projections see the model dtype.
+        if output.dtype != query.dtype:
+            output = output.to(query.dtype)
         return output.contiguous()

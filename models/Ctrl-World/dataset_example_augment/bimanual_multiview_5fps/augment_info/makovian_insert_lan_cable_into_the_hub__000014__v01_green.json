@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_bimanual_multiview",
+  "subset": "makovian",
+  "source_episode": "makovian_insert_lan_cable_into_the_hub__000014",
+  "variant": "v01_green",
+  "object": "lan cable",
+  "edit_instruction": "change the color of the lan cable to green, keep its shape and position",
+  "source_instruction": "insert lan cable into the hub",
+  "new_instruction": "Insert green lan cable into the hub.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

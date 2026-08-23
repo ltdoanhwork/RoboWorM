@@ -51,12 +51,16 @@ def enable_radial_attention(
     SVDRadialAttnProcessor.W = W
     SVDRadialAttnProcessor.model_type = model_type
 
-    num_layers = len(unet.attn_processors)
-    processors = {
-        name: SVDRadialAttnProcessor(layer_idx=idx, num_layers=num_layers)
-        for idx, name in enumerate(unet.attn_processors.keys())
-    }
-    unet.set_attn_processor(processors)
+    # Enumerate attention modules via named_modules (NOT unet.attn_processors —
+    # that property returns EMPTY on the Ctrl-World custom UNet, so the old code
+    # set 0 processors and ran pure dense; verified via CW_ATTN_PROFILE).
+    attn_modules = [
+        (name, module) for name, module in unet.named_modules()
+        if hasattr(module, "processor") and hasattr(module, "to_q")
+    ]
+    num_layers = len(attn_modules)
+    for idx, (name, module) in enumerate(attn_modules):
+        module.processor = SVDRadialAttnProcessor(layer_idx=idx, num_layers=num_layers)
 
     # Summary
     H_total = num_views * H_per_view

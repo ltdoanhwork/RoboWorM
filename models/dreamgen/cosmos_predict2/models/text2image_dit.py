@@ -1123,7 +1123,18 @@ class Block(nn.Module):
         if self.sito_runtime is not None:
             if self.cp_size is not None and self.cp_size > 1:
                 raise ValueError("[SiTo] DreamGen SiTo v1 is single-GPU only; disable context parallelism.")
-            sito_plan = self.sito_runtime.prepare(self_attn_input, video_size=VideoSize(T=T, H=H, W=W))
+            # Prune-once: build the plan a single time (on the first block that
+            # runs) and reuse the same keep/prune layout for every later block.
+            # This removes the per-block `prepare()` overhead, which is the main
+            # cost on DreamGen DiT. The shared plan lives in the mutable runtime
+            # context dict so all blocks (each with its own runtime instance) see it.
+            sito_ctx = None if attention_runtime_context is None else attention_runtime_context.get("sito")
+            if sito_ctx is not None and "shared_plan" in sito_ctx:
+                sito_plan = sito_ctx["shared_plan"]
+            else:
+                sito_plan = self.sito_runtime.prepare(self_attn_input, video_size=VideoSize(T=T, H=H, W=W))
+                if sito_ctx is not None:
+                    sito_ctx["shared_plan"] = sito_plan
             if sito_plan is not None:
                 self_attn_input = self.sito_runtime.prune(self_attn_input, sito_plan)
                 self_attn_rope = self.sito_runtime.prune_rope(rope_emb_L_1_1_D, sito_plan)
@@ -1753,6 +1764,15 @@ class MiniTrainDIT(WeightTrainingStat):
             blocks = self.cuda_graphs[shapes_key]
         else:
             blocks = self.blocks
+
+        # SiTo prune-once: provide a fresh shared-plan dict for this forward pass
+        # so all blocks reuse one plan, but the plan is rebuilt every denoise step.
+        if getattr(self, "has_sito_backend", False) and not use_cuda_graphs:
+            if attention_runtime_context is None:
+                attention_runtime_context = {}
+            else:
+                attention_runtime_context = dict(attention_runtime_context)
+            attention_runtime_context["sito"] = {}
 
         block_kwargs = {
             "rope_emb_L_1_1_D": rope_emb_L_1_1_D,

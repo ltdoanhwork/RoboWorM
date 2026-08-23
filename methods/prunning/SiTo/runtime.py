@@ -8,7 +8,7 @@ import torch
 import torch.nn.functional as F
 
 
-GroupMode = Literal["full_2d", "per_frame"]
+GroupMode = Literal["full_2d", "per_frame", "temporal"]
 
 _DEFAULT_PATCH_H = 2
 _DEFAULT_PATCH_W = 2
@@ -27,6 +27,11 @@ class SiToRuntimePlan:
     pruned_indices: torch.Tensor
     replacement_keep_positions: torch.Tensor
     original_length: int
+    # gather_from_kept[i] = row in the compact (kept) tensor that original
+    # position i should copy from. Precomputing this collapses recover() from
+    # two scatter writes + a gather into a single index_select, which is what
+    # makes token pruning actually cheaper than dense attention here.
+    gather_from_kept: torch.Tensor | None = None
 
 
 def resolve_sito_auto_prune_ratio(tokens_per_group: int) -> float:
@@ -55,15 +60,21 @@ def _validate_sito_common(
         raise ValueError(f"`start_layer_idx` must be non-negative, got {start_layer_idx}.")
     if keep_last_n_dense < 0:
         raise ValueError(f"`keep_last_n_dense` must be non-negative, got {keep_last_n_dense}.")
-    if group_mode not in {"full_2d", "per_frame"}:
-        raise ValueError(f"`group_mode` must be 'full_2d' or 'per_frame', got {group_mode!r}.")
+    if group_mode not in {"full_2d", "per_frame", "temporal"}:
+        raise ValueError(f"`group_mode` must be 'full_2d', 'per_frame', or 'temporal', got {group_mode!r}.")
     if prune_ratio is not None:
-        max_prune_ratio = 1.0 - 1.0 / float(patch_h * patch_w)
-        if not 0.0 <= prune_ratio < max_prune_ratio:
-            raise ValueError(
-                "`prune_ratio` must satisfy 0 <= prune_ratio < "
-                f"{max_prune_ratio:.4f} for patch size {(patch_h, patch_w)}, got {prune_ratio}."
-            )
+        if group_mode == "temporal":
+            if not 0.0 <= prune_ratio < 1.0:
+                raise ValueError(
+                    f"For `group_mode='temporal'`, `prune_ratio` must satisfy 0 <= prune_ratio < 1, got {prune_ratio}."
+                )
+        else:
+            max_prune_ratio = 1.0 - 1.0 / float(patch_h * patch_w)
+            if not 0.0 <= prune_ratio < max_prune_ratio:
+                raise ValueError(
+                    "`prune_ratio` must satisfy 0 <= prune_ratio < "
+                    f"{max_prune_ratio:.4f} for patch size {(patch_h, patch_w)}, got {prune_ratio}."
+                )
 
 
 def build_sito_parameters(
@@ -150,6 +161,10 @@ class SiToTokenPruner:
     ) -> SiToRuntimePlan | None:
         if hidden_states.ndim != 3:
             raise ValueError(f"`hidden_states` must have shape (B, N, D), got {tuple(hidden_states.shape)}.")
+        if self.group_mode == "temporal":
+            if video_size is None:
+                raise ValueError("`video_size` is required for `group_mode='temporal'`.")
+            return self._build_temporal_plan(hidden_states, video_size=video_size)
         if self.group_mode == "per_frame":
             if video_size is None:
                 raise ValueError("`video_size` is required for `group_mode='per_frame'`.")
@@ -165,13 +180,20 @@ class SiToTokenPruner:
         if plan is None:
             return hidden_states
 
-        batch_size, _, hidden_dim = hidden_states.shape
-        full_states = hidden_states.new_empty(batch_size, plan.original_length, hidden_dim)
-        full_states[:, plan.keep_indices, :] = hidden_states
-        if plan.pruned_indices.numel() > 0:
-            propagated = hidden_states.index_select(dim=1, index=plan.replacement_keep_positions)
-            full_states[:, plan.pruned_indices, :] = propagated
-        return full_states
+        gather_idx = plan.gather_from_kept
+        if gather_idx is None:
+            # Build once: position -> row in the compact kept tensor. Kept
+            # positions map to their own compact row; pruned positions map to
+            # the compact row of their replacement kept token.
+            device = hidden_states.device
+            gather_idx = torch.empty(plan.original_length, dtype=torch.long, device=device)
+            compact_rows = torch.arange(plan.keep_indices.numel(), device=device)
+            gather_idx[plan.keep_indices] = compact_rows
+            if plan.pruned_indices.numel() > 0:
+                gather_idx[plan.pruned_indices] = plan.replacement_keep_positions
+            object.__setattr__(plan, "gather_from_kept", gather_idx)
+
+        return hidden_states.index_select(dim=1, index=gather_idx)
 
     def prune_rope(self, rope_emb: torch.Tensor | None, plan: SiToRuntimePlan | None) -> torch.Tensor | None:
         if rope_emb is None or plan is None:
@@ -224,6 +246,106 @@ class SiToTokenPruner:
             keep_indices=torch.cat(keep_indices, dim=0),
             pruned_indices=torch.cat(pruned_indices, dim=0),
             replacement_keep_positions=torch.cat(replacement_keep_positions, dim=0),
+            original_length=seq_len,
+        )
+
+    def _build_temporal_plan(self, hidden_states: torch.Tensor, *, video_size: Any) -> SiToRuntimePlan | None:
+        """Prune temporally-redundant tokens, recovering from the nearest kept frame.
+
+        Tokens sharing the same spatial position ``(h, w)`` across the flattened
+        time/view axis ``t`` (``t = V * T`` for multiview) form a temporal group.
+        A token is a pruning candidate when it is very similar to the *previous*
+        frame at the same position (low temporal change). Frame 0 of every position
+        is always kept. Crucially, each pruned token is recovered from the
+        **nearest preceding kept frame at the same spatial position** (not a fixed
+        ``t=0`` anchor), so motion is tracked instead of being reset to the first
+        frame. Selection is fully vectorized.
+        """
+        _, seq_len, _ = hidden_states.shape
+        group_t = int(video_size.T)
+        group_h = int(video_size.H)
+        group_w = int(video_size.W)
+        per_frame_tokens = group_h * group_w
+        if group_t <= 0 or per_frame_tokens <= 0 or group_t * per_frame_tokens != seq_len:
+            raise ValueError(
+                f"Invalid video geometry for SiTo temporal: got seq_len={seq_len}, "
+                f"video_size={(group_t, group_h, group_w)}."
+            )
+        # Need at least 2 frames to have temporal redundancy to exploit.
+        if group_t < 2:
+            return None
+
+        # Temporal groups are small (group_t frames); the spatial auto-schedule
+        # (keyed on 2048/512/128 tokens) does not apply. Fall back to a sensible
+        # default fraction of the temporal axis when no explicit ratio is set.
+        if self.prune_ratio is None:
+            prune_ratio = 0.30
+        else:
+            max_prune_ratio = 1.0 - 1.0 / float(group_t)
+            prune_ratio = float(min(max(self.prune_ratio, 0.0), max(0.0, max_prune_ratio - 1e-6)))
+        if prune_ratio <= 0.0:
+            return None
+
+        device = hidden_states.device
+        # token_summary: (N, D) averaged over batch and L2-normalized per token.
+        token_summary = F.normalize(hidden_states.float(), dim=-1).mean(dim=0)
+        # Reshape to (t, hw, D); flattened index = t * per_frame_tokens + hw.
+        grid = token_summary.view(group_t, per_frame_tokens, token_summary.shape[-1])
+
+        # Redundancy score = similarity of each frame (t>=1) to the PREVIOUS frame
+        # at the same spatial position. High similarity => low temporal change =>
+        # safe to prune (and cheap to recover from the temporal neighbor).
+        prev_feat = grid[:-1]  # (t-1, hw, D): frames 0..t-2
+        curr_feat = grid[1:]  # (t-1, hw, D): frames 1..t-1
+        sim_to_prev = (curr_feat * prev_feat).sum(dim=-1)  # (t-1, hw)
+        if self.noise_alpha > 0:
+            sim_to_prev = sim_to_prev + self.noise_alpha * torch.randn_like(sim_to_prev)
+
+        num_candidates = sim_to_prev.numel()
+        target_prune = min(int(round(seq_len * prune_ratio)), num_candidates)
+        if target_prune <= 0:
+            return None
+
+        # Candidate token indices (only frames 1..t-1 are prunable; frame 0 kept).
+        cand_t = torch.arange(1, group_t, device=device).view(-1, 1).expand(group_t - 1, per_frame_tokens)
+        cand_hw = torch.arange(per_frame_tokens, device=device).view(1, -1).expand(group_t - 1, per_frame_tokens)
+        cand_token_idx = (cand_t * per_frame_tokens + cand_hw).reshape(-1)
+
+        sim_flat = sim_to_prev.reshape(-1)
+        # Most similar to previous frame == most redundant -> prune first.
+        prune_order = sim_flat.argsort(descending=True)
+        prune_positions = prune_order[:target_prune]
+        pruned_indices = cand_token_idx.index_select(0, prune_positions)
+
+        keep_mask = torch.ones(seq_len, dtype=torch.bool, device=device)
+        keep_mask[pruned_indices] = False
+        keep_indices = torch.nonzero(keep_mask, as_tuple=False).squeeze(-1)
+
+        # For each pruned token, find the nearest PRECEDING kept frame at the same
+        # spatial position. Build a (group_t, per_frame_tokens) kept-frame table and
+        # take a cumulative "last kept frame index" along time. Frame 0 is always
+        # kept, so a valid predecessor always exists.
+        kept_grid = keep_mask.view(group_t, per_frame_tokens)  # (t, hw) bool
+        frame_ids = torch.arange(group_t, device=device).view(group_t, 1).expand(group_t, per_frame_tokens)
+        # last_kept[t, hw] = max frame index <= t that is kept at position hw.
+        last_kept = torch.cummax(torch.where(kept_grid, frame_ids, torch.full_like(frame_ids, -1)), dim=0).values
+
+        pruned_t = pruned_indices // per_frame_tokens
+        pruned_hw = pruned_indices % per_frame_tokens
+        # Nearest preceding kept frame for each pruned token = last_kept at (t-1, hw)
+        # (the predecessor row), guaranteed >= 0 because frame 0 is kept.
+        src_frame = last_kept[(pruned_t - 1).clamp(min=0), pruned_hw]
+        replacement_src_token = src_frame * per_frame_tokens + pruned_hw
+
+        # Map original kept-token index -> position within the kept list.
+        position_in_keep = torch.empty(seq_len, dtype=torch.long, device=device)
+        position_in_keep[keep_indices] = torch.arange(keep_indices.numel(), device=device)
+        replacement_keep_positions = position_in_keep.index_select(0, replacement_src_token)
+
+        return SiToRuntimePlan(
+            keep_indices=keep_indices,
+            pruned_indices=pruned_indices,
+            replacement_keep_positions=replacement_keep_positions,
             original_length=seq_len,
         )
 

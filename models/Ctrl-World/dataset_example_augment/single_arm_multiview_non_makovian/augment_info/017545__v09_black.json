@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_single_arm_multiview",
+  "subset": "non_makovian",
+  "source_episode": "017545",
+  "variant": "v09_black",
+  "object": "black bowl",
+  "edit_instruction": "change the color of the black bowl to black, keep its shape and position",
+  "source_instruction": "Put some of the rings in the black bowl",
+  "new_instruction": "Put some of the rings in the black bowl.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

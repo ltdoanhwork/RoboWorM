@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_bimanual_multiview",
+  "subset": "makovian",
+  "source_episode": "makovian_insert_small_gear_shaft__000039",
+  "variant": "v03_yellow",
+  "object": "small gear",
+  "edit_instruction": "change the color of the small gear to yellow, keep its shape and position",
+  "source_instruction": "insert small gear shaft",
+  "new_instruction": "Insert yellow small gear shaft.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

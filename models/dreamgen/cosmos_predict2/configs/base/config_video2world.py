@@ -511,6 +511,7 @@ def get_cosmos_predict2_video2world_pipeline(
     sito_patch_w: int = 2,
     sito_noise_alpha: float = 0.1,
     sito_sim_beta: float = 1.0,
+    sito_group_mode: str = "per_frame",
     svg: bool = False,
     svg_variant: str = "svg1",
     svg_start_layer_idx: int = 4,
@@ -573,7 +574,7 @@ def get_cosmos_predict2_video2world_pipeline(
             patch_w=sito_patch_w,
             noise_alpha=sito_noise_alpha,
             sim_beta=sito_sim_beta,
-            group_mode="per_frame",
+            group_mode=sito_group_mode,
         )
     if svg:
         config.net.svg_parameters = build_svg_parameters(

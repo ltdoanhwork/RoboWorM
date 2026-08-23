@@ -15,6 +15,8 @@
 
 import collections
 import math
+import os
+import time
 from collections import namedtuple
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -60,11 +62,19 @@ from cosmos_predict2._src.imaginaire.utils import log
 from cosmos_predict2._src.imaginaire.utils.context_parallel import split_inputs_cp
 from cosmos_predict2._src.predict2.conditioner import DataType
 from cosmos_predict2._src.predict2.modules.neighborhood_attn import NeighborhoodAttention
-from cosmos_predict2._src.predict2.networks.a2a_cp import MinimalA2AAttnOp, NattenA2AAttnOp, SVGA2AAttnOp
+from cosmos_predict2._src.predict2.networks.a2a_cp import (
+    MinimalA2AAttnOp,
+    NattenA2AAttnOp,
+    PISAA2AAttnOp,
+    RadialA2AAttnOp,
+    SVGA2AAttnOp,
+)
 from cosmos_predict2._src.predict2.networks.model_weights_stats import WeightTrainingStat
 from cosmos_predict2._src.predict2.networks.selective_activation_checkpoint import SACConfig as _SACConfig
 from methods.prunning.SiTo.runtime import SiToTokenPruner, build_sito_parameters
 from methods.prunning.importance_token_merge.runtime import ITMTokenMerger, build_itm_parameters
+from methods.sparse_attention.pisa.config import build_dreamdojo_pisa_parameters
+from methods.sparse_attention.radial.config import build_dreamdojo_radial_parameters
 from methods.sparse_attention.svg.config import build_dreamdojo_svg_parameters
 
 
@@ -218,6 +228,10 @@ class SACConfig(_SACConfig):
 
 
 VideoSize = namedtuple("VideoSize", ["T", "H", "W"])
+
+# Populated only when DD_ATTN_PROFILE=1: {(backend, kind, qshape): [calls, total_seconds]}.
+# Dumped by scripts/_profile_dreamdojo_attn_share.py to size the sparse-attention headroom.
+_ATTN_PROFILE_STATS: dict = {}
 
 
 class RMSNorm(torch.nn.Module):
@@ -489,6 +503,8 @@ class Attention(nn.Module):
         backend: str = "transformer_engine",
         natten_params: Mapping[str, Any] | None = None,
         svg_params: Mapping[str, Any] | None = None,
+        pisa_params: Mapping[str, Any] | None = None,
+        radial_params: Mapping[str, Any] | None = None,
         use_wan_fp32_strategy: bool = False,
     ) -> None:
         super().__init__()
@@ -498,12 +514,24 @@ class Attention(nn.Module):
         )
         self.is_selfattn = context_dim is None  # self attention
 
-        assert backend in ["transformer_engine", "torch", "torch-flex", "minimal_a2a", "natten", "i4", "svg"], (
-            f"Invalid backend: {backend}"
-        )
+        assert backend in [
+            "transformer_engine",
+            "torch",
+            "torch-flex",
+            "minimal_a2a",
+            "natten",
+            "i4",
+            "svg",
+            "pisa",
+            "radial",
+        ], f"Invalid backend: {backend}"
         self.backend = backend
         if backend == "svg" and not self.is_selfattn:
             raise ValueError("[SVG] Cross-attention is not supported in DreamDojo.")
+        if backend == "pisa" and not self.is_selfattn:
+            raise ValueError("[PISA] Cross-attention is not supported in DreamDojo.")
+        if backend == "radial" and not self.is_selfattn:
+            raise ValueError("[Radial] Cross-attention is not supported in DreamDojo.")
 
         context_dim = query_dim if context_dim is None else context_dim
         inner_dim = head_dim * n_heads
@@ -556,6 +584,14 @@ class Attention(nn.Module):
             if svg_params is None:
                 raise ValueError("You must specify `svg_params` when using the SVG backend, got None.")
             self.attn_op = SVGA2AAttnOp(**svg_params)
+        elif self.backend == "pisa":
+            if pisa_params is None:
+                raise ValueError("You must specify `pisa_params` when using the PISA backend, got None.")
+            self.attn_op = PISAA2AAttnOp(**pisa_params)
+        elif self.backend == "radial":
+            if radial_params is None:
+                raise ValueError("You must specify `radial_params` when using the Radial backend, got None.")
+            self.attn_op = RadialA2AAttnOp(**radial_params)
 
         if not hasattr(self.attn_op, "set_context_parallel_group"):
 
@@ -623,7 +659,10 @@ class Attention(nn.Module):
         kv_state: Optional[KVCacheLayerState] = None,
     ):
         additional_args = {}
-        if isinstance(self.attn_op, (NattenA2AAttnOp, NeighborhoodAttention, SVGA2AAttnOp)) or self.backend == "i4":
+        if (
+            isinstance(self.attn_op, (NattenA2AAttnOp, NeighborhoodAttention, SVGA2AAttnOp, RadialA2AAttnOp))
+            or self.backend == "i4"
+        ):
             additional_args["video_size"] = video_size
         if isinstance(self.attn_op, SVGA2AAttnOp):
             additional_args["attention_runtime_context"] = attention_runtime_context
@@ -632,7 +671,20 @@ class Attention(nn.Module):
             if self.attn_op.stateless:
                 additional_args["kv_state"] = kv_state
 
-        result = self.attn_op(q, k, v, **additional_args)  # [B, S, H, D]
+        if os.environ.get("DD_ATTN_PROFILE") == "1":
+            torch.cuda.synchronize()
+            _t0 = time.perf_counter()
+            result = self.attn_op(q, k, v, **additional_args)
+            torch.cuda.synchronize()
+            _dt = time.perf_counter() - _t0
+            _stats = _ATTN_PROFILE_STATS.setdefault(
+                (self.backend, "self" if self.is_selfattn else "cross", tuple(q.shape)),
+                [0, 0.0],
+            )
+            _stats[0] += 1
+            _stats[1] += _dt
+        else:
+            result = self.attn_op(q, k, v, **additional_args)  # [B, S, H, D]
 
         # In stateless KV cache mode, attn_op returns (output, new_state).
         if isinstance(self.attn_op, AttentionOpWithKVCache) and self.attn_op.stateless:
@@ -1261,6 +1313,8 @@ class Block(nn.Module):
         cross_attention_backend: str = "transformer_engine",
         natten_params: Mapping[str, Any] | None = None,
         svg_params: Mapping[str, Any] | None = None,
+        pisa_params: Mapping[str, Any] | None = None,
+        radial_params: Mapping[str, Any] | None = None,
         sito_params: Mapping[str, Any] | None = None,
         itm_params: Mapping[str, Any] | None = None,
         image_context_dim: Optional[int] = None,
@@ -1278,6 +1332,8 @@ class Block(nn.Module):
             backend=self_attention_backend,
             natten_params=natten_params,
             svg_params=svg_params,
+            pisa_params=pisa_params,
+            radial_params=radial_params,
             use_wan_fp32_strategy=use_wan_fp32_strategy,
         )
 
@@ -1687,12 +1743,25 @@ class MiniTrainDIT(WeightTrainingStat):
         svg_sparsity: Optional[float] = None,
         svg_num_sampled_rows: Optional[int] = None,
         svg_sample_mse_max_row: Optional[int] = None,
+        svg_profile_recompute_every: Optional[int] = None,
         svg_num_q_centroids: Optional[int] = None,
         svg_num_k_centroids: Optional[int] = None,
         svg_top_p_kmeans: Optional[float] = None,
         svg_min_kc_ratio: Optional[float] = None,
         svg_kmeans_iter_init: Optional[int] = None,
         svg_kmeans_iter_step: Optional[int] = None,
+        pisa_parameters: Union[dict, list] = None,
+        use_pisa: bool = False,
+        pisa_density: float = 0.2,
+        pisa_block_size: int = 64,
+        pisa_start_layer_idx: int = 2,
+        pisa_use_bias: bool = False,
+        radial_parameters: Union[dict, list] = None,
+        use_radial: bool = False,
+        radial_decay_factor: float = 1.0,
+        radial_block_size: int = 64,
+        radial_start_layer_idx: int = 4,
+        radial_model_type: str = "hunyuan",
         # if True, will closely match wan's strategy to use fp32 in certain layers/operations
         use_wan_fp32_strategy: bool = False,
         zero_init_action_embedder: bool = False,
@@ -1741,6 +1810,10 @@ class MiniTrainDIT(WeightTrainingStat):
         self.zero_init_action_embedder = zero_init_action_embedder
         if self.cross_attention_backend == "svg":
             raise ValueError("[SVG] Cross-attention is not supported in DreamDojo.")
+        if self.cross_attention_backend == "pisa":
+            raise ValueError("[PISA] Cross-attention is not supported in DreamDojo.")
+        if self.cross_attention_backend == "radial":
+            raise ValueError("[Radial] Cross-attention is not supported in DreamDojo.")
         if n_dense_blocks == -1 and isinstance(natten_parameters, Mapping):
             if self.self_attention_backend == "natten":
                 natten_parameters = [natten_parameters for _ in range(num_blocks)]
@@ -1748,6 +1821,10 @@ class MiniTrainDIT(WeightTrainingStat):
                 natten_parameters = None
         if isinstance(svg_parameters, Mapping):
             svg_parameters = [svg_parameters for _ in range(num_blocks)]
+        if isinstance(pisa_parameters, Mapping):
+            pisa_parameters = [pisa_parameters for _ in range(num_blocks)]
+        if isinstance(radial_parameters, Mapping):
+            radial_parameters = [radial_parameters for _ in range(num_blocks)]
         if isinstance(sito_parameters, Mapping):
             sito_parameters = [sito_parameters for _ in range(num_blocks)]
         if isinstance(itm_parameters, Mapping):
@@ -1773,12 +1850,29 @@ class MiniTrainDIT(WeightTrainingStat):
                 sparsity=svg_sparsity,
                 num_sampled_rows=svg_num_sampled_rows,
                 sample_mse_max_row=svg_sample_mse_max_row,
+                profile_recompute_every=svg_profile_recompute_every,
                 num_q_centroids=svg_num_q_centroids,
                 num_k_centroids=svg_num_k_centroids,
                 top_p_kmeans=svg_top_p_kmeans,
                 min_kc_ratio=svg_min_kc_ratio,
                 kmeans_iter_init=svg_kmeans_iter_init,
                 kmeans_iter_step=svg_kmeans_iter_step,
+            )
+        if self.self_attention_backend == "pisa" and pisa_parameters is None:
+            pisa_parameters = build_dreamdojo_pisa_parameters(
+                num_blocks=num_blocks,
+                density=pisa_density,
+                block_size=pisa_block_size,
+                start_layer_idx=pisa_start_layer_idx,
+                use_bias=pisa_use_bias,
+            )
+        if self.self_attention_backend == "radial" and radial_parameters is None:
+            radial_parameters = build_dreamdojo_radial_parameters(
+                num_blocks=num_blocks,
+                decay_factor=radial_decay_factor,
+                block_size=radial_block_size,
+                start_layer_idx=radial_start_layer_idx,
+                model_type=radial_model_type,
             )
         if use_sito and sito_parameters is None:
             sito_parameters = build_sito_parameters(
@@ -1806,6 +1900,8 @@ class MiniTrainDIT(WeightTrainingStat):
                 group_mode="per_frame",
             )
         _validate_sparse_parameter_list(svg_parameters, name="svg_parameters", num_blocks=num_blocks)
+        _validate_sparse_parameter_list(pisa_parameters, name="pisa_parameters", num_blocks=num_blocks)
+        _validate_sparse_parameter_list(radial_parameters, name="radial_parameters", num_blocks=num_blocks)
         _validate_sparse_parameter_list(sito_parameters, name="sito_parameters", num_blocks=num_blocks)
         _validate_sparse_parameter_list(itm_parameters, name="itm_parameters", num_blocks=num_blocks)
 
@@ -1814,6 +1910,8 @@ class MiniTrainDIT(WeightTrainingStat):
             for name, parameters in (
                 ("natten", natten_parameters),
                 ("svg", svg_parameters),
+                ("pisa", pisa_parameters),
+                ("radial", radial_parameters),
                 ("sito", sito_parameters),
                 ("itm", itm_parameters),
             )
@@ -1824,6 +1922,8 @@ class MiniTrainDIT(WeightTrainingStat):
             raise ValueError(f"Sparse backends are mutually exclusive in MiniTrainDIT, got {enabled_str}.")
 
         self.has_svg_backend = svg_parameters is not None
+        self.has_pisa_backend = pisa_parameters is not None
+        self.has_radial_backend = radial_parameters is not None
         self.has_sito_backend = sito_parameters is not None
         self.has_itm_backend = itm_parameters is not None
         self.itm_schedule = None
@@ -1852,11 +1952,17 @@ class MiniTrainDIT(WeightTrainingStat):
                         if natten_parameters is not None and natten_parameters[i] is not None
                         else "svg"
                         if svg_parameters is not None and svg_parameters[i] is not None
+                        else "pisa"
+                        if pisa_parameters is not None and pisa_parameters[i] is not None
+                        else "radial"
+                        if radial_parameters is not None and radial_parameters[i] is not None
                         else dense_self_attention_backend
                     ),
                     cross_attention_backend=self.cross_attention_backend,
                     natten_params=None if natten_parameters is None else natten_parameters[i],
                     svg_params=None if svg_parameters is None else svg_parameters[i],
+                    pisa_params=None if pisa_parameters is None else pisa_parameters[i],
+                    radial_params=None if radial_parameters is None else radial_parameters[i],
                     sito_params=None if sito_parameters is None else sito_parameters[i],
                     itm_params=None if itm_parameters is None else itm_parameters[i],
                     image_context_dim=None if extra_image_context_dim is None else model_channels,
@@ -2187,6 +2293,10 @@ class MiniTrainDIT(WeightTrainingStat):
             raise ValueError("[ITM] DreamDojo ITM v1 is single-GPU only; set context_parallel_size=1.")
         if getattr(self, "has_fastercache_backend", False):
             raise ValueError("[FasterCache] DreamDojo FasterCache v1 is single-GPU only; set context_parallel_size=1.")
+        if self.has_pisa_backend:
+            raise ValueError("[PISA] DreamDojo PISA v1 is single-GPU only; set context_parallel_size=1.")
+        if self.has_radial_backend:
+            raise ValueError("[Radial] DreamDojo Radial v1 is single-GPU only; set context_parallel_size=1.")
         # pos_embedder
         self.pos_embedder.enable_context_parallel(process_group=process_group)
         if self.extra_per_block_abs_pos_emb:

@@ -57,6 +57,14 @@ class SVDSVGAttnProcessor:
     num_sampled_rows: int = 64
     first_layers_fp: int = 2
     MIN_TOKENS: int = 128   # skip temporal (T=11) and mid (T=45)
+    # Profile the MSE mask-selection only once per (layer, T) then HOLD the
+    # winning mask for all subsequent calls. On Ctrl-World a full episode issues
+    # 450 UNet forwards; re-running the MSE profiling (a full nrows×T matmul per
+    # candidate mask) every call was the dominant SVG1 overhead and made every
+    # spatial self-attn layer ~4-5x SLOWER than dense. Holding the plan (like the
+    # SiTo/ITM prune-once-hold and PISA plan-cache) removes that repeated cost.
+    # Set to a positive N to re-profile every N calls; 0/negative = never re-profile.
+    plan_recompute_every: int = 0
     # Geometry — set by adapter so masks can be rebuilt for any T
     num_views: int = 3
     H_per_view: int = 24
@@ -67,6 +75,9 @@ class SVDSVGAttnProcessor:
         self.num_layers = num_layers
         # Per-instance mask cache keyed by T → List[Tensor([T,T] bool)]
         self._mask_cache: dict = {}
+        # Per-instance HELD winning-mask index keyed by T (prune-once-hold).
+        self._best_idx_cache: dict = {}
+        self._calls_since_profile: dict = {}
 
     # ── diffusers callback ─────────────────────────────────────────────────
     def __call__(
@@ -125,8 +136,24 @@ class SVDSVGAttnProcessor:
         then apply masked SDPA with the winning mask.
         """
         masks = self._get_masks_for_T(T, device=q.device)
-        best_mask_idx = self._select_best_mask(q, k, v, T, masks)
+        best_mask_idx = self._get_or_profile_best_mask(q, k, v, T, masks)
         return self._masked_sparse_attention(q, k, v, best_mask_idx, T, masks)
+
+    def _get_or_profile_best_mask(self, q, k, v, T, masks) -> int:
+        """Return the held winning mask index for this T, profiling only on the
+        first call (or every plan_recompute_every calls). This is the key
+        overhead fix: the MSE profiling matmul is O(nrows×T) per candidate and
+        was previously paid on EVERY forward."""
+        recompute = self.plan_recompute_every
+        n = self._calls_since_profile.get(T, 0)
+        have = T in self._best_idx_cache
+        if have and (recompute <= 0 or (n % recompute) != 0):
+            self._calls_since_profile[T] = n + 1
+            return self._best_idx_cache[T]
+        best = self._select_best_mask(q, k, v, T, masks)
+        self._best_idx_cache[T] = best
+        self._calls_since_profile[T] = n + 1
+        return best
 
     # ── mask cache: lazily build [T,T] bool masks per T ───────────────────
     def _get_masks_for_T(self, T: int, device: torch.device) -> List[torch.Tensor]:
@@ -209,16 +236,25 @@ class SVDSVGAttnProcessor:
         T: int,
         masks: List[torch.Tensor],   # each [T, T] bool, on correct device
     ) -> torch.Tensor:
-        """Apply the winning [T,T] bool mask as an additive float mask in SDPA."""
-        full_mask = masks[best_mask_idx]   # [T, T] bool
+        """Apply the winning [T,T] mask via SDPA.
 
-        # True → attend (0.0), False → mask out (-inf)
-        additive = torch.zeros(T, T, device=q.device, dtype=q.dtype)
-        additive = additive.masked_fill(~full_mask, float("-inf"))
+        We pass the BOOLEAN mask directly (True = keep). A float additive -inf
+        mask forces SDPA onto the slow math kernel; the boolean mask lets it use
+        the more efficient masked path. The bool mask is cached per
+        (T, mask_idx, device) so it is built once, not on each of the 450 calls."""
+        cache_key = (T, best_mask_idx, q.device)
+        bcache = getattr(self, "_boolmask_cache", None)
+        if bcache is None:
+            bcache = {}
+            self._boolmask_cache = bcache
+        bm = bcache.get(cache_key)
+        if bm is None:
+            bm = masks[best_mask_idx].to(device=q.device, dtype=torch.bool)
+            bcache[cache_key] = bm
 
         return F.scaled_dot_product_attention(
             q, k, v,
-            attn_mask=additive,
+            attn_mask=bm,      # bool: True = attend
             dropout_p=0.0,
         )
 

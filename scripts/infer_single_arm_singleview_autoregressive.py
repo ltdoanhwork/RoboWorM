@@ -11,7 +11,9 @@ For each episode:
 
 import argparse
 import json
+import os
 import sys
+import time
 from pathlib import Path
 
 import mediapy
@@ -52,12 +54,113 @@ def parse_args():
     parser.add_argument("--dicache-rel-l1-thresh", type=float, default=0.08)
     parser.add_argument("--dicache-ret-ratio", type=float, default=0.2)
     parser.add_argument("--dicache-probe-depth", type=int, default=2)
+
+    # FasterCache
+    parser.add_argument("--fastercache-enabled", action="store_true")
+    parser.add_argument("--fastercache-start-step", type=int, default=0)
+    parser.add_argument("--fastercache-model-interval", type=int, default=5)
+    parser.add_argument("--fastercache-block-interval", type=int, default=3)
+
+    # SVG (Sparse-VideoGen 1 / 2)
+    parser.add_argument("--use-svg", action="store_true")
+    parser.add_argument("--svg-variant", type=str, default="svg1", choices=["svg1", "svg2"])
+    parser.add_argument("--svg-start-layer-idx", type=int, default=None)
+    parser.add_argument("--svg-dense-step-frac", type=float, default=None)
+    parser.add_argument("--svg-sparsity", type=float, default=None)
+    parser.add_argument("--svg-num-sampled-rows", type=int, default=None)
+    parser.add_argument("--svg-sample-mse-max-row", type=int, default=None)
+    parser.add_argument(
+        "--svg-profile-recompute-every",
+        type=int,
+        default=None,
+        help="SVG1: recompute the spatial/temporal head MSE profile every N attention "
+        "calls (1 = every call, the upstream behaviour). Caching this is what makes "
+        "SVG1 competitive (see dreamdojo-humanoid-singleview-sparse-attention rule).",
+    )
+    parser.add_argument("--svg-num-q-centroids", type=int, default=None)
+    parser.add_argument("--svg-num-k-centroids", type=int, default=None)
+    parser.add_argument("--svg-top-p-kmeans", type=float, default=None)
+    parser.add_argument("--svg-min-kc-ratio", type=float, default=None)
+    parser.add_argument("--svg-kmeans-iter-init", type=int, default=None)
+    parser.add_argument("--svg-kmeans-iter-step", type=int, default=None)
+
+    # PISA (piecewise sparse attention)
+    parser.add_argument("--use-pisa", action="store_true")
+    parser.add_argument("--pisa-density", type=float, default=0.2)
+    parser.add_argument("--pisa-block-size", type=int, default=64)
+    parser.add_argument("--pisa-start-layer-idx", type=int, default=2)
+    parser.add_argument("--pisa-use-bias", action="store_true")
+
+    # Radial Attention
+    parser.add_argument("--use-radial", action="store_true")
+    parser.add_argument("--radial-decay-factor", type=float, default=1.0)
+    parser.add_argument("--radial-block-size", type=int, default=64, choices=[64, 128])
+    parser.add_argument("--radial-start-layer-idx", type=int, default=4)
+    parser.add_argument("--radial-model-type", type=str, default="hunyuan", choices=["hunyuan", "wan"])
+
     return parser.parse_args()
 
 
+def build_experiment_opts(args):
+    """Build hydra experiment overrides for the sparse-attention backends.
+
+    Mirrors infer_humanoid_singleview_full_episode.py exactly — the SVG/PISA/Radial
+    runtimes are shape-driven (not embodiment-specific), so this logic is identical.
+    """
+    opts = []
+    if getattr(args, "use_svg", False):
+        opts += [
+            "model.config.net.self_attention_backend=svg",
+            "model.config.net.cross_attention_backend=minimal_a2a",
+            f"model.config.net.svg_variant={args.svg_variant}",
+        ]
+        for flag, key in (
+            ("svg_start_layer_idx", "svg_start_layer_idx"),
+            ("svg_dense_step_frac", "svg_dense_step_frac"),
+            ("svg_sparsity", "svg_sparsity"),
+            ("svg_num_sampled_rows", "svg_num_sampled_rows"),
+            ("svg_sample_mse_max_row", "svg_sample_mse_max_row"),
+            ("svg_profile_recompute_every", "svg_profile_recompute_every"),
+            ("svg_num_q_centroids", "svg_num_q_centroids"),
+            ("svg_num_k_centroids", "svg_num_k_centroids"),
+            ("svg_top_p_kmeans", "svg_top_p_kmeans"),
+            ("svg_min_kc_ratio", "svg_min_kc_ratio"),
+            ("svg_kmeans_iter_init", "svg_kmeans_iter_init"),
+            ("svg_kmeans_iter_step", "svg_kmeans_iter_step"),
+        ):
+            value = getattr(args, flag, None)
+            if value is not None:
+                opts.append(f"model.config.net.{key}={value}")
+    if getattr(args, "use_pisa", False):
+        opts += [
+            "model.config.net.self_attention_backend=pisa",
+            "model.config.net.cross_attention_backend=minimal_a2a",
+            f"model.config.net.pisa_density={args.pisa_density}",
+            f"model.config.net.pisa_block_size={args.pisa_block_size}",
+            f"model.config.net.pisa_start_layer_idx={args.pisa_start_layer_idx}",
+            f"model.config.net.pisa_use_bias={str(args.pisa_use_bias).lower()}",
+        ]
+    if getattr(args, "use_radial", False):
+        opts += [
+            "model.config.net.self_attention_backend=radial",
+            "model.config.net.cross_attention_backend=minimal_a2a",
+            f"model.config.net.radial_decay_factor={args.radial_decay_factor}",
+            f"model.config.net.radial_block_size={args.radial_block_size}",
+            f"model.config.net.radial_start_layer_idx={args.radial_start_layer_idx}",
+            f"model.config.net.radial_model_type={args.radial_model_type}",
+        ]
+
+    enabled = sum(
+        bool(getattr(args, flag, False)) for flag in ("use_svg", "use_pisa", "use_radial")
+    )
+    if enabled > 1:
+        raise ValueError("SVG / PISA / Radial are mutually exclusive; enable at most one.")
+    return opts
+
+
 def build_cache_config_from_args(args):
-    """Build a cache strategy config from CLI flags (WorldCache / DiCache)."""
-    from methods.cache_strategy.common import WorldCacheConfig, DiCacheConfig
+    """Build a cache strategy config from CLI flags (WorldCache / DiCache / FasterCache)."""
+    from methods.cache_strategy.common import WorldCacheConfig, DiCacheConfig, FasterCacheConfig
 
     if getattr(args, "worldcache_enabled", False):
         return WorldCacheConfig(
@@ -73,6 +176,12 @@ def build_cache_config_from_args(args):
             rel_l1_thresh=args.dicache_rel_l1_thresh,
             ret_ratio=args.dicache_ret_ratio,
             probe_depth=args.dicache_probe_depth,
+        )
+    if getattr(args, "fastercache_enabled", False):
+        return FasterCacheConfig(
+            start_step=args.fastercache_start_step,
+            model_interval=args.fastercache_model_interval,
+            block_interval=args.fastercache_block_interval,
         )
     return None
 
@@ -124,7 +233,7 @@ def build_model(args):
         s3_credential_path="",
         context_parallel_size=setup_args.context_parallel_size,
         config_file=setup_args.config_file,
-        experiment_opts=[],
+        experiment_opts=build_experiment_opts(args),
         cache_config=cache_config,
     )
 
@@ -287,6 +396,7 @@ def main():
     save_root.mkdir(parents=True, exist_ok=True)
 
     all_psnr, all_ssim, all_lpips = [], [], []
+    all_gen_times = []
 
     for ep_idx in range(num_episodes):
         ep_info = plan[ep_idx]
@@ -343,14 +453,19 @@ def main():
             full_lam = torch.cat(all_lam_parts, dim=0) if isinstance(all_lam_parts[0], torch.Tensor) else None
 
         # Pure autoregressive rollout from first GT frame only
+        gen_start_time = time.time()
         pred_video = generate_autoregressive(
             video2world_cli, first_frame, full_actions, args.chunk_size, full_lam,
             guidance=args.guidance,
         )
+        gen_elapsed = time.time() - gen_start_time
 
         if pred_video is None:
             print(f"  Skipping episode {traj_id}: could not generate any frames.")
             continue
+
+        all_gen_times.append(gen_elapsed)
+        print(f"  [Timing] Episode {ep_idx}: generation took {gen_elapsed:.2f}s")
 
         # Build GT by concatenating segments: first segment full, subsequent
         # segments contribute only their first chunk_size frames (segments are
@@ -388,6 +503,7 @@ def main():
                 "total_frames_pred": len(pred_video),
                 "total_frames_gt": traj_length,
                 "trajectory_id": traj_id,
+                "gen_time_s": round(gen_elapsed, 2),
                 "mode": "autoregressive",
             }, f, indent=2)
 
@@ -411,6 +527,24 @@ def main():
         print(f"PSNR: {summary['mean_psnr']:.3f}")
         print(f"SSIM: {summary['mean_ssim']:.4f}")
         print(f"LPIPS: {summary['mean_lpips']:.4f}")
+
+    if all_gen_times:
+        mean_gen_time = sum(all_gen_times) / len(all_gen_times)
+        total_gen_time = sum(all_gen_times)
+        print(f"\n[Timing] Generated {len(all_gen_times)} episodes in {total_gen_time:.2f}s total")
+        print(f"[Timing] Average generation time per episode: {mean_gen_time:.2f}s")
+
+    if os.environ.get("DD_ATTN_PROFILE") == "1":
+        from cosmos_predict2._src.predict2.networks.minimal_v4_dit import _ATTN_PROFILE_STATS
+
+        total = sum(v[1] for v in _ATTN_PROFILE_STATS.values())
+        print(f"\n=== Attention profile (total {total:.2f}s of {sum(all_gen_times):.2f}s gen) ===")
+        for key, (calls, secs) in sorted(_ATTN_PROFILE_STATS.items(), key=lambda kv: -kv[1][1]):
+            backend, kind, shape = key
+            print(
+                f"{backend:>10} {kind:>5} q={shape}: {calls:6d} calls, {secs:7.2f}s "
+                f"({secs / calls * 1000:.3f} ms/call)"
+            )
 
     cleanup_environment()
 

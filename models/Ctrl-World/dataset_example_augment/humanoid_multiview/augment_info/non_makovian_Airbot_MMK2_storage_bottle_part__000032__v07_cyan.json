@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_humanoid_multiview",
+  "subset": "non_makovian",
+  "source_episode": "non_makovian_Airbot_MMK2_storage_bottle_part__000032",
+  "variant": "v07_cyan",
+  "object": "bottle",
+  "edit_instruction": "change the color of the bottle to cyan, keep its shape and position",
+  "source_instruction": "put the water bottle and handle into the cardboard box.",
+  "new_instruction": "Put the water cyan bottle and handle into the cardboard box.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

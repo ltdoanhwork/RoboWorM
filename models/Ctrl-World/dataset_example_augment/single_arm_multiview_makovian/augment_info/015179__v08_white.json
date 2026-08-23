@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_single_arm_multiview",
+  "subset": "makovian",
+  "source_episode": "015179",
+  "variant": "v08_white",
+  "object": "pen",
+  "edit_instruction": "change the color of the pen to white, keep its shape and position",
+  "source_instruction": "Pick up the pen and put it in the cup",
+  "new_instruction": "Pick up the white pen and put it in the cup.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

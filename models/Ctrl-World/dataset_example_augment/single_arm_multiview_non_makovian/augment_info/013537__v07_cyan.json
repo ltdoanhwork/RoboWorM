@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_single_arm_multiview",
+  "subset": "non_makovian",
+  "source_episode": "013537",
+  "variant": "v07_cyan",
+  "object": "box",
+  "edit_instruction": "change the color of the box to cyan, keep its shape and position",
+  "source_instruction": "Remove the lemon from the box",
+  "new_instruction": "Remove the lemon from the cyan box.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

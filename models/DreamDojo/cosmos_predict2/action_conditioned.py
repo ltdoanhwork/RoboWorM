@@ -67,6 +67,10 @@ def _build_svg_experiment_opts(setup_args: ActionConditionedSetupArguments) -> l
         opts.append(f"model.config.net.svg_num_sampled_rows={setup_args.svg_num_sampled_rows}")
     if setup_args.svg_sample_mse_max_row is not None:
         opts.append(f"model.config.net.svg_sample_mse_max_row={setup_args.svg_sample_mse_max_row}")
+    if setup_args.svg_profile_recompute_every is not None:
+        opts.append(
+            f"model.config.net.svg_profile_recompute_every={setup_args.svg_profile_recompute_every}"
+        )
     if setup_args.svg_num_q_centroids is not None:
         opts.append(f"model.config.net.svg_num_q_centroids={setup_args.svg_num_q_centroids}")
     if setup_args.svg_num_k_centroids is not None:
@@ -80,6 +84,34 @@ def _build_svg_experiment_opts(setup_args: ActionConditionedSetupArguments) -> l
     if setup_args.svg_kmeans_iter_step is not None:
         opts.append(f"model.config.net.svg_kmeans_iter_step={setup_args.svg_kmeans_iter_step}")
     return opts
+
+
+def _build_pisa_experiment_opts(setup_args: ActionConditionedSetupArguments) -> list[str]:
+    if not getattr(setup_args, "use_pisa", False):
+        return []
+
+    return [
+        "model.config.net.self_attention_backend=pisa",
+        "model.config.net.cross_attention_backend=minimal_a2a",
+        f"model.config.net.pisa_density={setup_args.pisa_density}",
+        f"model.config.net.pisa_block_size={setup_args.pisa_block_size}",
+        f"model.config.net.pisa_start_layer_idx={setup_args.pisa_start_layer_idx}",
+        f"model.config.net.pisa_use_bias={str(setup_args.pisa_use_bias).lower()}",
+    ]
+
+
+def _build_radial_experiment_opts(setup_args: ActionConditionedSetupArguments) -> list[str]:
+    if not getattr(setup_args, "use_radial", False):
+        return []
+
+    return [
+        "model.config.net.self_attention_backend=radial",
+        "model.config.net.cross_attention_backend=minimal_a2a",
+        f"model.config.net.radial_decay_factor={setup_args.radial_decay_factor}",
+        f"model.config.net.radial_block_size={setup_args.radial_block_size}",
+        f"model.config.net.radial_start_layer_idx={setup_args.radial_start_layer_idx}",
+        f"model.config.net.radial_model_type={setup_args.radial_model_type}",
+    ]
 
 
 def _build_sito_experiment_opts(setup_args: ActionConditionedSetupArguments) -> list[str]:
@@ -342,6 +374,8 @@ def inference(
         config_file=setup_args.config_file,
         experiment_opts=(
             _build_svg_experiment_opts(setup_args)
+            + _build_pisa_experiment_opts(setup_args)
+            + _build_radial_experiment_opts(setup_args)
             + _build_sito_experiment_opts(setup_args)
             + _build_itm_experiment_opts(setup_args)
         ),

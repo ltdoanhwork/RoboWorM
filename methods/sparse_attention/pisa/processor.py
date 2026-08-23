@@ -82,23 +82,26 @@ class SVDPISAAttnProcessor:
         v = self._split_heads(v, H)   # (B, H, T_kv, D_head)
 
         is_self_attn = (T_q == T_kv)
-        if not is_self_attn:
-            raise RuntimeError(
-                f"[PISA] Cross-attention is not supported without fallback "
-                f"(T_q={T_q}, T_kv={T_kv}, layer_idx={self.layer_idx})."
+        # Graceful SDPA fallback for layers/shapes PISA does not accelerate
+        # (cross-attn, layers below start_layer_idx, short temporal/mid seqs,
+        # or when an attention_mask is present). PISA only accelerates the long
+        # spatial self-attention layers; everything else must pass through
+        # unchanged so the model runs end-to-end (acceleration-benchmark rule).
+        _fallback = (
+            (not is_self_attn)
+            or (self.layer_idx < self.start_layer_idx)
+            or (T_q < self.MIN_TOKENS_FOR_PISA)
+            or (attention_mask is not None)
+        )
+        if _fallback:
+            hidden_states = F.scaled_dot_product_attention(
+                q, k, v, attn_mask=attention_mask,
             )
-        if self.layer_idx < self.start_layer_idx:
-            raise RuntimeError(
-                f"[PISA] Layer {self.layer_idx} is below start_layer_idx={self.start_layer_idx}; "
-                "fallback is disabled."
-            )
-        if T_q < self.MIN_TOKENS_FOR_PISA:
-            raise RuntimeError(
-                f"[PISA] Sequence length T={T_q} is below MIN_TOKENS_FOR_PISA={self.MIN_TOKENS_FOR_PISA}; "
-                "fallback is disabled."
-            )
-        if attention_mask is not None:
-            raise RuntimeError("[PISA] attention_mask is not supported without fallback.")
+            hidden_states = hidden_states.permute(0, 2, 1, 3).contiguous().reshape(B, T_q, -1)
+            hidden_states = hidden_states.to(q.dtype)
+            hidden_states = attn.to_out[0](hidden_states)
+            hidden_states = attn.to_out[1](hidden_states)
+            return hidden_states
 
         bs = min(self.block_size, T_q)
         hidden_states = self.attn_fn(

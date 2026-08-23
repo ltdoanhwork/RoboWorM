@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_humanoid_multiview_4view_grid",
+  "subset": "non_makovian",
+  "source_episode": "non_makovian_AIRBOT_MMK2_boxs_storage__000108",
+  "variant": "v02_blue",
+  "object": "box",
+  "edit_instruction": "change the color of the box to blue, keep its shape and position",
+  "source_instruction": "put the calculator box in the yellow bucket with your left hand and the power bank box in the yellow bucket with your right hand.",
+  "new_instruction": "Put the calculator blue box in the yellow bucket with your left hand and the power bank box in the yellow bucket with your right hand.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_bimanual_multiview_4view_grid",
+  "subset": "non_makovian",
+  "source_episode": "non_makovian_fold_blue_towel__000029",
+  "variant": "v01_green",
+  "object": "blue towel",
+  "edit_instruction": "change the color of the blue towel to green, keep its shape and position",
+  "source_instruction": "fold blue towel",
+  "new_instruction": "Fold green towel.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

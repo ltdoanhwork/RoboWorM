@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_single_arm_multiview",
+  "subset": "non_makovian",
+  "source_episode": "001758",
+  "variant": "v01_green",
+  "object": "white bowl",
+  "edit_instruction": "change the color of the white bowl to green, keep its shape and position",
+  "source_instruction": "Get one scoop of the contents in the white bowl and put in the open clear cup",
+  "new_instruction": "Get one scoop of the contents in the green bowl and put in the open clear cup.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

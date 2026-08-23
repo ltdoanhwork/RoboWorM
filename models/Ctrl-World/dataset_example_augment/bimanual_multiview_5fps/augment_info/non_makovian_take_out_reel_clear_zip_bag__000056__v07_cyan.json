@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_bimanual_multiview",
+  "subset": "non_makovian",
+  "source_episode": "non_makovian_take_out_reel_clear_zip_bag__000056",
+  "variant": "v07_cyan",
+  "object": "clear zip bag",
+  "edit_instruction": "change the color of the clear zip bag to cyan, keep its shape and position",
+  "source_instruction": "take out reel clear zip bag",
+  "new_instruction": "Take out reel cyan zip bag.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

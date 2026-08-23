@@ -27,7 +27,11 @@ import math
 
 def main(args):
     logger = get_logger(__name__, log_level="INFO")
-    swanlab.sync_wandb()
+    # swanlab.sync_wandb() hijacks wandb.init and forces a cloud login, which
+    # crashes headless (no-tty, no API key) runs. Only enable it when explicitly
+    # requested via SWANLAB_MODE=cloud. Otherwise rely on plain wandb (offline).
+    if os.environ.get("SWANLAB_MODE", "local") == "cloud":
+        swanlab.sync_wandb()
     accelerator = Accelerator(
         gradient_accumulation_steps=args.gradient_accumulation_steps,
         mixed_precision=args.mixed_precision,
@@ -38,9 +42,26 @@ def main(args):
     # model and optimizer
     model = CrtlWorld(args)
     if args.ckpt_path is not None:
-        print(f"Loading checkpoint from {args.ckpt_path}!")
+        strict = getattr(args, "load_strict", True)
+        print(f"Loading checkpoint from {args.ckpt_path}! (strict={strict})")
         state_dict = torch.load(args.ckpt_path, map_location='cpu')
-        model.load_state_dict(state_dict, strict=True)
+        if not strict:
+            # Warm-start: drop action_encoder weights whose shape mismatches the
+            # (possibly re-dimensioned) action encoder, so they are re-initialized.
+            model_sd = model.state_dict()
+            filtered = {}
+            dropped = []
+            for k, v in state_dict.items():
+                if k in model_sd and model_sd[k].shape == v.shape:
+                    filtered[k] = v
+                else:
+                    dropped.append(k)
+            missing, unexpected = model.load_state_dict(filtered, strict=False)
+            print(f"  Dropped (shape-mismatch) {len(dropped)} tensors "
+                  f"(e.g. {dropped[:3]}); reinitialized from scratch.")
+            print(f"  Missing after load: {len(missing)}, Unexpected: {len(unexpected)}")
+        else:
+            model.load_state_dict(state_dict, strict=True)
     model.to(accelerator.device)
     model.train()
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)
@@ -65,7 +86,9 @@ def main(args):
         print(f"Number of parameters in the action_encoder: {num_params/1000000:.2f}M")
 
     # train and val datasets
-    from dataset.dataset_droid_exp33 import Dataset_mix
+    dataset_module = getattr(args, "dataset_module", "dataset.dataset_droid_exp33")
+    import importlib
+    Dataset_mix = importlib.import_module(dataset_module).Dataset_mix
     train_dataset = Dataset_mix(args,mode='train')
     val_dataset = Dataset_mix(args,mode='val')
     train_dataloader = torch.utils.data.DataLoader(
@@ -168,7 +191,9 @@ def validate_video_generation(model, val_dataset, args, train_steps, videos_dir,
     his_latent_gt, future_latent_ft = video_gt[:,:args.num_history], video_gt[:,args.num_history:]
     current_latent = future_latent_ft[:,0]
     print("image",current_latent.shape, 'action', actions.shape)
-    assert current_latent.shape[1:] == (4, 72, 40)
+    grid_rows = int(getattr(args, "grid_rows", getattr(args, "num_views", 3)))
+    grid_cols = int(getattr(args, "grid_cols", 1))
+    assert current_latent.shape[1:] == (4, grid_rows * 24, grid_cols * 40)
     assert actions.shape[1:] == (int(args.num_frames+args.num_history), args.action_dim)
 
     # start generate
@@ -181,8 +206,8 @@ def validate_video_generation(model, val_dataset, args, train_steps, videos_dir,
             pipeline,
             image=current_latent,
             text=action_latent,
-            width=args.width,
-            height=int(3*args.height),
+            width=int(grid_cols*args.width),
+            height=int(grid_rows*args.height),
             num_frames=args.num_frames,
             history=his_latent_gt,
             num_inference_steps=args.num_inference_steps,
@@ -197,9 +222,9 @@ def validate_video_generation(model, val_dataset, args, train_steps, videos_dir,
             his_cond_zero=args.his_cond_zero,
         )
     
-    pred_latents = einops.rearrange(pred_latents, 'b f c (m h) (n w) -> (b m n) f c h w', m=3,n=1) # (B, 8, 4, 32,32)
+    pred_latents = einops.rearrange(pred_latents, 'b f c (m h) (n w) -> (b m n) f c h w', m=grid_rows,n=grid_cols) # (B, 8, 4, 32,32)
     video_gt = torch.cat([his_latent_gt, future_latent_ft], dim=1) # (B, 8, 4, 32,32)
-    video_gt = einops.rearrange(video_gt, 'b f c (m h) (n w) -> (b m n) f c h w', m=3,n=1) # (B, 8, 4, 32,32)
+    video_gt = einops.rearrange(video_gt, 'b f c (m h) (n w) -> (b m n) f c h w', m=grid_rows,n=grid_cols) # (B, 8, 4, 32,32)
     
     # decode latent
     if video_gt.shape[2] != 3:  
@@ -244,6 +269,9 @@ if __name__ == "__main__":
     # reset parameters with command line
     from argparse import ArgumentParser
     parser = ArgumentParser()
+    parser.add_argument('--config', type=str, default='droid',
+                        choices=['droid', 'bimanual', 'bimanual_grid', 'humanoid', 'humanoid_grid'],
+                        help='Which config/dataset preset to use.')
     parser.add_argument('--svd_model_path', type=str, default=None)
     parser.add_argument('--clip_model_path', type=str, default=None)
     parser.add_argument('--ckpt_path', type=str, default=None)
@@ -251,16 +279,62 @@ if __name__ == "__main__":
     parser.add_argument('--dataset_meta_info_path', type=str, default=None)
     # dataset_names
     parser.add_argument('--dataset_names', type=str, default=None)
+    parser.add_argument('--output_dir', type=str, default=None)
+    parser.add_argument('--tag', type=str, default=None)
+    parser.add_argument('--max_train_steps', type=int, default=None)
+    parser.add_argument('--train_batch_size', type=int, default=None)
+    parser.add_argument('--no_load_strict', action='store_true',
+                        help='Load checkpoint with strict=False (reinit mismatched tensors).')
+    parser.add_argument('--debug', action='store_true')
     args_new = parser.parse_args()
-    args = wm_args()
+
+    if args_new.config == 'bimanual':
+        from config_bimanual import wm_args_bimanual
+        args = wm_args_bimanual()
+        args.dataset_module = 'dataset.dataset_bimanual_multiview'
+        args.dataset_cfgs = args.dataset_names
+        args.load_strict = not args_new.no_load_strict
+    elif args_new.config == 'bimanual_grid':
+        from config_bimanual_grid import wm_args_bimanual_grid
+        args = wm_args_bimanual_grid()
+        # same dimension-agnostic dataset class; grid layout via num_views/grid_* fields
+        args.dataset_module = 'dataset.dataset_bimanual_multiview'
+        args.dataset_cfgs = args.dataset_names
+        args.load_strict = not args_new.no_load_strict
+    elif args_new.config == 'humanoid':
+        from config_humanoid import wm_args_humanoid
+        args = wm_args_humanoid()
+        # reuse the dimension-agnostic bimanual dataset class (reads observation.state.qpos)
+        args.dataset_module = 'dataset.dataset_bimanual_multiview'
+        args.dataset_cfgs = args.dataset_names
+        args.load_strict = not args_new.no_load_strict
+    elif args_new.config == 'humanoid_grid':
+        from config_humanoid_grid import wm_args_humanoid_grid
+        args = wm_args_humanoid_grid()
+        # same dimension-agnostic dataset class; grid layout via num_views/grid_* fields
+        args.dataset_module = 'dataset.dataset_bimanual_multiview'
+        args.dataset_cfgs = args.dataset_names
+        args.load_strict = not args_new.no_load_strict
+    else:
+        args = wm_args()
+        args.dataset_module = 'dataset.dataset_droid_exp33'
+        args.load_strict = not args_new.no_load_strict
 
     def merge_args(args, new_args):
+        skip = {'config', 'no_load_strict'}
         for k, v in new_args.__dict__.items():
-            if v is not None:
+            if k in skip:
+                continue
+            if v is not None and v is not False:
                 args.__dict__[k] = v
+        # keep dataset_cfgs in sync with dataset_names if the latter was overridden
+        if getattr(new_args, 'dataset_names', None) is not None:
+            args.__dict__['dataset_cfgs'] = new_args.dataset_names
         return args
-    
+
     args = merge_args(args, args_new)
+    if hasattr(args, '__post_init__'):
+        args.__post_init__()
 
     main(args)
 

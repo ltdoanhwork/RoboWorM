@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_single_arm_multiview",
+  "subset": "makovian",
+  "source_episode": "018288",
+  "variant": "v09_black",
+  "object": "pen",
+  "edit_instruction": "change the color of the pen to black, keep its shape and position",
+  "source_instruction": "Remove the pen from the cup",
+  "new_instruction": "Remove the black pen from the cup.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

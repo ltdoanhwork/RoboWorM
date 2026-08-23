@@ -1,0 +1,13 @@
+{
+  "config": "ctrlworld_bimanual_multiview",
+  "subset": "makovian",
+  "source_episode": "makovian_tape_closed_cardboard__000046",
+  "variant": "v06_pink",
+  "object": "cardboard",
+  "edit_instruction": "change the color of the cardboard to pink, keep its shape and position",
+  "source_instruction": "tape closed cardboard",
+  "new_instruction": "Tape pink closed cardboard.",
+  "edit_model": "qwen",
+  "seed": 0,
+  "first_frame_only": true
+}

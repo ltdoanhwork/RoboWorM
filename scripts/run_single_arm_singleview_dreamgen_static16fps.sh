@@ -30,7 +30,9 @@ source "${VENV}/bin/activate"
 export PYTHONPATH="${ROOT}/models/dreamgen:${ROOT}:${PYTHONPATH:-}"
 
 # --- Checkpoint (from single_arm_static_16fps training) ---
-CKPT_BASE="${ROOT}/exp_logs/dreamgen_logs/posttraining/singleview/single_arm_static_singleview_16fps"
+# Defaults to the v2 run (prompt + 4:3 resolution fixes). Override with e.g.
+#   CKPT_BASE=.../single_arm_static_singleview_16fps_v1_90k  to test the old run.
+CKPT_BASE="${CKPT_BASE:-${ROOT}/exp_logs/dreamgen_logs/posttraining/singleview/single_arm_static_singleview_16fps_v2}"
 CKPT_MODEL_DIR="${CKPT_BASE}/checkpoints_40_per/model"
 
 # Default to the latest checkpoint recorded by the trainer if ITER_NAME unset.
@@ -59,7 +61,9 @@ RESOLUTION="${RESOLUTION:-480}"
 FPS="${FPS:-16}"
 GUIDANCE="${GUIDANCE:-7}"
 MASTER_PORT="${MASTER_PORT:-29550}"
-ASPECT_RATIO="${ASPECT_RATIO:-16:9}"
+ASPECT_RATIO="${ASPECT_RATIO:-4:3}"
+# Training randomly used 1-2 conditioning frames; 1 is always in-distribution.
+NUM_CONDITIONAL_FRAMES="${NUM_CONDITIONAL_FRAMES:-1}"
 
 # --- Views to use for inference (must match training: RoboChallenge global view) ---
 VIEWS="${VIEWS:-global}"
@@ -71,7 +75,13 @@ OUTPUT_ROOT="${OUTPUT_ROOT:-${ROOT}/sampling_dataset/dense/single_arm/output/sin
 SPLITS="${SPLITS:-makovian non_makovian}"
 NUM_CHUNKS="${NUM_CHUNKS:-2 3}"
 FORCE_REGENERATE="${FORCE_REGENERATE:-0}"
-PROMPT_REFINE="${PROMPT_REFINE:-1}"
+# Training used the raw composed caption (build_caption) with NO extra prefix and
+# NO prompt refiner. To keep the inference text distribution identical to training:
+#   - PROMPT_REFINE defaults to 0 (refiner rewrites the prompt → distribution shift)
+#   - PROMPT_PREFIX defaults to "" (the example script otherwise prepends
+#     "The robot arm is performing a task. " which the model never saw in training)
+PROMPT_REFINE="${PROMPT_REFINE:-0}"
+PROMPT_PREFIX="${PROMPT_PREFIX:-}"
 SOURCE_FPS=15
 
 OUT_ITER="${ITER_NAME}_static16fps"
@@ -84,6 +94,8 @@ echo "  Views:      ${VIEWS} (from single_arm/singleview dataset)"
 echo "  Model:      ${MODEL_SIZE} | Resolution: ${RESOLUTION} | FPS: ${FPS}"
 echo "  GPUs:       ${NUM_GPUS}"
 echo "  Guidance:   ${GUIDANCE}"
+echo "  Cond frames: ${NUM_CONDITIONAL_FRAMES} | Aspect: ${ASPECT_RATIO}"
+echo "  Prompt refine: ${PROMPT_REFINE} | Prefix: '${PROMPT_PREFIX}'"
 echo "  Splits:     ${SPLITS}"
 echo "  Chunks:     ${NUM_CHUNKS}"
 echo "  Output:     ${OUTPUT_ROOT}/{split}/${OUT_ITER}/"
@@ -179,6 +191,37 @@ if not episodes:
 
 ep_tasks = load_tasks(split_dir)
 
+# Prompt augmentation MUST mirror the training prepare script
+# (prepare_single_arm_robochallenge_dreamgen_16fps.py::build_caption) so the
+# text distribution at inference matches what the model was trained on.
+# At inference we generate a full episode from the first frame, so we use the
+# robot prefix + the first rephrasing variant and omit the per-segment phase
+# hint (the generated clip spans all phases).
+PROMPT_PREFIXES = [
+    "A robot arm",
+    "A single robotic arm",
+    "A tabletop robot arm",
+    "A robot manipulator",
+]
+TASK_REPHRASINGS = {
+    "place the cup on the coaster": "places the cup on the coaster",
+    "turn on the light switch": "turns on the light switch",
+    "press the pink, blue, and green buttons in sequence":
+        "presses the pink, blue, and green buttons in sequence",
+    "pull out a tissue, wipe the stains on the table clean, "
+    "and then discard the tissue into the trash bin":
+        "pulls out a tissue, wipes the stains on the table clean, "
+        "and then discards the tissue into the trash bin",
+}
+GENERIC_CAPTION = "A robot arm performing a manipulation task."
+
+def build_caption(raw_task, ep_id):
+    if not raw_task or raw_task == GENERIC_CAPTION:
+        return GENERIC_CAPTION
+    prefix = PROMPT_PREFIXES[ep_id % len(PROMPT_PREFIXES)]
+    task_phrase = TASK_REPHRASINGS.get(raw_task, raw_task)
+    return f"{prefix} {task_phrase}."
+
 # Group by num_chunks
 chunks_groups = defaultdict(list)
 for ep_id, video_path in episodes:
@@ -186,7 +229,7 @@ for ep_id, video_path in episodes:
     if not frame_png.exists():
         result = subprocess.run(
             ["ffmpeg", "-y", "-i", str(video_path),
-             "-vf", "scale=768:432", "-vframes", "1", "-q:v", "2", str(frame_png)],
+             "-vf", "scale=640:480", "-vframes", "1", "-q:v", "2", str(frame_png)],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
         if result.returncode != 0:
@@ -215,7 +258,8 @@ for ep_id, video_path in episodes:
     else:
         n_chunks = 2
 
-    caption = ep_tasks.get(ep_id, "A robot arm performing a manipulation task.")
+    raw_task = ep_tasks.get(ep_id, GENERIC_CAPTION)
+    caption = build_caption(raw_task, ep_id)
     out_video = f"{output_dir}/episode_{ep_id:06d}.mp4"
 
     chunks_groups[n_chunks].append({
@@ -309,6 +353,8 @@ print(len(pending))
       --guidance "${GUIDANCE}" \
       --num_gpus "${NUM_GPUS}" \
       --aspect_ratio "${ASPECT_RATIO}" \
+      --num_conditional_frames "${NUM_CONDITIONAL_FRAMES}" \
+      --prompt_prefix "${PROMPT_PREFIX}" \
       --disable_guardrail \
       --no_skip_existing \
       ${pr_flag}
@@ -322,6 +368,8 @@ print(len(pending))
       --guidance "${GUIDANCE}" \
       --num_gpus "${NUM_GPUS}" \
       --aspect_ratio "${ASPECT_RATIO}" \
+      --num_conditional_frames "${NUM_CONDITIONAL_FRAMES}" \
+      --prompt_prefix "${PROMPT_PREFIX}" \
       --disable_guardrail \
       --no_skip_existing \
       ${pr_flag}
