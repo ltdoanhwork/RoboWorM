@@ -28,6 +28,7 @@ import random
 import shutil
 import subprocess
 import sys
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -151,8 +152,8 @@ def collect_sources(n: int, seed: int) -> list[dict]:
         used_ep.add(ep)
         web.append(
             {
-                "src": src,
-                "embodiment": it["embodiment"],
+                    "src": str(src),
+                    "embodiment": it["embodiment"],
                 "split": it.get("split", ""),
                 "task": it.get("task", ""),
                 "prompt": it.get("prompt") or it.get("task", ""),
@@ -189,7 +190,7 @@ def collect_sources(n: int, seed: int) -> list[dict]:
             used_ep.add(c["episode"])
             extras.append(
                 {
-                    "src": c["pred"],
+                    "src": str(c["pred"]),
                     "embodiment": c["embodiment"],
                     "split": c.get("split", ""),
                     "task": c.get("task", ""),
@@ -203,6 +204,41 @@ def collect_sources(n: int, seed: int) -> list[dict]:
     rng = random.Random(seed)
     rng.shuffle(picked)
     return picked[:n]
+
+
+def process_one(job: dict) -> dict | None:
+    """Decode one source, write raw.mp4 + flow.mp4. Returns public catalog row or None."""
+    pid, src, out_dir, base_url = job["pid"], job["src"], Path(job["out_dir"]), job["base_url"]
+    raw_p, flow_p = out_dir / "raw.mp4", out_dir / "flow.mp4"
+    try:
+        frames, fps = read_mp4(Path(src["src"]))
+    except Exception as e:
+        print(f"  skip {src['src']}: {e}", flush=True)
+        return None
+    if len(frames) < 8:
+        print(f"  skip {src['src']}: {len(frames)} frames", flush=True)
+        return None
+    try:
+        left, right, layout = [], [], "unknown"
+        for f in frames:
+            a, b, layout = static_pair(f)
+            left.append(a)
+            right.append(b)
+        raw = [hstack_pair(a, b) for a, b in zip(left, right)]
+        flow = [hstack_pair(a, b) for a, b in zip(overlay_flow_rgb(left), overlay_flow_rgb(right))]
+    except Exception as e:
+        print(f"  skip {src['src']} crop/flow: {e}", flush=True)
+        return None
+    out_dir.mkdir(parents=True, exist_ok=True)
+    fps_out = fps if fps > 1 else 16.0
+    write_mp4(raw_p, raw, fps_out)
+    write_mp4(flow_p, flow, fps_out)
+    row = public_row(pid, src, layout, len(frames), fps_out, base_url)
+    (out_dir / "meta.json").write_text(
+        json.dumps({**row, "episode": src["episode"], "pool": src["pool"]}, indent=2) + "\n"
+    )
+    print(f"  {pid} {src['embodiment']} {layout} {len(frames)}f {src['pool']}", flush=True)
+    return row
 
 
 def public_row(pid: str, src: dict, layout: str, n_frames: int, fps: float, base_url: str) -> dict:
@@ -230,6 +266,7 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--hf-repo", default=HF_REPO)
     ap.add_argument("--keep-existing", action="store_true", help="do not wipe DEST; skip ids that already have raw+flow")
+    ap.add_argument("--workers", type=int, default=4)
     args = ap.parse_args()
 
     n = args.n
@@ -248,38 +285,37 @@ def main() -> int:
     clips_dir.mkdir(parents=True, exist_ok=True)
 
     base_url = f"https://huggingface.co/datasets/{args.hf_repo}/resolve/main/{HF_PREFIX}/clips"
-    catalog_items = []
     todo = sources[: args.limit] if args.limit else sources
-
+    jobs = []
     for i, src in enumerate(todo):
         pid = f"{i:05d}"
         out_dir = clips_dir / pid
-        raw_p, flow_p = out_dir / "raw.mp4", out_dir / "flow.mp4"
-        if args.keep_existing and raw_p.is_file() and flow_p.is_file():
-            print(f"  [{i+1}/{len(todo)}] {pid} skip existing")
+        if args.keep_existing and (out_dir / "raw.mp4").is_file() and (out_dir / "flow.mp4").is_file():
+            print(f"  {pid} skip existing")
             continue
-        try:
-            frames, fps = read_mp4(Path(src["src"]))
-        except Exception as e:
-            print(f"  skip {src['src']}: {e}")
-            continue
-        if len(frames) < 8:
-            print(f"  skip {src['src']}: {len(frames)} frames")
-            continue
-        try:
-            raw, layout = dual_static(frames, with_flow=False)
-            flow, _ = dual_static(frames, with_flow=True)
-        except Exception as e:
-            print(f"  skip {src['src']} crop/flow: {e}")
-            continue
-        out_dir.mkdir(parents=True, exist_ok=True)
-        fps_out = fps if fps > 1 else 16.0
-        write_mp4(raw_p, raw, fps_out)
-        write_mp4(flow_p, flow, fps_out)
-        row = public_row(pid, src, layout, len(frames), fps_out, base_url)
-        catalog_items.append(row)
-        (out_dir / "meta.json").write_text(json.dumps({**row, "episode": src["episode"], "pool": src["pool"]}, indent=2) + "\n")
-        print(f"  [{i+1}/{len(todo)}] {pid} {src['embodiment']} {layout} {len(frames)}f {src['pool']}")
+        jobs.append({"pid": pid, "src": src, "out_dir": str(out_dir), "base_url": base_url})
+
+    catalog_items = []
+    workers = max(1, args.workers)
+    print(f"processing {len(jobs)} clips with {workers} workers…", flush=True)
+    if workers == 1:
+        for job in jobs:
+            row = process_one(job)
+            if row:
+                catalog_items.append(row)
+    else:
+        ctx = __import__("multiprocessing").get_context("spawn")
+        with ProcessPoolExecutor(max_workers=workers, mp_context=ctx) as ex:
+            futs = {ex.submit(process_one, job): job["pid"] for job in jobs}
+            for fut in as_completed(futs):
+                try:
+                    row = fut.result()
+                except Exception as e:
+                    print(f"  fail {futs[fut]}: {e}", flush=True)
+                    continue
+                if row:
+                    catalog_items.append(row)
+    catalog_items.sort(key=lambda r: r["id"])
 
     catalog = {
         "mode": "full_static2",
