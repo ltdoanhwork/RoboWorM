@@ -29,9 +29,11 @@ DATASET_META_INFO="./models/Ctrl-World/dataset_meta_info"
 DATASET_EXAMPLE_DIR="./models/Ctrl-World/dataset_example"
 
 # Radial -- TUNED (see ctrlworld-single-arm-multiview-sparse-attention-insights).
+# fp4 is the best sparse quality point (PSNR 21.38 ≈ dense), still 0.92x (slower)
+# — net-negative on this short-seq SVD UNet, kept as a valid benchmark point.
 RADIAL_DECAY="${RADIAL_DECAY:-1.0}"
 RADIAL_BLOCK_SIZE="${RADIAL_BLOCK_SIZE:-64}"
-RADIAL_FIRST_LAYERS_FP="${RADIAL_FIRST_LAYERS_FP:-2}"
+RADIAL_FIRST_LAYERS_FP="${RADIAL_FIRST_LAYERS_FP:-4}"
 RADIAL_MODEL_TYPE="${RADIAL_MODEL_TYPE:-hunyuan}"
 
 OUTPUT_BASE="${OUTPUT_ROOT:-${PROJECT_ROOT}/sampling_dataset/radial/single_arm/output/multiview/ctrlworld}"

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Video World — Triplet labeling (1–2–3)</title>
+<title>Video World — Multiview static pair (1–2–3)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -12,11 +12,11 @@
 body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
 button{font-family:inherit;cursor:pointer}
 nav{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.94);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:.85rem 1.5rem}
-nav .inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+nav .inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
 .logo{font-weight:800} .logo span{background:linear-gradient(135deg,var(--accent),#0891b2);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .nav-meta{font-size:.85rem;color:var(--muted)}
 .nav-meta strong{color:var(--text)} .nav-meta a{color:var(--accent);text-decoration:none}
-main{max-width:1100px;margin:0 auto;padding:1.5rem}
+main{max-width:1200px;margin:0 auto;padding:1.5rem}
 .rubric{background:#fff;border:1px solid var(--border);border-radius:12px;padding:.9rem 1.1rem;margin-bottom:1rem}
 .rubric h3{font-size:.8rem;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);margin-bottom:.4rem}
 .rubric table{width:100%;border-collapse:collapse;font-size:.85rem}
@@ -26,12 +26,14 @@ main{max-width:1100px;margin:0 auto;padding:1.5rem}
 .prompt-bar .label{font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);margin-bottom:.3rem}
 .prompt-bar .text{font-size:1.05rem;font-weight:600}
 .stage{background:var(--card);border:1px solid var(--border);border-top:none;border-radius:0 0 16px 16px;overflow:hidden}
-.triplet{display:flex;flex-direction:column;gap:0}
-.clip{border-bottom:1px solid var(--border);padding:.6rem 1rem 1rem}
-.clip header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;font-size:.8rem;color:var(--muted)}
-.clip video{width:100%;max-height:28vh;background:#0a0a0f;display:block;object-fit:contain;border-radius:8px}
-.scores{display:flex;gap:.4rem;margin-top:.5rem}
-.score{flex:1;border:1px solid var(--border);background:#fff;border-radius:10px;padding:.55rem .3rem;font-weight:700}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:0}
+@media (max-width:800px){.pair{grid-template-columns:1fr}}
+.pane{padding:.6rem .9rem 1rem;border-right:1px solid var(--border)}
+.pane:last-child{border-right:none}
+.pane header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;font-size:.8rem;color:var(--muted);font-weight:600}
+.pane video{width:100%;background:#0a0a0f;display:block;object-fit:contain;border-radius:8px;max-height:42vh}
+.scores{display:flex;gap:.4rem;padding:0 1rem}
+.score{flex:1;border:1px solid var(--border);background:#fff;border-radius:10px;padding:.7rem .3rem;font-weight:700}
 .score small{display:block;font-weight:500;font-size:.7rem;opacity:.75}
 .score.active{background:var(--accent);border-color:var(--accent);color:#fff}
 .nav-btns{display:flex;gap:.5rem;flex-wrap:wrap;padding:1rem 1.2rem}
@@ -48,10 +50,10 @@ main{max-width:1100px;margin:0 auto;padding:1.5rem}
 <body>
 <nav>
   <div class="inner">
-    <div class="logo"><span>VideoWorld</span> Triplets · 1–2–3</div>
+    <div class="logo"><span>VideoWorld</span> Static pair · 1–2–3</div>
     <div class="nav-meta">
       <span id="raterChip"></span>
-      Points <strong id="nLabeled">0</strong> / <span id="nTotal">0</span>
+      Videos <strong id="nLabeled">0</strong> / <span id="nTotal">0</span>
       · <a href="segment.html">segment mode</a>
       · <a href="admin.html">admin</a>
       · <a href="#" id="switchUser">switch user</a>
@@ -67,9 +69,8 @@ main{max-width:1100px;margin:0 auto;padding:1.5rem}
       <tr><th>3 Pass</th><td>Coherent, follows the prompt, physics look right.</td><td class="ex">example: TBD</td></tr>
     </table>
     <p style="margin-top:.55rem;font-size:.8rem;color:var(--muted)">
-      Each point = <b>3 videos</b>. Each video is <b>16 frames</b> of the two
-      <b>static cameras</b> side-by-side. Color overlay = optical flow (motion).
-      Keys <b>1–3</b> score the next unscored video; Space plays all three.
+      Full original length. Only the <b>two static cameras</b>. Left = raw, right = optical-flow overlay.
+      Score the <b>whole video</b> 1 / 2 / 3. Space plays both (synced).
     </p>
   </div>
   <div class="progress"><div id="bar"></div></div>
@@ -80,11 +81,25 @@ main{max-width:1100px;margin:0 auto;padding:1.5rem}
   </div>
   <div class="meta" id="chips"></div>
   <div class="stage" id="stage">
-    <div class="triplet" id="triplet"></div>
+    <div class="pair">
+      <div class="pane">
+        <header>Raw · two static views</header>
+        <video id="vidRaw" controls playsinline muted></video>
+      </div>
+      <div class="pane">
+        <header>Flow overlay · same two views</header>
+        <video id="vidFlow" controls playsinline muted></video>
+      </div>
+    </div>
+    <div class="scores" style="margin-top:.8rem">
+      <button class="score" data-s="1">1<small>fail</small></button>
+      <button class="score" data-s="2">2<small>mixed</small></button>
+      <button class="score" data-s="3">3<small>pass</small></button>
+    </div>
     <div class="nav-btns">
-      <button class="btn" id="btnPlay">Play all</button>
-      <button class="btn" id="btnPrev">← Prev point</button>
-      <button class="btn primary" id="btnNext">Next point →</button>
+      <button class="btn" id="btnPlay">Play both</button>
+      <button class="btn" id="btnPrev">← Prev</button>
+      <button class="btn primary" id="btnNext">Next →</button>
     </div>
   </div>
 </main>
@@ -98,13 +113,28 @@ if (VGP.requireGate()) {
   $('switchUser').onclick = e => { e.preventDefault(); sessionStorage.removeItem('vgp_pass_ok'); location.href='gate.html?next='+encodeURIComponent(location.pathname); };
 
   let all=[], idx=0, labels={};
+  const raw = $('vidRaw'), flow = $('vidFlow');
 
   function setStatus(t, cls){ const el=$('status'); el.textContent=t; el.className='status'+(cls?' '+cls:''); }
+  function nDone(){ return all.filter(it => labels[it.id] != null).length; }
 
-  function pointDone(it){
-    return [0,1,2].every(k => labels[`${it.id}_v${k}`] != null);
+  function syncFrom(master, slave){
+    if (Math.abs((slave.currentTime||0) - (master.currentTime||0)) > 0.12) {
+      try { slave.currentTime = master.currentTime; } catch(e) {}
+    }
   }
-  function nDone(){ return all.filter(pointDone).length; }
+
+  raw.addEventListener('play', () => flow.play().catch(()=>{}));
+  raw.addEventListener('pause', () => flow.pause());
+  raw.addEventListener('seeked', () => { try { flow.currentTime = raw.currentTime; } catch(e) {} });
+  raw.addEventListener('timeupdate', () => syncFrom(raw, flow));
+  flow.addEventListener('play', () => raw.play().catch(()=>{}));
+  flow.addEventListener('pause', () => raw.pause());
+
+  function playBoth(){
+    raw.currentTime = 0; flow.currentTime = 0;
+    raw.play().catch(()=>{}); flow.play().catch(()=>{});
+  }
 
   function render(){
     const it = all[idx];
@@ -114,66 +144,46 @@ if (VGP.requireGate()) {
     $('bar').style.width = (all.length ? 100*nDone()/all.length : 0)+'%';
     $('promptText').textContent = it.prompt || it.task || '';
     $('chips').innerHTML = ['embodiment','split','task'].map(k => `<span class="chip">${it[k]||''}</span>`).join(' ')
+      + ` <span class="chip">${it.n_frames||'?'} frames</span>`
       + ` <span class="chip">${idx+1} / ${all.length}</span>`;
-    const host = $('triplet');
-    host.innerHTML = '';
-    (it.videos||[]).forEach((url, k) => {
-      const id = `${it.id}_v${k}`;
-      const wrap = document.createElement('div');
-      wrap.className = 'clip';
-      wrap.innerHTML = `
-        <header><span>Video ${k+1} / 3 · 16 frames · two static views</span><span class="chip">${id}</span></header>
-        <video id="vid${k}" src="${url}" controls playsinline muted loop></video>
-        <div class="scores">
-          <button class="score ${labels[id]===1?'active':''}" data-k="${k}" data-s="1">1<small>fail</small></button>
-          <button class="score ${labels[id]===2?'active':''}" data-k="${k}" data-s="2">2<small>mixed</small></button>
-          <button class="score ${labels[id]===3?'active':''}" data-k="${k}" data-s="3">3<small>pass</small></button>
-        </div>`;
-      host.appendChild(wrap);
-    });
-    host.querySelectorAll('.score').forEach(b => b.onclick = () => rate(Number(b.dataset.k), Number(b.dataset.s)));
+    raw.src = it.video_raw || '';
+    flow.src = it.video_flow || '';
+    document.querySelectorAll('.score').forEach(b => b.classList.toggle('active', labels[it.id]===Number(b.dataset.s)));
   }
 
-  async function rate(k, s){
+  async function rate(s){
     const it = all[idx]; if (!it) return;
-    const id = `${it.id}_v${k}`;
-    labels[id] = s;
+    labels[it.id] = s;
     setStatus('Saving…', 'syncing');
-    render();
+    document.querySelectorAll('.score').forEach(b => b.classList.toggle('active', Number(b.dataset.s)===s));
     try {
-      await VGP.sbUpsertLabel(rater, id, s);
-      setStatus(`Saved video ${k+1}: ${s}`);
+      await VGP.sbUpsertLabel(rater, it.id, s);
+      setStatus('Saved '+s);
     } catch (e) {
       console.error(e);
       setStatus('Save failed.', 'err');
+      return;
     }
-    if (pointDone(it) && idx < all.length-1){ idx += 1; render(); playAll(); }
+    if (idx < all.length-1){ idx += 1; render(); }
+    else setStatus('All videos in your queue are done.');
   }
 
-  function playAll(){
-    [0,1,2].forEach(k => { const v=$('vid'+k); if (v){ v.currentTime=0; v.play().catch(()=>{}); } });
-  }
-
+  document.querySelectorAll('.score').forEach(b => b.onclick = () => rate(Number(b.dataset.s)));
   document.addEventListener('keydown', e => {
     if (['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)) return;
-    if (e.key>='1' && e.key<='3'){
-      e.preventDefault();
-      const it = all[idx]; if (!it) return;
-      const unset = [0,1,2].find(k => labels[`${it.id}_v${k}`]==null);
-      rate(unset==null?0:unset, Number(e.key));
-    }
-    if (e.key===' '){ e.preventDefault(); playAll(); }
+    if (e.key>='1' && e.key<='3'){ e.preventDefault(); rate(Number(e.key)); }
+    if (e.key===' '){ e.preventDefault(); if (raw.paused) playBoth(); else { raw.pause(); flow.pause(); } }
     if (e.key==='ArrowRight'){ e.preventDefault(); if (idx<all.length-1){ idx++; render(); } }
     if (e.key==='ArrowLeft'){ e.preventDefault(); if (idx>0){ idx--; render(); } }
   });
-  $('btnPlay').onclick = playAll;
+  $('btnPlay').onclick = playBoth;
   $('btnPrev').onclick = () => { if (idx>0){ idx--; render(); } };
   $('btnNext').onclick = () => { if (idx<all.length-1){ idx++; render(); } };
 
   (async () => {
     const cat = await (await fetch('catalog.json')).json();
     all = VGP.buildQueue(cat.items||[], rater, { coreFraction: 0.10, targetTotal: (cat.items||[]).length });
-    try { labels = await VGP.sbLoadLabels(rater); setStatus('Ready. Keys 1–3 score the next unscored video in the point.'); }
+    try { labels = await VGP.sbLoadLabels(rater); setStatus('Ready. Keys 1–3 score this video. Space plays raw+flow together.'); }
     catch(e){ console.error(e); setStatus('Could not reach Supabase.', 'err'); }
     render();
   })().catch(e => { console.error(e); setStatus('Failed to load catalog.json', 'err'); });

@@ -365,6 +365,103 @@ def _import_pruning_module(backend, module_name):
     return importlib.import_module(f"methods.prunning.{backend}.{module_name}")
 
 
+def _install_attn_profiler(unet):
+    """Env-gated (CW_ATTN_PROFILE=1) per-attention-layer profiler.
+
+    Wraps every attention processor's __call__ to record, per (layer, T_q):
+    self/cross, CUDA-synced ms/call, and % of attention. Also times the whole
+    UNet.forward so we get attention-as-fraction-of-UNet. This is the ground
+    truth for "does the sparse backend actually fire on the big spatial layer"
+    and "where does UNet time go". No-op unless CW_ATTN_PROFILE=1.
+    """
+    if os.environ.get("CW_ATTN_PROFILE", "0") != "1":
+        return
+    import atexit as _atexit
+    from collections import defaultdict as _dd
+
+    stats = _dd(lambda: {"calls": 0, "ms": 0.0, "t_q": 0, "t_kv": 0, "self": False})
+
+    class _ProfWrap:
+        def __init__(self, name, inner):
+            self._name = name
+            self._inner = inner
+
+        def __getattr__(self, item):
+            return getattr(self._inner, item)
+
+        def __call__(self, attn, hidden_states, encoder_hidden_states=None, *a, **kw):
+            t_q = hidden_states.shape[1]
+            kv = encoder_hidden_states if encoder_hidden_states is not None else hidden_states
+            t_kv = kv.shape[1]
+            ev0 = torch.cuda.Event(enable_timing=True)
+            ev1 = torch.cuda.Event(enable_timing=True)
+            ev0.record()
+            out = self._inner(attn, hidden_states, encoder_hidden_states, *a, **kw)
+            ev1.record()
+            torch.cuda.synchronize()
+            s = stats[(self._name, t_q)]
+            s["calls"] += 1
+            s["ms"] += ev0.elapsed_time(ev1)
+            s["t_q"] = t_q
+            s["t_kv"] = t_kv
+            s["self"] = (t_q == t_kv)
+            return out
+
+    n_wrapped = 0
+    for _mname, _mod in unet.named_modules():
+        if hasattr(_mod, "processor") and hasattr(_mod, "to_q"):
+            _mod.processor = _ProfWrap(_mname, _mod.processor)
+            n_wrapped += 1
+
+    def _dump():
+        rows = sorted(stats.items(), key=lambda kv: -kv[1]["ms"])
+        total = sum(v["ms"] for _, v in rows)
+        print("\n===== [CW_ATTN_PROFILE] per-(layer,seqlen) attention time =====")
+        print(f"{'layer':<46}{'T_q':>7}{'T_kv':>7}{'self':>6}{'calls':>7}"
+              f"{'ms_tot':>10}{'ms/call':>9}{'%attn':>7}")
+        by_seq = _dd(lambda: {"ms": 0.0, "calls": 0})
+        for (name, _tq), v in rows:
+            by_seq[v["t_q"]]["ms"] += v["ms"]
+            by_seq[v["t_q"]]["calls"] += v["calls"]
+            short = name if len(name) <= 44 else "..." + name[-41:]
+            print(f"{short:<46}{v['t_q']:>7}{v['t_kv']:>7}{str(v['self']):>6}"
+                  f"{v['calls']:>7}{v['ms']:>10.1f}{v['ms']/max(v['calls'],1):>9.3f}"
+                  f"{100*v['ms']/max(total,1e-9):>7.1f}")
+        print(f"----- attention time grouped by T_q (total {total:.1f} ms) -----")
+        for tq, v in sorted(by_seq.items(), key=lambda kv: -kv[1]["ms"]):
+            print(f"  T_q={tq:>6}  calls={v['calls']:>6}  ms={v['ms']:>9.1f}"
+                  f"  ({100*v['ms']/max(total,1e-9):>5.1f}% of attn)")
+        print("================================================================\n")
+
+    _atexit.register(_dump)
+    print(f"[CW_ATTN_PROFILE] attention profiler installed on {n_wrapped} attn modules.")
+
+    _fwd = {"ms": 0.0, "calls": 0}
+    _orig_fwd = unet.forward
+
+    def _timed_fwd(*a, **kw):
+        ev0 = torch.cuda.Event(enable_timing=True)
+        ev1 = torch.cuda.Event(enable_timing=True)
+        ev0.record()
+        out = _orig_fwd(*a, **kw)
+        ev1.record()
+        torch.cuda.synchronize()
+        _fwd["ms"] += ev0.elapsed_time(ev1)
+        _fwd["calls"] += 1
+        return out
+
+    unet.forward = _timed_fwd
+
+    def _dump_fwd():
+        attn_ms = sum(v["ms"] for v in stats.values())
+        print(f"[CW_ATTN_PROFILE] UNet.forward total {_fwd['ms']:.1f} ms over "
+              f"{_fwd['calls']} calls; attention = {attn_ms:.1f} ms "
+              f"({100*attn_ms/max(_fwd['ms'],1e-9):.1f}% of UNet fwd). "
+              f"Non-attention = {100*(1-attn_ms/max(_fwd['ms'],1e-9)):.1f}%.")
+
+    _atexit.register(_dump_fwd)
+
+
 def main():
     parser = ArgumentParser()
     parser.add_argument("--svd_model_path", type=str, required=True)
@@ -600,6 +697,8 @@ def main():
         print(f"[Sparse] Radial enabled: decay={args.radial_decay_factor}, "
               f"block_size={args.radial_block_size}, model_type={args.radial_model_type}, "
               f"geom={_num_views}x{_h_per_view}x{_w}")
+
+    _install_attn_profiler(unet)
 
     # Find all episodes
     anno_dir = Path(val_dataset_dir) / "annotation" / "val"

@@ -47,12 +47,14 @@ video{width:100%;max-height:56vh;background:#0a0a0f;display:block;object-fit:con
   <div class="rubric">
     <b>How to score:</b> the video plays <b>16 frames</b> then pauses. Press <b>1 / 2 / 3</b>
     (fail / mixed / pass), then the next segment plays, until the video ends.
-    Dataset for this mode (300 mixed multi+single view) is not locked yet — rubric examples TBD.
+    Remaining 300: mix of <b>multiview + singleview</b>. Multiview shows
+    <b>all views</b> (not just the two static cameras). Dataset not locked yet — rubric examples TBD.
   </div>
   <p class="status" id="status">Loading…</p>
   <div id="empty" class="empty" style="display:none">
-    No sequential-segment catalog yet. The remaining 300 (multiview + singleview)
-    will land in <code>catalog.segment.json</code> once that split is chosen.
+    No sequential-segment catalog yet. The remaining 300 (all views if
+    multiview, plus singleview, scored every 16 frames) lands in
+    <code>catalog.segment.json</code> once that split is chosen.
   </div>
   <div class="stage" id="stage" style="display:none">
     <div class="prompt-bar">

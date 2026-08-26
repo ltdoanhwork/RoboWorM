@@ -12,8 +12,8 @@ as a side-by-side `view1|view2` overlay to help raters see motion.
 | PNG `view1/view2/frame_*.png` layout | original only | labeling pipeline decodes mp4 instead |
 
 The labeling builder (`scripts/build_assessment_multiview.py`) crops the two
-**static** cameras out of a 3-view strip / 4-view 2×2 grid, runs the flow
-heatmap on each, then hstacks them into one clip.
+**static** cameras out of a 3-view strip / 4-view 2×2 grid, writes a **raw**
+hstack and a **flow-overlay** hstack, both at the original clip length.
 
 ## Original CLI (frame folders)
 

@@ -11,14 +11,15 @@ once you pick them.
 | **2** | Mixed | Recognizable robot/task but artifacts, mild physics errors, or drift. | _TBD_ |
 | **3** | Pass | Coherent motion, follows the prompt, physics look right. | _TBD_ |
 
-## Mode A — Multiview triplets (first 300 videos)
+## Mode A — Multiview static pair (first 300 videos)
 
-Each **point** shows **3 videos**. Each video is **16 frames** of the two
-**static** cameras playing side-by-side (flow heatmap overlay). Score **each
-of the 3 videos** 1/2/3.
+Full original length. Only the **two static cameras**. The page shows **raw**
+and **optical-flow overlay** of the same clip, playing together. Score the
+**whole video** 1 / 2 / 3 once.
 
 ## Mode B — Sequential 16-frame segments (remaining 300)
 
-Watch the video. After every **16 frames** (regardless of fps) the clip
-pauses — score 1/2/3 — then play the next segment until the video ends.
-Mix of multiview + singleview. Dataset for this mode is not locked yet.
+Dataset not locked yet. Will mix **multiview + singleview**. If the clip is
+multiview, show **all views**. The video plays, pauses every **16 frames**
+(regardless of fps), you score 1 / 2 / 3, then the next segment, until the
+clip ends.

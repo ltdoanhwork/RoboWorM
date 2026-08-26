@@ -30,9 +30,12 @@ DATASET_META_INFO="./models/Ctrl-World/dataset_meta_info"
 DATASET_EXAMPLE_DIR="./models/Ctrl-World/dataset_example"
 
 # PISA -- TUNED (see ctrlworld-single-arm-multiview-sparse-attention-insights).
-PISA_DENSITY="${PISA_DENSITY:-0.2}"
+# d0.2/s0 is CORRUPT here (PSNR 17.6, last frame melts to noise); d0.5/start2 is
+# the least-bad quality point (PSNR 20.95, still 0.95x = slower than dense —
+# sparse-attn is net-negative on this short-seq SVD UNet, a valid benchmark point).
+PISA_DENSITY="${PISA_DENSITY:-0.5}"
 PISA_BLOCK_SIZE="${PISA_BLOCK_SIZE:-64}"
-PISA_START_LAYER="${PISA_START_LAYER:-0}"
+PISA_START_LAYER="${PISA_START_LAYER:-2}"
 
 OUTPUT_BASE="${OUTPUT_ROOT:-${PROJECT_ROOT}/sampling_dataset/pisa/single_arm/output/multiview/ctrlworld}"
 INPUT_BASE="${INPUT_ROOT:-${PROJECT_ROOT}/sampling_dataset/pisa/single_arm/input/multiview/ctrlworld}"

@@ -6,8 +6,8 @@ Supabase Free, as long as this stays a non-commercial research deployment
 
 ```
 gate.html     passcode + display name
-index.html    Mode A — 100 points × 3 videos, 1–2–3, two static views + flow overlay
-segment.html  Mode B — sequential 16-frame scoring (remaining 300, catalog not locked)
+index.html    Mode A — 300 full-length MV clips, 2 static views, raw + flow, 1–2–3
+segment.html  Mode B — remaining 300, all views if MV + singleview, every 16 frames (catalog not locked)
 admin.html    cross-rater progress + CSV/JSON export
 RUBRIC.md     1–2–3 rubric placeholders (examples TBD)
 vgp.js        queue assignment + Supabase REST
@@ -16,16 +16,16 @@ catalog.segment.json  Mode B stub
 ```
 
 Mode A videos live at
-`https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/assessment/multiview_triplets/points/{id}/seg{k}.mp4`.
+`https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/assessment/multiview_static2/clips/{id}/{raw,flow}.mp4`.
 Rebuild:
 
 ```bash
 models/dreamgen/.venv/bin/python scripts/build_assessment_multiview.py
-cp sampling_dataset/assessment/multiview_triplets/catalog.json webpage/labeling/catalog.json
+cp sampling_dataset/assessment/multiview_static2/catalog.public.json webpage/labeling/catalog.json
 HF_TOKEN=... python scripts/upload_content_to_hf.py \
-  sampling_dataset/assessment/multiview_triplets/points \
+  sampling_dataset/assessment/multiview_static2/clips \
   doanh25032004/video_gen_physics --repo-type dataset \
-  --prefix assessment/multiview_triplets/points
+  --prefix assessment/multiview_static2/clips
 ```
 
 ## 1. Supabase (free Postgres)
