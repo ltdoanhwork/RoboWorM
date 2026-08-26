@@ -13,7 +13,7 @@
 create table if not exists public.labels (
   rater_name text not null check (length(rater_name) between 1 and 60),
   item_id text not null,
-  score smallint not null check (score between 1 and 5),
+  score smallint not null check (score between 1 and 3),
   updated_at timestamptz not null default now()
 );
 

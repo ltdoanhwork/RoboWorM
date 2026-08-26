@@ -3,99 +3,88 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Video World — Human Labeling</title>
+<title>Video World — Triplet labeling (1–2–3)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
---bg:#f8f9fa;--card:#fff;--border:#e2e5e9;--text:#1a1a2e;--muted:#7a7a96;--secondary:#4a4a68;
---accent:#4f46e5;--accent-light:#6366f1;--green:#059669;--orange:#d97706;--red:#dc2626;
---radius:12px;
-}
-html,body{height:100%}
+:root{--bg:#f8f9fa;--card:#fff;--border:#e2e5e9;--text:#1a1a2e;--muted:#7a7a96;--secondary:#4a4a68;--accent:#4f46e5;--orange:#d97706;--red:#dc2626}
 body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
 button{font-family:inherit;cursor:pointer}
 nav{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.94);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:.85rem 1.5rem}
 nav .inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
 .logo{font-weight:800} .logo span{background:linear-gradient(135deg,var(--accent),#0891b2);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.nav-meta{font-size:.85rem;color:var(--muted);display:flex;align-items:center;gap:.6rem}
-.nav-meta strong{color:var(--text)}
-.nav-meta a{color:var(--accent);text-decoration:none}
+.nav-meta{font-size:.85rem;color:var(--muted)}
+.nav-meta strong{color:var(--text)} .nav-meta a{color:var(--accent);text-decoration:none}
 main{max-width:1100px;margin:0 auto;padding:1.5rem}
-.filters{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.25rem}
-select{border:1px solid var(--border);background:#fff;border-radius:8px;padding:.45rem .7rem;font-size:.85rem;color:var(--secondary)}
-.stage{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.04)}
-.stage video{width:100%;max-height:62vh;background:#0a0a0f;display:block;object-fit:contain}
-.prompt-bar{padding:.9rem 1.2rem;background:linear-gradient(135deg,#eef2ff,#ecfeff);border-bottom:1px solid var(--border)}
+.rubric{background:#fff;border:1px solid var(--border);border-radius:12px;padding:.9rem 1.1rem;margin-bottom:1rem}
+.rubric h3{font-size:.8rem;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);margin-bottom:.4rem}
+.rubric table{width:100%;border-collapse:collapse;font-size:.85rem}
+.rubric th,.rubric td{text-align:left;padding:.3rem .4rem;border-bottom:1px solid var(--border);vertical-align:top}
+.rubric .ex{color:var(--muted);font-style:italic}
+.prompt-bar{padding:.9rem 1.2rem;background:linear-gradient(135deg,#eef2ff,#ecfeff);border:1px solid var(--border);border-radius:12px 12px 0 0}
 .prompt-bar .label{font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);margin-bottom:.3rem}
-.prompt-bar .text{font-size:1.05rem;font-weight:600;color:var(--text);line-height:1.4}
-.meta-bar{padding:.9rem 1.2rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:.75rem;flex-wrap:wrap;align-items:center}
-.chip{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:.2rem .5rem}
-.controls{padding:1.1rem 1.2rem 1.4rem}
-.scores{display:flex;gap:.5rem;flex-wrap:wrap;margin:.75rem 0 1rem}
-.score{flex:1;min-width:72px;border:1px solid var(--border);background:#fff;border-radius:10px;padding:.7rem .4rem;font-weight:600;font-size:.9rem;color:var(--secondary);transition:.15s}
-.score:hover{border-color:var(--accent);color:var(--accent)}
+.prompt-bar .text{font-size:1.05rem;font-weight:600}
+.stage{background:var(--card);border:1px solid var(--border);border-top:none;border-radius:0 0 16px 16px;overflow:hidden}
+.triplet{display:flex;flex-direction:column;gap:0}
+.clip{border-bottom:1px solid var(--border);padding:.6rem 1rem 1rem}
+.clip header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;font-size:.8rem;color:var(--muted)}
+.clip video{width:100%;max-height:28vh;background:#0a0a0f;display:block;object-fit:contain;border-radius:8px}
+.scores{display:flex;gap:.4rem;margin-top:.5rem}
+.score{flex:1;border:1px solid var(--border);background:#fff;border-radius:10px;padding:.55rem .3rem;font-weight:700}
+.score small{display:block;font-weight:500;font-size:.7rem;opacity:.75}
 .score.active{background:var(--accent);border-color:var(--accent);color:#fff}
-.score small{display:block;font-weight:500;font-size:.7rem;opacity:.8;margin-top:.15rem}
-.nav-btns{display:flex;gap:.5rem;flex-wrap:wrap}
+.nav-btns{display:flex;gap:.5rem;flex-wrap:wrap;padding:1rem 1.2rem}
 .btn{border:1px solid var(--border);background:#fff;border-radius:8px;padding:.55rem 1rem;font-weight:600;font-size:.85rem;color:var(--secondary)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-.btn:hover{border-color:var(--accent)}
-.help{margin-top:.85rem;font-size:.8rem;color:var(--muted)}
-.progress{height:6px;background:#eceef2;border-radius:99px;overflow:hidden;margin:0 0 1rem}
+.chip{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:.2rem .5rem}
+.meta{padding:.7rem 1.2rem;display:flex;gap:.4rem;flex-wrap:wrap}
+.status{color:var(--muted);font-size:.85rem;margin:.6rem 0}
+.status.err{color:var(--red)} .status.syncing{color:var(--orange)}
+.progress{height:6px;background:#eceef2;border-radius:99px;overflow:hidden;margin:0 0 .8rem}
 .progress > div{height:100%;background:linear-gradient(90deg,var(--accent),#0891b2);width:0%}
-.status{color:var(--muted);font-size:.85rem;margin-bottom:.75rem}
-.status.syncing{color:var(--orange)}
-.status.err{color:var(--red)}
-.empty{padding:3rem 1.5rem;text-align:center;color:var(--muted)}
 </style>
 </head>
 <body>
 <nav>
   <div class="inner">
-    <div class="logo"><span>VideoWorld</span> Human Labeling</div>
+    <div class="logo"><span>VideoWorld</span> Triplets · 1–2–3</div>
     <div class="nav-meta">
       <span id="raterChip"></span>
-      Labeled <strong id="nLabeled">0</strong> / <span id="nTotal">0</span>
-      &nbsp;·&nbsp; <a href="#" id="switchUser">switch user</a>
+      Points <strong id="nLabeled">0</strong> / <span id="nTotal">0</span>
+      · <a href="segment.html">segment mode</a>
+      · <a href="admin.html">admin</a>
+      · <a href="#" id="switchUser">switch user</a>
     </div>
   </div>
 </nav>
 <main>
-  <div class="filters">
-    <select id="emb"></select>
-    <select id="view"></select>
-    <select id="model"></select>
-    <select id="split"></select>
-    <button class="btn" id="btnShuffle">Shuffle</button>
+  <div class="rubric" id="rubric">
+    <h3>Rubric (placeholders — examples TBD)</h3>
+    <table>
+      <tr><th>1 Fail</th><td>Physics broken, melted, wrong task, unusable.</td><td class="ex">example: TBD</td></tr>
+      <tr><th>2 Mixed</th><td>Recognizable but artifacts / mild physics errors / drift.</td><td class="ex">example: TBD</td></tr>
+      <tr><th>3 Pass</th><td>Coherent, follows the prompt, physics look right.</td><td class="ex">example: TBD</td></tr>
+    </table>
+    <p style="margin-top:.55rem;font-size:.8rem;color:var(--muted)">
+      Each point = <b>3 videos</b>. Each video is <b>16 frames</b> of the two
+      <b>static cameras</b> side-by-side. Color overlay = optical flow (motion).
+      Keys <b>1–3</b> score the next unscored video; Space plays all three.
+    </p>
   </div>
   <div class="progress"><div id="bar"></div></div>
   <p class="status" id="status">Loading…</p>
+  <div class="prompt-bar">
+    <div class="label">Task prompt</div>
+    <div class="text" id="promptText"></div>
+  </div>
+  <div class="meta" id="chips"></div>
   <div class="stage" id="stage">
-    <div class="prompt-bar">
-      <div class="label">Task prompt</div>
-      <div class="text" id="promptText"></div>
-    </div>
-    <div class="meta-bar">
-      <div id="chips"></div>
-      <div class="chip" id="idxChip"></div>
-    </div>
-    <video id="player" controls playsinline muted></video>
-    <div class="controls">
-      <div class="scores">
-        <button class="score" data-s="1">1<small>broken</small></button>
-        <button class="score" data-s="2">2<small>poor</small></button>
-        <button class="score" data-s="3">3<small>ok</small></button>
-        <button class="score" data-s="4">4<small>good</small></button>
-        <button class="score" data-s="5">5<small>excellent</small></button>
-      </div>
-      <div class="nav-btns">
-        <button class="btn" id="btnPrev">← Prev</button>
-        <button class="btn primary" id="btnNext">Next →</button>
-        <button class="btn" id="btnSkip">Skip unlabeled</button>
-      </div>
-      <p class="help">Keys: <b>1–5</b> score · <b>←/→</b> navigate · <b>space</b> play/pause. Your queue is personal — scores sync automatically.</p>
+    <div class="triplet" id="triplet"></div>
+    <div class="nav-btns">
+      <button class="btn" id="btnPlay">Play all</button>
+      <button class="btn" id="btnPrev">← Prev point</button>
+      <button class="btn primary" id="btnNext">Next point →</button>
     </div>
   </div>
 </main>
@@ -104,150 +93,90 @@ select{border:1px solid var(--border);background:#fff;border-radius:8px;padding:
 <script>
 if (VGP.requireGate()) {
   const rater = VGP.getRater();
-  let all = [], pool = [], idx = 0;
-  let labels = {}; // item_id -> score (from Supabase, this rater only)
-  let pending = new Set(); // item_ids with an in-flight/failed sync
-
   const $ = id => document.getElementById(id);
-  const emb = $('emb'), view = $('view'), model = $('model'), split = $('split');
-  const player = $('player');
-
   $('raterChip').textContent = rater;
-  document.getElementById('switchUser').onclick = (e) => {
-    e.preventDefault();
-    sessionStorage.removeItem('vgp_pass_ok');
-    location.href = 'gate.html?next=' + encodeURIComponent(location.pathname);
-  };
+  $('switchUser').onclick = e => { e.preventDefault(); sessionStorage.removeItem('vgp_pass_ok'); location.href='gate.html?next='+encodeURIComponent(location.pathname); };
 
-  function labeledCount(){ return pool.filter(it => labels[it.id] != null).length; }
+  let all=[], idx=0, labels={};
 
-  function fillSelect(el, values, label){
-    const cur = el.value;
-    el.innerHTML = `<option value="">${label}: all</option>` + values.map(v => `<option value="${v}">${v}</option>`).join('');
-    if ([...el.options].some(o => o.value === cur)) el.value = cur;
+  function setStatus(t, cls){ const el=$('status'); el.textContent=t; el.className='status'+(cls?' '+cls:''); }
+
+  function pointDone(it){
+    return [0,1,2].every(k => labels[`${it.id}_v${k}`] != null);
   }
+  function nDone(){ return all.filter(pointDone).length; }
 
-  function applyFilters(){
-    pool = all.filter(it =>
-      (!emb.value || it.embodiment === emb.value) &&
-      (!view.value || it.view === view.value) &&
-      (!model.value || it.model === model.value) &&
-      (!split.value || it.split === split.value)
-    );
-    idx = Math.min(idx, Math.max(0, pool.length - 1));
-    show();
-  }
-
-  function shuffle(){
-    for (let i = pool.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [pool[i], pool[j]] = [pool[j], pool[i]];
-    }
-    idx = 0; show();
-  }
-
-  function setStatus(text, cls){
-    const el = $('status');
-    el.textContent = text;
-    el.className = 'status' + (cls ? ' ' + cls : '');
-  }
-
-  function renderMeta(){
-    $('nTotal').textContent = pool.length;
-    $('nLabeled').textContent = labeledCount();
-    $('bar').style.width = (pool.length ? (100 * labeledCount() / pool.length) : 0) + '%';
-    const it = pool[idx];
-    if (!it) return;
-    $('idxChip').textContent = `${idx + 1} / ${pool.length}`;
+  function render(){
+    const it = all[idx];
+    if (!it){ setStatus('No items.'); return; }
+    $('nTotal').textContent = all.length;
+    $('nLabeled').textContent = nDone();
+    $('bar').style.width = (all.length ? 100*nDone()/all.length : 0)+'%';
     $('promptText').textContent = it.prompt || it.task || '';
-    $('chips').innerHTML = ['embodiment','view','model','split','task'].map(k =>
-      `<span class="chip">${it[k] || ''}</span>`).join(' ');
-    document.querySelectorAll('.score').forEach(b => {
-      b.classList.toggle('active', String(labels[it.id]) === b.dataset.s);
+    $('chips').innerHTML = ['embodiment','split','task'].map(k => `<span class="chip">${it[k]||''}</span>`).join(' ')
+      + ` <span class="chip">${idx+1} / ${all.length}</span>`;
+    const host = $('triplet');
+    host.innerHTML = '';
+    (it.videos||[]).forEach((url, k) => {
+      const id = `${it.id}_v${k}`;
+      const wrap = document.createElement('div');
+      wrap.className = 'clip';
+      wrap.innerHTML = `
+        <header><span>Video ${k+1} / 3 · 16 frames · two static views</span><span class="chip">${id}</span></header>
+        <video id="vid${k}" src="${url}" controls playsinline muted loop></video>
+        <div class="scores">
+          <button class="score ${labels[id]===1?'active':''}" data-k="${k}" data-s="1">1<small>fail</small></button>
+          <button class="score ${labels[id]===2?'active':''}" data-k="${k}" data-s="2">2<small>mixed</small></button>
+          <button class="score ${labels[id]===3?'active':''}" data-k="${k}" data-s="3">3<small>pass</small></button>
+        </div>`;
+      host.appendChild(wrap);
     });
+    host.querySelectorAll('.score').forEach(b => b.onclick = () => rate(Number(b.dataset.k), Number(b.dataset.s)));
   }
 
-  function show(){
-    if (!pool.length){
-      setStatus('No items match these filters.');
-      $('stage').style.display = 'none';
-      renderMeta();
-      return;
-    }
-    $('stage').style.display = 'block';
-    const it = pool[idx];
-    if (!pending.has(it.id)) {
-      setStatus(labels[it.id] != null ? `Current score: ${labels[it.id]}` : 'Unlabeled');
-    }
-    if (player.getAttribute('src') !== it.video){
-      player.src = it.video;
-      player.play().catch(()=>{});
-    }
-    renderMeta();
-  }
-
-  async function rate(s){
-    const it = pool[idx]; if (!it) return;
-    labels[it.id] = s;
-    pending.add(it.id);
+  async function rate(k, s){
+    const it = all[idx]; if (!it) return;
+    const id = `${it.id}_v${k}`;
+    labels[id] = s;
     setStatus('Saving…', 'syncing');
-    renderMeta();
+    render();
     try {
-      await VGP.sbUpsertLabel(rater, it.id, s);
-      pending.delete(it.id);
-      setStatus(`Saved: ${s}`);
+      await VGP.sbUpsertLabel(rater, id, s);
+      setStatus(`Saved video ${k+1}: ${s}`);
     } catch (e) {
       console.error(e);
-      setStatus('Save failed — will not advance. Check connection and retry.', 'err');
-      pending.delete(it.id);
-      return; // do not advance on failure so the rating isn't silently lost
+      setStatus('Save failed.', 'err');
     }
-    if (idx < pool.length - 1){ idx += 1; show(); }
-    else renderMeta();
+    if (pointDone(it) && idx < all.length-1){ idx += 1; render(); playAll(); }
   }
 
-  function unique(key){ return [...new Set(all.map(x => x[key]))].sort(); }
-
-  async function init(){
-    const catRes = await fetch('catalog.json');
-    const cat = await catRes.json();
-    const items = cat.items || [];
-    all = VGP.buildQueue(items, rater, { coreFraction: 0.10, targetTotal: 100 });
-
-    fillSelect(emb, unique('embodiment'), 'Embodiment');
-    fillSelect(view, unique('view'), 'View');
-    fillSelect(model, unique('model'), 'Model');
-    fillSelect(split, unique('split'), 'Split');
-    applyFilters();
-
-    try {
-      labels = await VGP.sbLoadLabels(rater);
-      setStatus('Ready.');
-    } catch (e) {
-      console.error(e);
-      setStatus('Could not reach Supabase — check config.js / connection.', 'err');
-    }
-    show();
+  function playAll(){
+    [0,1,2].forEach(k => { const v=$('vid'+k); if (v){ v.currentTime=0; v.play().catch(()=>{}); } });
   }
 
-  init().catch(err => { setStatus('Failed to load catalog.json.', 'err'); console.error(err); });
-
-  [emb, view, model, split].forEach(el => el.addEventListener('change', () => { idx = 0; applyFilters(); }));
-  $('btnShuffle').onclick = shuffle;
-  $('btnPrev').onclick = () => { if (idx>0){ idx--; show(); } };
-  $('btnNext').onclick = () => { if (idx<pool.length-1){ idx++; show(); } };
-  $('btnSkip').onclick = () => {
-    const next = pool.findIndex((it,i) => i > idx && labels[it.id] == null);
-    if (next >= 0){ idx = next; show(); }
-  };
-  document.querySelectorAll('.score').forEach(b => b.addEventListener('click', () => rate(Number(b.dataset.s))));
   document.addEventListener('keydown', e => {
     if (['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)) return;
-    if (e.key >= '1' && e.key <= '5'){ e.preventDefault(); rate(Number(e.key)); }
-    if (e.key === 'ArrowRight'){ e.preventDefault(); if (idx<pool.length-1){ idx++; show(); } }
-    if (e.key === 'ArrowLeft'){ e.preventDefault(); if (idx>0){ idx--; show(); } }
-    if (e.key === ' '){ e.preventDefault(); player.paused ? player.play() : player.pause(); }
+    if (e.key>='1' && e.key<='3'){
+      e.preventDefault();
+      const it = all[idx]; if (!it) return;
+      const unset = [0,1,2].find(k => labels[`${it.id}_v${k}`]==null);
+      rate(unset==null?0:unset, Number(e.key));
+    }
+    if (e.key===' '){ e.preventDefault(); playAll(); }
+    if (e.key==='ArrowRight'){ e.preventDefault(); if (idx<all.length-1){ idx++; render(); } }
+    if (e.key==='ArrowLeft'){ e.preventDefault(); if (idx>0){ idx--; render(); } }
   });
+  $('btnPlay').onclick = playAll;
+  $('btnPrev').onclick = () => { if (idx>0){ idx--; render(); } };
+  $('btnNext').onclick = () => { if (idx<all.length-1){ idx++; render(); } };
+
+  (async () => {
+    const cat = await (await fetch('catalog.json')).json();
+    all = VGP.buildQueue(cat.items||[], rater, { coreFraction: 0.10, targetTotal: (cat.items||[]).length });
+    try { labels = await VGP.sbLoadLabels(rater); setStatus('Ready. Keys 1–3 score the next unscored video in the point.'); }
+    catch(e){ console.error(e); setStatus('Could not reach Supabase.', 'err'); }
+    render();
+  })().catch(e => { console.error(e); setStatus('Failed to load catalog.json', 'err'); });
 }
 </script>
 </body>

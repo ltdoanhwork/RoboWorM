@@ -1,0 +1,7 @@
+{
+  "mode": "segment",
+  "n": 0,
+  "seg_len": 16,
+  "note": "Remaining 300 (multiview + singleview) is not locked yet. Sequential 16-frame scoring UI is ready in segment.html.",
+  "items": []
+}

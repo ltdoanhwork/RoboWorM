@@ -5,26 +5,27 @@ Supabase Free, as long as this stays a non-commercial research deployment
 (see cost notes below).
 
 ```
-gate.html    passcode + display name (sets localStorage/sessionStorage)
-index.html   labeling UI (1-5 score), personal queue, syncs to Supabase
-admin.html   cross-rater progress + CSV/JSON export
-vgp.js       shared logic: queue assignment, Supabase REST calls
-catalog.json blind public catalog (400 items; no method/role/path fields)
-config.js    Supabase URL + publishable key + passcode — committed on purpose (see below)
-config.example.js  same template, kept for reference
+gate.html     passcode + display name
+index.html    Mode A — 100 points × 3 videos, 1–2–3, two static views + flow overlay
+segment.html  Mode B — sequential 16-frame scoring (remaining 300, catalog not locked)
+admin.html    cross-rater progress + CSV/JSON export
+RUBRIC.md     1–2–3 rubric placeholders (examples TBD)
+vgp.js        queue assignment + Supabase REST
+catalog.json  Mode A public catalog (HF URLs)
+catalog.segment.json  Mode B stub
 ```
 
-Video files are **not** hosted here — `catalog.json`'s `video` field points at
-the public HuggingFace dataset CDN
-(`https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/data_for_web/clips/{id}.mp4`).
-Rebuild the blind bundle + catalog with:
+Mode A videos live at
+`https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/assessment/multiview_triplets/points/{id}/seg{k}.mp4`.
+Rebuild:
 
 ```bash
-python scripts/build_public_labeling_bundle.py   # writes clips/ + catalog.public.json
-cp sampling_dataset/data_for_web/catalog.public.json webpage/labeling/catalog.json
+models/dreamgen/.venv/bin/python scripts/build_assessment_multiview.py
+cp sampling_dataset/assessment/multiview_triplets/catalog.json webpage/labeling/catalog.json
 HF_TOKEN=... python scripts/upload_content_to_hf.py \
-  sampling_dataset/data_for_web/clips doanh25032004/video_gen_physics \
-  --repo-type dataset --prefix data_for_web/clips
+  sampling_dataset/assessment/multiview_triplets/points \
+  doanh25032004/video_gen_physics --repo-type dataset \
+  --prefix assessment/multiview_triplets/points
 ```
 
 ## 1. Supabase (free Postgres)

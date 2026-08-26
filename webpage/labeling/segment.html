@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video World — Segment labeling (16 frames)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f8f9fa;--card:#fff;--border:#e2e5e9;--text:#1a1a2e;--muted:#7a7a96;--accent:#4f46e5;--orange:#d97706;--red:#dc2626}
+body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+button{font-family:inherit;cursor:pointer}
+nav{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--border);padding:.85rem 1.5rem}
+nav .inner{max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.logo{font-weight:800} .logo span{background:linear-gradient(135deg,var(--accent),#0891b2);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-meta{font-size:.85rem;color:var(--muted)} .nav-meta a{color:var(--accent);text-decoration:none}
+main{max-width:1100px;margin:0 auto;padding:1.5rem}
+.rubric{background:#fff;border:1px solid var(--border);border-radius:12px;padding:.9rem 1.1rem;margin-bottom:1rem;font-size:.85rem}
+.stage{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.prompt-bar{padding:.9rem 1.2rem;background:linear-gradient(135deg,#eef2ff,#ecfeff);border-bottom:1px solid var(--border)}
+.prompt-bar .label{font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--accent)}
+.prompt-bar .text{font-size:1.05rem;font-weight:600}
+video{width:100%;max-height:56vh;background:#0a0a0f;display:block;object-fit:contain}
+.controls{padding:1rem 1.2rem}
+.scores{display:flex;gap:.5rem;margin:.7rem 0}
+.score{flex:1;border:1px solid var(--border);background:#fff;border-radius:10px;padding:.7rem .4rem;font-weight:700}
+.score small{display:block;font-weight:500;font-size:.7rem;opacity:.75}
+.score.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn{border:1px solid var(--border);background:#fff;border-radius:8px;padding:.55rem 1rem;font-weight:600}
+.status{color:var(--muted);font-size:.85rem;margin:.5rem 0 1rem}
+.status.err{color:var(--red)}
+.empty{padding:2rem;text-align:center;color:var(--muted)}
+</style>
+</head>
+<body>
+<nav>
+  <div class="inner">
+    <div class="logo"><span>VideoWorld</span> Segments · 16 frames</div>
+    <div class="nav-meta">
+      <span id="raterChip"></span>
+      · <a href="index.html">triplet mode</a>
+      · <a href="admin.html">admin</a>
+    </div>
+  </div>
+</nav>
+<main>
+  <div class="rubric">
+    <b>How to score:</b> the video plays <b>16 frames</b> then pauses. Press <b>1 / 2 / 3</b>
+    (fail / mixed / pass), then the next segment plays, until the video ends.
+    Dataset for this mode (300 mixed multi+single view) is not locked yet — rubric examples TBD.
+  </div>
+  <p class="status" id="status">Loading…</p>
+  <div id="empty" class="empty" style="display:none">
+    No sequential-segment catalog yet. The remaining 300 (multiview + singleview)
+    will land in <code>catalog.segment.json</code> once that split is chosen.
+  </div>
+  <div class="stage" id="stage" style="display:none">
+    <div class="prompt-bar">
+      <div class="label">Task prompt · segment <span id="segChip">1</span></div>
+      <div class="text" id="promptText"></div>
+    </div>
+    <video id="player" playsinline muted></video>
+    <div class="controls">
+      <div class="scores">
+        <button class="score" data-s="1">1<small>fail</small></button>
+        <button class="score" data-s="2">2<small>mixed</small></button>
+        <button class="score" data-s="3">3<small>pass</small></button>
+      </div>
+      <button class="btn" id="btnReplay">Replay segment</button>
+      <button class="btn" id="btnNextVid">Skip to next video</button>
+    </div>
+  </div>
+</main>
+<script src="config.js"></script>
+<script src="vgp.js"></script>
+<script>
+if (VGP.requireGate()) {
+  const rater = VGP.getRater();
+  document.getElementById('raterChip').textContent = rater;
+  const $ = id => document.getElementById(id);
+  const player = $('player');
+  const SEG = 16;
+  let items=[], idx=0, seg=0, nFrames=0, fps=16, labels={};
+
+  function setStatus(t, cls){ const el=$('status'); el.textContent=t; el.className='status'+(cls?' '+cls:''); }
+
+  function segCount(){ return Math.max(1, Math.floor(nFrames / SEG)); }
+  function segItemId(){ return `${items[idx].id}_s${String(seg).padStart(3,'0')}`; }
+
+  function playSeg(){
+    const it = items[idx];
+    $('promptText').textContent = it.prompt || it.task || '';
+    $('segChip').textContent = `${seg+1} / ${segCount()}`;
+    const t0 = seg * SEG / fps;
+    const t1 = Math.min(nFrames, (seg+1)*SEG) / fps;
+    player.ontimeupdate = () => {
+      if (player.currentTime >= t1 - 0.02) {
+        player.pause();
+        player.ontimeupdate = null;
+        setStatus(`Segment ${seg+1} ended — score 1 / 2 / 3`);
+      }
+    };
+    player.currentTime = t0;
+    player.play().catch(()=>{});
+    document.querySelectorAll('.score').forEach(b => b.classList.toggle('active', labels[segItemId()]===Number(b.dataset.s)));
+  }
+
+  async function rate(s){
+    const it = items[idx]; if (!it) return;
+    const id = segItemId();
+    labels[id] = s;
+    setStatus('Saving…');
+    try { await VGP.sbUpsertLabel(rater, id, s); }
+    catch(e){ console.error(e); setStatus('Save failed.', 'err'); return; }
+    if (seg+1 < segCount()){ seg += 1; playSeg(); }
+    else if (idx+1 < items.length){ idx += 1; seg = 0; loadVideo(); }
+    else setStatus('All videos done.');
+  }
+
+  function loadVideo(){
+    const it = items[idx];
+    nFrames = it.n_frames || 0;
+    fps = it.fps || 16;
+    player.src = it.video;
+    player.onloadedmetadata = () => {
+      if (!nFrames) nFrames = Math.round((player.duration||0) * (player.frameRate || fps));
+      if (!nFrames) nFrames = Math.round((player.duration||0) * fps);
+      playSeg();
+    };
+  }
+
+  document.querySelectorAll('.score').forEach(b => b.onclick = () => rate(Number(b.dataset.s)));
+  document.addEventListener('keydown', e => {
+    if (e.key>='1' && e.key<='3'){ e.preventDefault(); rate(Number(e.key)); }
+    if (e.key===' '){ e.preventDefault(); player.paused ? player.play() : player.pause(); }
+  });
+  $('btnReplay').onclick = playSeg;
+  $('btnNextVid').onclick = () => { if (idx+1<items.length){ idx++; seg=0; loadVideo(); } };
+
+  (async () => {
+    try {
+      const res = await fetch('catalog.segment.json');
+      if (!res.ok) throw new Error('missing');
+      const cat = await res.json();
+      items = cat.items || [];
+    } catch { items = []; }
+    try { labels = await VGP.sbLoadLabels(rater); } catch(e){ console.error(e); }
+    if (!items.length){
+      $('empty').style.display = 'block';
+      setStatus('Waiting on the remaining-300 dataset.');
+      return;
+    }
+    $('stage').style.display = 'block';
+    setStatus('Ready.');
+    loadVideo();
+  })();
+}
+</script>
+</body>
+</html>
