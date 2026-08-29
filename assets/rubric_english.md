@@ -20,8 +20,8 @@ Task completion rate, aesthetic appeal, and the accuracy or execution quality of
 
 | Rating | Multiview Consistency & Camera Stability | Threshold Conditions (Area & Duration)* |
 |--------|--------------------------------------------|-------------------------------------------|
-| **Good** | • Motion, shape, color, and relative spatial positioning across both views are virtually identical.<br>• The cameras remain nearly static. | Affected region covers **< 10%** of the frame area **and** persists for **< 10%** of the video duration. |
-| **Medium** | • Noticeable discrepancies appear between the two views (e.g., slight variations in motion or shape, minor relative position misalignments).<br>• Cameras may exhibit occasional jitter or small pans/drifts. | Affected region covers **≤ 50%** of the frame area **and** persists for **≤ 50%** of the video duration. |
-| **Bad** | • Asynchronous issues are prominent, severe, and persistent.<br>• Cameras may shift, pan, or drift with large amplitudes. | Affected region covers **> 50%** of the frame area **or** persists for **> 50%** of the video duration. |
+| **Good** | • Motion, shape, color, and relative spatial positioning across both views are virtually identical.<br>• Camera is almost static. | Error region covers < 10% of the frame area and appears in < 10% of the video duration. |
+| **Medium** | • Discrepancies appear between the two views (e.g., minor differences in motion, shape, or relative position), but it can still be concluded that the robots in both views are performing the same action.<br>• Cameras may exhibit occasional jitter or small pans/drifts. | Error region covers ≤ 30% of the frame area and appears in ≤ 30% of the video duration. |
+| **Bad** | • Inconsistencies are pronounced, severe, and persistent, making it obvious that the robots in the two views are performing different actions.<br>• Cameras may shift, pan, or drift with large amplitudes. | Error region covers > 30% of the frame area or appears in > 30% of the video duration. |
 
 \* *Note: The combination of quantitative thresholds for frame area percentage (%) and video duration percentage (%) only serves as a reference guideline.*

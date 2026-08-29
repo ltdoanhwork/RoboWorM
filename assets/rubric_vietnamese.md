@@ -20,8 +20,8 @@ Mức độ hoàn thành/tuân thủ tác vụ, tính thẩm mỹ, độ chuẩn
 
 | Mức điểm | Tiêu chuẩn Đồng bộ & Độ ổn định Camera | Điều kiện Ngưỡng (Diện tích & Thời lượng)* |
 |----------|----------------------------------------|---------------------------------------------|
-| **Good** | • Chuyển động, hình dạng, màu sắc và vị trí tương quan giữa các view gần như tương đồng.<br>• Camera gần như tĩnh. | Vùng bị lỗi chỉ chiếm **< 10%** diện tích khung hình **và** xuất hiện **< 10%** thời lượng video. |
-| **Medium** | • Xuất hiện các sự bất đồng giữa 2 view (ví dụ: sai khác nhỏ về chuyển động, hình dáng, lệch vị trí tương quan, ...).<br>• Camera có thể bị giật gián đoạn, xoay/dịch góc máy nhỏ. | Vùng bị lỗi chiếm **≤ 50%** diện tích khung hình **và** xuất hiện **≤ 50%** thời lượng video. |
-| **Bad** | • Các sự bất đồng bộ xuất hiện rõ rệt, nghiêm trọng và kéo dài.<br>• Camera có thể bị xoay/dịch với biên độ lớn. | Vùng bị lỗi xuất hiện phạm vi **> 50%** diện tích khung hình **hoặc** kéo dài **> 50%** thời lượng video. |
+| **Good** | • Chuyển động, hình dạng, màu sắc và vị trí tương quan giữa các view gần như tương đồng.<br>• Camera gần như tĩnh. | Vùng bị lỗi chỉ chiếm < 10% diện tích khung hình và xuất hiện < 10% thời lượng video. |
+| **Medium** | • Xuất hiện các sự bất đồng giữa 2 view (ví dụ: sai khác nhỏ về chuyển động, hình dáng, vị trí tương quan, ...) nhưng vẫn có thể  kết luận robot ở hai góc nhìn đang thực hiện cùng một hành động.<br>• Camera có thể bị giật gián đoạn, xoay/dịch góc máy nhỏ. | Vùng bị lỗi chiếm ≤ 30% diện tích khung hình và xuất hiện ≤ 30% thời lượng video. |
+| **Bad** | • Các sự bất đồng bộ xuất hiện rõ rệt, nghiêm trọng và kéo dài, dễ thấy robot ở hai góc nhìn đang thực hiện hành động khác nhau.<br>• Camera có thể bị xoay/dịch với biên độ lớn. | Vùng bị lỗi chiếm > 30% diện tích khung hình hoặc kéo dài > 30% thời lượng video. |
 
 \* *Lưu ý: Các logic kết hợp về mặt định lượng % diện tích khung hình và % thời lượng video mang tính chất tham khảo.*
