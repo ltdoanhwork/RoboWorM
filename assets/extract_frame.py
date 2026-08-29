@@ -794,20 +794,17 @@ def main():
     p = argparse.ArgumentParser(description="Extract multiview frames from videos listed in all_videos.md")
     p.add_argument(
         "--root",
-        default="/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/3.Code/"
-        "VideoWordModelBenchmark/thanhnv_multiview/data/video",
+        default="/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/WorldModelBenchmark/data/doanh",
         help="Video root directory",
     )
     p.add_argument(
         "--videos-md",
-        default="/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/3.Code/"
-        "VideoWordModelBenchmark/human_assessment_feature/assets/all_videos.md",
+        default="/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/WorldModelBenchmark/human-assessment/assets/all_videos.md",
         help="Markdown file listing relative video paths (one per line)",
     )
     p.add_argument(
         "--output",
-        default="/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/3.Code/"
-        "VideoWordModelBenchmark/thanhnv_multiview/data/data_for_web_init_frame",
+        default="/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/WorldModelBenchmark/data/preprocessing/data_for_web",
         help="Output root (mirrors relative video path)",
     )
     p.add_argument(

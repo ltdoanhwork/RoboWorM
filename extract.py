@@ -8,31 +8,9 @@ import numpy as np
 
 from keypoints import track_keypoints
 from optical_flow import FlowConfig, compute_flow_series
+from seed_points import load_seed_points
 from utils import EpisodeReader
-import json
 
-JSON_PATH = Path("seed_points.json")
-
-def load_seed_points(episode_name: str) -> dict[str, np.ndarray]:
-    if not JSON_PATH.exists():
-        raise FileNotFoundError(
-            f"Chưa tìm thấy file {JSON_PATH}. Vui lòng chạy annotate_episode.py trước!"
-        )
-
-    with open(JSON_PATH, "r") as f:
-        data = json.load(f)
-
-    if episode_name not in data:
-        raise KeyError(
-            f"Chưa có seed points cho '{episode_name}' trong {JSON_PATH}. "
-            f"Hãy chạy: python annotate_episode.py <đường_dẫn_episode>"
-        )
-
-    pts_dict = data[episode_name]
-    return {
-        "view1": np.array(pts_dict["view1"], dtype=np.float32),
-        "view2": np.array(pts_dict["view2"], dtype=np.float32),
-    }
 
 def extract_episode(
     episode_dir: str | Path,
@@ -40,12 +18,13 @@ def extract_episode(
     *,
     flow_cfg: FlowConfig | None = None,
     out_path: str | Path | None = None,
+    data_root: str | Path | None = None,
 ) -> Path:
     episode_dir = Path(episode_dir)
     name = episode_dir.name
 
     if pts is None:
-        pts = load_seed_points(name)
+        pts = load_seed_points(episode_dir, root=data_root)
 
     reader = EpisodeReader(episode_dir)
     views = reader.views
@@ -72,7 +51,7 @@ def extract_episode(
         payload[f"{view}_pts0"] = np.asarray(pts[view], dtype=np.float32)
 
     if out_path is None:
-        out_path = episode_dir / "features.npz"
+        out_path = "/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/WorldModelBenchmark/human-assessment/features.npz"
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(out_path, **payload)
@@ -88,8 +67,7 @@ if __name__ == "__main__":
         "episode_dir",
         nargs="?",
         default=(
-            "/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/"
-            "WorldModelBenchmark/human_assessment_feature/test_data/frames/real/episode_000855"
+            "/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/WorldModelBenchmark/data/preprocessing/data_for_web/augment/bimanual/output/multiview/ctrlworld/makovian/episode_insert_small_gear_shaft__000039__v03_yellow"
         ),
     )
     p.add_argument("-o", "--out", type=str, default=None)

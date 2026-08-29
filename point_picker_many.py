@@ -10,11 +10,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-JSON_PATH = Path(__file__).resolve().parent / "assets" / "seed_points.json"
-DEFAULT_ROOT = Path(
-    "/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/"
-    "VideoWordModelBenchmark/thanhnv_multiview/data/data_for_web_init_frame"
-)
+from seed_points import JSON_PATH, DEFAULT_DATA_ROOT as DEFAULT_ROOT
 
 __all__ = [
     "intersect_frames",

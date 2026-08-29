@@ -133,7 +133,11 @@ if __name__ == "__main__":
     import argparse
 
     root = Path(__file__).resolve().parent
-    default_ep = root / "test_data/frames/good/episode_000255"
+    default_ep = Path(
+        "/pfss/mlde/workspaces/mlde_wsp_MGPATH/thanhnv/WorldModelBenchmark/"
+        "data/preprocessing/data_for_web/augment/bimanual/output/multiview/"
+        "ctrlworld/makovian/episode_insert_small_gear_shaft__000039__v03_yellow"
+    )
 
     p = argparse.ArgumentParser(description="Overlay flow + keypoints on episode frames")
     p.add_argument("episode_dir", nargs="?", default=str(default_ep))
