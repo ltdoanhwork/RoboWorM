@@ -1,135 +1,361 @@
-<!doctype html>
-<html lang="vi">
+<!DOCTYPE html>
+<html lang="vi" data-lang="vi">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Hallucination Bench · Segment labeling</title>
-  <style>
-    :root{--ink:#17211b;--muted:#617067;--line:#d9e1dc;--paper:#f5f7f4;--card:#fff;--green:#247b4b;--amber:#a96c00;--red:#b13b35;--nav:#18352a;--shadow:0 10px 28px #17211b12}
-    *{box-sizing:border-box} body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
-    button{font:inherit} nav{height:58px;background:var(--nav);color:#fff;display:flex;align-items:center;gap:12px;padding:0 22px;position:sticky;top:0;z-index:20}
-    nav strong{letter-spacing:.02em} nav .spacer{flex:1}.nav-btn{border:1px solid #ffffff55;background:#ffffff10;color:#fff;border-radius:8px;padding:7px 11px;cursor:pointer}
-    #referenceToggle{display:none}.shell{max-width:1500px;margin:auto;padding:20px;display:grid;grid-template-columns:minmax(0,1fr) 410px;gap:20px;align-items:start}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
-    .stage{padding:18px}.eyebrow{color:var(--green);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.09em}.stage-head{display:flex;align-items:flex-start;gap:16px;margin-bottom:12px}
-    h1,h2,h3,p{margin-top:0}.stage-head h1{font-size:22px;margin:3px 0}.stage-head .meta{color:var(--muted);font-size:13px}.stage-head .push{margin-left:auto;text-align:right}
-    .progress{height:7px;background:#e7ece9;border-radius:10px;overflow:hidden;margin-top:7px}.progress span{display:block;height:100%;background:var(--green);width:0;transition:width .2s}
-    .video-wrap{background:#111;border-radius:11px;overflow:hidden;display:grid;place-items:center;min-height:420px}video{display:block;width:100%;max-height:67vh;background:#111}
-    .segment-strip{display:flex;gap:10px;align-items:center;padding:12px 2px 4px;color:var(--muted);font-size:13px}.segment-strip b{color:var(--ink)}
-    .score-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}.score{border:2px solid;border-radius:11px;padding:14px 8px;background:#fff;font-weight:800;cursor:pointer;transition:.12s}
-    .score:hover,.score.active{color:#fff;transform:translateY(-1px)}.score.bad{border-color:var(--red);color:var(--red)}.score.bad:hover,.score.bad.active{background:var(--red);color:#fff}.score.medium{border-color:var(--amber);color:var(--amber)}.score.medium:hover,.score.medium.active{background:var(--amber);color:#fff}.score.good{border-color:var(--green);color:var(--green)}.score.good:hover,.score.good.active{background:var(--green);color:#fff}
-    .actions{display:flex;align-items:center;gap:9px;margin-top:12px}.soft-btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 11px;cursor:pointer}.status{margin-left:auto;color:var(--muted);font-size:13px}.status.err{color:var(--red)}
-    .reference{position:sticky;top:78px;max-height:calc(100vh - 96px);overflow:auto;padding:16px}.reference-title{display:flex;align-items:center;gap:8px}.reference-title h2{font-size:18px;margin:0}.close-ref{display:none;margin-left:auto}
-    .rubric-cards{display:grid;gap:7px;margin:13px 0}.rubric-card{border-left:5px solid;border-radius:8px;padding:9px 11px;background:#f8faf8;font-size:13px}.rubric-card strong{display:block;margin-bottom:2px}.rubric-card.bad{border-color:var(--red)}.rubric-card.medium{border-color:var(--amber)}.rubric-card.good{border-color:var(--green)}
-    details{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 0;margin:12px 0}summary{cursor:pointer;font-weight:750}.markdown{font-size:13px;padding-top:8px}.markdown h1{font-size:18px}.markdown h2{font-size:15px;margin-top:16px}.markdown ul{padding-left:20px}.markdown table{width:100%;border-collapse:collapse;font-size:12px}.markdown td,.markdown th{border:1px solid var(--line);padding:6px;text-align:left;vertical-align:top}
-    .example-head{display:flex;align-items:baseline;gap:8px}.example-head h3{font-size:16px;margin:0}.example-head span{color:var(--muted);font-size:12px}.tabs{display:flex;gap:5px;flex-wrap:wrap;margin:9px 0}.tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 9px;font-size:12px;cursor:pointer}.tab.active{background:var(--nav);border-color:var(--nav);color:#fff}
-    .example-player{border-radius:9px;overflow:hidden;background:#111}.example-player video{max-height:250px}.example-caption{font-size:12px;color:var(--muted);margin-top:7px}.empty{padding:50px;text-align:center;color:var(--muted)}
-    @media(max-width:980px){.shell{grid-template-columns:1fr;padding:12px}.reference{display:none;position:fixed;inset:58px 0 0 auto;width:min(430px,100%);max-height:none;z-index:30;border-radius:0;overflow:auto}.reference.mobile-open{display:block}#referenceToggle,.close-ref{display:inline-block}.video-wrap{min-height:260px}}
-    @media(max-width:560px){nav{padding:0 12px}.stage{padding:12px}.stage-head{display:block}.stage-head .push{text-align:left;margin-top:8px}.score-grid{gap:6px}.score{padding:11px 3px}.video-wrap{min-height:210px}}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video World — Single-view segments</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
 </head>
 <body>
 <nav>
-  <strong>Hallucination Bench</strong>
-  <span id="raterNav"></span><span class="spacer"></span>
-  <a class="nav-btn" href="index.html" style="text-decoration:none">Multiview</a>
-  <button class="nav-btn" id="langBtn" type="button">EN</button>
-  <button class="nav-btn" id="referenceToggle" type="button">Rubric + examples</button>
+  <div class="nav-inner">
+    <a class="brand" href="home.html"><span class="brand-mark">VW</span><span>Single view <span class="brand-sub">segments · 25 / 50</span></span></a>
+    <div class="nav-actions">
+      <span class="nav-meta"><span id="raterChip"></span> · <strong id="nLife">0</strong> <span data-lang="vi">đã chấm</span><span data-lang="en">labeled</span> · <strong id="nLabeled">0</strong>/<span id="nTotal">0</span></span>
+      <a class="top-btn" href="home.html"><span data-lang="vi">Lô của tôi</span><span data-lang="en">My batch</span></a>
+      <button class="top-btn accent" id="jumpExamples"><span data-lang="vi">Ví dụ</span><span data-lang="en">Examples</span></button>
+      <button class="top-btn" id="langToggle">EN</button>
+      <a class="top-btn" href="#" id="switchUser"><span data-lang="vi">Đổi user</span><span data-lang="en">Switch user</span></a>
+    </div>
+  </div>
 </nav>
+<main>
+  <div class="workspace">
+    <section class="evaluation">
+      <details class="guide" open>
+        <summary><span data-lang="vi">Cách đánh giá · Good / Medium / Bad</span><span data-lang="en">How to rate · Good / Medium / Bad</span></summary>
+        <div class="guide-body">
+          <div data-lang="vi">
+            <p class="guide-intro">Xem video xuyên suốt. Hết mỗi đoạn (~16 frame, đoạn cuối có thể ngắn hơn) video tự dừng — chấm 1/2/3 rồi xem tiếp. Nút phát lại chỉ quay lại đầu đoạn hiện tại.</p>
+            <div class="guide-grid">
+              <article class="criterion bad"><h3>Bad · phím 1</h3><p>Lỗi rõ, nặng, kéo dài; robot biến dạng / tan rã / teleport; chuyển động khó hiểu.</p></article>
+              <article class="criterion medium"><h3>Medium · phím 2</h3><p>Biến dạng nhẹ, nhòe cục bộ, rung hoặc lem màu ngắn; vẫn nhận ra robot và hành động.</p></article>
+              <article class="criterion good"><h3>Good · phím 3</h3><p>Hình dạng / màu ổn định; chuyển động mượt, hợp lý; chỉ lỗi rất nhỏ, thoáng qua.</p></article>
+            </div>
+            <p class="guide-note">Segment lấy từ metadata (không cắt file nhỏ). Nộp lô được khi chưa xem hết. Không hiện metric máy trên trang chấm.</p>
+          </div>
+          <div data-lang="en">
+            <p class="guide-intro">Watch the full video. It pauses at the end of each ~16-frame segment (the last may be shorter). Score 1/2/3, then playback continues. Replay only rewinds the current segment.</p>
+            <div class="guide-grid">
+              <article class="criterion bad"><h3>Bad · key 1</h3><p>Clear, severe, lasting errors; deformation, dissolving, or teleporting; action hard to follow.</p></article>
+              <article class="criterion medium"><h3>Medium · key 2</h3><p>Mild deformation, local blur, jitter, or brief color bleed; robot and action remain recognizable.</p></article>
+              <article class="criterion good"><h3>Good · key 3</h3><p>Stable shape and color; smooth, plausible motion; only tiny momentary errors.</p></article>
+            </div>
+            <p class="guide-note">Segments come from metadata (no tiny MP4s). You can submit the batch before finishing.</p>
+          </div>
+        </div>
+      </details>
 
-<main class="shell">
-  <section class="card stage" id="stage" hidden>
-    <div class="stage-head">
-      <div><div class="eyebrow" id="embodiment"></div><h1 id="task">Robot motion quality</h1><div class="meta" id="videoMeta"></div></div>
-      <div class="push"><b id="progressText">0 / 0</b><div class="meta" id="segmentMeta"></div><div class="progress"><span id="progressBar"></span></div></div>
-    </div>
-    <div class="video-wrap"><video id="player" playsinline preload="metadata"></video></div>
-    <div class="segment-strip"><b id="segmentTitle"></b><span id="frameRange"></span><span>·</span><span id="timeRange"></span></div>
-    <div class="score-grid">
-      <button class="score bad" data-score="1" type="button"><span data-i18n="bad">Tệ</span> · 1</button>
-      <button class="score medium" data-score="2" type="button"><span data-i18n="medium">Trung bình</span> · 2</button>
-      <button class="score good" data-score="3" type="button"><span data-i18n="good">Tốt</span> · 3</button>
-    </div>
-    <div class="actions">
-      <button class="soft-btn" id="replayBtn" type="button" data-i18n="replay">Phát lại đoạn</button>
-      <button class="soft-btn" id="nextBtn" type="button" data-i18n="next">Video tiếp</button>
-      <span class="status" id="status"></span>
-    </div>
-  </section>
-  <section class="card empty" id="empty">Đang tải dữ liệu…</section>
+      <div class="progress-row">
+        <div class="progress"><div id="bar"></div></div>
+        <p class="status" id="status">Loading…</p>
+      </div>
 
-  <aside class="card reference" id="reference">
-    <div class="reference-title"><h2 data-i18n="reference">Rubric tham chiếu</h2><button class="soft-btn close-ref" id="closeRef" type="button">×</button></div>
-    <div class="rubric-cards">
-      <div class="rubric-card bad"><strong><span data-i18n="bad">Tệ</span> · 1</strong><span data-i18n="badShort">Lỗi rõ, nặng, kéo dài; robot biến dạng/tan rã/teleport; chuyển động khó hiểu.</span></div>
-      <div class="rubric-card medium"><strong><span data-i18n="medium">Trung bình</span> · 2</strong><span data-i18n="mediumShort">Biến dạng nhẹ, nhòe cục bộ, rung hoặc lem màu ngắn; vẫn nhận ra robot và hành động.</span></div>
-      <div class="rubric-card good"><strong><span data-i18n="good">Tốt</span> · 3</strong><span data-i18n="goodShort">Hình dạng/màu ổn định; chuyển động mượt, hợp lý; chỉ lỗi rất nhỏ, thoáng qua.</span></div>
-    </div>
-    <details><summary data-i18n="fullRubric">Xem rubric đầy đủ</summary><div class="markdown" id="rubricBody">Đang tải…</div></details>
-    <div class="example-head"><h3 data-i18n="examples">Video ví dụ</h3><span data-i18n="examplesHelp">Luôn là tham chiếu, không nằm trong queue</span></div>
-    <div class="tabs" id="ratingTabs"></div><div class="tabs" id="robotTabs"></div><div class="tabs" id="indexTabs"></div>
-    <div class="example-player"><video id="examplePlayer" controls playsinline preload="metadata"></video></div>
-    <div class="example-caption" id="exampleCaption"></div>
-  </aside>
+      <section class="assessment" id="stage" hidden>
+        <div class="prompt-bar">
+          <div class="prompt-label" id="embodiment"></div>
+          <div class="prompt-text" id="task">Robot motion quality</div>
+        </div>
+        <div class="meta" id="chips"></div>
+        <div class="video-wrap"><video id="player" playsinline preload="metadata"></video></div>
+        <div class="seg-track" id="segTrack"></div>
+        <div class="wait-banner" id="waitBanner" hidden></div>
+        <div class="segment-strip">
+          <b id="segmentTitle"></b>
+          <span id="frameRange"></span>
+          <span>·</span>
+          <span id="timeRange"></span>
+        </div>
+        <div class="score-area">
+          <p class="score-question"><span data-lang="vi">Đoạn này chất lượng thế nào?</span><span data-lang="en">How is this segment?</span></p>
+          <div class="scores">
+            <button class="score" data-s="1">Bad<small><span data-lang="vi">lỗi rõ rệt</span><span data-lang="en">severe errors</span> · 1</small></button>
+            <button class="score" data-s="2">Medium<small><span data-lang="vi">sai khác nhỏ</span><span data-lang="en">mild artifacts</span> · 2</small></button>
+            <button class="score" data-s="3">Good<small><span data-lang="vi">ổn định</span><span data-lang="en">stable</span> · 3</small></button>
+          </div>
+        </div>
+        <div class="nav-btns">
+          <button class="btn" id="replayBtn"><span data-lang="vi">Phát lại đoạn</span><span data-lang="en">Replay segment</span><span class="shortcut">Space</span></button>
+          <button class="btn" id="btnPrev">← <span data-lang="vi">Trước</span><span data-lang="en">Prev</span></button>
+          <button class="btn" id="nextBtn"><span data-lang="vi">Video tiếp</span><span data-lang="en">Next video</span> →</button>
+          <button class="btn warn" id="btnSubmit"><span data-lang="vi">Nộp lô</span><span data-lang="en">Submit batch</span></button>
+          <a class="btn primary" href="home.html"><span data-lang="vi">Về trang lô</span><span data-lang="en">Back to batch</span></a>
+        </div>
+      </section>
+      <section class="card empty" id="empty">Đang tải dữ liệu…</section>
+    </section>
+
+    <aside class="reference" id="examplesPanel">
+      <div class="reference-head">
+        <div class="eyebrow"><span data-lang="vi">Mở bất kỳ lúc nào</span><span data-lang="en">Available anytime</span></div>
+        <h2><span data-lang="vi">Ví dụ tham chiếu</span><span data-lang="en">Reference examples</span></h2>
+        <p><span data-lang="vi">Không nằm trong hàng đợi chấm. Chọn mức điểm, robot, rồi clip.</span><span data-lang="en">Never enters the rating queue. Pick rating, robot, then clip.</span></p>
+      </div>
+      <div class="tabs" id="ratingTabs"></div>
+      <div class="tabs" id="robotTabs"></div>
+      <div class="tabs" id="indexTabs"></div>
+      <div class="example-player"><video id="examplePlayer" controls playsinline preload="metadata"></video></div>
+      <div class="example-caption" id="exampleCaption"></div>
+      <details class="rubric-full"><summary><span data-lang="vi">Xem rubric đầy đủ</span><span data-lang="en">View full rubric</span></summary>
+        <div class="markdown" id="rubricBody">…</div>
+      </details>
+    </aside>
+  </div>
 </main>
 
-<script src="config.js"></script><script src="vgp.js"></script>
+<script src="config.js"></script>
+<script src="vgp.js"></script>
 <script>
-(() => {
-  if (!window.VGP || !VGP.requireGate()) return;
+if (VGP.requireGate()) {
   const $ = id => document.getElementById(id);
-  const TEXT = {
-    vi:{bad:'Tệ',medium:'Trung bình',good:'Tốt',reference:'Rubric tham chiếu',fullRubric:'Xem rubric đầy đủ',examples:'Video ví dụ',examplesHelp:'Luôn là tham chiếu, không nằm trong queue',replay:'Phát lại đoạn',next:'Video tiếp',badShort:'Lỗi rõ, nặng, kéo dài; robot biến dạng/tan rã/teleport; chuyển động khó hiểu.',mediumShort:'Biến dạng nhẹ, nhòe cục bộ, rung hoặc lem màu ngắn; vẫn nhận ra robot và hành động.',goodShort:'Hình dạng/màu ổn định; chuyển động mượt, hợp lý; chỉ lỗi rất nhỏ, thoáng qua.',segment:'Đoạn',frames:'frame',saved:'Đã lưu',saving:'Đang lưu…',ready:'Sẵn sàng',done:'Đã chấm xong toàn bộ.',loadError:'Không tải được dữ liệu.',videoError:'Không tải được video.'},
-    en:{bad:'Bad',medium:'Medium',good:'Good',reference:'Reference rubric',fullRubric:'View full rubric',examples:'Example videos',examplesHelp:'Reference only; never enters rating queue',replay:'Replay segment',next:'Next video',badShort:'Clear, severe, lasting errors; deformation, dissolving or teleporting; action hard to follow.',mediumShort:'Mild deformation, local blur, jitter or brief color bleed; robot and action remain recognizable.',goodShort:'Stable shape and color; smooth, plausible motion; only tiny momentary errors.',segment:'Segment',frames:'frames',saved:'Saved',saving:'Saving…',ready:'Ready',done:'All segments complete.',loadError:'Could not load data.',videoError:'Could not load video.'}
-  };
-  let lang=localStorage.getItem('vgp_lang')==='en'?'en':'vi', items=[], examples=[], labels={}, idx=0, seg=0, endTime=0, exampleState={rating:'bad',embodiment:'bimanual',index:1};
-  const player=$('player'), examplePlayer=$('examplePlayer'), rater=VGP.getRater();
-  $('raterNav').textContent=rater;
+  const rater = VGP.getRater();
+  let items = [], mvAll = [], svAll = [], examples = [], labels = {}, idx = 0, seg = 0, endTime = 0, waiting = false;
+  let exampleState = { rating: 'bad', embodiment: 'bimanual', index: 1 };
+  const player = $('player'), examplePlayer = $('examplePlayer');
 
-  const t=k => TEXT[lang][k] || k;
-  const segmentId=(i=idx,s=seg)=>`${items[i].id}_s${String(s).padStart(3,'0')}`;
-  const currentSegment=()=>items[idx].segments[seg];
-  const allSegmentIds=()=>items.flatMap(it=>it.segments.map((_,s)=>`${it.id}_s${String(s).padStart(3,'0')}`));
-  function setStatus(message,error=false){$('status').textContent=message;$('status').classList.toggle('err',error)}
-  function escapeHtml(value){return value.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-  function inlineMd(value){return escapeHtml(value).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}
-  function markdown(value){
-    const lines=value.replace(/\r/g,'').split('\n'), out=[]; let list=false, table=[];
-    const flushList=()=>{if(list){out.push('</ul>');list=false}};
-    const flushTable=()=>{if(!table.length)return; const rows=table.filter(x=>!/^[\s|:-]+$/.test(x)); if(rows.length){out.push('<table>');rows.forEach((row,i)=>{const cells=row.split('|').slice(1,-1);out.push('<tr>'+cells.map(c=>`<${i?'td':'th'}>${inlineMd(c.trim())}</${i?'td':'th'}>`).join('')+'</tr>')});out.push('</table>')}table=[]};
-    for(const raw of lines){const line=raw.trim();if(line.startsWith('|')){flushList();table.push(line);continue}flushTable();if(!line){flushList();continue}const h=line.match(/^(#{1,3})\s+(.+)/);if(h){flushList();out.push(`<h${h[1].length}>${inlineMd(h[2])}</h${h[1].length}>`);continue}const li=line.match(/^[-*]\s+(.+)/);if(li){if(!list){out.push('<ul>');list=true}out.push(`<li>${inlineMd(li[1])}</li>`);continue}flushList();out.push(`<p>${inlineMd(line)}</p>`)}flushList();flushTable();return out.join('');
+  $('raterChip').textContent = rater;
+  $('switchUser').onclick = e => {
+    e.preventDefault();
+    VGP.clearSession();
+    location.href = 'gate.html?next=' + encodeURIComponent('home.html');
+  };
+  function lang(){ return document.documentElement.dataset.lang || 'vi'; }
+  function setLang(next){
+    document.documentElement.dataset.lang = next;
+    document.documentElement.lang = next;
+    $('langToggle').textContent = next === 'vi' ? 'EN' : 'VI';
+    localStorage.setItem('vgp_lang', next);
+    loadRubric();
+    renderExamples();
+    if (items[idx]) renderSegment();
   }
-  async function loadRubric(){try{const res=await fetch(`rubric.segment.${lang}.md`);if(!res.ok)throw Error(res.status);$('rubricBody').innerHTML=markdown(await res.text())}catch(e){$('rubricBody').textContent=t('loadError')}}
-  function applyLanguage(){document.documentElement.lang=lang;document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));$('langBtn').textContent=lang==='vi'?'EN':'VI';loadRubric();renderExamples();renderSegment()}
+  setLang(localStorage.getItem('vgp_lang') === 'en' ? 'en' : 'vi');
+  $('langToggle').onclick = () => setLang(lang() === 'vi' ? 'en' : 'vi');
+
+  function setStatus(vi, en, cls){
+    $('status').textContent = lang() === 'vi' ? vi : en;
+    $('status').className = 'status' + (cls ? ' ' + cls : '');
+  }
+  function nVideosDone(){ return items.filter(it => VGP.videoComplete(it, labels)).length; }
+  function refreshLife(){ $('nLife').textContent = VGP.raterStats(labels, mvAll, svAll).totalVideos; }
+  function sid(i = idx, s = seg){ return VGP.segmentId(items[i].id, s); }
+  function currentSegment(){ return items[idx].segments[seg]; }
+
+  function escapeHtml(value){ return value.replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+  function inlineMd(value){ return escapeHtml(value).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); }
+  function markdown(value){
+    const lines = value.replace(/\r/g, '').split('\n'), out = []; let list = false, table = [];
+    const flushList = () => { if (list) { out.push('</ul>'); list = false; } };
+    const flushTable = () => {
+      if (!table.length) return;
+      const rows = table.filter(x => !/^[\s|:-]+$/.test(x));
+      if (rows.length) {
+        out.push('<table>');
+        rows.forEach((row, i) => {
+          const cells = row.split('|').slice(1, -1);
+          out.push('<tr>' + cells.map(c => `<${i ? 'td' : 'th'}>${inlineMd(c.trim())}</${i ? 'td' : 'th'}>`).join('') + '</tr>');
+        });
+        out.push('</table>');
+      }
+      table = [];
+    };
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (line.startsWith('|')) { flushList(); table.push(line); continue; }
+      flushTable();
+      if (!line) { flushList(); continue; }
+      const h = line.match(/^(#{1,3})\s+(.+)/);
+      if (h) { flushList(); out.push(`<h${h[1].length}>${inlineMd(h[2])}</h${h[1].length}>`); continue; }
+      const li = line.match(/^[-*]\s+(.+)/);
+      if (li) { if (!list) { out.push('<ul>'); list = true; } out.push(`<li>${inlineMd(li[1])}</li>`); continue; }
+      flushList(); out.push(`<p>${inlineMd(line)}</p>`);
+    }
+    flushList(); flushTable(); return out.join('');
+  }
+  async function loadRubric(){
+    try {
+      const res = await fetch(`rubric.segment.${lang()}.md`);
+      if (!res.ok) throw new Error(res.status);
+      $('rubricBody').innerHTML = markdown(await res.text());
+    } catch { $('rubricBody').textContent = lang() === 'vi' ? 'Không tải được rubric.' : 'Could not load rubric.'; }
+  }
 
   function renderExamples(){
-    const groups=[['rating',['bad','medium','good']],['embodiment',['bimanual','humanoid','single_arm']],['index',[1,2,3,4,5]]];
-    for(const [key,values] of groups){const root=$(key==='rating'?'ratingTabs':key==='embodiment'?'robotTabs':'indexTabs');root.replaceChildren();values.forEach(value=>{const button=document.createElement('button');button.type='button';button.className='tab'+(exampleState[key]===value?' active':'');button.textContent=key==='rating'?t(value):key==='embodiment'?value.replace('_',' '):value;button.onclick=()=>{exampleState[key]=value;renderExamples()};root.append(button)})}
-    const item=examples.find(x=>x.rating===exampleState.rating&&x.embodiment===exampleState.embodiment&&x.index===exampleState.index);
-    if(item&&examplePlayer.dataset.id!==item.id){examplePlayer.dataset.id=item.id;examplePlayer.src=item.video}
-    $('exampleCaption').textContent=item?`${t(item.rating)} · ${item.embodiment.replace('_',' ')} · ${item.index}/5`:t('loadError');
+    const groups = [['rating', ['bad', 'medium', 'good']], ['embodiment', ['bimanual', 'humanoid', 'single_arm']], ['index', [1, 2, 3, 4, 5]]];
+    for (const [key, values] of groups) {
+      const root = $(key === 'rating' ? 'ratingTabs' : key === 'embodiment' ? 'robotTabs' : 'indexTabs');
+      root.replaceChildren();
+      values.forEach(value => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'tab' + (key === 'rating' ? ' ' + value : '') + (exampleState[key] === value ? ' active' : '');
+        button.textContent = key === 'rating' ? value : key === 'embodiment' ? value.replace('_', ' ') : value;
+        button.onclick = () => { exampleState[key] = value; renderExamples(); };
+        root.append(button);
+      });
+    }
+    const item = examples.find(x => x.rating === exampleState.rating && x.embodiment === exampleState.embodiment && x.index === exampleState.index);
+    if (item && examplePlayer.dataset.id !== item.id) { examplePlayer.dataset.id = item.id; examplePlayer.src = item.video; }
+    $('exampleCaption').textContent = item ? `${item.rating} · ${item.embodiment.replace('_', ' ')} · ${item.index}/5` : '';
   }
-  function progress(){const ids=allSegmentIds(),done=ids.filter(id=>labels[id]!==undefined).length;$('progressText').textContent=`${done.toLocaleString()} / ${ids.length.toLocaleString()}`;$('progressBar').style.width=`${ids.length?100*done/ids.length:0}%`}
+
+  function setChips(values){
+    const host = $('chips'); host.replaceChildren();
+    values.filter(Boolean).forEach(value => {
+      const chip = document.createElement('span'); chip.className = 'chip'; chip.textContent = value; host.append(chip);
+    });
+  }
+
   function renderSegment(){
-    if(!items.length||!items[idx])return;const it=items[idx],s=currentSegment();
-    $('embodiment').textContent=it.embodiment.replace('_',' ');$('task').textContent=it.task||'Robot motion quality';$('videoMeta').textContent=`Video ${idx+1}/${items.length} · ${it.view}`;
-    $('segmentMeta').textContent=`${t('segment')} ${seg+1}/${it.segments.length}`;$('segmentTitle').textContent=`${t('segment')} ${seg+1}`;$('frameRange').textContent=`${t('frames')} ${s.start_frame}–${s.end_frame}`;
-    const start=s.start_frame/it.fps;endTime=(s.end_frame+1)/it.fps;$('timeRange').textContent=`${start.toFixed(2)}–${endTime.toFixed(2)}s`;
-    document.querySelectorAll('.score').forEach(b=>b.classList.toggle('active',Number(b.dataset.score)===labels[segmentId()]));progress();
+    if (!items[idx]) return;
+    const it = items[idx], s = currentSegment();
+    $('embodiment').textContent = it.embodiment.replace('_', ' ');
+    $('task').textContent = it.task || 'Robot motion quality';
+    $('nTotal').textContent = items.length;
+    $('nLabeled').textContent = nVideosDone();
+    refreshLife();
+    $('bar').style.width = (items.length ? 100 * nVideosDone() / items.length : 0) + '%';
+    setChips([it.embodiment, it.view, `${it.n_frames} frames`, `${idx + 1} / ${items.length}`, `seg ${seg + 1}/${it.segments.length}`]);
+    $('segmentTitle').textContent = (lang() === 'vi' ? 'Đoạn ' : 'Segment ') + (seg + 1);
+    $('frameRange').textContent = `frames ${s.start_frame}–${s.end_frame} (${s.n_frames})`;
+    const start = s.start_frame / it.fps;
+    endTime = (s.end_frame + 1) / it.fps;
+    $('timeRange').textContent = `${start.toFixed(2)}–${endTime.toFixed(2)}s`;
+    document.querySelectorAll('.score').forEach(b => b.classList.toggle('active', Number(b.dataset.s) === labels[sid()]));
+    const track = $('segTrack');
+    track.replaceChildren();
+    it.segments.forEach((_, s) => {
+      const tick = document.createElement('span');
+      tick.className = 'seg-tick';
+      if (labels[VGP.segmentId(it.id, s)] != null) tick.classList.add('done');
+      if (s === seg) tick.classList.add(waiting ? 'wait' : 'current');
+      track.append(tick);
+    });
+    $('waitBanner').hidden = !waiting;
+    $('waitBanner').textContent = waiting
+      ? (lang() === 'vi'
+        ? `Hết đoạn ${seg + 1}/${it.segments.length}. Chấm 1 / 2 / 3 để xem tiếp.`
+        : `End of segment ${seg + 1}/${it.segments.length}. Score 1 / 2 / 3 to continue.`)
+      : '';
   }
-  function playSegment(){const it=items[idx],s=currentSegment(),start=s.start_frame/it.fps;renderSegment();const seek=()=>{player.currentTime=Math.max(0,start);player.play().catch(()=>{})};if(player.readyState>=1)seek();else player.onloadedmetadata=seek}
-  function loadVideo(){const it=items[idx];if(player.dataset.id!==it.id){player.dataset.id=it.id;player.src=it.video;player.load()}playSegment()}
-  function advance(){if(seg+1<items[idx].segments.length){seg++;playSegment();return}if(idx+1<items.length){idx++;seg=0;loadVideo();return}setStatus(t('done'))}
-  async function rate(score){const id=segmentId();labels[id]=score;renderSegment();setStatus(t('saving'));try{await VGP.sbUpsertLabel(rater,id,score);setStatus(t('saved'));advance()}catch(e){console.error(e);delete labels[id];renderSegment();setStatus(String(e),true)}}
-  function findResume(){for(let i=0;i<items.length;i++)for(let s=0;s<items[i].segments.length;s++)if(labels[segmentId(i,s)]===undefined)return [i,s];return [0,0]}
 
-  player.addEventListener('timeupdate',()=>{if(endTime&&player.currentTime>=endTime){player.pause();player.currentTime=endTime}});player.addEventListener('error',()=>setStatus(t('videoError'),true));
-  document.querySelectorAll('.score').forEach(button=>button.onclick=()=>rate(Number(button.dataset.score)));$('replayBtn').onclick=playSegment;$('nextBtn').onclick=()=>{if(idx+1<items.length){idx++;seg=0;loadVideo()}};
-  document.addEventListener('keydown',event=>{if(['INPUT','TEXTAREA'].includes(event.target.tagName))return;if(event.key>='1'&&event.key<='3'){event.preventDefault();rate(Number(event.key))}if(event.key===' '){event.preventDefault();player.paused?playSegment():player.pause()}});
-  $('langBtn').onclick=()=>{lang=lang==='vi'?'en':'vi';localStorage.setItem('vgp_lang',lang);applyLanguage()};$('referenceToggle').onclick=()=>$('reference').classList.add('mobile-open');$('closeRef').onclick=()=>$('reference').classList.remove('mobile-open');
+  function segmentStart(){
+    return items[idx].segments[seg].start_frame / items[idx].fps;
+  }
+  function seekToStartAndPlay(){
+    waiting = false;
+    renderSegment();
+    const start = segmentStart();
+    const go = () => { player.currentTime = Math.max(0, start); player.play().catch(() => {}); };
+    if (player.readyState >= 1) go();
+    else player.onloadedmetadata = go;
+  }
+  function continuePlay(){
+    waiting = false;
+    renderSegment();
+    const start = segmentStart();
+    if (Math.abs((player.currentTime || 0) - start) > 0.2) player.currentTime = start;
+    player.play().catch(() => {});
+  }
+  function loadVideo(){
+    const it = items[idx];
+    if (player.dataset.id !== it.id) { player.dataset.id = it.id; player.src = it.video; player.load(); }
+    seekToStartAndPlay();
+  }
+  function findResume(){
+    for (let i = 0; i < items.length; i++)
+      for (let s = 0; s < items[i].segments.length; s++)
+        if (labels[VGP.segmentId(items[i].id, s)] == null) return [i, s];
+    return [0, 0];
+  }
+  function advance(fromScore){
+    if (seg + 1 < items[idx].segments.length) {
+      seg += 1;
+      if (fromScore) continuePlay();
+      else seekToStartAndPlay();
+      return;
+    }
+    if (idx + 1 < items.length) { idx += 1; seg = 0; loadVideo(); return; }
+    waiting = false;
+    renderSegment();
+    setStatus('Đã xong 25 video single-view.', 'Single-view half complete.');
+  }
+  async function rate(score){
+    const id = sid();
+    labels[id] = score;
+    renderSegment();
+    setStatus('Đang lưu…', 'Saving…', 'syncing');
+    try {
+      await VGP.sbUpsertLabel(rater, id, score);
+      setStatus('Đã lưu · xem tiếp.', 'Saved · continuing.');
+      advance(true);
+    } catch (e) {
+      console.error(e);
+      delete labels[id];
+      renderSegment();
+      setStatus('Lưu thất bại.', 'Save failed.', 'err');
+    }
+  }
 
-  (async()=>{try{const [catalogRes,exampleRes]=await Promise.all([fetch('catalog.segment.json'),fetch('examples.segment.json')]);if(!catalogRes.ok||!exampleRes.ok)throw Error('catalog');const catalog=await catalogRes.json(),exampleCatalog=await exampleRes.json();items=VGP.buildQueue(catalog.items||[],rater,{targetTotal:(catalog.items||[]).length});examples=exampleCatalog.items||[];labels=await VGP.sbLoadLabels(rater);[idx,seg]=findResume();$('empty').hidden=true;$('stage').hidden=false;applyLanguage();renderExamples();loadVideo();setStatus(t('ready'))}catch(e){console.error(e);$('empty').textContent=t('loadError');setStatus(t('loadError'),true)}})();
-})();
+  player.addEventListener('timeupdate', () => {
+    if (!endTime || waiting) return;
+    if (player.currentTime >= endTime - 0.03) {
+      player.pause();
+      try { player.currentTime = endTime; } catch (_) {}
+      waiting = true;
+      renderSegment();
+      setStatus('Hết đoạn. Chấm để xem tiếp.', 'Segment ended. Score to continue.');
+    }
+  });
+  player.addEventListener('error', () => setStatus('Không tải được video.', 'Could not load video.', 'err'));
+  document.querySelectorAll('.score').forEach(b => b.onclick = () => rate(Number(b.dataset.s)));
+  $('replayBtn').onclick = seekToStartAndPlay;
+  $('btnPrev').onclick = () => {
+    if (seg > 0) { seg -= 1; seekToStartAndPlay(); }
+    else if (idx > 0) { idx -= 1; seg = items[idx].segments.length - 1; loadVideo(); }
+  };
+  $('nextBtn').onclick = () => { if (idx + 1 < items.length) { idx += 1; seg = 0; loadVideo(); } };
+  $('btnSubmit').onclick = () => { VGP.submitBatch(); location.href = 'home.html'; };
+  $('jumpExamples').onclick = () => $('examplesPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.addEventListener('keydown', event => {
+    if (['INPUT', 'TEXTAREA'].includes(event.target.tagName)) return;
+    if (event.key >= '1' && event.key <= '3') { event.preventDefault(); rate(Number(event.key)); }
+    if (event.key === ' ') {
+      event.preventDefault();
+      if (waiting) return;
+      player.paused ? player.play().catch(() => {}) : player.pause();
+    }
+    if (event.key === 'ArrowRight') { event.preventDefault(); advance(false); }
+    if (event.key === 'ArrowLeft') { event.preventDefault(); $('btnPrev').click(); }
+  });
+
+  (async () => {
+    const [catalog, exampleCatalog, mvCat] = await Promise.all([
+      fetch('catalog.segment.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
+      fetch('examples.segment.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
+      fetch('catalog.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
+    ]);
+    svAll = catalog.items || [];
+    mvAll = mvCat.items || [];
+    if (!VGP.getBatch() || VGP.getBatch().submittedAt) { location.replace('home.html'); return; }
+    items = VGP.itemsFromIds(svAll, VGP.getBatch().svIds);
+    examples = exampleCatalog.items || [];
+    labels = await VGP.sbLoadLabels(rater);
+    [idx, seg] = findResume();
+    $('empty').hidden = true;
+    $('stage').hidden = false;
+    renderExamples();
+    loadRubric();
+    loadVideo();
+    setStatus('Sẵn sàng · xem đến hết đoạn, chấm 1–3 để xem tiếp.', 'Ready · watch to the segment end, then score 1–3 to continue.');
+  })().catch(err => {
+    console.error(err);
+    $('empty').textContent = lang() === 'vi' ? 'Không tải được dữ liệu.' : 'Could not load data.';
+    setStatus('Không tải được catalog / Supabase.', 'Failed to load catalog or Supabase.', 'err');
+  });
+}
 </script>
 </body>
 </html>

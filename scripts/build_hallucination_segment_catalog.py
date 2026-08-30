@@ -17,6 +17,7 @@ WEB_ROOT = REPO / "webpage" / "labeling"
 BUCKET_BASE = "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web"
 EMBODIMENTS = ("bimanual", "humanoid", "single_arm")
 RATING = {"low": ("bad", 1), "medium": ("medium", 2), "high": ("good", 3)}
+DETECTORS = ("rigidity", "jerk", "teleport", "joint_limit", "self_collision")
 
 
 def read_json(path: Path):
@@ -38,6 +39,25 @@ def task_from_source(source: str | None) -> str:
         return "Robot motion quality assessment"
     task = re.sub(r"[_-]+", " ", stem).strip()
     return task or "Robot motion quality assessment"
+
+
+def detector_fields(segment: dict) -> tuple[dict, bool]:
+    """Copy calibrated detector outputs. Public catalog stays blind."""
+    out = {}
+    any_violated = False
+    for name in DETECTORS:
+        raw = segment.get(name)
+        if not isinstance(raw, dict):
+            continue
+        rec = {
+            "value": raw.get("value"),
+            "ratio": raw.get("ratio"),
+            "violated": bool(raw.get("violated")),
+        }
+        out[name] = rec
+        if rec["violated"]:
+            any_violated = True
+    return out, any_violated
 
 
 def public_segments(raw_segments: list[dict]) -> list[dict]:
@@ -96,6 +116,45 @@ def build_catalog() -> dict:
     }
 
 
+def build_metrics() -> dict:
+    """Admin-only machine scores, same ids as human labels (`…_s000`)."""
+    batch_root = DATA_ROOT / "300-prune"
+    items = []
+    for embodiment in EMBODIMENTS:
+        metadata = read_json(batch_root / embodiment / "segments.json")
+        videos = metadata.get("videos", metadata)
+        for number in range(1, 101):
+            raw = videos.get(f"{number}.mp4") or videos.get(str(number))
+            if raw is None:
+                raise KeyError(f"Missing segment metadata: {embodiment}/{number}")
+            video_id = f"hallucination_{embodiment}_{number:03d}"
+            for index, segment in enumerate(raw.get("segments", [])):
+                detectors, violated = detector_fields(segment)
+                start = int(segment["start_frame"])
+                end = int(segment["end_frame"])
+                items.append({
+                    "id": f"{video_id}_s{index:03d}",
+                    "video_id": video_id,
+                    "embodiment": embodiment,
+                    "index": index,
+                    "start_frame": start,
+                    "end_frame": end,
+                    "n_frames": int(segment.get("n_frames", end - start + 1)),
+                    "violated": violated,
+                    "n_violated_video": int(raw.get("n_violated") or 0),
+                    "detectors": detectors,
+                })
+    if not items:
+        raise ValueError("No metric segments")
+    return {
+        "mode": "segment_metrics",
+        "n": len(items),
+        "detectors": list(DETECTORS),
+        "n_violated": sum(1 for item in items if item["violated"]),
+        "items": items,
+    }
+
+
 def build_examples() -> dict:
     example_root = DATA_ROOT / "example"
     manifest = read_json(example_root / "manifest.json")
@@ -125,9 +184,9 @@ def build_examples() -> dict:
     return {"n": len(items), "items": items}
 
 
-def write_json(path: Path, value: dict) -> None:
+def write_json(path: Path, value: dict, indent: int | None = 2) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(value, ensure_ascii=False, indent=indent) + "\n", encoding="utf-8")
 
 
 def main() -> None:
@@ -137,19 +196,24 @@ def main() -> None:
     args = parser.parse_args()
     catalog_path = DATA_ROOT / "catalog.segment.json"
     examples_path = DATA_ROOT / "examples.segment.json"
+    metrics_path = DATA_ROOT / "metrics.segment.json"
     write_json(catalog_path, build_catalog())
     write_json(examples_path, build_examples())
+    write_json(metrics_path, build_metrics(), indent=None)
 
     if args.sync_web:
         shutil.copy2(catalog_path, WEB_ROOT / "catalog.segment.json")
         shutil.copy2(examples_path, WEB_ROOT / "examples.segment.json")
+        shutil.copy2(metrics_path, WEB_ROOT / "metrics.segment.json")
         shutil.copy2(DATA_ROOT / "rubric_vi.md", WEB_ROOT / "rubric.segment.vi.md")
         shutil.copy2(DATA_ROOT / "rubric_en.md", WEB_ROOT / "rubric.segment.en.md")
 
     catalog = read_json(catalog_path)
     examples = read_json(examples_path)
+    metrics = read_json(metrics_path)
     print(f"Built {catalog['n']} videos / {catalog['n_segments']} segments / "
-          f"{examples['n']} examples")
+          f"{examples['n']} examples / {metrics['n']} metrics "
+          f"({metrics['n_violated']} machine-violated)")
 
 
 if __name__ == "__main__":

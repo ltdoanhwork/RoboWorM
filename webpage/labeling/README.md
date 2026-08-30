@@ -5,12 +5,14 @@ Supabase Free, as long as this stays a non-commercial research deployment
 (see cost notes below).
 
 ```
-gate.html     passcode + display name
-index.html    Mode A — 300 curated MV clips, raw + CoTracker overlay, Bad/Medium/Good
-segment.html  Mode B — 300 hallucinate-bench videos, metadata-defined segments
-admin.html    cross-rater progress + CSV/JSON export
-RUBRIC.md     links to bilingual source rubrics + numeric score mapping
-vgp.js        queue assignment + Supabase REST
+gate.html     rater passcode + name  |  admin passcode (analytics only)
+home.html     hub: 50-video batch, lifetime stats, submit anytime
+index.html    Mode A — 25 MV clips / batch, raw + flow, Bad/Medium/Good
+segment.html  Mode B — 25 videos / batch, metadata-defined 16-frame segments
+analytics.html admin-only charts (coverage, scores, raters). Not linked from rater UI.
+admin.html    redirect → analytics.html
+app.css       shared UI
+vgp.js        least-labeled batch assignment + Supabase REST
 catalog.json  Mode A public catalog (HF URLs)
 examples.json 9 references: 3 ratings × 3 robot embodiments
 catalog.segment.json  Mode B blind public catalog (300 videos / explicit frame ranges)
@@ -76,8 +78,9 @@ To change the passcode or point at a different Supabase project: edit
 `webpage/labeling/config.js` and push to `main` — Vercel redeploys
 automatically.
 
-Share `https://<project>.vercel.app/gate.html` + the passcode with raters.
-Admin dashboard: `/admin.html` (same passcode gate).
+Share `https://<project>.vercel.app/` (or `/gate.html`) + the **rater**
+passcode. Do **not** give raters `/analytics.html` — that URL uses a
+separate `ADMIN_PASSCODE` in `config.js`. Rater passcodes cannot open it.
 
 Cost note: Vercel Hobby is free but restricted to **non-commercial personal
 use** per its Fair Use Guidelines — fine for an internal research study, not
@@ -96,10 +99,39 @@ cd webpage/labeling && python3 -m http.server 8899
 
 ## Rater assignment
 
-`vgp.buildQueue()` gives every rater a personal ~100-item queue:
-10% is a shared "core" subset (same clips for everyone, for inter-annotator
-agreement), the rest is a deterministic hash-based sample so coverage spreads
-out as more raters join — no backend assignment table needed.
+Each rater gets **50 videos at a time** (25 Mode A multiview, then a prompt
+to continue with 25 Mode B single-view). The batch is stored in
+`localStorage` so refresh does not re-roll. **Submit works before the batch
+is finished.** After submit they can request another 50.
+
+Assignment reads current Supabase labels and picks videos this rater has not
+finished, **least-labeled first**, random among ties. That evens coverage
+while keeping intentional overlap across raters. Same display name restores
+lifetime counts (multiview videos + completed single-view videos + segments).
+
+## Hallucinate segments (Mode B)
+
+Do not cut 8k tiny MP4s. `scripts/build_hallucination_segment_catalog.py`
+copies `start_frame` / `end_frame` / `n_frames` from
+`sampling_dataset/data_for_web/hallucinate_bench/300-prune/{robot}/segments.json`
+(including the last short tail — 297 of 8370 segments are &lt;16 frames).
+The browser streams the full HF video and seeks:
+
+```
+start_time = start_frame / fps
+end_time   = (end_frame + 1) / fps
+```
+
+Rebuild after HF metadata changes:
+
+```bash
+python scripts/build_hallucination_segment_catalog.py --sync-web
+```
+
+`--sync-web` also writes `metrics.segment.json` (admin-only): per-segment
+rigidity / jerk / teleport / joint_limit / self_collision from each
+`300-prune/{robot}/segments.json`. Analytics compares those machine flags
+to human 1–2–3. The rater catalog stays blind.
 
 ## Design tradeoffs (why it's free)
 

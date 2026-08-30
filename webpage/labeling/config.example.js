@@ -7,6 +7,8 @@ const CONFIG = {
   // free-tier email-OTP rate limit (2 emails/hour) by skipping email auth
   // entirely. Anyone who has the passcode can write labels under any name.
   ACCESS_PASSCODE: "change-me",
+  // Separate gate for /analytics.html. Rater passcode cannot open admin.
+  ADMIN_PASSCODE: "change-me-admin",
 
   // Supabase project REST endpoint + anon (public) key. Anon key is safe to
   // ship client-side; RLS policies in supabase/schema.sql scope what it can
