@@ -7,13 +7,15 @@ Supabase Free, as long as this stays a non-commercial research deployment
 ```
 gate.html     passcode + display name
 index.html    Mode A — 300 curated MV clips, raw + CoTracker overlay, Bad/Medium/Good
-segment.html  Mode B — remaining 300, all views if MV + singleview, every 16 frames (catalog not locked)
+segment.html  Mode B — 300 hallucinate-bench videos, metadata-defined segments
 admin.html    cross-rater progress + CSV/JSON export
 RUBRIC.md     links to bilingual source rubrics + numeric score mapping
 vgp.js        queue assignment + Supabase REST
 catalog.json  Mode A public catalog (HF URLs)
 examples.json 9 references: 3 ratings × 3 robot embodiments
-catalog.segment.json  Mode B stub
+catalog.segment.json  Mode B blind public catalog (300 videos / explicit frame ranges)
+examples.segment.json 45 references: 3 ratings × 3 robot embodiments × 5 clips
+rubric.segment.{vi,en}.md Mode B bilingual rubrics shown during labeling
 ```
 
 Mode A videos live at
@@ -36,6 +38,16 @@ HF_TOKEN=... python scripts/upload_content_to_hf.py \
 `assets/seed_points.json` provides CoTracker initialization points; entries
 without points fall back to optical flow. `assets/examples.md` controls the
 nine references shown in the sticky example panel.
+
+Mode B source data lives under `sampling_dataset/hallucinate_bench`. Rebuild
+its blind catalog and sync public metadata/rubrics after downloading:
+
+```bash
+python scripts/build_hallucination_segment_catalog.py --sync-web
+```
+
+Builder strips source bundle, quality stratum, detector outputs, and violation
+counts. Example clips remain reference-only and never enter rating queue.
 
 ## 1. Supabase (free Postgres)
 
