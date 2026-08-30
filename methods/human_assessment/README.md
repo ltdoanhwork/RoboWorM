@@ -7,13 +7,15 @@ as a side-by-side `view1|view2` overlay to help raters see motion.
 
 | piece | used? | why |
 |---|---|---|
-| Farneback flow heatmap (`optical_flow.py`) | **yes** | no seeds needed; highlights where pixels move |
-| CoTracker3 keypoints (`keypoints.py` + `point_picker.py`) | later | needs a human to click seeds per episode |
+| Farneback flow heatmap (`optical_flow.py`) | fallback | used when a curated seed entry has no points |
+| CoTracker3 keypoints (`keypoints.py` + `point_picker.py`) | **yes** | initialized from `assets/seed_points.json` |
 | PNG `view1/view2/frame_*.png` layout | original only | labeling pipeline decodes mp4 instead |
 
-The labeling builder (`scripts/build_assessment_multiview.py`) crops the two
-**static** cameras out of a 3-view strip / 4-view 2×2 grid, writes a **raw**
-hstack and a **flow-overlay** hstack, both at the original clip length.
+The labeling builder (`scripts/build_assessment_multiview.py`) reads the exact
+300 paths from `assets/all_videos.md`, crops the two **static** cameras out of a
+3/4-view strip or 2×2 grid, then writes a **raw** hstack and a **CoTracker**
+hstack at original length. It also exports the 9 examples in
+`assets/examples.md` as a public frontend manifest.
 
 ## Original CLI (frame folders)
 

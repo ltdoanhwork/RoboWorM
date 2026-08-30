@@ -6,12 +6,13 @@ Supabase Free, as long as this stays a non-commercial research deployment
 
 ```
 gate.html     passcode + display name
-index.html    Mode A — 300 full-length MV clips, 2 static views, raw + flow, 1–2–3
+index.html    Mode A — 300 curated MV clips, raw + CoTracker overlay, Bad/Medium/Good
 segment.html  Mode B — remaining 300, all views if MV + singleview, every 16 frames (catalog not locked)
 admin.html    cross-rater progress + CSV/JSON export
-RUBRIC.md     1–2–3 rubric placeholders (examples TBD)
+RUBRIC.md     links to bilingual source rubrics + numeric score mapping
 vgp.js        queue assignment + Supabase REST
 catalog.json  Mode A public catalog (HF URLs)
+examples.json 9 references: 3 ratings × 3 robot embodiments
 catalog.segment.json  Mode B stub
 ```
 
@@ -20,13 +21,21 @@ Mode A videos live at
 Rebuild:
 
 ```bash
-models/dreamgen/.venv/bin/python scripts/build_assessment_multiview.py
-cp sampling_dataset/assessment/multiview_static2/catalog.public.json webpage/labeling/catalog.json
+models/dreamgen/.venv/bin/python scripts/build_assessment_multiview.py --sync-web
 HF_TOKEN=... python scripts/upload_content_to_hf.py \
   sampling_dataset/assessment/multiview_static2/clips \
   doanh25032004/video_gen_physics --repo-type dataset \
   --prefix assessment/multiview_static2/clips
+HF_TOKEN=... python scripts/upload_content_to_hf.py \
+  sampling_dataset/assessment/multiview_static2/examples \
+  doanh25032004/video_gen_physics --repo-type dataset \
+  --prefix assessment/multiview_static2/examples
 ```
+
+`assets/all_videos.md` fixes source order for all 300 items.
+`assets/seed_points.json` provides CoTracker initialization points; entries
+without points fall back to optical flow. `assets/examples.md` controls the
+nine references shown in the sticky example panel.
 
 ## 1. Supabase (free Postgres)
 

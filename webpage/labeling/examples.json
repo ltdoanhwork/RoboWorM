@@ -1,0 +1,69 @@
+{
+  "n": 9,
+  "scale": ["bad", "medium", "good"],
+  "items": [
+    {
+      "id": "bad-bimanual",
+      "score": 1,
+      "rating": "bad",
+      "embodiment": "bimanual",
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/bimanual/output/multiview/dreamgen/makovian/iter_000120000/insert_gear_onto_shaft_sliding/episode_000020/full_pred.mp4"
+    },
+    {
+      "id": "bad-humanoid",
+      "score": 1,
+      "rating": "bad",
+      "embodiment": "humanoid",
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/humanoid/output/multiview/dreamgen/makovian/iter_000100000/Airbot_MMK2_move_pan/episode_000012/full_pred.mp4"
+    },
+    {
+      "id": "bad-single-arm",
+      "score": 1,
+      "rating": "bad",
+      "embodiment": "single_arm",
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/tmp/lowquality_multiview/episode_007115.mp4"
+    },
+    {
+      "id": "medium-bimanual",
+      "score": 2,
+      "rating": "medium",
+      "embodiment": "bimanual",
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/bimanual/output/multiview/dreamgen/makovian/iter_000120000/put_cup_moved_red_handle_holder/episode_000030/full_pred.mp4"
+    },
+    {
+      "id": "medium-humanoid",
+      "score": 2,
+      "rating": "medium",
+      "embodiment": "humanoid",
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/augment/humanoid/output/multiview/ctrlworld/makovian/episode_AIRBOT_MMK2_mobile_car__000039__v09_black/full_pred.mp4"
+    },
+    {
+      "id": "medium-single-arm",
+      "score": 2,
+      "rating": "medium",
+      "embodiment": "single_arm",
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/single_arm/output/multiview/dreamgen/non_makovian/episode_000582.mp4"
+    },
+    {
+      "id": "good-bimanual",
+      "score": 3,
+      "rating": "good",
+      "embodiment": "bimanual",
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/bimanual/output/multiview/ctrlworld/makovian/episode_insert_random_shaft_random_medium_gear__000085/pred_all_views.mp4"
+    },
+    {
+      "id": "good-humanoid",
+      "score": 3,
+      "rating": "good",
+      "embodiment": "humanoid",
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/humanoid/output/multiview/ctrlworld/non_makovian/episode_AIRBOT_MMK2_boxs_storage__000047/pred_all_views.mp4"
+    },
+    {
+      "id": "good-single-arm",
+      "score": 3,
+      "rating": "good",
+      "embodiment": "single_arm",
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/single_arm/output/multiview/dreamgen/non_makovian/episode_001470.mp4"
+    }
+  ]
+}

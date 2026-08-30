@@ -1,25 +1,18 @@
-# Scoring rubric (placeholders)
+# Multiview consistency rubric
 
-Fill these in before raters start. Examples can be a screenshot / clip id
-once you pick them.
+Source of truth:
 
-## Scale (1–2–3)
+- Vietnamese: [`../../assets/rubric_vietnamese.md`](../../assets/rubric_vietnamese.md)
+- English: [`../../assets/rubric_english.md`](../../assets/rubric_english.md)
+- Reference clips: [`../../assets/examples.md`](../../assets/examples.md)
 
-| Score | Label | Meaning (edit me) | Example (add later) |
-|---|---|---|---|
-| **1** | Fail | Physics broken, melted, wrong task, unusable. | _TBD_ |
-| **2** | Mixed | Recognizable robot/task but artifacts, mild physics errors, or drift. | _TBD_ |
-| **3** | Pass | Coherent motion, follows the prompt, physics look right. | _TBD_ |
+Database score mapping stays numeric for compatibility:
 
-## Mode A — Multiview static pair (first 300 videos)
+| Stored score | Rating |
+|---|---|
+| `1` | Bad |
+| `2` | Medium |
+| `3` | Good |
 
-Full original length. Only the **two static cameras**. The page shows **raw**
-and **optical-flow overlay** of the same clip, playing together. Score the
-**whole video** 1 / 2 / 3 once.
-
-## Mode B — Sequential 16-frame segments (remaining 300)
-
-Dataset not locked yet. Will mix **multiview + singleview**. If the clip is
-multiview, show **all views**. The video plays, pauses every **16 frames**
-(regardless of fps), you score 1 / 2 / 3, then the next segment, until the
-clip ends.
+The labeling page exposes both languages and all nine examples. Examples are
+reference-only and never enter a rater's evaluation queue.
