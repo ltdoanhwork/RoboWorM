@@ -25,11 +25,11 @@ Rebuild:
 ```bash
 models/dreamgen/.venv/bin/python scripts/build_assessment_multiview.py --sync-web
 HF_TOKEN=... python scripts/upload_content_to_hf.py \
-  sampling_dataset/assessment/multiview_static2/clips \
+  sampling_dataset/data_for_web/assessment/multiview_static2/clips \
   doanh25032004/video_gen_physics --repo-type dataset \
   --prefix assessment/multiview_static2/clips
 HF_TOKEN=... python scripts/upload_content_to_hf.py \
-  sampling_dataset/assessment/multiview_static2/examples \
+  sampling_dataset/data_for_web/assessment/multiview_static2/examples \
   doanh25032004/video_gen_physics --repo-type dataset \
   --prefix assessment/multiview_static2/examples
 ```
@@ -39,7 +39,8 @@ HF_TOKEN=... python scripts/upload_content_to_hf.py \
 without points fall back to optical flow. `assets/examples.md` controls the
 nine references shown in the sticky example panel.
 
-Mode B source data lives under `sampling_dataset/hallucinate_bench`. Rebuild
+Mode B source data lives under
+`sampling_dataset/data_for_web/hallucinate_bench`. Rebuild
 its blind catalog and sync public metadata/rubrics after downloading:
 
 ```bash

@@ -12,7 +12,7 @@ from urllib.parse import quote
 
 
 REPO = Path(__file__).resolve().parents[1]
-DATA_ROOT = REPO / "sampling_dataset" / "hallucinate_bench"
+DATA_ROOT = REPO / "sampling_dataset" / "data_for_web" / "hallucinate_bench"
 WEB_ROOT = REPO / "webpage" / "labeling"
 BUCKET_BASE = "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web"
 EMBODIMENTS = ("bimanual", "humanoid", "single_arm")

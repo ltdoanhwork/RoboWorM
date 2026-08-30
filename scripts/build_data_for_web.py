@@ -36,6 +36,7 @@ SAMPLING = REPO / "sampling_dataset"
 DEST = SAMPLING / "data_for_web"
 
 SKIP_METHODS = {".cache", "data_for_web"}
+PRESERVE_ENTRIES = {"labels.json", "assessment", "hallucinate_bench"}
 SKIP_FNAMES = {
     "full_gt.mp4",
     "gt_all_views.mp4",
@@ -401,7 +402,7 @@ def main() -> int:
 
     if dest.exists():
         for child in dest.iterdir():
-            if child.name == "labels.json":
+            if child.name in PRESERVE_ENTRIES:
                 continue
             if child.is_symlink() or child.is_file():
                 child.unlink()
@@ -525,6 +526,9 @@ small random sample. ~{args.target} clips, even across cells.
 ```bash
 python scripts/build_data_for_web.py --target 400 --seed 42
 ```
+
+`assessment/` and `hallucinate_bench/` are separate website bundles. Rebuilds
+preserve both directories and `labels.json`.
 """
     )
     print(f"\nWrote {n_ok} pred files -> {dest} ({n_miss} missing)")
