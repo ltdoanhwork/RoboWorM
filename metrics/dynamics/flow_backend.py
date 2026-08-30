@@ -17,7 +17,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-_REPO_ROOT = Path(__file__).resolve().parents[1]
+_REPO_ROOT = Path(__file__).resolve().parents[2]
 _SEA_RAFT_DIR = (
     _REPO_ROOT
     / "metrics/WorldScore/worldscore/benchmark/metrics/third_party/SEA-RAFT"

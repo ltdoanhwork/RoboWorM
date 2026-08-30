@@ -30,25 +30,27 @@ def _flow_magnitude(flow: np.ndarray) -> np.ndarray:
     return np.sqrt(flow[..., 0] ** 2 + flow[..., 1] ** 2)
 
 
-def flow_vs_gt_metrics(
+def flow_vs_ref_metrics(
     pred_frames: np.ndarray,
-    gt_frames: np.ndarray,
+    ref_frames: np.ndarray,
     flow_model,
     max_pairs: Optional[int] = None,
+    ref_name: str = "gt",
 ) -> Dict[str, float]:
-    """Compute flow-vs-GT motion metrics for one view.
+    """Compare pred flow against a reference video (GT or dense pred).
 
     Args:
         pred_frames: (T, H, W, 3) uint8 RGB predicted frames.
-        gt_frames:   (T, H, W, 3) uint8 RGB ground-truth frames (same T,H,W).
-        flow_model:  object with ``.flow(frame1, frame2) -> (H,W,2)`` (SeaRaftFlow).
+        ref_frames:  (T, H, W, 3) uint8 RGB reference frames (same T,H,W).
+        flow_model:  object with ``.flow(frame1, frame2) -> (H,W,2)``.
         max_pairs:   optionally cap the number of consecutive pairs evaluated.
+        ref_name:    suffix for the reference keys (``gt`` or ``dense``).
 
     Returns:
-        dict of scalar metrics (see module docstring).
+        flow_epe, motion_mag_pred, motion_mag_{ref}, abs err, ratio, num_pairs.
     """
-    assert pred_frames.shape == gt_frames.shape, (
-        f"pred/gt shape mismatch: {pred_frames.shape} vs {gt_frames.shape}"
+    assert pred_frames.shape == ref_frames.shape, (
+        f"pred/ref shape mismatch: {pred_frames.shape} vs {ref_frames.shape}"
     )
     T = pred_frames.shape[0]
     n_pairs = T - 1
@@ -57,35 +59,50 @@ def flow_vs_gt_metrics(
 
     epe_list: List[float] = []
     mag_pred_list: List[float] = []
-    mag_gt_list: List[float] = []
+    mag_ref_list: List[float] = []
 
     for i in range(n_pairs):
         fp = flow_model.flow(pred_frames[i], pred_frames[i + 1])
-        fg = flow_model.flow(gt_frames[i], gt_frames[i + 1])
+        fr = flow_model.flow(ref_frames[i], ref_frames[i + 1])
 
-        epe = np.sqrt(((fp - fg) ** 2).sum(axis=-1))  # (H, W)
+        epe = np.sqrt(((fp - fr) ** 2).sum(axis=-1))  # (H, W)
         epe_list.append(float(epe.mean()))
         mag_pred_list.append(float(_flow_magnitude(fp).mean()))
-        mag_gt_list.append(float(_flow_magnitude(fg).mean()))
+        mag_ref_list.append(float(_flow_magnitude(fr).mean()))
 
     mag_pred = float(np.mean(mag_pred_list))
-    mag_gt = float(np.mean(mag_gt_list))
+    mag_ref = float(np.mean(mag_ref_list))
 
     return {
         "flow_epe": float(np.mean(epe_list)),
         "motion_mag_pred": mag_pred,
-        "motion_mag_gt": mag_gt,
-        "motion_mag_abs_err": abs(mag_pred - mag_gt),
-        "motion_mag_ratio": mag_pred / (mag_gt + _EPS),
+        f"motion_mag_{ref_name}": mag_ref,
+        "motion_mag_abs_err": abs(mag_pred - mag_ref),
+        "motion_mag_ratio": mag_pred / (mag_ref + _EPS),
         "num_pairs": n_pairs,
     }
+
+
+def flow_vs_gt_metrics(
+    pred_frames: np.ndarray,
+    gt_frames: np.ndarray,
+    flow_model,
+    max_pairs: Optional[int] = None,
+) -> Dict[str, float]:
+    """GT-ref wrapper (appendix / old ctrlworld trial). Prefer flow_vs_ref_metrics."""
+    return flow_vs_ref_metrics(
+        pred_frames, gt_frames, flow_model, max_pairs=max_pairs, ref_name="gt",
+    )
 
 
 def aggregate_view_metrics(view_metrics: Dict[str, Dict[str, float]]) -> Dict[str, float]:
     """Average per-view metric dicts into a single dict (skips ``num_pairs``)."""
     if not view_metrics:
         return {}
-    keys = ["flow_epe", "motion_mag_pred", "motion_mag_gt", "motion_mag_abs_err", "motion_mag_ratio"]
+    keys = [
+        "flow_epe", "motion_mag_pred", "motion_mag_gt", "motion_mag_dense",
+        "motion_mag_abs_err", "motion_mag_ratio",
+    ]
     out: Dict[str, float] = {}
     for k in keys:
         vals = [m[k] for m in view_metrics.values() if k in m]

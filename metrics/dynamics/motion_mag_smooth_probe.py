@@ -66,7 +66,8 @@ class Flow:
         im = cv2.cvtColor(cv2.imread(f), cv2.COLOR_BGR2RGB)
         return torch.tensor(im, dtype=torch.float32).permute(2, 0, 1)[None].to(self.dev)
 
-    def median_mag(self, f1, f2):
+    def compute(self, f1, f2):
+        """Dense flow (H,W,2) — same API as motion_accuracy_gdino.Flow."""
         with torch.no_grad():
             i1, i2 = self._img(f1), self._img(f2)
             s = self.a.scale
@@ -76,9 +77,12 @@ class Flow:
                 out = self.m(i1, i2, iters=self.a.iters, test_mode=True)
             fl = out["flow"][-1]
             fl = F.interpolate(fl, scale_factor=0.5 ** s, mode="bilinear", align_corners=False) * (0.5 ** s)
-            fl = fl.detach().cpu().numpy().squeeze().transpose(1, 2, 0)
-            mag = np.sqrt(fl[..., 0] ** 2 + fl[..., 1] ** 2)
-            return float(np.median(mag))
+            return fl.detach().cpu().numpy().squeeze().transpose(1, 2, 0)
+
+    def median_mag(self, f1, f2):
+        fl = self.compute(f1, f2)
+        mag = np.sqrt(fl[..., 0] ** 2 + fl[..., 1] ** 2)
+        return float(np.median(mag))
 
 
 def motion_magnitude(frames, flow):
