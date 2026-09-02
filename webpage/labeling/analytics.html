@@ -22,6 +22,32 @@
   <div class="chart-card admin-stat" id="stats">Loading…</div>
 
   <section class="chart-card">
+    <h2>Machine metrics — multiview consistency (data_for_web.csv)</h2>
+    <p class="status" style="margin-bottom:.7rem">
+      Automated scores from <span class="mono">data_for_web.csv</span>
+      (geometric_consistency, pose_stability, combined_score). Item id matches
+      <span class="mono">catalog.json</span> order. Human labels join on the same id.
+    </p>
+    <div class="admin-stat" id="mvMetricStats" style="margin-bottom:1rem"></div>
+    <div class="phase-grid">
+      <div>
+        <p class="status" style="margin-bottom:.4rem">Machine score mix (300 videos)</p>
+        <div class="bar-list" id="mvScoreMix"></div>
+        <p class="status" style="margin:.9rem 0 .4rem">Per robot_type — mean combined_score</p>
+        <div class="bar-list" id="mvEmbMean"></div>
+      </div>
+      <div>
+        <p class="status" style="margin-bottom:.4rem">Metric distribution (mean ± spread)</p>
+        <div class="bar-list" id="mvMetricDist"></div>
+        <p class="status" style="margin:.9rem 0 .4rem">Human vs machine (labeled multiview only)</p>
+        <div class="bar-list" id="mvHumanMachine"></div>
+      </div>
+    </div>
+    <p class="status" style="margin:1rem 0 .4rem">Score agreement — human vs machine (exact 1/2/3 match)</p>
+    <div class="bar-list" id="mvAgree"></div>
+  </section>
+
+  <section class="chart-card">
     <h2>Human vs machine — hallucinate segments.json</h2>
     <p class="status" style="margin-bottom:.7rem">
       Machine labels come from <span class="mono">300-prune/{robot}/segments.json</span>
@@ -78,7 +104,7 @@
 <script src="vgp.js"></script>
 <script>
 if (VGP.requireAdmin()) {
-  let rows = [], mvItems = [], svItems = [], metricItems = [];
+  let rows = [], mvItems = [], svItems = [], metricItems = [], mvMetricItems = [];
 
   function bars(host, entries, max){
     host.innerHTML = entries.map(([label, n, extra]) => {
@@ -160,6 +186,100 @@ if (VGP.requireAdmin()) {
     ).join('') || '<tr><td colspan="5">No labels yet.</td></tr>';
 
     renderMetrics();
+    renderMvMetrics();
+  }
+
+  function renderMvMetrics(){
+    const byId = new Map(mvMetricItems.map(it => [it.id, it]));
+    const mvIds = new Set(mvItems.map(it => it.id));
+    const labeled = rows.filter(r => mvIds.has(r.item_id) && byId.has(r.item_id));
+    const scores = { 1: 0, 2: 0, 3: 0 };
+    const embScores = {};
+    const embCombined = {};
+    let geoSum = 0, poseSum = 0, combSum = 0;
+    for (const it of mvMetricItems) {
+      scores[it.score] = (scores[it.score] || 0) + 1;
+      const emb = it.robot_type || 'unknown';
+      if (!embScores[emb]) embScores[emb] = { n: 0, sum: 0 };
+      embScores[emb].n += 1;
+      embScores[emb].sum += it.combined_score;
+      if (!embCombined[emb]) embCombined[emb] = [];
+      embCombined[emb].push(it.combined_score);
+      geoSum += it.geometric_consistency;
+      poseSum += it.pose_stability;
+      combSum += it.combined_score;
+    }
+    const n = mvMetricItems.length || 1;
+    const humanByMachine = { 1: {1:0,2:0,3:0}, 2: {1:0,2:0,3:0}, 3: {1:0,2:0,3:0} };
+    let exactAgree = 0;
+    const humanScores = [];
+    const machineScores = [];
+    for (const r of labeled) {
+      const m = byId.get(r.item_id);
+      humanByMachine[m.score][r.score] += 1;
+      if (m.score === r.score) exactAgree += 1;
+      humanScores.push(r.score);
+      machineScores.push(m.score);
+    }
+    const pearson = (() => {
+      if (humanScores.length < 2) return 0;
+      const n2 = humanScores.length;
+      const mx = mean(humanScores), my = mean(machineScores);
+      let num = 0, dx = 0, dy = 0;
+      for (let i = 0; i < n2; i++) {
+        const a = humanScores[i] - mx, b = machineScores[i] - my;
+        num += a * b; dx += a * a; dy += b * b;
+      }
+      return (dx && dy) ? num / Math.sqrt(dx * dy) : 0;
+    })();
+
+    document.getElementById('mvMetricStats').innerHTML = `
+      <div><b>${n}</b><span>machine-scored videos</span></div>
+      <div><b>${labeled.length}</b><span>human-labeled (joinable)</span></div>
+      <div><b>${(combSum / n).toFixed(3)}</b><span>mean combined_score</span></div>
+      <div><b>${(geoSum / n).toFixed(3)}</b><span>mean geometric_consistency</span></div>
+      <div><b>${(poseSum / n).toFixed(3)}</b><span>mean pose_stability</span></div>`;
+
+    const scoreMax = Math.max(1, scores[1], scores[2], scores[3]);
+    bars(document.getElementById('mvScoreMix'), [
+      ['1 Bad', scores[1] || 0],
+      ['2 Medium', scores[2] || 0],
+      ['3 Good', scores[3] || 0],
+    ], scoreMax);
+
+    const embEntries = Object.entries(embScores).sort((a, b) => a[0].localeCompare(b[0]));
+    bars(document.getElementById('mvEmbMean'), embEntries.map(([emb, v]) => [
+      emb, Number((v.sum / v.n).toFixed(3)),
+    ]), 1);
+
+    bars(document.getElementById('mvMetricDist'), [
+      ['geometric_consistency', Number((geoSum / n).toFixed(3))],
+      ['pose_stability', Number((poseSum / n).toFixed(3))],
+      ['combined_score', Number((combSum / n).toFixed(3))],
+    ], 1);
+
+    if (labeled.length) {
+      bars(document.getElementById('mvHumanMachine'), [
+        ['Mean human score', Number(mean(humanScores).toFixed(2))],
+        ['Mean machine score', Number(mean(machineScores).toFixed(2))],
+        ['Pearson r', Number(pearson.toFixed(2))],
+        ['Exact agreement', exactAgree],
+      ], Math.max(3, labeled.length));
+      bars(document.getElementById('mvAgree'), [
+        ['Machine Bad → human Bad', humanByMachine[1][1]],
+        ['Machine Bad → human Med', humanByMachine[1][2]],
+        ['Machine Bad → human Good', humanByMachine[1][3]],
+        ['Machine Med → human Bad', humanByMachine[2][1]],
+        ['Machine Med → human Med', humanByMachine[2][2]],
+        ['Machine Med → human Good', humanByMachine[2][3]],
+        ['Machine Good → human Bad', humanByMachine[3][1]],
+        ['Machine Good → human Med', humanByMachine[3][2]],
+        ['Machine Good → human Good', humanByMachine[3][3]],
+      ], Math.max(1, ...Object.values(humanByMachine).flatMap(o => Object.values(o))));
+    } else {
+      document.getElementById('mvHumanMachine').innerHTML = '<p class="status">No human multiview labels yet.</p>';
+      document.getElementById('mvAgree').innerHTML = '<p class="status">No human multiview labels yet.</p>';
+    }
   }
 
   function mean(xs){ return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0; }
@@ -265,16 +385,18 @@ if (VGP.requireAdmin()) {
 
   async function refresh(){
     document.getElementById('stats').textContent = 'Loading…';
-    const [all, mv, sv, metrics] = await Promise.all([
+    const [all, mv, sv, metrics, mvMetrics] = await Promise.all([
       VGP.sbLoadAllLabels(),
       fetch('catalog.json').then(r => r.json()),
       fetch('catalog.segment.json').then(r => r.json()),
       fetch('metrics.segment.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
+      fetch('metrics.multiview.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
     ]);
     rows = all;
     mvItems = mv.items || [];
     svItems = sv.items || [];
     metricItems = metrics.items || [];
+    mvMetricItems = mvMetrics.items || [];
     render();
   }
 
