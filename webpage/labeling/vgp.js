@@ -258,6 +258,127 @@ const VGP = (() => {
     if (!res.ok) throw new Error(`Supabase upsert failed: ${res.status} ${await res.text()}`);
   }
 
+  async function sbDeleteLabel(raterName, itemId) {
+    const url = `${CONFIG.SUPABASE_URL}/rest/v1/labels?rater_name=eq.${encodeURIComponent(raterName)}&item_id=eq.${encodeURIComponent(itemId)}`;
+    const res = await fetch(url, { method: "DELETE", headers: sbHeaders() });
+    if (!res.ok) throw new Error(`Supabase delete failed: ${res.status} ${await res.text()}`);
+  }
+
+  // --- local autosave mirror + undo stack ---------------------------------
+  const LABEL_CACHE_PREFIX = "vgp_labels_cache::";
+  const PENDING_PREFIX = "vgp_labels_pending::";
+  const UNDO_MAX = 40;
+  let undoStack = [];
+
+  function labelCacheKey(rater) {
+    return LABEL_CACHE_PREFIX + String(rater || "").toLowerCase();
+  }
+  function pendingKey(rater) {
+    return PENDING_PREFIX + String(rater || "").toLowerCase();
+  }
+
+  function readLabelCache(rater) {
+    try {
+      return JSON.parse(localStorage.getItem(labelCacheKey(rater)) || "{}") || {};
+    } catch {
+      return {};
+    }
+  }
+
+  function writeLabelCache(rater, map) {
+    localStorage.setItem(labelCacheKey(rater), JSON.stringify(map || {}));
+  }
+
+  function mergeLabels(remote, rater) {
+    const local = readLabelCache(rater);
+    return { ...local, ...(remote || {}) };
+  }
+
+  function mirrorLabel(rater, itemId, score) {
+    const map = readLabelCache(rater);
+    if (score == null) delete map[itemId];
+    else map[itemId] = score;
+    writeLabelCache(rater, map);
+  }
+
+  function readPending(rater) {
+    try {
+      return JSON.parse(localStorage.getItem(pendingKey(rater)) || "[]") || [];
+    } catch {
+      return [];
+    }
+  }
+
+  function writePending(rater, list) {
+    localStorage.setItem(pendingKey(rater), JSON.stringify(list || []));
+  }
+
+  function enqueuePending(rater, itemId, score) {
+    const list = readPending(rater).filter((p) => p.itemId !== itemId);
+    list.push({ itemId, score, at: Date.now() });
+    writePending(rater, list);
+  }
+
+  function dequeuePending(rater, itemId) {
+    writePending(rater, readPending(rater).filter((p) => p.itemId !== itemId));
+  }
+
+  /** Upsert/delete + local mirror. Queues on network failure for flush later. */
+  async function autosaveLabel(raterName, itemId, score) {
+    mirrorLabel(raterName, itemId, score);
+    try {
+      if (score == null) await sbDeleteLabel(raterName, itemId);
+      else await sbUpsertLabel(raterName, itemId, score);
+      dequeuePending(raterName, itemId);
+      return true;
+    } catch (err) {
+      enqueuePending(raterName, itemId, score);
+      throw err;
+    }
+  }
+
+  async function flushPending(raterName) {
+    const list = readPending(raterName);
+    for (const entry of list) {
+      try {
+        if (entry.score == null) await sbDeleteLabel(raterName, entry.itemId);
+        else await sbUpsertLabel(raterName, entry.itemId, entry.score);
+        dequeuePending(raterName, entry.itemId);
+      } catch (_) {
+        /* keep queued */
+      }
+    }
+    return readPending(raterName).length;
+  }
+
+  function pushUndo(entry) {
+    undoStack.push(entry);
+    if (undoStack.length > UNDO_MAX) undoStack.shift();
+  }
+
+  function canUndo() {
+    return undoStack.length > 0;
+  }
+
+  function clearUndo() {
+    undoStack = [];
+  }
+
+  /**
+   * Pop last score action and restore server + local map.
+   * entry: { itemId, prevScore, nextScore, idx?, cursor? }
+   * Returns restored entry or null.
+   */
+  async function undoLast(raterName, labelsMap) {
+    const entry = undoStack.pop();
+    if (!entry) return null;
+    const restore = entry.prevScore == null ? null : entry.prevScore;
+    if (restore == null) delete labelsMap[entry.itemId];
+    else labelsMap[entry.itemId] = restore;
+    await autosaveLabel(raterName, entry.itemId, restore);
+    return entry;
+  }
+
   async function sbLoadLabels(raterName) {
     const url = `${CONFIG.SUPABASE_URL}/rest/v1/labels?rater_name=eq.${encodeURIComponent(raterName)}&select=item_id,score`;
     const res = await fetch(url, { headers: sbHeaders() });
@@ -295,7 +416,9 @@ const VGP = (() => {
     coverageCounts, pickLeastLabeled,
     getBatch, getValidBatch, isStaleOpenBatch, saveBatch, submitBatch, clearBatch, createBatch, getOrCreateBatch,
     itemsFromIds,
-    sbUpsertLabel, sbLoadLabels, sbLoadAllLabels,
+    sbUpsertLabel, sbDeleteLabel, sbLoadLabels, sbLoadAllLabels,
+    mergeLabels, mirrorLabel, autosaveLabel, flushPending, readPending,
+    pushUndo, canUndo, clearUndo, undoLast,
     fnv1a, mulberry32,
     BATCH_VERSION,
   };

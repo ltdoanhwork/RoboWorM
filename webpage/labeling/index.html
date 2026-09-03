@@ -67,6 +67,7 @@
         </div>
         <div class="nav-btns">
           <button class="btn" id="btnPlay"><span data-lang="vi">Phát</span><span data-lang="en">Play</span><span class="shortcut">Space</span></button>
+          <button class="btn" id="btnUndo" disabled><span data-lang="vi">Hoàn tác</span><span data-lang="en">Undo</span><span class="shortcut">Ctrl+Z</span></button>
           <button class="btn" id="btnPrev">← <span data-lang="vi">Trước</span><span data-lang="en">Prev</span></button>
           <button class="btn" id="btnNext"><span data-lang="vi">Tiếp</span><span data-lang="en">Next</span> →</button>
           <button class="btn warn" id="btnSubmit"><span data-lang="vi">Nộp lô</span><span data-lang="en">Submit batch</span></button>
@@ -178,19 +179,45 @@ if (VGP.requireGate()) {
     document.querySelectorAll('.score').forEach(button => button.classList.toggle('active', labels[it.id] === Number(button.dataset.s)));
   }
 
+  function refreshUndoBtn(){
+    const btn = $('btnUndo');
+    if (btn) btn.disabled = !VGP.canUndo();
+  }
+
   async function rate(score){
     const it = all[idx]; if (!it) return;
+    const prev = labels[it.id] != null ? labels[it.id] : null;
+    if (prev === score) return;
+    VGP.pushUndo({ itemId: it.id, prevScore: prev, nextScore: score, idx });
     labels[it.id] = score;
-    setStatus('Đang lưu…', 'Saving…', 'syncing');
+    refreshUndoBtn();
+    setStatus('Đang tự lưu…', 'Autosaving…', 'syncing');
     document.querySelectorAll('.score').forEach(button => button.classList.toggle('active', Number(button.dataset.s) === score));
     try {
-      await VGP.sbUpsertLabel(rater, it.id, score);
-      setStatus(`Đã lưu: ${['','Bad','Medium','Good'][score]}`, `Saved: ${['','Bad','Medium','Good'][score]}`);
+      await VGP.autosaveLabel(rater, it.id, score);
+      setStatus(`Đã tự lưu: ${['','Bad','Medium','Good'][score]}`, `Autosaved: ${['','Bad','Medium','Good'][score]}`);
     } catch (error) {
-      console.error(error); setStatus('Lưu thất bại.', 'Save failed.', 'err'); return;
+      console.error(error); setStatus('Lưu tạm local · sẽ thử lại.', 'Saved locally · will retry.', 'err');
     }
     if (idx < all.length - 1){ idx += 1; render(); }
     else { setStatus('Đã xong 25 video multiview.', 'Multiview half complete.'); maybeContinue(); }
+  }
+
+  async function undo(){
+    if (!VGP.canUndo()) return;
+    setStatus('Đang hoàn tác…', 'Undoing…', 'syncing');
+    try {
+      const entry = await VGP.undoLast(rater, labels);
+      if (!entry) return;
+      if (Number.isInteger(entry.idx)) idx = Math.min(entry.idx, Math.max(0, all.length - 1));
+      render();
+      refreshUndoBtn();
+      const name = entry.prevScore == null ? (lang() === 'vi' ? 'đã xóa điểm' : 'cleared score')
+        : ['','Bad','Medium','Good'][entry.prevScore];
+      setStatus(`Hoàn tác · ${name}`, `Undone · ${name}`);
+    } catch (error) {
+      console.error(error); setStatus('Hoàn tác thất bại.', 'Undo failed.', 'err'); refreshUndoBtn();
+    }
   }
 
   function renderExamples(){
@@ -225,12 +252,14 @@ if (VGP.requireGate()) {
   });
   document.addEventListener('keydown', event => {
     if ($('exampleDialog').open || $('continueDialog').open || ['INPUT','SELECT','TEXTAREA'].includes(event.target.tagName)) return;
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z'){ event.preventDefault(); undo(); return; }
     if (event.key >= '1' && event.key <= '3'){ event.preventDefault(); rate(Number(event.key)); }
     if (event.key === ' '){ event.preventDefault(); raw.paused ? playOne(raw) : raw.pause(); }
     if (event.key === 'ArrowRight' && idx < all.length - 1){ event.preventDefault(); idx++; render(); }
     if (event.key === 'ArrowLeft' && idx > 0){ event.preventDefault(); idx--; render(); }
   });
   $('btnPlay').onclick = () => playOne(raw);
+  $('btnUndo').onclick = () => undo();
   $('btnPrev').onclick = () => { if (idx > 0){ idx--; render(); } };
   $('btnNext').onclick = () => { if (idx < all.length - 1){ idx++; render(); } };
   $('btnSubmit').onclick = submitBatch;
@@ -260,13 +289,15 @@ if (VGP.requireGate()) {
     if (exampleResult.status === 'fulfilled') examples = exampleResult.value.items || [];
     renderExamples();
     try {
-      labels = await VGP.sbLoadLabels(rater);
+      labels = VGP.mergeLabels(await VGP.sbLoadLabels(rater), rater);
+      VGP.flushPending(rater).catch(() => {});
       const firstOpen = all.findIndex(it => labels[it.id] == null);
       idx = firstOpen >= 0 ? firstOpen : 0;
-      setStatus('Sẵn sàng · phím 1–3 để chấm, Space để phát.', 'Ready · keys 1–3 rate, Space plays.');
+      setStatus('Sẵn sàng · 1–3 chấm (tự lưu), Ctrl+Z hoàn tác.', 'Ready · 1–3 rates (autosave), Ctrl+Z undoes.');
     } catch (error) {
       console.error(error); setStatus('Không kết nối được Supabase.', 'Could not reach Supabase.', 'err');
     }
+    refreshUndoBtn();
     render();
     maybeContinue();
   })().catch(error => { console.error(error); setStatus('Không tải được catalog.json.', 'Failed to load catalog.json.', 'err'); });

@@ -107,7 +107,7 @@ main{max-width:1500px;margin:auto;padding:1.15rem 1.25rem 2rem}
 .btn,.soft-btn{border:1px solid var(--border);background:#fff;border-radius:8px;padding:.52rem .85rem;font-weight:700;font-size:.78rem;color:var(--secondary);text-decoration:none}
 .btn.primary{margin-left:auto;background:var(--accent);border-color:var(--accent);color:#fff}
 .btn.warn{background:var(--medium-soft);border-color:#fde68a;color:var(--medium)}
-.shortcut{font-family:'JetBrains Mono',monospace;font-size:.65rem;opacity:.7;margin-left:.25rem}
+.btn:disabled{opacity:.45;cursor:not-allowed}
 .markdown{font-size:.8rem;padding:.6rem 0 0}
 .markdown h1{font-size:1.05rem}
 .markdown h2{font-size:.9rem;margin-top:1rem}

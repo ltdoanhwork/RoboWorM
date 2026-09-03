@@ -64,6 +64,7 @@
         </div>
         <div class="nav-btns">
           <button class="btn" id="replayBtn"><span data-lang="vi">Phát lại</span><span data-lang="en">Replay</span><span class="shortcut">Space</span></button>
+          <button class="btn" id="btnUndo" disabled><span data-lang="vi">Hoàn tác</span><span data-lang="en">Undo</span><span class="shortcut">Ctrl+Z</span></button>
           <button class="btn" id="btnPrev">← <span data-lang="vi">Trước</span><span data-lang="en">Prev</span></button>
           <button class="btn" id="nextBtn"><span data-lang="vi">Tiếp</span><span data-lang="en">Next</span> →</button>
           <button class="btn warn" id="btnSubmit"><span data-lang="vi">Nộp lô</span><span data-lang="en">Submit batch</span></button>
@@ -225,34 +226,52 @@ if (VGP.requireGate()) {
     return i >= 0 ? i : 0;
   }
 
+  function refreshUndoBtn(){
+    const btn = $('btnUndo');
+    if (btn) btn.disabled = !VGP.canUndo();
+  }
+
   async function rate(score){
     const it = items[idx]; if (!it) return;
     const id = labelId(it);
+    const prev = labels[id] != null ? labels[id] : null;
+    if (prev === score) return;
+    VGP.pushUndo({ itemId: id, prevScore: prev, nextScore: score, idx });
     labels[id] = score;
+    refreshUndoBtn();
     render();
-    setStatus('Đang lưu…', 'Saving…', 'syncing');
+    setStatus('Đang tự lưu…', 'Autosaving…', 'syncing');
     try {
-      await VGP.sbUpsertLabel(rater, id, score);
-      setStatus('Đã lưu.', 'Saved.');
-      if (idx + 1 < items.length) { idx += 1; loadVideo(); }
-      else setStatus('Đã xong 25 video single-view.', 'Single-view half complete.');
+      await VGP.autosaveLabel(rater, id, score);
+      setStatus('Đã tự lưu.', 'Autosaved.');
     } catch (e) {
       console.error(e);
-      delete labels[id];
-      render();
-      setStatus('Lưu thất bại.', 'Save failed.', 'err');
+      setStatus('Lưu tạm local · sẽ thử lại.', 'Saved locally · will retry.', 'err');
+    }
+    if (idx + 1 < items.length) { idx += 1; loadVideo(); }
+    else setStatus('Đã xong 25 video single-view.', 'Single-view half complete.');
+  }
+
+  async function undo(){
+    if (!VGP.canUndo()) return;
+    setStatus('Đang hoàn tác…', 'Undoing…', 'syncing');
+    try {
+      const entry = await VGP.undoLast(rater, labels);
+      if (!entry) return;
+      if (Number.isInteger(entry.idx)) idx = Math.min(entry.idx, Math.max(0, items.length - 1));
+      refreshUndoBtn();
+      loadVideo();
+      const name = entry.prevScore == null ? (lang() === 'vi' ? 'đã xóa điểm' : 'cleared score')
+        : ['','Bad','Medium','Good'][entry.prevScore];
+      setStatus(`Hoàn tác · ${name}`, `Undone · ${name}`);
+    } catch (e) {
+      console.error(e); setStatus('Hoàn tác thất bại.', 'Undo failed.', 'err'); refreshUndoBtn();
     }
   }
 
-  player.addEventListener('error', () => setStatus('Không tải được video.', 'Could not load video.', 'err'));
-  document.querySelectorAll('.score').forEach(b => b.onclick = () => rate(Number(b.dataset.s)));
-  $('replayBtn').onclick = () => { player.currentTime = 0; player.play().catch(() => {}); };
-  $('btnPrev').onclick = () => { if (idx > 0) { idx -= 1; loadVideo(); } };
-  $('nextBtn').onclick = () => { if (idx + 1 < items.length) { idx += 1; loadVideo(); } };
-  $('btnSubmit').onclick = () => { VGP.submitBatch(); location.href = 'home.html'; };
-  $('jumpExamples').onclick = () => $('examplesPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
   document.addEventListener('keydown', event => {
     if (['INPUT', 'TEXTAREA'].includes(event.target.tagName)) return;
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); undo(); return; }
     if (event.key >= '1' && event.key <= '3') { event.preventDefault(); rate(Number(event.key)); }
     if (event.key === ' ') {
       event.preventDefault();
@@ -261,6 +280,14 @@ if (VGP.requireGate()) {
     if (event.key === 'ArrowRight' && idx + 1 < items.length) { event.preventDefault(); idx += 1; loadVideo(); }
     if (event.key === 'ArrowLeft' && idx > 0) { event.preventDefault(); idx -= 1; loadVideo(); }
   });
+  player.addEventListener('error', () => setStatus('Không tải được video.', 'Could not load video.', 'err'));
+  document.querySelectorAll('.score').forEach(b => b.onclick = () => rate(Number(b.dataset.s)));
+  $('replayBtn').onclick = () => { player.currentTime = 0; player.play().catch(() => {}); };
+  $('btnUndo').onclick = () => undo();
+  $('btnPrev').onclick = () => { if (idx > 0) { idx -= 1; loadVideo(); } };
+  $('nextBtn').onclick = () => { if (idx + 1 < items.length) { idx += 1; loadVideo(); } };
+  $('btnSubmit').onclick = () => { VGP.submitBatch(); location.href = 'home.html'; };
+  $('jumpExamples').onclick = () => $('examplesPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   (async () => {
     const [catalog, exampleCatalog, mvCat] = await Promise.all([
@@ -278,14 +305,16 @@ if (VGP.requireGate()) {
     if (examples.length) {
       exampleState.embodiment = examples[0].embodiment || exampleState.embodiment;
     }
-    labels = await VGP.sbLoadLabels(rater);
+    labels = VGP.mergeLabels(await VGP.sbLoadLabels(rater), rater);
+    VGP.flushPending(rater).catch(() => {});
     idx = findResume();
     $('empty').hidden = true;
     $('stage').hidden = false;
     renderExamples();
     loadRubric();
+    refreshUndoBtn();
     loadVideo();
-    setStatus('Sẵn sàng · xem clip, chấm đoạn giữa (phím 1–3).', 'Ready · watch clip, score the middle (keys 1–3).');
+    setStatus('Sẵn sàng · 1–3 chấm (tự lưu), Ctrl+Z hoàn tác.', 'Ready · 1–3 rates (autosave), Ctrl+Z undoes.');
   })().catch(err => {
     console.error(err);
     $('empty').textContent = lang() === 'vi' ? 'Không tải được dữ liệu. Về trang lô và nhận 50 video mới.' : 'Could not load data. Return home and get a new batch.';
