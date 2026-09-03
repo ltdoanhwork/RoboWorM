@@ -270,8 +270,10 @@ if (VGP.requireGate()) {
     ]);
     svAll = catalog.items || [];
     mvAll = mvCat.items || [];
-    if (!VGP.getBatch() || VGP.getBatch().submittedAt) { location.replace('home.html'); return; }
-    items = VGP.itemsFromIds(svAll, VGP.getBatch().svIds);
+    const batch = VGP.getValidBatch(mvAll, svAll);
+    if (!batch) { location.replace('home.html'); return; }
+    items = VGP.itemsFromIds(svAll, batch.svIds);
+    if (!items.length) { location.replace('home.html'); return; }
     examples = exampleCatalog.items || [];
     if (examples.length) {
       exampleState.embodiment = examples[0].embodiment || exampleState.embodiment;
@@ -286,8 +288,8 @@ if (VGP.requireGate()) {
     setStatus('Sẵn sàng · xem clip, chấm đoạn giữa (phím 1–3).', 'Ready · watch clip, score the middle (keys 1–3).');
   })().catch(err => {
     console.error(err);
-    $('empty').textContent = lang() === 'vi' ? 'Không tải được dữ liệu.' : 'Could not load data.';
-    setStatus('Không tải được catalog / Supabase.', 'Failed to load catalog or Supabase.', 'err');
+    $('empty').textContent = lang() === 'vi' ? 'Không tải được dữ liệu. Về trang lô và nhận 50 video mới.' : 'Could not load data. Return home and get a new batch.';
+    setStatus('Lỗi tải. Thử nhận lô mới từ trang chủ.', 'Load error. Get a new batch from home.', 'err');
   });
 }
 </script>

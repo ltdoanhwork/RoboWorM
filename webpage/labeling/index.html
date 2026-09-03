@@ -250,11 +250,13 @@ if (VGP.requireGate()) {
     if (catalogResult.status !== 'fulfilled') throw catalogResult.reason;
     mvAll = catalogResult.value.items || [];
     svAll = svResult.status === 'fulfilled' ? (svResult.value.items || []) : [];
-    if (!VGP.getBatch() || VGP.getBatch().submittedAt) {
+    const batch = VGP.getValidBatch(mvAll, svAll);
+    if (!batch || batch.submittedAt) {
       location.replace('home.html');
       return;
     }
-    all = VGP.itemsFromIds(mvAll, VGP.getBatch().mvIds);
+    all = VGP.itemsFromIds(mvAll, batch.mvIds);
+    if (!all.length) { location.replace('home.html'); return; }
     if (exampleResult.status === 'fulfilled') examples = exampleResult.value.items || [];
     renderExamples();
     try {

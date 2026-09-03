@@ -185,7 +185,13 @@ if (VGP.requireGate()) {
     svAll = svCat.items || [];
     labels = await VGP.sbLoadLabels(rater);
     renderStats();
-    batch = VGP.getBatch();
+    const prev = VGP.getBatch();
+    const wasStale = prev && VGP.isStaleOpenBatch(prev, mvAll, svAll);
+    batch = VGP.getValidBatch(mvAll, svAll);
+    if (wasStale) {
+      setStatus('Catalog đã cập nhật (rate900). Nhận 50 video mới để tiếp tục.',
+        'Catalog updated (rate900). Get a new batch of 50 videos to continue.');
+    }
     if (!batch || batch.submittedAt) $('btnAssign').hidden = false;
     renderBatch();
   })().catch(err => { console.error(err); setStatus('Không tải được catalog / Supabase.', 'Failed to load catalog or Supabase.', 'err'); });

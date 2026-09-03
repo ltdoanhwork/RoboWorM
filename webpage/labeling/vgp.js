@@ -7,6 +7,7 @@ const VGP = (() => {
   const PASS_KEY = "vgp_pass_ok";
   const ADMIN_KEY = "vgp_admin_ok";
   const BATCH_PREFIX = "vgp_batch::";
+  const BATCH_VERSION = 2; // bump when catalog ids change (e.g. rate900)
   const HALF = 25;
   const ADMIN_PAGES = /(^|\/)(analytics|admin)\.html?$/i;
 
@@ -187,6 +188,12 @@ const VGP = (() => {
     localStorage.removeItem(batchStorageKey());
   }
 
+  async function getOrCreateBatch(mvItems, svItems) {
+    const existing = getValidBatch(mvItems, svItems);
+    if (existing) return existing;
+    return createBatch(mvItems, svItems);
+  }
+
   async function createBatch(mvItems, svItems) {
     const [mine, allRows] = await Promise.all([
       sbLoadLabels(getRater()),
@@ -198,6 +205,7 @@ const VGP = (() => {
     const svPick = pickLeastLabeled(svItems, coverageCounts(allRows, svItems), svDone, HALF);
     return saveBatch({
       id: `${Date.now().toString(36)}-${fnv1a(getRater() + Math.random())}`,
+      version: BATCH_VERSION,
       createdAt: new Date().toISOString(),
       submittedAt: null,
       mvIds: mvPick.map((it) => it.id),
@@ -205,17 +213,31 @@ const VGP = (() => {
     });
   }
 
-  async function getOrCreateBatch(mvItems, svItems) {
-    const existing = getBatch();
-    if (existing && !existing.submittedAt && (existing.mvIds?.length || existing.svIds?.length)) {
-      return existing;
-    }
-    return createBatch(mvItems, svItems);
-  }
-
   function itemsFromIds(allItems, ids) {
     const map = new Map((allItems || []).map((it) => [it.id, it]));
     return (ids || []).map((id) => map.get(id)).filter(Boolean);
+  }
+
+  /** Open batch whose ids no longer exist in current catalogs. */
+  function isStaleOpenBatch(batch, mvItems, svItems) {
+    if (!batch || batch.submittedAt) return false;
+    if (batch.version != null && batch.version !== BATCH_VERSION) return true;
+    const mvIds = batch.mvIds || [];
+    const svIds = batch.svIds || [];
+    if (!mvIds.length && !svIds.length) return true;
+    if (mvIds.length && itemsFromIds(mvItems, mvIds).length === 0) return true;
+    if (svIds.length && itemsFromIds(svItems, svIds).length === 0) return true;
+    return false;
+  }
+
+  function getValidBatch(mvItems, svItems) {
+    const batch = getBatch();
+    if (!batch) return null;
+    if (isStaleOpenBatch(batch, mvItems, svItems)) {
+      clearBatch();
+      return null;
+    }
+    return batch;
   }
 
   function sbHeaders() {
@@ -271,9 +293,10 @@ const VGP = (() => {
     clearSession, isAdminPath, requireGate, requireAdmin,
     segmentId, parentVideoId, scoreableSegmentIndices, videoComplete, videoTouched, raterStats,
     coverageCounts, pickLeastLabeled,
-    getBatch, saveBatch, submitBatch, clearBatch, createBatch, getOrCreateBatch,
+    getBatch, getValidBatch, isStaleOpenBatch, saveBatch, submitBatch, clearBatch, createBatch, getOrCreateBatch,
     itemsFromIds,
     sbUpsertLabel, sbLoadLabels, sbLoadAllLabels,
     fnv1a, mulberry32,
+    BATCH_VERSION,
   };
 })();
