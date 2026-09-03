@@ -24,26 +24,26 @@
 <main>
   <div class="workspace">
     <section class="evaluation">
-      <details class="guide" open>
+      <details class="guide">
         <summary><span data-lang="vi">Cách đánh giá · Good / Medium / Bad</span><span data-lang="en">How to rate · Good / Medium / Bad</span></summary>
         <div class="guide-body">
           <div data-lang="vi">
-            <p class="guide-intro">Đánh giá tính nhất quán về chuyển động, hình dáng, màu sắc, vị trí tương quan giữa hai góc nhìn và độ ổn định camera (lý tưởng là các camera đều hoàn toàn tĩnh).</p>
+            <p class="guide-intro">Chấm độ nhất quán giữa hai camera (chuyển động, hình dạng, màu, vị trí). Camera lý tưởng là tĩnh.</p>
             <div class="guide-grid">
-              <article class="criterion bad"><h3>Bad · phím 1</h3><p>Sai khác rõ rệt, nghiêm trọng hoặc kéo dài; lỗi &gt;30% diện tích hay &gt;30% thời lượng. Camera xoay/dịch lớn.</p></article>
-              <article class="criterion medium"><h3>Medium · phím 2</h3><p>Có sai khác nhỏ nhưng vẫn nhận ra cùng hành động; lỗi ≤30% diện tích và ≤30% thời lượng. Camera có thể giật/drift nhẹ.</p></article>
-              <article class="criterion good"><h3>Good · phím 3</h3><p>Hai view gần như đồng nhất, camera gần như tĩnh; lỗi &lt;10% diện tích và &lt;10% thời lượng.</p></article>
+              <article class="criterion bad"><h3>Bad · 1</h3><p>Sai khác rõ / kéo dài (&gt;30%). Camera xoay/dịch lớn.</p></article>
+              <article class="criterion medium"><h3>Medium · 2</h3><p>Sai khác nhỏ (≤30%), vẫn cùng hành động. Giật nhẹ OK.</p></article>
+              <article class="criterion good"><h3>Good · 3</h3><p>Gần như đồng nhất; lỗi &lt;10%. Camera gần tĩnh.</p></article>
             </div>
-            <p class="guide-note"><strong>Không xét:</strong> hoàn thành tác vụ, thẩm mỹ, độ đúng hành động hay tính vật lý. <strong>Hiện tượng bất thường (bao gồm nhưng không giới hạn ở: robot di chuyển lạ; vật thể tự biến dạng, biến mất / xuất hiện, tự di chuyển…) vẫn được coi là nhất quán nếu xuất hiện giống nhau và đồng thời ở cả hai view</strong>. Ngưỡng % chỉ mang tính tham khảo.</p>
+            <p class="guide-note"><strong>Không xét</strong> hoàn thành tác vụ / thẩm mỹ. <strong>Hiện tượng bất thường vẫn nhất quán nếu xuất hiện giống nhau và đồng thời ở cả hai view.</strong></p>
           </div>
           <div data-lang="en">
-            <p class="guide-intro">Evaluate consistency of motion, shape, color, and relative position across both views, plus camera stability (ideally both cameras are fully static).</p>
+            <p class="guide-intro">Score consistency across the two cameras (motion, shape, color, position). Cameras are ideally static.</p>
             <div class="guide-grid">
-              <article class="criterion bad"><h3>Bad · key 1</h3><p>Pronounced, severe, or persistent mismatch; errors exceed 30% of area or duration. Large camera shift, pan, or drift.</p></article>
-              <article class="criterion medium"><h3>Medium · key 2</h3><p>Minor discrepancies, but both views still show the same action; errors ≤30% of area and duration. Occasional jitter or small drift.</p></article>
-              <article class="criterion good"><h3>Good · key 3</h3><p>Views are virtually identical and cameras almost static; errors below 10% of area and duration.</p></article>
+              <article class="criterion bad"><h3>Bad · 1</h3><p>Clear / lasting mismatch (&gt;30%). Large camera motion.</p></article>
+              <article class="criterion medium"><h3>Medium · 2</h3><p>Minor mismatch (≤30%), same action. Light jitter OK.</p></article>
+              <article class="criterion good"><h3>Good · 3</h3><p>Nearly identical; errors &lt;10%. Cameras nearly static.</p></article>
             </div>
-            <p class="guide-note"><strong>Ignore:</strong> task completion, aesthetics, action quality, and physical plausibility. <strong>Abnormal phenomena (including but not limited to: odd robot motion; objects morphing, disappearing / appearing, or moving on their own…) still count as consistent if they appear identically and simultaneously in both views</strong>. Percentage thresholds are guidelines.</p>
+            <p class="guide-note"><strong>Ignore</strong> task success / aesthetics. <strong>Abnormal events still count as consistent if identical and simultaneous in both views.</strong></p>
           </div>
         </div>
       </details>
@@ -54,26 +54,19 @@
       </div>
 
       <section class="assessment">
-        <div class="pair">
-          <div class="pane">
-            <header><span data-lang="vi">Video gốc · hai camera tĩnh</span><span data-lang="en">Raw · two static cameras</span><span>RAW</span></header>
-            <video id="vidRaw" controls playsinline muted></video>
-          </div>
-          <div class="pane">
-            <header><span data-lang="vi">Hỗ trợ quan sát · cùng hai camera</span><span data-lang="en">Diagnostic overlay · same cameras</span><span id="overlayKind">TRACKING</span></header>
-            <video id="vidOverlay" controls playsinline muted></video>
-          </div>
+        <div class="video-wrap video-wrap-lg">
+          <video id="vidRaw" controls playsinline muted></video>
         </div>
         <div class="score-area">
           <p class="score-question"><span data-lang="vi">Hai góc nhìn đồng bộ và ổn định ở mức nào?</span><span data-lang="en">How consistent and stable are the two views?</span></p>
           <div class="scores">
-            <button class="score" data-s="1">Bad<small><span data-lang="vi">lỗi rõ rệt</span><span data-lang="en">severe mismatch</span> · 1</small></button>
-            <button class="score" data-s="2">Medium<small><span data-lang="vi">sai khác nhỏ</span><span data-lang="en">minor mismatch</span> · 2</small></button>
-            <button class="score" data-s="3">Good<small><span data-lang="vi">gần như đồng nhất</span><span data-lang="en">nearly identical</span> · 3</small></button>
+            <button class="score" data-s="1">Bad<small>1</small></button>
+            <button class="score" data-s="2">Medium<small>2</small></button>
+            <button class="score" data-s="3">Good<small>3</small></button>
           </div>
         </div>
         <div class="nav-btns">
-          <button class="btn" id="btnPlay"><span data-lang="vi">Phát cả hai</span><span data-lang="en">Play both</span><span class="shortcut">Space</span></button>
+          <button class="btn" id="btnPlay"><span data-lang="vi">Phát</span><span data-lang="en">Play</span><span class="shortcut">Space</span></button>
           <button class="btn" id="btnPrev">← <span data-lang="vi">Trước</span><span data-lang="en">Prev</span></button>
           <button class="btn" id="btnNext"><span data-lang="vi">Tiếp</span><span data-lang="en">Next</span> →</button>
           <button class="btn warn" id="btnSubmit"><span data-lang="vi">Nộp lô</span><span data-lang="en">Submit batch</span></button>
@@ -86,7 +79,7 @@
       <div class="reference-head">
         <div class="eyebrow"><span data-lang="vi">Mở bất kỳ lúc nào</span><span data-lang="en">Available anytime</span></div>
         <h2><span data-lang="vi">Ví dụ tham chiếu</span><span data-lang="en">Reference examples</span></h2>
-        <p><span data-lang="vi">Mỗi mức có đủ Bimanual, Humanoid, Single-arm. Click để xem; raw + tracking hiện khi output CoTracker đã sync.</span><span data-lang="en">Each rating includes Bimanual, Humanoid, and Single-arm. Raw + tracking appear after CoTracker outputs sync.</span></p>
+        <p><span data-lang="vi">Mỗi mức có đủ Bimanual, Humanoid, Single-arm.</span><span data-lang="en">Each rating includes Bimanual, Humanoid, and Single-arm.</span></p>
       </div>
       <div class="example-tabs">
         <button class="example-tab active" data-rating="bad">Bad</button>
@@ -122,11 +115,10 @@
     <button class="dialog-close" id="closeExample" aria-label="Close">×</button>
   </div>
   <div class="dialog-body">
-    <div class="pair" id="examplePair">
+    <div class="pair single" id="examplePair">
       <div class="pane"><header>RAW</header><video id="exampleRaw" controls playsinline muted></video></div>
-      <div class="pane" id="exampleOverlayPane"><header>TRACKING / FLOW</header><video id="exampleOverlay" controls playsinline muted></video></div>
     </div>
-    <div class="dialog-actions"><button class="btn" id="playExample"><span data-lang="vi">Phát cả hai</span><span data-lang="en">Play both</span></button></div>
+    <div class="dialog-actions"><button class="btn" id="playExample"><span data-lang="vi">Phát</span><span data-lang="en">Play</span></button></div>
   </div>
 </dialog>
 
@@ -137,8 +129,8 @@ if (VGP.requireGate()) {
   const $ = id => document.getElementById(id);
   const rater = VGP.getRater();
   let all = [], idx = 0, labels = {}, examples = [], exampleRating = 'bad', mvAll = [], svAll = [];
-  const raw = $('vidRaw'), overlay = $('vidOverlay');
-  const exampleRaw = $('exampleRaw'), exampleOverlay = $('exampleOverlay');
+  const raw = $('vidRaw');
+  const exampleRaw = $('exampleRaw');
 
   $('raterChip').textContent = rater;
   $('switchUser').onclick = e => {
@@ -171,25 +163,9 @@ if (VGP.requireGate()) {
     VGP.submitBatch();
     location.href = 'home.html';
   }
-  function syncFrom(master, slave){
-    if (Math.abs((slave.currentTime || 0) - (master.currentTime || 0)) > .12) {
-      try { slave.currentTime = master.currentTime; } catch (_) {}
-    }
-  }
-  function bindPair(master, slave){
-    master.addEventListener('play', () => slave.play().catch(() => {}));
-    master.addEventListener('pause', () => slave.pause());
-    master.addEventListener('seeked', () => { try { slave.currentTime = master.currentTime; } catch (_) {} });
-    master.addEventListener('timeupdate', () => syncFrom(master, slave));
-    slave.addEventListener('play', () => master.play().catch(() => {}));
-    slave.addEventListener('pause', () => master.pause());
-  }
-  bindPair(raw, overlay);
-  bindPair(exampleRaw, exampleOverlay);
-
-  function playPair(a, b){
-    a.currentTime = 0; b.currentTime = 0;
-    a.play().catch(() => {}); b.play().catch(() => {});
+  function playOne(v){
+    v.currentTime = 0;
+    v.play().catch(() => {});
   }
   function render(){
     const it = all[idx];
@@ -199,8 +175,6 @@ if (VGP.requireGate()) {
     refreshLife();
     $('bar').style.width = (all.length ? 100 * nDone() / all.length : 0) + '%';
     raw.src = it.video_raw || '';
-    overlay.src = it.video_overlay || it.video_tracking || it.video_flow || '';
-    $('overlayKind').textContent = (it.overlay_kind || (it.video_flow ? 'flow' : 'tracking')).toUpperCase();
     document.querySelectorAll('.score').forEach(button => button.classList.toggle('active', labels[it.id] === Number(button.dataset.s)));
   }
 
@@ -239,14 +213,9 @@ if (VGP.requireGate()) {
     $('exampleRating').textContent = `${item.rating} · score ${item.score}`;
     $('exampleTitle').textContent = item.embodiment.replace('_', '-');
     exampleRaw.src = item.video_raw || '';
-    const overlayUrl = item.video_overlay || item.video_tracking || item.video_flow || '';
-    exampleOverlay.src = overlayUrl;
-    $('exampleOverlayPane').hidden = !overlayUrl;
-    $('examplePair').classList.toggle('single', !overlayUrl);
-    $('playExample').hidden = !overlayUrl;
     $('exampleDialog').showModal();
   }
-  function closeExample(){ exampleRaw.pause(); exampleOverlay.pause(); exampleRaw.removeAttribute('src'); exampleOverlay.removeAttribute('src'); $('exampleDialog').close(); }
+  function closeExample(){ exampleRaw.pause(); exampleRaw.removeAttribute('src'); $('exampleDialog').close(); }
 
   document.querySelectorAll('.score').forEach(button => button.onclick = () => rate(Number(button.dataset.s)));
   document.querySelectorAll('.example-tab').forEach(button => button.onclick = () => {
@@ -257,11 +226,11 @@ if (VGP.requireGate()) {
   document.addEventListener('keydown', event => {
     if ($('exampleDialog').open || $('continueDialog').open || ['INPUT','SELECT','TEXTAREA'].includes(event.target.tagName)) return;
     if (event.key >= '1' && event.key <= '3'){ event.preventDefault(); rate(Number(event.key)); }
-    if (event.key === ' '){ event.preventDefault(); raw.paused ? playPair(raw, overlay) : (raw.pause(), overlay.pause()); }
+    if (event.key === ' '){ event.preventDefault(); raw.paused ? playOne(raw) : raw.pause(); }
     if (event.key === 'ArrowRight' && idx < all.length - 1){ event.preventDefault(); idx++; render(); }
     if (event.key === 'ArrowLeft' && idx > 0){ event.preventDefault(); idx--; render(); }
   });
-  $('btnPlay').onclick = () => playPair(raw, overlay);
+  $('btnPlay').onclick = () => playOne(raw);
   $('btnPrev').onclick = () => { if (idx > 0){ idx--; render(); } };
   $('btnNext').onclick = () => { if (idx < all.length - 1){ idx++; render(); } };
   $('btnSubmit').onclick = submitBatch;
@@ -270,7 +239,7 @@ if (VGP.requireGate()) {
   $('jumpExamples').onclick = () => $('examplesPanel').scrollIntoView({behavior:'smooth', block:'start'});
   $('closeExample').onclick = closeExample;
   $('exampleDialog').addEventListener('click', event => { if (event.target === $('exampleDialog')) closeExample(); });
-  $('playExample').onclick = () => playPair(exampleRaw, exampleOverlay);
+  $('playExample').onclick = () => playOne(exampleRaw);
 
   (async () => {
     const [catalogResult, exampleResult, svResult] = await Promise.allSettled([
@@ -292,7 +261,7 @@ if (VGP.requireGate()) {
       labels = await VGP.sbLoadLabels(rater);
       const firstOpen = all.findIndex(it => labels[it.id] == null);
       idx = firstOpen >= 0 ? firstOpen : 0;
-      setStatus('Sẵn sàng · phím 1–3 để chấm, Space để phát cả hai.', 'Ready · keys 1–3 rate, Space plays both.');
+      setStatus('Sẵn sàng · phím 1–3 để chấm, Space để phát.', 'Ready · keys 1–3 rate, Space plays.');
     } catch (error) {
       console.error(error); setStatus('Không kết nối được Supabase.', 'Could not reach Supabase.', 'err');
     }

@@ -82,15 +82,34 @@ const VGP = (() => {
     return m ? m[1] : itemId;
   }
 
+  function scoreableSegmentIndices(item) {
+    if (!item || !item.segments) return null;
+    if (Number.isInteger(item.score_segment_index)) return [item.score_segment_index];
+    const rated = item.segments
+      .map((seg, i) => (seg && seg.rateable === false ? null : i))
+      .filter((i) => i != null);
+    return rated.length ? rated : item.segments.map((_, i) => i);
+  }
+
   function videoComplete(item, labels) {
     if (!item) return false;
     if (!item.segments) return labels[item.id] != null;
-    return item.segments.every((_, s) => labels[segmentId(item.id, s)] != null);
+    // rate900: one score on video id OR on the middle segment id
+    if (item.rate_target === "middle" || Number.isInteger(item.score_segment_index)) {
+      const s = item.score_segment_index ?? 1;
+      return labels[item.id] != null || labels[segmentId(item.id, s)] != null;
+    }
+    const idxs = scoreableSegmentIndices(item) || [];
+    return idxs.every((s) => labels[segmentId(item.id, s)] != null);
   }
 
   function videoTouched(item, labels) {
     if (!item) return false;
     if (!item.segments) return labels[item.id] != null;
+    if (item.rate_target === "middle" || Number.isInteger(item.score_segment_index)) {
+      const s = item.score_segment_index ?? 1;
+      return labels[item.id] != null || labels[segmentId(item.id, s)] != null;
+    }
     return item.segments.some((_, s) => labels[segmentId(item.id, s)] != null);
   }
 
@@ -100,7 +119,7 @@ const VGP = (() => {
     const svTouched = (svItems || []).filter((it) => videoTouched(it, labels)).length;
     let svSegments = 0;
     for (const id of Object.keys(labels)) {
-      if (/_s\d{3}$/.test(id)) svSegments += 1;
+      if (/_s\d{3}$/.test(id) || /^rate900_/.test(id)) svSegments += 1;
     }
     return {
       mvLabeled,
@@ -250,7 +269,7 @@ const VGP = (() => {
     HALF,
     getRater, setRater, passOk, setPassOk, adminOk, setAdminOk,
     clearSession, isAdminPath, requireGate, requireAdmin,
-    segmentId, parentVideoId, videoComplete, videoTouched, raterStats,
+    segmentId, parentVideoId, scoreableSegmentIndices, videoComplete, videoTouched, raterStats,
     coverageCounts, pickLeastLabeled,
     getBatch, saveBatch, submitBatch, clearBatch, createBatch, getOrCreateBatch,
     itemsFromIds,

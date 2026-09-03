@@ -73,6 +73,18 @@ main{max-width:1500px;margin:auto;padding:1.15rem 1.25rem 2rem}
 .pane video{aspect-ratio:16/6}
 .video-wrap{padding:.72rem;background:#fff}
 .video-wrap video{aspect-ratio:16/9;max-height:67vh}
+.video-wrap-lg{padding:1rem}
+.video-wrap-lg video{max-height:72vh;aspect-ratio:auto;min-height:280px}
+.pair.single{grid-template-columns:1fr}
+.pie-row{display:flex;flex-wrap:wrap;gap:1.25rem;align-items:flex-start;margin:.5rem 0 1rem}
+.pie-card{flex:1 1 180px;min-width:160px;text-align:center}
+.pie-card h3{font-size:.78rem;color:var(--muted);margin-bottom:.45rem;font-weight:700}
+.pie{width:120px;height:120px;border-radius:50%;margin:0 auto .5rem;background:#e5e7eb}
+.pie-legend{font-size:.72rem;color:var(--secondary);text-align:left;display:grid;gap:.2rem}
+.pie-legend span{display:flex;align-items:center;gap:.35rem}
+.pie-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.emb-section{margin-top:1rem;padding-top:.75rem;border-top:1px solid var(--border)}
+.emb-section h3{font-size:.9rem;margin-bottom:.55rem}
 .segment-strip{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:0 1rem .2rem;color:var(--muted);font-size:.8rem}
 .segment-strip b{color:var(--text)}
 .wait-banner{margin:.55rem 1rem 0;padding:.55rem .7rem;border-radius:8px;background:var(--accent-soft);color:var(--accent);font-size:.8rem;font-weight:700}

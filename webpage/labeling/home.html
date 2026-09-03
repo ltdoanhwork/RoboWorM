@@ -24,13 +24,13 @@
     <div class="eyebrow"><span data-lang="vi">Lô 50 video</span><span data-lang="en">Batch of 50 videos</span></div>
     <h1><span data-lang="vi">Xin chào, </span><span data-lang="en">Hello, </span><span id="helloName"></span></h1>
     <p>
-      <span data-lang="vi">Mỗi lô gồm 25 video multiview (toàn bộ clip, raw + flow) rồi 25 video single-view (chấm từng đoạn 16 frame). Nộp được kể cả khi chưa xong. Video ít nhãn được ưu tiên, nên nhiều người sẽ chấm trùng một số clip.</span>
-      <span data-lang="en">Each batch is 25 multiview clips (full length, raw + flow) then 25 single-view videos (score every 16-frame segment). You can submit before finishing. Least-labeled videos are assigned first, so overlap across raters is expected.</span>
+      <span data-lang="vi">Mỗi lô gồm 25 video multiview (raw, hai camera tĩnh) rồi 25 clip single-view rate900 (~3 giây; chấm đoạn giữa). Nộp được kể cả khi chưa xong. Video ít nhãn được ưu tiên.</span>
+      <span data-lang="en">Each batch is 25 multiview clips (raw, two static cameras) then 25 rate900 single-view clips (~3s; score the middle segment). You can submit before finishing. Least-labeled videos are assigned first.</span>
     </p>
     <div class="stat-row">
       <div><b id="statMv">0</b><span data-lang="vi">multiview đã xong</span><span data-lang="en">multiview done</span></div>
       <div><b id="statSv">0</b><span data-lang="vi">single-view đã xong</span><span data-lang="en">single-view done</span></div>
-      <div><b id="statSeg">0</b><span data-lang="vi">segment đã chấm</span><span data-lang="en">segments scored</span></div>
+      <div><b id="statSeg">0</b><span data-lang="vi">rate900 đã chấm</span><span data-lang="en">rate900 scored</span></div>
       <div><b id="statTotal">0</b><span data-lang="vi">tổng video</span><span data-lang="en">total videos</span></div>
     </div>
     <p class="status" id="status" style="margin-top:.85rem">Loading…</p>
@@ -46,8 +46,8 @@
       <div class="eyebrow">1 / 2</div>
       <h2><span data-lang="vi">Multiview · hai camera tĩnh</span><span data-lang="en">Multiview · two static cameras</span></h2>
       <p>
-        <span data-lang="vi">Clip gốc đầy đủ. Trái = raw, phải = overlay chuyển động. Chấm cả video 1 / 2 / 3.</span>
-        <span data-lang="en">Full-length clip. Left = raw, right = motion overlay. Score the whole video 1 / 2 / 3.</span>
+        <span data-lang="vi">Clip gốc đầy đủ (raw). Chấm cả video 1 / 2 / 3.</span>
+        <span data-lang="en">Full-length raw clip. Score the whole video 1 / 2 / 3.</span>
       </p>
       <div class="meta-line"><strong id="mvProg">0 / 25</strong> · <span data-lang="vi">nửa đầu của lô</span><span data-lang="en">first half of the batch</span></div>
       <div class="progress"><div id="mvBar"></div></div>
@@ -57,10 +57,10 @@
     </article>
     <article class="phase" id="svPhase">
       <div class="eyebrow">2 / 2</div>
-      <h2><span data-lang="vi">Single view · từng segment</span><span data-lang="en">Single view · per segment</span></h2>
+      <h2><span data-lang="vi">Single view · rate900</span><span data-lang="en">Single view · rate900</span></h2>
       <p>
-        <span data-lang="vi">Xem full video, tự dừng hết mỗi đoạn ~16 frame, chấm rồi xem tiếp.</span>
-        <span data-lang="en">Watch the full video; it pauses at each ~16-frame segment until you score, then continues.</span>
+        <span data-lang="vi">Clip ~3 giây (3×16 frame). Xem cả clip, chấm đoạn giữa.</span>
+        <span data-lang="en">~3s clip (3×16 frames). Watch the whole clip; score the middle segment.</span>
       </p>
       <div class="meta-line"><strong id="svProg">0 / 25</strong> · <span data-lang="vi">nửa sau của lô</span><span data-lang="en">second half of the batch</span></div>
       <div class="progress"><div id="svBar"></div></div>
