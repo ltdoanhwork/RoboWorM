@@ -570,6 +570,43 @@ const VGP = (() => {
     });
   }
 
+  function anyDialogOpen() {
+    return !!document.querySelector("dialog[open]");
+  }
+
+  function bindExampleRemind(check, opts) {
+    const dialog = document.getElementById("exampleRemind");
+    if (!dialog) return;
+    const key = "vgp_ex_remind::" + check;
+    const close = () => {
+      sessionStorage.setItem(key, "1");
+      if (dialog.open) dialog.close();
+    };
+    const showExamples = () => {
+      close();
+      const panel = document.getElementById("examplesPanel");
+      if (panel) {
+        panel.classList.add("nudge");
+        panel.scrollIntoView({ behavior: "smooth", block: "start" });
+        setTimeout(() => panel.classList.remove("nudge"), 2400);
+      }
+      if (opts && typeof opts.onShow === "function") opts.onShow();
+    };
+    const closeBtn = document.getElementById("closeExRemind");
+    const showBtn = document.getElementById("showExRemind");
+    const skipBtn = document.getElementById("skipExRemind");
+    if (closeBtn) closeBtn.onclick = close;
+    if (skipBtn) skipBtn.onclick = close;
+    if (showBtn) showBtn.onclick = showExamples;
+    dialog.addEventListener("click", (e) => { if (e.target === dialog) close(); });
+    dialog.addEventListener("cancel", () => { sessionStorage.setItem(key, "1"); });
+    if (!sessionStorage.getItem(key)) {
+      requestAnimationFrame(() => {
+        if (!sessionStorage.getItem(key) && !dialog.open) dialog.showModal();
+      });
+    }
+  }
+
   const exampleCache = new Map();
   function preloadVideos(urls) {
     (urls || []).forEach((url) => {
@@ -593,7 +630,7 @@ const VGP = (() => {
     segmentId, parentVideoId, scoreableSegmentIndices, videoComplete, videoTouched, raterStats,
     coverageCounts, pickLeastLabeled, conflictIds, conflictRows,
     getBatch, getValidBatch, isStaleOpenBatch, saveBatch, submitBatch, clearBatch, createBatch, getOrCreateBatch,
-    itemsFromIds, renderStepStrip, preloadVideos,
+    itemsFromIds, renderStepStrip, preloadVideos, anyDialogOpen, bindExampleRemind,
     sbUpsertLabel, sbDeleteLabel, sbLoadLabels, sbLoadAllLabels,
     mergeLabels, mirrorLabel, autosaveLabel, flushPending, readPending,
     pushUndo, canUndo, clearUndo, undoLast,

@@ -89,6 +89,28 @@
   </div>
 </main>
 
+<dialog id="exampleRemind" class="remind">
+  <div class="dialog-head">
+    <div><div class="dialog-rating">Hallucinate</div>
+      <h2><span data-lang="en">Watch the examples first</span><span data-lang="vi">Xem ví dụ trước đã</span></h2></div>
+    <button class="dialog-close" id="closeExRemind" type="button">×</button>
+  </div>
+  <div class="dialog-body">
+    <p>
+      <span data-lang="en">Before you score, play the <strong>Bad / Medium / Good</strong> clips in <em>Reference examples</em>. Score only the middle segment for physical integrity — melt, teleport, non-physical motion.</span>
+      <span data-lang="vi">Trước khi chấm, xem clip <strong>Bad / Medium / Good</strong> ở <em>ví dụ tham chiếu</em>. Chỉ chấm đoạn giữa về tính vật lý — tan, teleport, chuyển động phi vật lý.</span>
+    </p>
+    <ol class="howto-ol">
+      <li><span data-lang="en">Open Bad, then Medium, then Good so the scale is calibrated.</span><span data-lang="vi">Mở Bad, rồi Medium, rồi Good để thống nhất thang điểm.</span></li>
+      <li><span data-lang="en">Then watch each assigned ~3s clip and score the middle second.</span><span data-lang="vi">Sau đó xem clip ~3 giây được giao và chỉ chấm đoạn giữa.</span></li>
+    </ol>
+    <div class="dialog-actions">
+      <button class="btn primary" id="showExRemind" type="button"><span data-lang="en">Show examples</span><span data-lang="vi">Xem ví dụ</span></button>
+      <button class="btn" id="skipExRemind" type="button"><span data-lang="en">Start scoring</span><span data-lang="vi">Bắt đầu chấm</span></button>
+    </div>
+  </div>
+</dialog>
+
 <script src="config.js"></script>
 <script src="vgp.js"></script>
 <script>
@@ -305,6 +327,7 @@ if (VGP.requireGate()) {
   $('moreExample').onclick = moreExample;
 
   document.addEventListener('keydown', event => {
+    if (VGP.anyDialogOpen()) return;
     if (['INPUT', 'TEXTAREA'].includes(event.target.tagName)) return;
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); undo(); return; }
     if (event.key >= '1' && event.key <= '3') { event.preventDefault(); rate(Number(event.key)); }
@@ -342,6 +365,18 @@ if (VGP.requireGate()) {
     $('empty').hidden = true;
     $('stage').hidden = false;
     renderExamples();
+    VGP.bindExampleRemind('hallu', {
+      onShow() {
+        exampleRating = 'bad';
+        document.querySelectorAll('.example-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.rating === 'bad'));
+        renderExamples();
+        const first = EMBODIMENTS
+          .map(emb => examples.filter(item => item.rating === 'bad' && item.embodiment === emb)
+            .sort((a, b) => (a.index || 0) - (b.index || 0)))
+          .find(list => list.length);
+        if (first) openExampleGroup(first);
+      }
+    });
     loadRubric();
     refreshUndoBtn();
     loadVideo();

@@ -110,6 +110,28 @@
   </div>
 </main>
 
+<dialog id="exampleRemind" class="remind">
+  <div class="dialog-head">
+    <div><div class="dialog-rating">Geometry</div>
+      <h2><span data-lang="en">Watch the examples first</span><span data-lang="vi">Xem ví dụ trước đã</span></h2></div>
+    <button class="dialog-close" id="closeExRemind" type="button">×</button>
+  </div>
+  <div class="dialog-body">
+    <p>
+      <span data-lang="en">Before you score, play the <strong>Bad / Medium / Good</strong> clips in <em>Reference examples</em>. That sets the 1–2–3 scale for the two static cameras.</span>
+      <span data-lang="vi">Trước khi chấm, xem clip <strong>Bad / Medium / Good</strong> ở <em>ví dụ tham chiếu</em>. Như vậy thang 1–2–3 cho hai camera tĩnh sẽ thống nhất.</span>
+    </p>
+    <ol class="howto-ol">
+      <li><span data-lang="en">Open Bad, then Medium, then Good. Watch one clip per embodiment if you can.</span><span data-lang="vi">Mở Bad, rồi Medium, rồi Good. Nên xem một clip mỗi embodiment.</span></li>
+      <li><span data-lang="en">Then score your assigned clips. You can reopen examples anytime.</span><span data-lang="vi">Sau đó mới chấm clip được giao. Có thể mở lại ví dụ bất cứ lúc nào.</span></li>
+    </ol>
+    <div class="dialog-actions">
+      <button class="btn primary" id="showExRemind" type="button"><span data-lang="en">Show examples</span><span data-lang="vi">Xem ví dụ</span></button>
+      <button class="btn" id="skipExRemind" type="button"><span data-lang="en">Start scoring</span><span data-lang="vi">Bắt đầu chấm</span></button>
+    </div>
+  </div>
+</dialog>
+
 <script src="config.js"></script>
 <script src="vgp.js"></script>
 <script>
@@ -316,6 +338,7 @@ if (VGP.requireGate()) {
     if (first) openExampleGroup(first);
   });
   document.addEventListener('keydown', event => {
+    if (VGP.anyDialogOpen()) return;
     if (['INPUT','SELECT','TEXTAREA'].includes(event.target.tagName)) return;
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z'){ event.preventDefault(); undo(); return; }
     if (event.key >= '1' && event.key <= '3'){ event.preventDefault(); rate(Number(event.key)); }
@@ -349,6 +372,18 @@ if (VGP.requireGate()) {
     if (exampleResult.status === 'fulfilled') examples = exampleResult.value.items || [];
     VGP.preloadVideos(examples.map(it => it.video_raw || it.video));
     renderExamples();
+    VGP.bindExampleRemind('geo', {
+      onShow() {
+        exampleRating = 'bad';
+        document.querySelectorAll('.example-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.rating === 'bad'));
+        renderExamples();
+        const first = ['bimanual', 'humanoid', 'single_arm']
+          .map(emb => examples.filter(item => item.rating === 'bad' && item.embodiment === emb)
+            .sort((a, b) => (a.index || 0) - (b.index || 0)))
+          .find(list => list.length);
+        if (first) openExampleGroup(first);
+      }
+    });
     loadRubric();
     try {
       labels = VGP.mergeLabels(await VGP.sbLoadLabels(rater), rater);
