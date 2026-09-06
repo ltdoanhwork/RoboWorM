@@ -195,8 +195,9 @@ dialog::backdrop{background:rgba(13,18,31,.62);backdrop-filter:blur(3px)}
 .dialog-actions{display:flex;gap:.5rem;padding-top:.7rem;flex-wrap:wrap}
 .dialog-rating{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;font-weight:800;color:var(--accent)}
 [hidden]{display:none!important}
-body [data-lang]{display:none}
-html[data-lang="vi"] body [data-lang="vi"],html[data-lang="en"] body [data-lang="en"]{display:revert}
+body [data-lang="vi"]{display:none}
+html[data-lang="vi"] body [data-lang="vi"]{display:unset}
+html[data-lang="vi"] body [data-lang="en"]{display:none}
 @media(max-width:1050px){.workspace,.phase-grid{grid-template-columns:1fr}.reference{position:static;max-height:none}.example-list,.workspace-stack .example-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:760px){
   .nav-inner{align-items:flex-start}

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" data-lang="en">
 <head>
+<script>document.documentElement.setAttribute("data-lang",(function(){try{return localStorage.getItem("vgp_lang_v2")==="vi"?"vi":"en"}catch(e){return"en"}})());document.documentElement.lang=document.documentElement.getAttribute("data-lang");</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VideoWorld — Multiview geometry consistency check</title>
@@ -128,10 +129,8 @@ if (VGP.requireGate()) {
 
   function lang(){ return document.documentElement.dataset.lang || 'en'; }
   function setLang(next){
-    document.documentElement.dataset.lang = next;
-    document.documentElement.lang = next;
-    $('langToggle').textContent = next === 'vi' ? 'EN' : 'VI';
-    localStorage.setItem('vgp_lang', next);
+    const lang = VGP.applyLang(next);
+    $('langToggle').textContent = lang === 'vi' ? 'EN' : 'VI';
     loadRubric();
   }
   setLang(VGP.defaultLang());

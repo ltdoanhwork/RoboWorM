@@ -150,7 +150,18 @@ const VGP = (() => {
   }
 
   function defaultLang() {
-    return localStorage.getItem("vgp_lang") === "vi" ? "vi" : "en";
+    try {
+      if (localStorage.getItem("vgp_lang_v2") === "vi") return "vi";
+    } catch (_) {}
+    return "en";
+  }
+
+  function applyLang(next) {
+    const lang = next === "vi" ? "vi" : "en";
+    document.documentElement.setAttribute("data-lang", lang);
+    document.documentElement.lang = lang;
+    try { localStorage.setItem("vgp_lang_v2", lang); } catch (_) {}
+    return lang;
   }
 
   function normalizeName(name) {
@@ -578,7 +589,7 @@ const VGP = (() => {
     CHECK, SCORE_LABEL, BAND_TO_SCORE, normalizeEmbodiment, embLabel, scoreLabel, checkLabel, machineScore,
     getRater, setRater, passOk, setPassOk, adminOk, setAdminOk,
     clearSession, isAdminPath, requireGate, requireAdmin,
-    defaultLang, isReviewer, raterPassOk, conflictCheckProgress,
+    defaultLang, applyLang, isReviewer, raterPassOk, conflictCheckProgress,
     segmentId, parentVideoId, scoreableSegmentIndices, videoComplete, videoTouched, raterStats,
     coverageCounts, pickLeastLabeled, conflictIds, conflictRows,
     getBatch, getValidBatch, isStaleOpenBatch, saveBatch, submitBatch, clearBatch, createBatch, getOrCreateBatch,
