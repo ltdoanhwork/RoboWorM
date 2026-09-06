@@ -7,12 +7,12 @@ const VGP = (() => {
   const PASS_KEY = "vgp_pass_ok";
   const ADMIN_KEY = "vgp_admin_ok";
   const BATCH_PREFIX = "vgp_batch::";
-  const BATCH_VERSION = 3; // 25 geometry + 75 hallucinate; 2-rater coverage
+  const BATCH_VERSION = 4; // checkers get conflict-only batches
   const GEO_N = 25;
   const HALLU_N = 75;
   const HALF = GEO_N; // back-compat alias
   const TARGET_COVER = 2;
-  const REVIEWERS = ["quang", "thanh"];
+  const REVIEWERS = ["quang_check", "thanh_check"];
   const ADMIN_PAGES = /(^|\/)(analytics|admin)\.html?$/i;
   const CHECK = { geo: "geometry", hallu: "hallucinate" };
   const SCORE_LABEL = { 1: "Bad", 2: "Medium", 3: "Good" };
@@ -153,8 +153,21 @@ const VGP = (() => {
     return localStorage.getItem("vgp_lang") === "vi" ? "vi" : "en";
   }
 
+  function normalizeName(name) {
+    return String(name || "").trim().toLowerCase();
+  }
+
   function isReviewer(name) {
-    return REVIEWERS.includes(String(name || "").trim().toLowerCase());
+    return REVIEWERS.includes(normalizeName(name));
+  }
+
+  function reviewerPassOk(pass) {
+    return String(pass || "") === String((typeof CONFIG !== "undefined" && CONFIG.REVIEWER_PASSCODE) || "1");
+  }
+
+  function raterPassOk(name, pass) {
+    if (isReviewer(name)) return reviewerPassOk(pass);
+    return String(pass || "") === String((typeof CONFIG !== "undefined" && CONFIG.ACCESS_PASSCODE) || "");
   }
 
   function raterStats(labels, mvItems, svItems) {
@@ -179,10 +192,11 @@ const VGP = (() => {
     const known = new Set((items || []).map((it) => it.id));
     const raters = new Map();
     for (const row of rows || []) {
+      if (isReviewer(row.rater_name)) continue;
       const vid = known.has(row.item_id) ? row.item_id : parentVideoId(row.item_id);
       if (!known.has(vid)) continue;
       if (!raters.has(vid)) raters.set(vid, new Set());
-      raters.get(vid).add(row.rater_name);
+      raters.get(vid).add(normalizeName(row.rater_name));
     }
     const counts = {};
     for (const it of items || []) counts[it.id] = (raters.get(it.id) || new Set()).size;
@@ -190,8 +204,8 @@ const VGP = (() => {
   }
 
   // Each video is assigned to at most TARGET_COVER distinct raters.
-  // Prefer uncovered, then 1-label videos. Reviewers (quang/thanh) are
-  // steered at conflicts first and may exceed the cap.
+  // Prefer uncovered, then 1-label videos. Conflict checkers only
+  // receive disagreement clips and may exceed the cap.
   function pickLeastLabeled(items, coverage, doneIds, n, opts) {
     const options = opts || {};
     const maxCover = options.maxCover != null ? options.maxCover : TARGET_COVER;
@@ -214,19 +228,25 @@ const VGP = (() => {
     return fresh.slice(0, n);
   }
 
-  function conflictIds(rows, items) {
+  function labelsByVideo(rows, items) {
     const known = new Set((items || []).map((it) => it.id));
     const byVid = new Map();
     for (const row of rows || []) {
       const vid = known.has(row.item_id) ? row.item_id : parentVideoId(row.item_id);
       if (!known.has(vid)) continue;
       if (!byVid.has(vid)) byVid.set(vid, new Map());
-      byVid.get(vid).set(row.rater_name, row.score);
+      byVid.get(vid).set(normalizeName(row.rater_name), row);
     }
+    return byVid;
+  }
+
+  function conflictIds(rows, items) {
+    const byVid = labelsByVideo(rows, items);
     const out = [];
     for (const [vid, scores] of byVid) {
-      const uniq = new Set(scores.values());
-      if (scores.size >= 2 && uniq.size >= 2) out.push(vid);
+      const regular = [...scores.values()].filter((row) => !isReviewer(row.rater_name));
+      const uniq = new Set(regular.map((row) => row.score));
+      if (regular.length >= 2 && uniq.size >= 2) out.push(vid);
     }
     return out;
   }
@@ -242,6 +262,30 @@ const VGP = (() => {
       grouped[vid].push(row);
     }
     return Object.entries(grouped).map(([id, labels]) => ({ id, labels }));
+  }
+
+  function pickConflictItems(items, rows, doneIds, n) {
+    const want = new Set(conflictIds(rows, items));
+    const fresh = (items || []).filter((it) => want.has(it.id) && !doneIds.has(it.id));
+    fresh.sort(() => Math.random() - 0.5);
+    return n != null ? fresh.slice(0, n) : fresh;
+  }
+
+  function conflictCheckProgress(rows, items) {
+    const ids = conflictIds(rows, items);
+    const byVid = labelsByVideo(rows, items);
+    const per = {};
+    for (const name of REVIEWERS) per[name] = 0;
+    let open = 0, one = 0, both = 0;
+    for (const id of ids) {
+      const labels = byVid.get(id) || new Map();
+      const checkers = REVIEWERS.filter((name) => labels.has(name));
+      checkers.forEach((name) => { per[name] += 1; });
+      if (checkers.length === 0) open += 1;
+      else if (checkers.length === 1) one += 1;
+      else both += 1;
+    }
+    return { total: ids.length, open, one, both, per };
   }
 
   function batchStorageKey() {
@@ -286,16 +330,16 @@ const VGP = (() => {
     const mvDone = new Set((mvItems || []).filter((it) => mine[it.id] != null).map((it) => it.id));
     const svDone = new Set((svItems || []).filter((it) => videoComplete(it, mine)).map((it) => it.id));
     const reviewer = isReviewer(getRater());
-    const mvCov = coverageCounts(allRows, mvItems);
-    const svCov = coverageCounts(allRows, svItems);
-    const mvPick = pickLeastLabeled(mvItems, mvCov, mvDone, GEO_N, {
-      maxCover: reviewer ? 99 : TARGET_COVER,
-      preferIds: reviewer ? conflictIds(allRows, mvItems) : [],
-    });
-    const svPick = pickLeastLabeled(svItems, svCov, svDone, HALLU_N, {
-      maxCover: reviewer ? 99 : TARGET_COVER,
-      preferIds: reviewer ? conflictIds(allRows, svItems) : [],
-    });
+    const mvPick = reviewer
+      ? pickConflictItems(mvItems, allRows, mvDone)
+      : pickLeastLabeled(mvItems, coverageCounts(allRows, mvItems), mvDone, GEO_N);
+    const svPick = reviewer
+      ? pickConflictItems(svItems, allRows, svDone)
+      : pickLeastLabeled(svItems, coverageCounts(allRows, svItems), svDone, HALLU_N);
+    if (reviewer && !mvPick.length && !svPick.length) {
+      clearBatch();
+      return { id: null, version: BATCH_VERSION, reviewer: true, mvIds: [], svIds: [], empty: true };
+    }
     return saveBatch({
       id: `${Date.now().toString(36)}-${fnv1a(getRater() + Math.random())}`,
       version: BATCH_VERSION,
@@ -534,7 +578,7 @@ const VGP = (() => {
     CHECK, SCORE_LABEL, BAND_TO_SCORE, normalizeEmbodiment, embLabel, scoreLabel, checkLabel, machineScore,
     getRater, setRater, passOk, setPassOk, adminOk, setAdminOk,
     clearSession, isAdminPath, requireGate, requireAdmin,
-    defaultLang, isReviewer,
+    defaultLang, isReviewer, raterPassOk, conflictCheckProgress,
     segmentId, parentVideoId, scoreableSegmentIndices, videoComplete, videoTouched, raterStats,
     coverageCounts, pickLeastLabeled, conflictIds, conflictRows,
     getBatch, getValidBatch, isStaleOpenBatch, saveBatch, submitBatch, clearBatch, createBatch, getOrCreateBatch,

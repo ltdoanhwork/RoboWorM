@@ -21,11 +21,11 @@
 </nav>
 <main>
   <section class="home-hero">
-    <div class="eyebrow"><span data-lang="vi">Lô 100 video · 25 + 75</span><span data-lang="en">Batch of 100 videos · 25 + 75</span></div>
+    <div class="eyebrow" id="homeEyebrow"><span data-lang="vi">Lô 100 video · 25 + 75</span><span data-lang="en">Batch of 100 videos · 25 + 75</span></div>
     <h1><span data-lang="vi">Xin chào, </span><span data-lang="en">Hello, </span><span id="helloName"></span></h1>
     <p>
-      <span data-lang="en">This study has two checks. Multiview geometry consistency asks whether two static cameras stay aligned — same motion, shape, color, and position — not whether the robot finished the task. Hallucinate check asks whether the generated robot stays physically intact (no melt, teleport, or non-physical motion). Each batch delivers 25 geometry clips and 75 hallucinate clips. Every video is assigned to two different raters; admin tracks disagreements. Reserved reviewers quang and thanh re-score conflicts.</span>
-      <span data-lang="vi">Nghiên cứu có hai phần. Multiview geometry consistency xem hai camera tĩnh có còn khớp nhau không — cùng chuyển động, hình dạng, màu, vị trí — không xét hoàn thành tác vụ. Hallucinate check xem robot sinh ra có còn vật lý (không tan, teleport, phi vật lý). Mỗi lô giao 25 clip geometry và 75 clip hallucinate. Mỗi video được giao cho hai người khác nhau; admin theo dõi conflict. Tài khoản quang và thanh chấm lại các video conflict.</span>
+      <span data-lang="en" id="introEn">This study has two checks. Geometry asks whether two static cameras stay aligned — same motion, shape, color, and position — not whether the robot finished the task. Hallucinate asks whether the generated robot stays physically intact. Each batch delivers 25 geometry clips and 75 hallucinate clips. Every video is assigned to two different raters. Conflict checkers quang_check and thanh_check re-score disagreements.</span>
+      <span data-lang="vi" id="introVi">Nghiên cứu có hai phần. Geometry xem hai camera tĩnh có còn khớp nhau không. Hallucinate xem robot sinh ra có còn vật lý. Mỗi lô giao 25 clip geometry và 75 clip hallucinate. Mỗi video được giao cho hai người khác nhau. Tài khoản quang_check và thanh_check chấm lại các video conflict.</span>
     </p>
     <div class="howto-row">
       <button class="btn primary" type="button" id="btnHowTo"><span data-lang="en">What do I click?</span><span data-lang="vi">Tôi cần bấm gì?</span></button>
@@ -173,6 +173,14 @@ if (VGP.requireGate()) {
 
   $('raterChip').textContent = rater;
   $('helloName').textContent = rater;
+  const checker = VGP.isReviewer(rater);
+  if (checker) {
+    $('homeEyebrow').innerHTML = '<span data-lang="vi">Tài khoản check conflict</span><span data-lang="en">Conflict checker account</span>';
+    $('introEn').textContent = 'You only receive videos where two raters already disagreed. Score them again on the same Bad / Medium / Good scale.';
+    $('introVi').textContent = 'Bạn chỉ nhận video mà hai rater đã chấm khác nhau. Chấm lại trên thang Bad / Medium / Good.';
+    $('btnAssign').innerHTML = '<span data-lang="vi">Nhận video conflict</span><span data-lang="en">Get conflict videos</span>';
+    $('btnNew').innerHTML = '<span data-lang="vi">Nhận conflict mới</span><span data-lang="en">Get more conflicts</span>';
+  }
   function lang(){ return document.documentElement.dataset.lang || 'en'; }
   function setLang(next){
     document.documentElement.dataset.lang = next;
@@ -205,19 +213,24 @@ if (VGP.requireGate()) {
     $('btnSubmit').hidden = !open;
     $('btnNew').hidden = !(batch && batch.submittedAt);
     if (!batch){
-      setStatus('Chưa có lô. Nhận 100 video để bắt đầu.', 'No batch yet. Get 100 videos to start.');
+      setStatus(
+        checker ? 'Chưa có lô. Nhận video conflict để bắt đầu.' : 'Chưa có lô. Nhận 100 video để bắt đầu.',
+        checker ? 'No batch yet. Get conflict videos to start.' : 'No batch yet. Get 100 videos to start.'
+      );
       return;
     }
     const mvItems = VGP.itemsFromIds(mvAll, batch.mvIds);
     const svItems = VGP.itemsFromIds(svAll, batch.svIds);
     const mvDone = mvItems.filter(it => labels[it.id] != null).length;
     const svDone = svItems.filter(it => VGP.videoComplete(it, labels)).length;
-    $('mvProg').textContent = `${mvDone} / ${mvItems.length || VGP.GEO_N}`;
-    $('svProg').textContent = `${svDone} / ${svItems.length || VGP.HALLU_N}`;
+    $('mvProg').textContent = `${mvDone} / ${mvItems.length}`;
+    $('svProg').textContent = `${svDone} / ${svItems.length}`;
     $('mvBar').style.width = (mvItems.length ? 100 * mvDone / mvItems.length : 0) + '%';
     $('svBar').style.width = (svItems.length ? 100 * svDone / svItems.length : 0) + '%';
-    const extra = VGP.isReviewer(rater)
-      ? (lang() === 'vi' ? ' Tài khoản reviewer: ưu tiên video conflict.' : ' Reviewer account: conflict videos are prioritized.')
+    $('goMv').closest('.phase').hidden = checker && !mvItems.length;
+    $('svPhase').hidden = checker && !svItems.length;
+    const extra = checker
+      ? (lang() === 'vi' ? ' Chỉ gồm video conflict.' : ' Conflict videos only.')
       : '';
     if (batch.submittedAt){
       setStatus(`Đã nộp lô này. Tổng ${VGP.raterStats(labels, mvAll, svAll).totalVideos} video.` + extra,
@@ -228,11 +241,19 @@ if (VGP.requireGate()) {
     }
   }
   async function assign(){
-    setStatus('Đang phân phối — mỗi video tối đa 2 người…', 'Assigning — each video to at most 2 raters…', 'syncing');
+    setStatus(
+      checker ? 'Đang lấy video conflict…' : 'Đang phân phối — mỗi video tối đa 2 người…',
+      checker ? 'Loading conflict videos…' : 'Assigning — each video to at most 2 raters…',
+      'syncing'
+    );
     batch = await VGP.createBatch(mvAll, svAll);
     if (!batch.mvIds.length && !batch.svIds.length){
-      setStatus('Không còn video dưới 2 nhãn (hoặc bạn đã chấm hết).', 'No videos left under 2 labels (or you finished the catalog).');
-      $('btnAssign').hidden = true;
+      setStatus(
+        checker ? 'Hiện không còn video conflict chưa chấm.' : 'Không còn video dưới 2 nhãn (hoặc bạn đã chấm hết).',
+        checker ? 'No conflict videos left for you to check.' : 'No videos left under 2 labels (or you finished the catalog).'
+      );
+      $('btnAssign').hidden = !checker;
+      $('phaseGrid').hidden = true;
       return;
     }
     renderBatch();

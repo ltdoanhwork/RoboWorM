@@ -5,6 +5,7 @@
 const CONFIG = {
   ACCESS_PASSCODE: "vgp-label-2026",
   ADMIN_PASSCODE: "vgp-ops-2026",
+  REVIEWER_PASSCODE: "1",
 
   SUPABASE_URL: "https://usuctukltxniyhyjwhln.supabase.co",
   SUPABASE_PUBLISHABLE_KEY: "sb_publishable_eMHf2-CYSUB8Ot_GWqOBvA_J8NcWEa_",

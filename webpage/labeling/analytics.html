@@ -24,8 +24,9 @@
   <section class="chart-card">
     <h2>Conflicts — two raters, different scores</h2>
     <p class="status" style="margin-bottom:.7rem">
-      Target coverage is 2 distinct raters per video. Reserved reviewers
-      <span class="mono">quang</span> and <span class="mono">thanh</span> are assigned these first.
+      Target coverage is 2 distinct raters per video. Checkers
+      <span class="mono">quang_check</span> and <span class="mono">thanh_check</span>
+      log in on the rater gate and only receive these clips.
     </p>
     <div class="admin-stat" id="conflictStats" style="margin-bottom:1rem"></div>
     <div class="phase-grid">
@@ -38,6 +39,28 @@
         <div class="bar-list" id="conflictHallu"></div>
       </div>
     </div>
+  </section>
+
+  <section class="chart-card">
+    <h2>Conflict check progress</h2>
+    <p class="status" style="margin-bottom:.7rem">
+      Open = no checker score yet. One / both = how many of
+      <span class="mono">quang_check</span> and <span class="mono">thanh_check</span>
+      have re-scored that clip.
+    </p>
+    <div class="admin-stat" id="checkProgStats" style="margin-bottom:1rem"></div>
+    <div class="phase-grid">
+      <div>
+        <p class="status" style="margin-bottom:.4rem">Geometry check</p>
+        <div class="bar-list" id="checkProgGeo"></div>
+      </div>
+      <div>
+        <p class="status" style="margin-bottom:.4rem">Hallucinate check</p>
+        <div class="bar-list" id="checkProgHallu"></div>
+      </div>
+    </div>
+    <p class="status" style="margin:1rem 0 .4rem">Checker accounts</p>
+    <div class="bar-list" id="checkProgRaters"></div>
   </section>
 
   <section class="chart-card">
@@ -243,12 +266,35 @@ if (VGP.requireAdmin()) {
 
     const geoConflicts = VGP.conflictRows(rows, geoItems);
     const halluConflicts = VGP.conflictRows(rows, halluItems);
-    const reviewerDone = rows.filter(r => VGP.isReviewer(r.rater_name)).length;
-    document.getElementById('statConflicts').textContent = geoConflicts.length + halluConflicts.length;
+    const geoCheck = VGP.conflictCheckProgress(rows, geoItems);
+    const halluCheck = VGP.conflictCheckProgress(rows, halluItems);
+    const conflictTotal = geoCheck.total + halluCheck.total;
+    const conflictOpen = geoCheck.open + halluCheck.open;
+    const conflictBoth = geoCheck.both + halluCheck.both;
+    document.getElementById('statConflicts').textContent = conflictTotal;
     document.getElementById('conflictStats').innerHTML = `
-      <div><b>${geoConflicts.length}</b><span>geometry conflicts</span></div>
-      <div><b>${halluConflicts.length}</b><span>hallucinate conflicts</span></div>
-      <div><b>${reviewerDone}</b><span>quang+thanh labels</span></div>`;
+      <div><b>${geoCheck.total}</b><span>geometry conflicts</span></div>
+      <div><b>${halluCheck.total}</b><span>hallucinate conflicts</span></div>
+      <div><b>${conflictOpen}</b><span>open (no checker)</span></div>
+      <div><b>${conflictBoth}</b><span>checked by both</span></div>`;
+    document.getElementById('checkProgStats').innerHTML = `
+      <div><b>${conflictTotal}</b><span>conflicts total</span></div>
+      <div><b>${conflictOpen}</b><span>open</span></div>
+      <div><b>${geoCheck.one + halluCheck.one}</b><span>checked by one</span></div>
+      <div><b>${conflictBoth}</b><span>checked by both</span></div>
+      <div><b>${(geoCheck.per.quang_check || 0) + (halluCheck.per.quang_check || 0)}/${conflictTotal || 0}</b><span>quang_check</span></div>
+      <div><b>${(geoCheck.per.thanh_check || 0) + (halluCheck.per.thanh_check || 0)}/${conflictTotal || 0}</b><span>thanh_check</span></div>`;
+    const checkBars = (host, p) => bars(host, [
+      ['Open', p.open],
+      ['Checked by one', p.one],
+      ['Checked by both', p.both],
+    ], Math.max(1, p.total));
+    checkBars(document.getElementById('checkProgGeo'), geoCheck);
+    checkBars(document.getElementById('checkProgHallu'), halluCheck);
+    bars(document.getElementById('checkProgRaters'), [
+      [`quang_check · ${ (geoCheck.per.quang_check || 0) + (halluCheck.per.quang_check || 0) }/${conflictTotal}`, (geoCheck.per.quang_check || 0) + (halluCheck.per.quang_check || 0)],
+      [`thanh_check · ${ (geoCheck.per.thanh_check || 0) + (halluCheck.per.thanh_check || 0) }/${conflictTotal}`, (geoCheck.per.thanh_check || 0) + (halluCheck.per.thanh_check || 0)],
+    ], Math.max(1, conflictTotal));
     const fmtConflict = list => list.slice(0, 12).map(c => {
       const scores = c.labels.map(l => `${l.rater_name}:${l.score}`).join(' / ');
       return [c.id, c.labels.length, ` ${scores}`];
@@ -271,7 +317,7 @@ if (VGP.requireAdmin()) {
     bars(document.getElementById('raterBars'), perRater.map(r => [r.rater, r.n]), rMax);
 
     document.querySelector('#table tbody').innerHTML = perRater.map(r =>
-      `<tr><td>${r.rater}</td><td>${r.n}</td><td>${r.videos}</td><td>${r.mean}</td><td class="mono">${new Date(r.last).toLocaleString()}</td></tr>`
+      `<tr><td>${r.rater}${VGP.isReviewer(r.rater) ? ' <span class="mono">checker</span>' : ''}</td><td>${r.n}</td><td>${r.videos}</td><td>${r.mean}</td><td class="mono">${new Date(r.last).toLocaleString()}</td></tr>`
     ).join('') || '<tr><td colspan="5">No labels yet.</td></tr>';
 
     renderEmbodimentPies();

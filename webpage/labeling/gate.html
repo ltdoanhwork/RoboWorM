@@ -24,7 +24,7 @@ button:hover{opacity:.92}
 <body>
   <div class="card">
     <h1 id="title">Video World Labeling</h1>
-    <p class="sub" id="sub">Enter the access passcode shared with you, and pick a display name. Reserved reviewers: <strong>quang</strong> and <strong>thanh</strong>.</p>
+    <p class="sub" id="sub">Enter the access passcode shared with you, and pick a display name. Conflict checkers use <strong>quang_check</strong> or <strong>thanh_check</strong> with their own passcode.</p>
     <form id="gateForm">
       <div id="nameWrap">
         <label for="name">Your name</label>
@@ -66,7 +66,10 @@ document.getElementById('gateForm').addEventListener('submit', (e) => {
   }
   const name = nameEl.value.trim();
   if (!name){ err.textContent = 'Please enter a name.'; return; }
-  if (passEl.value !== CONFIG.ACCESS_PASSCODE){ err.textContent = 'Wrong passcode.'; return; }
+  if (!VGP.raterPassOk(name, passEl.value)){
+    err.textContent = VGP.isReviewer(name) ? 'Wrong checker passcode.' : 'Wrong passcode.';
+    return;
+  }
   if (VGP.isAdminPath(rawNext)){ err.textContent = 'Rater access cannot open admin pages.'; return; }
   VGP.setRater(name);
   VGP.setPassOk();
