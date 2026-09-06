@@ -115,12 +115,14 @@ def build_catalog(key: dict) -> dict:
 
 
 def band_to_score(band: str) -> int | None:
-    """Map machine stratum → pseudo score for analytics (not shown to raters)."""
+    """Map machine stratum → rater scale (not shown to raters)."""
     return {
-        "clean": 3,
-        "middle": 2,
-        "high": 1,
-        "control": 3,  # real teleop = quality floor / clean reference
+        "high": 1,      # Bad
+        "middle": 2,    # Medium
+        "medium": 2,    # Medium
+        "low": 3,       # Good
+        "clean": 3,     # Good
+        "control": 3,   # teleop / clean reference
     }.get(band)
 
 
@@ -130,13 +132,16 @@ def build_metrics(key: dict) -> dict:
         for number in range(1, 101):
             row = key[f"{embodiment}/{number}"]
             video_id = f"rate900_{embodiment}_{number:03d}"
+            machine_score = band_to_score(row.get("band") or "")
             items.append({
                 "id": video_id,  # one score per clip → same id as human label
                 "video_id": video_id,
+                "check": "hallucinate",
                 "embodiment": embodiment,
                 "index": MIDDLE_SEG,
                 "band": row.get("band"),
-                "machine_score": band_to_score(row.get("band") or ""),
+                "machine_score": machine_score,
+                "rating": {1: "bad", 2: "medium", 3: "good"}.get(machine_score),
                 "selected_by": row.get("selected_by"),
                 "peak_ratio": row.get("peak_ratio"),
                 "ratios": row.get("ratios") or {},

@@ -31,11 +31,11 @@
     <div class="phase-grid">
       <div>
         <p class="status" style="margin-bottom:.4rem">Geometry conflicts</p>
-        <div class="bar-list" id="conflictMv"></div>
+        <div class="bar-list" id="conflictGeo"></div>
       </div>
       <div>
         <p class="status" style="margin-bottom:.4rem">Hallucinate conflicts</p>
-        <div class="bar-list" id="conflictSv"></div>
+        <div class="bar-list" id="conflictHallu"></div>
       </div>
     </div>
   </section>
@@ -48,10 +48,10 @@
   </section>
 
   <section class="chart-card">
-    <h2>Multiview machine metrics (data_for_web.csv)</h2>
+    <h2>Geometry — machine vs human</h2>
     <p class="status" style="margin-bottom:.7rem">
-      From <span class="mono">metrics.multiview.json</span> (= data_for_web.csv). Best overview:
-      score mix + mean combined_score by robot_type + human agreement when labeled.
+      Same <span class="mono" id="geoPoolN">300</span> geometry clips raters score.
+      Machine score uses the same Bad / Medium / Good scale.
     </p>
     <div class="admin-stat" id="mvMetricStats" style="margin-bottom:1rem"></div>
     <div class="pie-row" id="mvPies"></div>
@@ -59,7 +59,7 @@
       <div>
         <p class="status" style="margin-bottom:.4rem">Machine score mix</p>
         <div class="bar-list" id="mvScoreMix"></div>
-        <p class="status" style="margin:.9rem 0 .4rem">Mean combined_score by robot_type</p>
+        <p class="status" style="margin:.9rem 0 .4rem">Mean combined_score by embodiment</p>
         <div class="bar-list" id="mvEmbMean"></div>
       </div>
       <div>
@@ -74,25 +74,24 @@
   </section>
 
   <section class="chart-card">
-    <h2>Hallucinate — key.json bands</h2>
+    <h2>Hallucinate — machine vs human</h2>
     <p class="status" style="margin-bottom:.7rem">
-      Machine strata from HF <span class="mono">rate900/key.json</span>
-      (clean / middle / high / control). Public catalog stays blind.
-      Human labels join on <span class="mono">rate900_{emb}_{nnn}</span>.
+      Same <span class="mono" id="halluPoolN">300</span> hallucinate clips raters score.
+      Machine map: high → Bad, medium → Medium, low → Good.
     </p>
     <div class="admin-stat" id="metricStats" style="margin-bottom:1rem"></div>
     <div class="pie-row" id="svPies"></div>
     <div class="phase-grid">
       <div>
-        <p class="status" style="margin-bottom:.4rem">Machine band mix</p>
+        <p class="status" style="margin-bottom:.4rem">Machine score mix</p>
         <div class="bar-list" id="metricProgress"></div>
         <p class="status" style="margin:.9rem 0 .4rem">Mean human by band</p>
         <div class="bar-list" id="metricMean"></div>
       </div>
       <div>
-        <p class="status" style="margin-bottom:.4rem">Human mix on high vs clean</p>
+        <p class="status" style="margin-bottom:.4rem">Human vs machine</p>
         <div class="bar-list" id="metricMix"></div>
-        <p class="status" style="margin:.9rem 0 .4rem">Agreement (human Bad vs high/middle)</p>
+        <p class="status" style="margin:.9rem 0 .4rem">Agreement (same 1 / 2 / 3 scale)</p>
         <div class="bar-list" id="metricAgree"></div>
       </div>
     </div>
@@ -105,10 +104,10 @@
   <div class="phase-grid">
     <section class="chart-card">
       <h2>Coverage</h2>
-      <p class="status" style="margin:.2rem 0 .4rem">Multiview geometry (300 · target 2 raters)</p>
-      <div class="bar-list" id="covMv"></div>
-      <p class="status" style="margin:.8rem 0 .4rem">Hallucinate (300 · target 2 raters)</p>
-      <div class="bar-list" id="covSv"></div>
+      <p class="status" style="margin:.2rem 0 .4rem" id="covGeoCap">Geometry</p>
+      <div class="bar-list" id="covGeo"></div>
+      <p class="status" style="margin:.8rem 0 .4rem" id="covHalluCap">Hallucinate</p>
+      <div class="bar-list" id="covHallu"></div>
     </section>
     <section class="chart-card">
       <h2>Overall score mix</h2>
@@ -126,8 +125,8 @@
 <script src="vgp.js"></script>
 <script>
 if (VGP.requireAdmin()) {
-  let rows = [], mvItems = [], svItems = [], metricItems = [], mvMetricItems = [];
-  const COLORS = { 1: '#c2413b', 2: '#a16207', 3: '#16835b', clean: '#16835b', middle: '#a16207', high: '#c2413b', control: '#4338ca' };
+  let rows = [], geoItems = [], halluItems = [], geoMetrics = [], halluMetrics = [];
+  const COLORS = { 1: '#c2413b', 2: '#a16207', 3: '#16835b' };
 
   function bars(host, entries, max){
     host.innerHTML = entries.map(([label, n, extra]) => {
@@ -168,7 +167,7 @@ if (VGP.requireAdmin()) {
   function mean(xs){ return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0; }
 
   function renderEmbodimentPies(){
-    const itemEmb = new Map([...mvItems, ...svItems].map(it => [it.id, it.embodiment || 'unknown']));
+    const itemEmb = new Map([...geoItems, ...halluItems].map(it => [it.id, VGP.normalizeEmbodiment(it.embodiment)]));
     const byEmb = {};
     for (const r of rows) {
       const vid = videoId(r.item_id, new Set([...itemEmb.keys()]));
@@ -187,7 +186,7 @@ if (VGP.requireAdmin()) {
     }
     host.innerHTML = embs.map(emb => {
       const e = byEmb[emb];
-      return `<div class="pie-card"><h3>${emb.replace(/_/g, ' ')}</h3>${pie([
+      return `<div class="pie-card"><h3>${VGP.embLabel(emb)}</h3>${pie([
         { label: 'Bad', n: e[1] || 0, color: COLORS[1] },
         { label: 'Med', n: e[2] || 0, color: COLORS[2] },
         { label: 'Good', n: e[3] || 0, color: COLORS[3] },
@@ -195,16 +194,19 @@ if (VGP.requireAdmin()) {
     }).join('');
     bars(document.getElementById('embBars'), embs.map(emb => {
       const e = byEmb[emb];
-      return [`${emb} · mean ${e.n ? (e.sum / e.n).toFixed(2) : '—'} · n=${e.n}`, e.n];
+      return [`${VGP.embLabel(emb)} · mean ${e.n ? (e.sum / e.n).toFixed(2) : '—'} · n=${e.n}`, e.n];
     }), Math.max(1, ...embs.map(e => byEmb[e].n)));
   }
 
   function render(){
-    const mvIds = new Set(mvItems.map(it => it.id));
-    const svIds = new Set(svItems.map(it => it.id));
-    const known = new Set([...mvIds, ...svIds]);
-    const mvCov = VGP.coverageCounts(rows, mvItems);
-    const svCov = VGP.coverageCounts(rows, svItems);
+    const geoN = geoItems.length;
+    const halluN = halluItems.length;
+    const poolN = geoN + halluN;
+    const geoIds = new Set(geoItems.map(it => it.id));
+    const halluIds = new Set(halluItems.map(it => it.id));
+    const known = new Set([...geoIds, ...halluIds]);
+    const geoCov = VGP.coverageCounts(rows, geoItems);
+    const halluCov = VGP.coverageCounts(rows, halluItems);
     const raters = new Map();
     const scores = { 1: 0, 2: 0, 3: 0 };
 
@@ -221,37 +223,42 @@ if (VGP.requireAdmin()) {
       rater, n: v.n, videos: v.videos.size, mean: (v.sum / v.n).toFixed(2), last: v.last,
     })).sort((a, b) => b.n - a.n);
 
-    const mvCovered = Object.values(mvCov).filter(n => n > 0).length;
-    const svCovered = Object.values(svCov).filter(n => n > 0).length;
-    const overlapMv = Object.values(mvCov).filter(n => n >= 2).length;
-    const overlapSv = Object.values(svCov).filter(n => n >= 2).length;
+    const geoCovered = Object.values(geoCov).filter(n => n > 0).length;
+    const halluCovered = Object.values(halluCov).filter(n => n > 0).length;
+    const overlapGeo = Object.values(geoCov).filter(n => n >= 2).length;
+    const overlapHallu = Object.values(halluCov).filter(n => n >= 2).length;
+
+    document.getElementById('geoPoolN').textContent = String(geoN);
+    document.getElementById('halluPoolN').textContent = String(halluN);
+    document.getElementById('covGeoCap').textContent = `Geometry (${geoN} · target ${VGP.TARGET_COVER} raters)`;
+    document.getElementById('covHalluCap').textContent = `Hallucinate (${halluN} · target ${VGP.TARGET_COVER} raters)`;
 
     document.getElementById('stats').innerHTML = `
       <div><b>${perRater.length}</b><span>raters</span></div>
       <div><b>${rows.length}</b><span>label rows</span></div>
-      <div><b>${mvCovered}/300</b><span>multiview covered</span></div>
-      <div><b>${svCovered}/300</b><span>hallucinate covered</span></div>
-      <div><b>${overlapMv + overlapSv}</b><span>videos with ≥2 raters</span></div>
+      <div><b>${geoCovered}/${geoN}</b><span>geometry covered</span></div>
+      <div><b>${halluCovered}/${halluN}</b><span>hallucinate covered</span></div>
+      <div><b>${overlapGeo + overlapHallu}/${poolN}</b><span>videos with ≥2 raters</span></div>
       <div><b id="statConflicts">0</b><span>score conflicts</span></div>`;
 
-    const mvConflicts = VGP.conflictRows(rows, mvItems);
-    const svConflicts = VGP.conflictRows(rows, svItems);
+    const geoConflicts = VGP.conflictRows(rows, geoItems);
+    const halluConflicts = VGP.conflictRows(rows, halluItems);
     const reviewerDone = rows.filter(r => VGP.isReviewer(r.rater_name)).length;
-    document.getElementById('statConflicts').textContent = mvConflicts.length + svConflicts.length;
+    document.getElementById('statConflicts').textContent = geoConflicts.length + halluConflicts.length;
     document.getElementById('conflictStats').innerHTML = `
-      <div><b>${mvConflicts.length}</b><span>geometry conflicts</span></div>
-      <div><b>${svConflicts.length}</b><span>hallucinate conflicts</span></div>
+      <div><b>${geoConflicts.length}</b><span>geometry conflicts</span></div>
+      <div><b>${halluConflicts.length}</b><span>hallucinate conflicts</span></div>
       <div><b>${reviewerDone}</b><span>quang+thanh labels</span></div>`;
     const fmtConflict = list => list.slice(0, 12).map(c => {
       const scores = c.labels.map(l => `${l.rater_name}:${l.score}`).join(' / ');
       return [c.id, c.labels.length, ` ${scores}`];
     });
-    bars(document.getElementById('conflictMv'), fmtConflict(mvConflicts).map(([id, n, extra]) => [id, n, extra]), 4);
-    bars(document.getElementById('conflictSv'), fmtConflict(svConflicts).map(([id, n, extra]) => [id, n, extra]), 4);
+    bars(document.getElementById('conflictGeo'), fmtConflict(geoConflicts).map(([id, n, extra]) => [id, n, extra]), 4);
+    bars(document.getElementById('conflictHallu'), fmtConflict(halluConflicts).map(([id, n, extra]) => [id, n, extra]), 4);
 
-    const covMax = Math.max(1, ...hist(mvCov).map(x => x[1]), ...hist(svCov).map(x => x[1]));
-    bars(document.getElementById('covMv'), hist(mvCov).map(([k, n]) => [`MV · ${k} labels`, n]), covMax);
-    bars(document.getElementById('covSv'), hist(svCov).map(([k, n]) => [`SV · ${k} labels`, n]), covMax);
+    const covMax = Math.max(1, ...hist(geoCov).map(x => x[1]), ...hist(halluCov).map(x => x[1]));
+    bars(document.getElementById('covGeo'), hist(geoCov).map(([k, n]) => [`Geometry · ${k} labels`, n]), covMax);
+    bars(document.getElementById('covHallu'), hist(halluCov).map(([k, n]) => [`Hallucinate · ${k} labels`, n]), covMax);
 
     const scoreMax = Math.max(1, scores[1], scores[2], scores[3]);
     bars(document.getElementById('scoreMix'), [
@@ -268,173 +275,147 @@ if (VGP.requireAdmin()) {
     ).join('') || '<tr><td colspan="5">No labels yet.</td></tr>';
 
     renderEmbodimentPies();
-    renderMvMetrics();
-    renderRate900();
+    renderCheckMetrics('geometry');
+    renderCheckMetrics('hallucinate');
   }
 
-  function renderMvMetrics(){
-    const byId = new Map(mvMetricItems.map(it => [it.id, it]));
-    const mvIds = new Set(mvItems.map(it => it.id));
-    const labeled = rows.filter(r => mvIds.has(r.item_id) && byId.has(r.item_id));
+  function pearson(xs, ys){
+    if (xs.length < 2) return 0;
+    const n2 = xs.length, mx = mean(xs), my = mean(ys);
+    let num = 0, dx = 0, dy = 0;
+    for (let i = 0; i < n2; i++) {
+      const a = xs[i] - mx, b = ys[i] - my;
+      num += a * b; dx += a * a; dy += b * b;
+    }
+    return (dx && dy) ? num / Math.sqrt(dx * dy) : 0;
+  }
+
+  function renderCheckMetrics(check){
+    const isGeo = check === 'geometry';
+    const catalog = isGeo ? geoItems : halluItems;
+    const metrics = isGeo ? geoMetrics : halluMetrics;
+    const catalogIds = new Set(catalog.map(it => it.id));
+    const byId = new Map(metrics.filter(it => catalogIds.has(it.id)).map(it => [it.id, it]));
+    const labeled = rows.map(r => ({ ...r, item_id: videoId(r.item_id, catalogIds) }))
+      .filter(r => catalogIds.has(r.item_id) && byId.has(r.item_id));
     const scores = { 1: 0, 2: 0, 3: 0 };
     const embScores = {};
     let geoSum = 0, poseSum = 0, combSum = 0;
-    for (const it of mvMetricItems) {
-      scores[it.score] = (scores[it.score] || 0) + 1;
-      const emb = it.robot_type || 'unknown';
+    const pool = [...byId.values()];
+    for (const it of pool) {
+      const ms = VGP.machineScore(it);
+      if (ms) scores[ms] = (scores[ms] || 0) + 1;
+      const emb = VGP.normalizeEmbodiment(it.embodiment || it.robot_type);
       if (!embScores[emb]) embScores[emb] = { n: 0, sum: 0 };
       embScores[emb].n += 1;
-      embScores[emb].sum += it.combined_score;
-      geoSum += it.geometric_consistency;
-      poseSum += it.pose_stability;
-      combSum += it.combined_score;
+      embScores[emb].sum += it.combined_score != null ? it.combined_score : (ms || 0);
+      geoSum += it.geometric_consistency || 0;
+      poseSum += it.pose_stability || 0;
+      combSum += it.combined_score || 0;
     }
-    const n = mvMetricItems.length || 1;
+    const n = pool.length || 1;
     const humanByMachine = { 1: {1:0,2:0,3:0}, 2: {1:0,2:0,3:0}, 3: {1:0,2:0,3:0} };
     let exactAgree = 0;
     const humanScores = [], machineScores = [];
     for (const r of labeled) {
-      const m = byId.get(r.item_id);
-      humanByMachine[m.score][r.score] += 1;
-      if (m.score === r.score) exactAgree += 1;
+      const m = VGP.machineScore(byId.get(r.item_id));
+      if (!m) continue;
+      humanByMachine[m][r.score] += 1;
+      if (m === r.score) exactAgree += 1;
       humanScores.push(r.score);
-      machineScores.push(m.score);
+      machineScores.push(m);
     }
-    const pearson = (() => {
-      if (humanScores.length < 2) return 0;
-      const n2 = humanScores.length;
-      const mx = mean(humanScores), my = mean(machineScores);
-      let num = 0, dx = 0, dy = 0;
-      for (let i = 0; i < n2; i++) {
-        const a = humanScores[i] - mx, b = machineScores[i] - my;
-        num += a * b; dx += a * a; dy += b * b;
-      }
-      return (dx && dy) ? num / Math.sqrt(dx * dy) : 0;
-    })();
 
-    document.getElementById('mvMetricStats').innerHTML = `
-      <div><b>${n}</b><span>machine videos</span></div>
-      <div><b>${labeled.length}</b><span>human-joined</span></div>
-      <div><b>${(combSum / n).toFixed(3)}</b><span>mean combined</span></div>
-      <div><b>${(geoSum / n).toFixed(3)}</b><span>mean geometric</span></div>
-      <div><b>${(poseSum / n).toFixed(3)}</b><span>mean pose</span></div>`;
+    const statHost = document.getElementById(isGeo ? 'mvMetricStats' : 'metricStats');
+    if (isGeo) {
+      statHost.innerHTML = `
+        <div><b>${pool.length}/${catalog.length}</b><span>geometry clips</span></div>
+        <div><b>${labeled.length}</b><span>human-joined</span></div>
+        <div><b>${(combSum / n).toFixed(3)}</b><span>mean combined</span></div>
+        <div><b>${(geoSum / n).toFixed(3)}</b><span>mean geometric</span></div>
+        <div><b>${(poseSum / n).toFixed(3)}</b><span>mean pose</span></div>`;
+    } else {
+      statHost.innerHTML = `
+        <div><b>${pool.length}/${catalog.length}</b><span>hallucinate clips</span></div>
+        <div><b>${labeled.length}</b><span>human-joined</span></div>
+        <div><b>${scores[1] || 0}</b><span>machine Bad</span></div>
+        <div><b>${scores[2] || 0}</b><span>machine Medium</span></div>
+        <div><b>${scores[3] || 0}</b><span>machine Good</span></div>`;
+    }
 
-    document.getElementById('mvPies').innerHTML = Object.entries(embScores).sort().map(([emb, v]) => {
-      const items = mvMetricItems.filter(it => it.robot_type === emb);
+    const pieHost = document.getElementById(isGeo ? 'mvPies' : 'svPies');
+    pieHost.innerHTML = Object.keys(embScores).sort().map(emb => {
+      const items = pool.filter(it => VGP.normalizeEmbodiment(it.embodiment || it.robot_type) === emb);
       const sc = { 1: 0, 2: 0, 3: 0 };
-      for (const it of items) sc[it.score] += 1;
-      return `<div class="pie-card"><h3>${emb} · machine</h3>${pie([
-        { label: 'Bad', n: sc[1], color: COLORS[1] },
-        { label: 'Med', n: sc[2], color: COLORS[2] },
-        { label: 'Good', n: sc[3], color: COLORS[3] },
-      ])}<p class="status">combined ${(v.sum / v.n).toFixed(3)}</p></div>`;
-    }).join('') || '<p class="status">No CSV metrics.</p>';
+      for (const it of items) sc[VGP.machineScore(it)] = (sc[VGP.machineScore(it)] || 0) + 1;
+      const extra = isGeo && embScores[emb].n
+        ? `<p class="status">combined ${(embScores[emb].sum / embScores[emb].n).toFixed(3)}</p>`
+        : `<p class="status">human ${items.filter(it => labeled.some(r => r.item_id === it.id)).length}/${items.length}</p>`;
+      return `<div class="pie-card"><h3>${VGP.embLabel(emb)} · machine</h3>${pie([
+        { label: 'Bad', n: sc[1] || 0, color: COLORS[1] },
+        { label: 'Med', n: sc[2] || 0, color: COLORS[2] },
+        { label: 'Good', n: sc[3] || 0, color: COLORS[3] },
+      ])}${extra}</div>`;
+    }).join('') || '<p class="status">No machine metrics for this catalog.</p>';
 
-    bars(document.getElementById('mvScoreMix'), [
-      ['1 Bad', scores[1] || 0], ['2 Medium', scores[2] || 0], ['3 Good', scores[3] || 0],
+    const mixHost = document.getElementById(isGeo ? 'mvScoreMix' : 'metricProgress');
+    bars(mixHost, [
+      ['Bad', scores[1] || 0], ['Medium', scores[2] || 0], ['Good', scores[3] || 0],
     ], Math.max(1, scores[1], scores[2], scores[3]));
-    bars(document.getElementById('mvEmbMean'), Object.entries(embScores).sort().map(([emb, v]) => [
-      emb, Number((v.sum / v.n).toFixed(3)),
-    ]), 1);
-    bars(document.getElementById('mvMetricDist'), [
-      ['geometric_consistency', Number((geoSum / n).toFixed(3))],
-      ['pose_stability', Number((poseSum / n).toFixed(3))],
-      ['combined_score', Number((combSum / n).toFixed(3))],
-    ], 1);
 
+    if (isGeo) {
+      bars(document.getElementById('mvEmbMean'), Object.keys(embScores).sort().map(emb => [
+        VGP.embLabel(emb), Number((embScores[emb].sum / embScores[emb].n).toFixed(3)),
+      ]), 1);
+      bars(document.getElementById('mvMetricDist'), [
+        ['geometric_consistency', Number((geoSum / n).toFixed(3))],
+        ['pose_stability', Number((poseSum / n).toFixed(3))],
+        ['combined_score', Number((combSum / n).toFixed(3))],
+      ], 1);
+    } else {
+      const byBandHuman = {};
+      for (const r of labeled) {
+        const band = byId.get(r.item_id).band || VGP.scoreLabel(VGP.machineScore(byId.get(r.item_id)));
+        if (!byBandHuman[band]) byBandHuman[band] = [];
+        byBandHuman[band].push(r.score);
+      }
+      bars(document.getElementById('metricMean'), Object.keys(byBandHuman).sort().map(b => [
+        `mean human · ${b} (${VGP.scoreLabel(VGP.BAND_TO_SCORE[b])})`,
+        Number(mean(byBandHuman[b]).toFixed(2)),
+      ]), 3);
+      const dets = {};
+      for (const it of pool) {
+        const d = it.selected_by || 'none';
+        dets[d] = (dets[d] || 0) + 1;
+      }
+      bars(document.getElementById('metricDet'), Object.entries(dets).sort((a, b) => b[1] - a[1]), Math.max(1, ...Object.values(dets), 1));
+      const embs = [...new Set(pool.map(it => VGP.normalizeEmbodiment(it.embodiment)))].sort();
+      bars(document.getElementById('metricEmb'), embs.map(emb => {
+        const all = pool.filter(it => VGP.normalizeEmbodiment(it.embodiment) === emb);
+        const done = all.filter(it => labeled.some(r => r.item_id === it.id));
+        const sc = done.length ? mean(labeled.filter(r => VGP.normalizeEmbodiment(byId.get(r.item_id)?.embodiment) === emb).map(r => r.score)) : 0;
+        return [`${VGP.embLabel(emb)} ${done.length}/${all.length} · mean ${done.length ? sc.toFixed(2) : '—'}`, done.length];
+      }), Math.max(1, ...embs.map(emb => pool.filter(it => VGP.normalizeEmbodiment(it.embodiment) === emb).length)));
+    }
+
+    const hmHost = document.getElementById(isGeo ? 'mvHumanMachine' : 'metricMix');
+    const agreeHost = document.getElementById(isGeo ? 'mvAgree' : 'metricAgree');
     if (labeled.length) {
-      bars(document.getElementById('mvHumanMachine'), [
+      bars(hmHost, [
         ['Mean human', Number(mean(humanScores).toFixed(2))],
         ['Mean machine', Number(mean(machineScores).toFixed(2))],
-        ['Pearson r', Number(pearson.toFixed(2))],
+        ['Pearson r', Number(pearson(humanScores, machineScores).toFixed(2))],
         ['Exact agree', exactAgree],
       ], Math.max(3, labeled.length));
-      bars(document.getElementById('mvAgree'), [
+      bars(agreeHost, [
         ['M-Bad→H-Bad', humanByMachine[1][1]], ['M-Bad→H-Med', humanByMachine[1][2]], ['M-Bad→H-Good', humanByMachine[1][3]],
         ['M-Med→H-Bad', humanByMachine[2][1]], ['M-Med→H-Med', humanByMachine[2][2]], ['M-Med→H-Good', humanByMachine[2][3]],
         ['M-Good→H-Bad', humanByMachine[3][1]], ['M-Good→H-Med', humanByMachine[3][2]], ['M-Good→H-Good', humanByMachine[3][3]],
       ], Math.max(1, ...Object.values(humanByMachine).flatMap(o => Object.values(o))));
     } else {
-      document.getElementById('mvHumanMachine').innerHTML = '<p class="status">No human multiview labels yet.</p>';
-      document.getElementById('mvAgree').innerHTML = '<p class="status">No human multiview labels yet.</p>';
+      hmHost.innerHTML = `<p class="status">No human ${check} labels yet.</p>`;
+      agreeHost.innerHTML = `<p class="status">No human ${check} labels yet.</p>`;
     }
-  }
-
-  function renderRate900(){
-    const byId = new Map(metricItems.map(it => [it.id, it]));
-    const labeled = rows.filter(r => byId.has(r.item_id));
-    const bands = {};
-    for (const it of metricItems) {
-      const b = it.band || 'unknown';
-      bands[b] = (bands[b] || 0) + 1;
-    }
-    const byBandHuman = {};
-    const mix = { high: {1:0,2:0,3:0}, clean: {1:0,2:0,3:0} };
-    let tp = 0, fp = 0, fn = 0, tn = 0;
-    for (const r of labeled) {
-      const m = byId.get(r.item_id);
-      const b = m.band || 'unknown';
-      if (!byBandHuman[b]) byBandHuman[b] = [];
-      byBandHuman[b].push(r.score);
-      const viol = !!m.violated;
-      if (mix[viol ? 'high' : 'clean']) mix[viol ? 'high' : 'clean'][r.score] += 1;
-      const bad = r.score === 1;
-      if (viol && bad) tp += 1;
-      else if (viol && !bad) fn += 1;
-      else if (!viol && bad) fp += 1;
-      else tn += 1;
-    }
-    const prec = (tp + fp) ? tp / (tp + fp) : 0;
-    const rec = (tp + fn) ? tp / (tp + fn) : 0;
-
-    document.getElementById('metricStats').innerHTML = `
-      <div><b>${labeled.length}/${metricItems.length}</b><span>clips labeled</span></div>
-      <div><b>${bands.high || 0}</b><span>machine high</span></div>
-      <div><b>${bands.clean || 0}</b><span>machine clean</span></div>
-      <div><b>${bands.control || 0}</b><span>control (teleop)</span></div>
-      <div><b>${mean(labeled.map(r => r.score)).toFixed(2)}</b><span>mean human</span></div>`;
-
-    const embs = [...new Set(metricItems.map(it => it.embodiment))].sort();
-    document.getElementById('svPies').innerHTML = embs.map(emb => {
-      const items = metricItems.filter(it => it.embodiment === emb);
-      const sc = { high: 0, middle: 0, clean: 0, control: 0 };
-      for (const it of items) sc[it.band] = (sc[it.band] || 0) + 1;
-      const done = items.filter(it => labeled.some(r => r.item_id === it.id)).length;
-      return `<div class="pie-card"><h3>${emb.replace(/_/g, ' ')} · bands</h3>${pie([
-        { label: 'high', n: sc.high || 0, color: COLORS.high },
-        { label: 'middle', n: sc.middle || 0, color: COLORS.middle },
-        { label: 'clean', n: sc.clean || 0, color: COLORS.clean },
-        { label: 'control', n: sc.control || 0, color: COLORS.control },
-      ])}<p class="status">human ${done}/${items.length}</p></div>`;
-    }).join('') || '<p class="status">No key.json metrics.</p>';
-
-    bars(document.getElementById('metricProgress'), Object.entries(bands).sort().map(([b, n]) => [b, n]), Math.max(1, ...Object.values(bands), 1));
-    bars(document.getElementById('metricMean'), Object.keys(byBandHuman).sort().map(b => [
-      `mean human · ${b}`, Number(mean(byBandHuman[b]).toFixed(2)),
-    ]), 3);
-    bars(document.getElementById('metricMix'), [
-      ['High/mid → Bad', mix.high[1]], ['High/mid → Med', mix.high[2]], ['High/mid → Good', mix.high[3]],
-      ['Clean → Bad', mix.clean[1]], ['Clean → Med', mix.clean[2]], ['Clean → Good', mix.clean[3]],
-    ], Math.max(1, ...Object.values(mix.high), ...Object.values(mix.clean)));
-    bars(document.getElementById('metricAgree'), [
-      ['Precision (Bad ∩ violated)', Number((prec * 100).toFixed(0))],
-      ['Recall (violated as Bad)', Number((rec * 100).toFixed(0))],
-      ['TP', tp], ['FN', fn], ['FP', fp], ['TN', tn],
-    ], Math.max(1, labeled.length, 100));
-
-    const dets = {};
-    for (const it of metricItems) {
-      const d = it.selected_by || 'none';
-      dets[d] = (dets[d] || 0) + 1;
-    }
-    bars(document.getElementById('metricDet'), Object.entries(dets).sort((a, b) => b[1] - a[1]), Math.max(1, ...Object.values(dets), 1));
-
-    bars(document.getElementById('metricEmb'), embs.map(emb => {
-      const all = metricItems.filter(it => it.embodiment === emb);
-      const done = all.filter(it => labeled.some(r => r.item_id === it.id));
-      const sc = done.length ? mean(labeled.filter(r => byId.get(r.item_id)?.embodiment === emb).map(r => r.score)) : 0;
-      return [`${emb} ${done.length}/${all.length} · mean ${done.length ? sc.toFixed(2) : '—'}`, done.length];
-    }), Math.max(1, ...embs.map(emb => metricItems.filter(it => it.embodiment === emb).length)));
   }
 
   function toCsv(data){
@@ -459,10 +440,12 @@ if (VGP.requireAdmin()) {
       fetch('metrics.multiview.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
     ]);
     rows = all;
-    mvItems = mv.items || [];
-    svItems = sv.items || [];
-    metricItems = metrics.items || [];
-    mvMetricItems = mvMetrics.items || [];
+    geoItems = mv.items || [];
+    halluItems = sv.items || [];
+    const geoIds = new Set(geoItems.map(it => it.id));
+    const halluIds = new Set(halluItems.map(it => it.id));
+    geoMetrics = (mvMetrics.items || []).filter(it => geoIds.has(it.id));
+    halluMetrics = (metrics.items || []).filter(it => halluIds.has(it.id));
     render();
   }
 

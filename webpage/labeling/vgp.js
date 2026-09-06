@@ -14,6 +14,37 @@ const VGP = (() => {
   const TARGET_COVER = 2;
   const REVIEWERS = ["quang", "thanh"];
   const ADMIN_PAGES = /(^|\/)(analytics|admin)\.html?$/i;
+  const CHECK = { geo: "geometry", hallu: "hallucinate" };
+  const SCORE_LABEL = { 1: "Bad", 2: "Medium", 3: "Good" };
+  const EMB_LABEL = { bimanual: "Bimanual", humanoid: "Humanoid", single_arm: "Single-arm" };
+  const BAND_TO_SCORE = { high: 1, middle: 2, medium: 2, low: 3, clean: 3, control: 3 };
+
+  function normalizeEmbodiment(emb) {
+    const x = String(emb || "unknown").toLowerCase();
+    if (x === "single_arm_a1x" || x === "single-arm" || x === "singlearm") return "single_arm";
+    return x;
+  }
+
+  function embLabel(emb) {
+    const key = normalizeEmbodiment(emb);
+    return EMB_LABEL[key] || String(emb || "unknown").replace(/_/g, " ");
+  }
+
+  function scoreLabel(score) {
+    return SCORE_LABEL[score] || String(score ?? "—");
+  }
+
+  function checkLabel(kind) {
+    return kind === "hallu" || kind === CHECK.hallu ? "Hallucinate" : "Geometry";
+  }
+
+  function machineScore(item) {
+    if (!item) return null;
+    if (item.machine_score != null) return Number(item.machine_score);
+    if (item.score != null) return Number(item.score);
+    const mapped = BAND_TO_SCORE[item.band];
+    return mapped != null ? mapped : null;
+  }
 
   function fnv1a(str) {
     let h = 0x811c9dc5;
@@ -500,6 +531,7 @@ const VGP = (() => {
 
   return {
     HALF, GEO_N, HALLU_N, TARGET_COVER, REVIEWERS, BATCH_VERSION,
+    CHECK, SCORE_LABEL, BAND_TO_SCORE, normalizeEmbodiment, embLabel, scoreLabel, checkLabel, machineScore,
     getRater, setRater, passOk, setPassOk, adminOk, setAdminOk,
     clearSession, isAdminPath, requireGate, requireAdmin,
     defaultLang, isReviewer,

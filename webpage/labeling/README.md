@@ -6,9 +6,9 @@ Supabase Free, as long as this stays a non-commercial research deployment
 
 ```
 gate.html     rater passcode + name  |  admin passcode (analytics only)
-home.html     hub: 50-video batch, lifetime stats, submit anytime
-index.html    Mode A — 25 MV clips / batch, raw + flow, Bad/Medium/Good
-segment.html  Mode B — 25 videos / batch, metadata-defined 16-frame segments
+home.html     hub: 100-video batch (25 geometry + 75 hallucinate), lifetime stats
+index.html    Geometry — 25 clips / batch, raw + flow, Bad/Medium/Good
+segment.html  Hallucinate — 75 clips / batch, score the middle 16 frames
 analytics.html admin-only charts (coverage, scores, raters). Not linked from rater UI.
 admin.html    redirect → analytics.html
 app.css       shared UI
@@ -99,10 +99,9 @@ cd webpage/labeling && python3 -m http.server 8899
 
 ## Rater assignment
 
-Each rater gets **50 videos at a time** (25 Mode A multiview, then a prompt
-to continue with 25 Mode B single-view). The batch is stored in
-`localStorage` so refresh does not re-roll. **Submit works before the batch
-is finished.** After submit they can request another 50.
+Each rater gets **100 videos at a time** (25 geometry, then 75 hallucinate).
+The batch is stored in `localStorage` so refresh does not re-roll. **Submit
+works before the batch is finished.** After submit they can request another 100.
 
 Assignment reads current Supabase labels and picks videos this rater has not
 finished, **least-labeled first**, random among ties. That evens coverage

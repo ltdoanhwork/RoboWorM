@@ -20,16 +20,21 @@ def main() -> None:
     rows = list(csv.DictReader(CSV_PATH.open()))
     items = []
     for i, row in enumerate(rows):
+        score = int(float(row["score"]))
         items.append(
             {
                 "id": f"{i:05d}",
+                "check": "geometry",
                 "video_path": row["video_path"],
-                "score": int(float(row["score"])),
+                "score": score,
+                "machine_score": score,
+                "rating": {1: "bad", 2: "medium", 3: "good"}[score],
                 "geometric_consistency": float(row["geometric_consistency"]),
                 "pose_stability": float(row["pose_stability"]),
                 "num_disjoint_frames": float(row["num_disjoint_frames"]),
                 "disjoint_frame_ratio": float(row["disjoint_frame_ratio"]),
                 "robot_type": row["robot_type"],
+                "embodiment": row["robot_type"],
                 "combined_score": float(row["combined_score"]),
             }
         )
