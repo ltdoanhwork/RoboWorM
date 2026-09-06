@@ -36,7 +36,7 @@
       <div class="step-strip" id="stepStrip"></div>
 
       <section class="assessment" id="stage" hidden>
-        <div class="video-wrap video-wrap-lg"><video id="player" playsinline preload="metadata" controls></video></div>
+        <div class="video-wrap video-wrap-sm"><video id="player" playsinline preload="metadata" controls></video></div>
         <div class="seg-track" id="segTrack" title="lead · middle (score) · trail"></div>
         <div class="score-area">
           <p class="score-question">
@@ -77,7 +77,7 @@
         <button class="example-tab active" data-rating="good">Good</button>
       </div>
       <div class="example-list" id="exampleList"><p class="example-empty">Loading examples…</p></div>
-      <div class="example-stage" id="exampleStage">
+      <div class="example-stage compact" id="exampleStage">
         <video id="examplePlayer" controls playsinline muted preload="auto"></video>
         <div class="example-stage-cap" id="exampleCaption">Pick an embodiment to play a cached example.</div>
       </div>
@@ -297,6 +297,11 @@ if (VGP.requireGate()) {
     exampleRating = button.dataset.rating;
     document.querySelectorAll('.example-tab').forEach(tab => tab.classList.toggle('active', tab === button));
     renderExamples();
+    const first = EMBODIMENTS
+      .map(emb => examples.filter(item => item.rating === exampleRating && item.embodiment === emb)
+        .sort((a, b) => (a.index || 0) - (b.index || 0)))
+      .find(list => list.length);
+    if (first) openExampleGroup(first);
   });
   $('moreExample').onclick = moreExample;
 

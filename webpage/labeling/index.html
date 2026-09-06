@@ -24,9 +24,30 @@
   <div class="workspace workspace-stack">
     <section class="evaluation">
       <details class="guide" open>
-        <summary><span data-lang="vi">Rubric · Good / Medium / Bad</span><span data-lang="en">Rubric · Good / Medium / Bad</span></summary>
+        <summary><span data-lang="vi">Cách đánh giá · Good / Medium / Bad</span><span data-lang="en">How to rate · Good / Medium / Bad</span></summary>
         <div class="guide-body">
-          <div class="markdown" id="rubricBody">Loading rubric…</div>
+          <div data-lang="en">
+            <p class="guide-intro">Score consistency across the two static cameras (motion, shape, color, position). Cameras are ideally static.</p>
+            <div class="guide-grid">
+              <article class="criterion bad"><h3>Bad · 1</h3><p>Clear / lasting mismatch (&gt;30%). Large camera motion.</p></article>
+              <article class="criterion medium"><h3>Medium · 2</h3><p>Minor mismatch (≤30%), same action. Light jitter OK.</p></article>
+              <article class="criterion good"><h3>Good · 3</h3><p>Nearly identical; errors &lt;10%. Cameras nearly static.</p></article>
+            </div>
+            <p class="guide-note"><strong>Ignore</strong> task success / aesthetics. <strong>Abnormal events still count as consistent if identical and simultaneous in both views.</strong></p>
+          </div>
+          <div data-lang="vi">
+            <p class="guide-intro">Chấm độ nhất quán giữa hai camera tĩnh (chuyển động, hình dạng, màu, vị trí). Camera lý tưởng là tĩnh.</p>
+            <div class="guide-grid">
+              <article class="criterion bad"><h3>Bad · 1</h3><p>Sai khác rõ / kéo dài (&gt;30%). Camera xoay/dịch lớn.</p></article>
+              <article class="criterion medium"><h3>Medium · 2</h3><p>Sai khác nhỏ (≤30%), vẫn cùng hành động. Giật nhẹ OK.</p></article>
+              <article class="criterion good"><h3>Good · 3</h3><p>Gần như đồng nhất; lỗi &lt;10%. Camera gần tĩnh.</p></article>
+            </div>
+            <p class="guide-note"><strong>Không xét</strong> hoàn thành tác vụ / thẩm mỹ. <strong>Hiện tượng bất thường vẫn nhất quán nếu xuất hiện giống nhau và đồng thời ở cả hai view.</strong></p>
+          </div>
+          <details class="rubric-full">
+            <summary><span data-lang="en">Full rubric</span><span data-lang="vi">Rubric đầy đủ</span></summary>
+            <div class="markdown" id="rubricBody">Loading rubric…</div>
+          </details>
         </div>
       </details>
 
@@ -289,6 +310,11 @@ if (VGP.requireGate()) {
     exampleRating = button.dataset.rating;
     document.querySelectorAll('.example-tab').forEach(tab => tab.classList.toggle('active', tab === button));
     renderExamples();
+    const first = ['bimanual', 'humanoid', 'single_arm']
+      .map(emb => examples.filter(item => item.rating === exampleRating && item.embodiment === emb)
+        .sort((a, b) => (a.index || 0) - (b.index || 0)))
+      .find(list => list.length);
+    if (first) openExampleGroup(first);
   });
   document.addEventListener('keydown', event => {
     if (['INPUT','SELECT','TEXTAREA'].includes(event.target.tagName)) return;

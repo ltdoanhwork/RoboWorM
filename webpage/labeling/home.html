@@ -24,9 +24,53 @@
     <div class="eyebrow"><span data-lang="vi">Lô 100 video · 25 + 75</span><span data-lang="en">Batch of 100 videos · 25 + 75</span></div>
     <h1><span data-lang="vi">Xin chào, </span><span data-lang="en">Hello, </span><span id="helloName"></span></h1>
     <p>
-      <span data-lang="en">This study has two checks. <strong>Multiview geometry consistency</strong> asks whether two static cameras stay aligned — same motion, shape, color, and position — not whether the robot finished the task. <strong>Hallucinate check</strong> asks whether the generated robot stays physically intact (no melt, teleport, or non-physical motion). Each batch delivers <strong>25 geometry</strong> clips and <strong>75 hallucinate</strong> clips. Every video is assigned to two different raters; admin tracks disagreements. Reserved reviewers <strong>quang</strong> and <strong>thanh</strong> re-score conflicts.</span>
-      <span data-lang="vi">Nghiên cứu có hai phần. <strong>Multiview geometry consistency</strong> xem hai camera tĩnh có còn khớp nhau không — cùng chuyển động, hình dạng, màu, vị trí — không xét hoàn thành tác vụ. <strong>Hallucinate check</strong> xem robot sinh ra có còn vật lý (không tan, teleport, phi vật lý). Mỗi lô giao <strong>25 geometry</strong> và <strong>75 hallucinate</strong>. Mỗi video được giao cho hai người khác nhau; admin theo dõi conflict. Tài khoản <strong>quang</strong> và <strong>thanh</strong> chấm lại các video conflict.</span>
+      <span data-lang="en">This study has two checks. Multiview geometry consistency asks whether two static cameras stay aligned — same motion, shape, color, and position — not whether the robot finished the task. Hallucinate check asks whether the generated robot stays physically intact (no melt, teleport, or non-physical motion). Each batch delivers 25 geometry clips and 75 hallucinate clips. Every video is assigned to two different raters; admin tracks disagreements. Reserved reviewers quang and thanh re-score conflicts.</span>
+      <span data-lang="vi">Nghiên cứu có hai phần. Multiview geometry consistency xem hai camera tĩnh có còn khớp nhau không — cùng chuyển động, hình dạng, màu, vị trí — không xét hoàn thành tác vụ. Hallucinate check xem robot sinh ra có còn vật lý (không tan, teleport, phi vật lý). Mỗi lô giao 25 clip geometry và 75 clip hallucinate. Mỗi video được giao cho hai người khác nhau; admin theo dõi conflict. Tài khoản quang và thanh chấm lại các video conflict.</span>
     </p>
+    <div class="howto-row">
+      <button class="btn primary" type="button" id="btnHowTo"><span data-lang="en">What do I click?</span><span data-lang="vi">Tôi cần bấm gì?</span></button>
+    </div>
+    <div class="app-preview">
+      <figure class="app-shot">
+        <img src="assets/geo-preview.jpg" alt="Two static camera views side by side">
+        <figcaption>
+          <span data-lang="en">Geometry check — two static cameras. Score the whole clip 1 / 2 / 3.</span>
+          <span data-lang="vi">Geometry — hai camera tĩnh. Chấm cả clip 1 / 2 / 3.</span>
+        </figcaption>
+      </figure>
+      <div class="mini-ui">
+        <div class="eyebrow">In the app</div>
+        <div class="mini-steps">
+          <button class="step current" type="button">1</button>
+          <button class="step done" type="button">2</button>
+          <button class="step" type="button">3</button>
+          <button class="step" type="button">…</button>
+        </div>
+        <div class="scores">
+          <button class="score" data-s="1" type="button">Bad<small>1</small></button>
+          <button class="score" data-s="2" type="button">Medium<small>2</small></button>
+          <button class="score" data-s="3" type="button">Good<small>3</small></button>
+        </div>
+        <p class="status" style="margin-top:.65rem">
+          <span data-lang="en">Click a number to jump. Keys 1–3 score. Space plays. Ctrl+Z undoes.</span>
+          <span data-lang="vi">Bấm số để nhảy clip. Phím 1–3 chấm. Space phát. Ctrl+Z hoàn tác.</span>
+        </p>
+      </div>
+    </div>
+    <div class="emb-grid">
+      <figure class="emb-card">
+        <img src="assets/emb-bimanual.jpg" alt="Bimanual robot">
+        <figcaption><strong>Bimanual</strong><span data-lang="en">Two robot arms on a table (ALOHA).</span><span data-lang="vi">Hai cánh tay trên bàn (ALOHA).</span></figcaption>
+      </figure>
+      <figure class="emb-card">
+        <img src="assets/emb-humanoid.jpg" alt="Humanoid robot">
+        <figcaption><strong>Humanoid</strong><span data-lang="en">Upper-body humanoid (GR1 / Airbot).</span><span data-lang="vi">Robot hình người (GR1 / Airbot).</span></figcaption>
+      </figure>
+      <figure class="emb-card">
+        <img src="assets/emb-single_arm.jpg" alt="Single-arm robot">
+        <figcaption><strong>Single-arm</strong><span data-lang="en">One arm, usually a DROID / A1X scene.</span><span data-lang="vi">Một cánh tay, thường là DROID / A1X.</span></figcaption>
+      </figure>
+    </div>
     <div class="stat-row">
       <div><b id="statMv">0</b><span data-lang="vi">multiview geometry</span><span data-lang="en">multiview geometry</span></div>
       <div><b id="statHallu">0</b><span data-lang="vi">hallucinate</span><span data-lang="en">hallucinate</span></div>
@@ -69,6 +113,37 @@
     </article>
   </div>
 </main>
+
+<dialog id="howtoDialog">
+  <div class="dialog-head">
+    <div><div class="dialog-rating">How to label</div>
+      <h2><span data-lang="en">What you need to click</span><span data-lang="vi">Bạn cần bấm gì</span></h2></div>
+    <button class="dialog-close" id="closeHowTo" type="button">×</button>
+  </div>
+  <div class="dialog-body">
+    <ol class="howto-ol">
+      <li>
+        <span data-lang="en"><strong>Get 100 videos</strong> — first time only. This assigns 25 geometry + 75 hallucinate clips that still need a second rater.</span>
+        <span data-lang="vi"><strong>Nhận 100 video</strong> — lần đầu. Lô gồm 25 geometry + 75 hallucinate chưa đủ 2 người chấm.</span>
+      </li>
+      <li>
+        <span data-lang="en"><strong>Rate geometry</strong> — open the first card. Watch both static cameras. Click <em>Bad / Medium / Good</em> (or keys 1–3). Click a numbered step to jump back and change a score.</span>
+        <span data-lang="vi"><strong>Chấm geometry</strong> — mở thẻ đầu. Xem hai camera tĩnh. Bấm <em>Bad / Medium / Good</em> (hoặc phím 1–3). Bấm ô số để quay lại sửa.</span>
+      </li>
+      <li>
+        <span data-lang="en"><strong>Back to Home</strong>, then <strong>Rate hallucinate</strong>. Watch the ~3s clip; score only the middle segment for physical integrity.</span>
+        <span data-lang="vi"><strong>Về Home</strong>, rồi <strong>Chấm hallucinate</strong>. Xem clip ~3 giây; chỉ chấm đoạn giữa về tính vật lý.</span>
+      </li>
+      <li>
+        <span data-lang="en"><strong>Submit this batch</strong> when you are done (or earlier — partial is OK). Then you can get another 100.</span>
+        <span data-lang="vi"><strong>Nộp lô này</strong> khi xong (hoặc sớm hơn — chưa hết vẫn nộp được). Sau đó nhận thêm 100 video.</span>
+      </li>
+    </ol>
+    <div class="dialog-actions">
+      <button class="btn primary" id="okHowTo" type="button"><span data-lang="en">Got it</span><span data-lang="vi">Đã hiểu</span></button>
+    </div>
+  </div>
+</dialog>
 
 <dialog id="continueDialog">
   <div class="dialog-head">
@@ -173,6 +248,16 @@ if (VGP.requireGate()) {
   $('btnSubmit').onclick = submit;
   $('dlgSubmit').onclick = submit;
   $('closeContinue').onclick = () => $('continueDialog').close();
+  function openHowTo(){ $('howtoDialog').showModal(); }
+  function closeHowTo(){
+    $('howtoDialog').close();
+    localStorage.setItem('vgp_howto_seen', '1');
+  }
+  $('btnHowTo').onclick = openHowTo;
+  $('closeHowTo').onclick = closeHowTo;
+  $('okHowTo').onclick = closeHowTo;
+  $('howtoDialog').addEventListener('click', event => { if (event.target === $('howtoDialog')) closeHowTo(); });
+  if (!localStorage.getItem('vgp_howto_seen')) openHowTo();
 
   (async () => {
     const [mvCat, svCat] = await Promise.all([
