@@ -22,9 +22,9 @@
   </div>
 </nav>
 <main>
-  <div class="workspace">
+  <div class="workspace workspace-stack">
     <section class="evaluation">
-      <details class="guide">
+      <details class="guide" open>
         <summary><span data-lang="vi">Cách đánh giá · Good / Medium / Bad</span><span data-lang="en">How to rate · Good / Medium / Bad</span></summary>
         <div class="guide-body">
           <div data-lang="vi">
@@ -88,6 +88,10 @@
         <button class="example-tab" data-rating="good">Good</button>
       </div>
       <div class="example-list" id="exampleList"><p class="example-empty">Loading examples…</p></div>
+      <div class="reference-foot">
+        <a class="btn primary" href="home.html?continue=sv"><span data-lang="vi">Tiếp tục single view</span><span data-lang="en">Continue single view</span></a>
+        <a class="btn" href="home.html"><span data-lang="vi">Quay về Home</span><span data-lang="en">Back to Home</span></a>
+      </div>
     </aside>
   </div>
 </main>
@@ -119,7 +123,10 @@
     <div class="pair single" id="examplePair">
       <div class="pane"><header>RAW</header><video id="exampleRaw" controls playsinline muted></video></div>
     </div>
-    <div class="dialog-actions"><button class="btn" id="playExample"><span data-lang="vi">Phát</span><span data-lang="en">Play</span></button></div>
+    <div class="dialog-actions">
+      <button class="btn" id="playExample"><span data-lang="vi">Phát</span><span data-lang="en">Play</span></button>
+      <button class="btn primary" id="moreExample"><span data-lang="vi">Xem thêm ví dụ</span><span data-lang="en">See more examples</span></button>
+    </div>
   </div>
 </dialog>
 
@@ -129,7 +136,7 @@
 if (VGP.requireGate()) {
   const $ = id => document.getElementById(id);
   const rater = VGP.getRater();
-  let all = [], idx = 0, labels = {}, examples = [], exampleRating = 'bad', mvAll = [], svAll = [];
+  let all = [], idx = 0, labels = {}, examples = [], exampleRating = 'bad', exampleCursor = 0, exampleGroup = [], mvAll = [], svAll = [];
   const raw = $('vidRaw');
   const exampleRaw = $('exampleRaw');
 
@@ -220,27 +227,49 @@ if (VGP.requireGate()) {
     }
   }
 
+  function embLabel(e){
+    return String(e || '').replace(/_/g, '-').replace(/\b\w/g, c => c.toUpperCase());
+  }
   function renderExamples(){
     const host = $('exampleList'); host.replaceChildren();
-    const filtered = examples.filter(item => item.rating === exampleRating);
-    if (!filtered.length){
+    const order = ['bimanual', 'humanoid', 'single_arm'];
+    const groups = order.map(emb => ({
+      embodiment: emb,
+      items: examples.filter(item => item.rating === exampleRating && item.embodiment === emb)
+        .sort((a, b) => (a.index || 0) - (b.index || 0)),
+    })).filter(g => g.items.length);
+    if (!groups.length){
       const empty = document.createElement('p'); empty.className = 'example-empty';
       empty.textContent = lang() === 'vi' ? 'Chưa có video ví dụ.' : 'No examples available.'; host.append(empty); return;
     }
-    filtered.forEach(item => {
+    groups.forEach(group => {
       const button = document.createElement('button'); button.className = 'example-card';
       const icon = document.createElement('span'); icon.className = 'play-icon'; icon.textContent = '▶';
       const copy = document.createElement('span');
-      const title = document.createElement('strong'); title.textContent = item.embodiment.replace('_', '-');
-      const hint = document.createElement('span'); hint.textContent = lang() === 'vi' ? 'Xem video tham chiếu' : 'Open reference video';
-      copy.append(title, hint); button.append(icon, copy); button.onclick = () => openExample(item); host.append(button);
+      const title = document.createElement('strong'); title.textContent = embLabel(group.embodiment);
+      const hint = document.createElement('span');
+      hint.textContent = lang() === 'vi' ? 'Xem video tham chiếu' : 'Open reference video';
+      copy.append(title, hint); button.append(icon, copy);
+      button.onclick = () => openExampleGroup(group.items); host.append(button);
     });
   }
-  function openExample(item){
-    $('exampleRating').textContent = `${item.rating} · score ${item.score}`;
-    $('exampleTitle').textContent = item.embodiment.replace('_', '-');
-    exampleRaw.src = item.video_raw || '';
+  function showExampleItem(item, extra){
+    $('exampleRating').textContent = `${item.rating} · score ${item.score}${extra || ''}`;
+    $('exampleTitle').textContent = embLabel(item.embodiment);
+    exampleRaw.src = item.video_raw || item.video || '';
+  }
+  function openExampleGroup(items){
+    exampleGroup = items;
+    exampleCursor = 0;
+    showExampleItem(exampleGroup[0], exampleGroup.length > 1 ? ` · 1/${exampleGroup.length}` : '');
     $('exampleDialog').showModal();
+  }
+  function moreExample(){
+    if (!exampleGroup.length) return;
+    exampleCursor = (exampleCursor + 1) % exampleGroup.length;
+    const item = exampleGroup[exampleCursor];
+    showExampleItem(item, ` · ${exampleCursor + 1}/${exampleGroup.length}`);
+    playOne(exampleRaw);
   }
   function closeExample(){ exampleRaw.pause(); exampleRaw.removeAttribute('src'); $('exampleDialog').close(); }
 
@@ -269,6 +298,7 @@ if (VGP.requireGate()) {
   $('closeExample').onclick = closeExample;
   $('exampleDialog').addEventListener('click', event => { if (event.target === $('exampleDialog')) closeExample(); });
   $('playExample').onclick = () => playOne(exampleRaw);
+  $('moreExample').onclick = moreExample;
 
   (async () => {
     const [catalogResult, exampleResult, svResult] = await Promise.allSettled([

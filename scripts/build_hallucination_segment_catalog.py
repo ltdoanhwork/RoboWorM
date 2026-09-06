@@ -162,7 +162,7 @@ def build_examples() -> dict:
     items = []
     for embodiment in EMBODIMENTS:
         for level, (rating, score) in RATING.items():
-            for index in range(1, 4):
+            for index in range(1, 6):
                 relative = f"{embodiment}/{level}/{index}.mp4"
                 if declared and relative not in declared:
                     raise ValueError(f"Example missing from manifest: {relative}")
@@ -175,11 +175,11 @@ def build_examples() -> dict:
                     "level": level,
                     "index": index,
                 })
-    if len(items) != 27:
-        raise ValueError(f"Expected 27 examples, got {len(items)}")
+    if len(items) != 45:
+        raise ValueError(f"Expected 45 examples (3×3×5), got {len(items)}")
     return {
         "n": len(items),
-        "note": "low=cleanest→good, high=extreme→bad (example/manifest.json).",
+        "note": "low=cleanest→good, high=extreme→bad (example/manifest.json). 5 clips per embodiment×level.",
         "items": items,
     }
 
@@ -235,7 +235,7 @@ def main() -> None:
         shutil.copy2(DATA_ROOT / "rubric_en.md", WEB_ROOT / "rubric.segment.en.md")
 
     print(
-        f"Built {catalog['n']} rate900 clips / {examples['n']} examples / "
+        f"Built {catalog['n']} hallucinate clips / {examples['n']} examples / "
         f"{metrics['n']} key metrics ({metrics['n_violated']} non-clean bands)"
     )
 

@@ -1,6 +1,6 @@
 {
-  "n": 27,
-  "note": "low=cleanest→good, high=extreme→bad (example/manifest.json).",
+  "n": 45,
+  "note": "low=cleanest→good, high=extreme→bad (example/manifest.json). 5 clips per embodiment×level.",
   "items": [
     {
       "id": "example_bimanual_good_1",
@@ -30,6 +30,24 @@
       "index": 3
     },
     {
+      "id": "example_bimanual_good_4",
+      "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/bimanual/low/4.mp4",
+      "embodiment": "bimanual",
+      "rating": "good",
+      "score": 3,
+      "level": "low",
+      "index": 4
+    },
+    {
+      "id": "example_bimanual_good_5",
+      "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/bimanual/low/5.mp4",
+      "embodiment": "bimanual",
+      "rating": "good",
+      "score": 3,
+      "level": "low",
+      "index": 5
+    },
+    {
       "id": "example_bimanual_medium_1",
       "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/bimanual/medium/1.mp4",
       "embodiment": "bimanual",
@@ -55,6 +73,24 @@
       "score": 2,
       "level": "medium",
       "index": 3
+    },
+    {
+      "id": "example_bimanual_medium_4",
+      "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/bimanual/medium/4.mp4",
+      "embodiment": "bimanual",
+      "rating": "medium",
+      "score": 2,
+      "level": "medium",
+      "index": 4
+    },
+    {
+      "id": "example_bimanual_medium_5",
+      "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/bimanual/medium/5.mp4",
+      "embodiment": "bimanual",
+      "rating": "medium",
+      "score": 2,
+      "level": "medium",
+      "index": 5
     },
     {
       "id": "example_bimanual_bad_1",
@@ -84,6 +120,24 @@
       "index": 3
     },
     {
+      "id": "example_bimanual_bad_4",
+      "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/bimanual/high/4.mp4",
+      "embodiment": "bimanual",
+      "rating": "bad",
+      "score": 1,
+      "level": "high",
+      "index": 4
+    },
+    {
+      "id": "example_bimanual_bad_5",
+      "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/bimanual/high/5.mp4",
+      "embodiment": "bimanual",
+      "rating": "bad",
+      "score": 1,
+      "level": "high",
+      "index": 5
+    },
+    {
       "id": "example_humanoid_good_1",
       "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/humanoid/low/1.mp4",
       "embodiment": "humanoid",
@@ -109,6 +163,24 @@
       "score": 3,
       "level": "low",
       "index": 3
+    },
+    {
+      "id": "example_humanoid_good_4",
+      "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/humanoid/low/4.mp4",
+      "embodiment": "humanoid",
+      "rating": "good",
+      "score": 3,
+      "level": "low",
+      "index": 4
+    },
+    {
+      "id": "example_humanoid_good_5",
+      "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/humanoid/low/5.mp4",
+      "embodiment": "humanoid",
+      "rating": "good",
+      "score": 3,
+      "level": "low",
+      "index": 5
     },
     {
       "id": "example_humanoid_medium_1",
@@ -138,6 +210,24 @@
       "index": 3
     },
     {
+      "id": "example_humanoid_medium_4",
+      "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/humanoid/medium/4.mp4",
+      "embodiment": "humanoid",
+      "rating": "medium",
+      "score": 2,
+      "level": "medium",
+      "index": 4
+    },
+    {
+      "id": "example_humanoid_medium_5",
+      "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/humanoid/medium/5.mp4",
+      "embodiment": "humanoid",
+      "rating": "medium",
+      "score": 2,
+      "level": "medium",
+      "index": 5
+    },
+    {
       "id": "example_humanoid_bad_1",
       "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/humanoid/high/1.mp4",
       "embodiment": "humanoid",
@@ -163,6 +253,24 @@
       "score": 1,
       "level": "high",
       "index": 3
+    },
+    {
+      "id": "example_humanoid_bad_4",
+      "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/humanoid/high/4.mp4",
+      "embodiment": "humanoid",
+      "rating": "bad",
+      "score": 1,
+      "level": "high",
+      "index": 4
+    },
+    {
+      "id": "example_humanoid_bad_5",
+      "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/humanoid/high/5.mp4",
+      "embodiment": "humanoid",
+      "rating": "bad",
+      "score": 1,
+      "level": "high",
+      "index": 5
     },
     {
       "id": "example_single_arm_a1x_good_1",
@@ -192,6 +300,24 @@
       "index": 3
     },
     {
+      "id": "example_single_arm_a1x_good_4",
+      "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/single_arm_a1x/low/4.mp4",
+      "embodiment": "single_arm_a1x",
+      "rating": "good",
+      "score": 3,
+      "level": "low",
+      "index": 4
+    },
+    {
+      "id": "example_single_arm_a1x_good_5",
+      "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/single_arm_a1x/low/5.mp4",
+      "embodiment": "single_arm_a1x",
+      "rating": "good",
+      "score": 3,
+      "level": "low",
+      "index": 5
+    },
+    {
       "id": "example_single_arm_a1x_medium_1",
       "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/single_arm_a1x/medium/1.mp4",
       "embodiment": "single_arm_a1x",
@@ -219,6 +345,24 @@
       "index": 3
     },
     {
+      "id": "example_single_arm_a1x_medium_4",
+      "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/single_arm_a1x/medium/4.mp4",
+      "embodiment": "single_arm_a1x",
+      "rating": "medium",
+      "score": 2,
+      "level": "medium",
+      "index": 4
+    },
+    {
+      "id": "example_single_arm_a1x_medium_5",
+      "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/single_arm_a1x/medium/5.mp4",
+      "embodiment": "single_arm_a1x",
+      "rating": "medium",
+      "score": 2,
+      "level": "medium",
+      "index": 5
+    },
+    {
       "id": "example_single_arm_a1x_bad_1",
       "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/single_arm_a1x/high/1.mp4",
       "embodiment": "single_arm_a1x",
@@ -244,6 +388,24 @@
       "score": 1,
       "level": "high",
       "index": 3
+    },
+    {
+      "id": "example_single_arm_a1x_bad_4",
+      "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/single_arm_a1x/high/4.mp4",
+      "embodiment": "single_arm_a1x",
+      "rating": "bad",
+      "score": 1,
+      "level": "high",
+      "index": 4
+    },
+    {
+      "id": "example_single_arm_a1x_bad_5",
+      "video": "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resolve/web/example/single_arm_a1x/high/5.mp4",
+      "embodiment": "single_arm_a1x",
+      "rating": "bad",
+      "score": 1,
+      "level": "high",
+      "index": 5
     }
   ]
 }

@@ -55,7 +55,7 @@
   </section>
 
   <section class="chart-card">
-    <h2>Hallucinate rate900 — key.json bands</h2>
+    <h2>Hallucinate — key.json bands</h2>
     <p class="status" style="margin-bottom:.7rem">
       Machine strata from HF <span class="mono">rate900/key.json</span>
       (clean / middle / high / control). Public catalog stays blind.
@@ -88,7 +88,7 @@
       <h2>Coverage</h2>
       <p class="status" style="margin:.2rem 0 .4rem">Multiview (300)</p>
       <div class="bar-list" id="covMv"></div>
-      <p class="status" style="margin:.8rem 0 .4rem">Single-view rate900 (300)</p>
+      <p class="status" style="margin:.8rem 0 .4rem">Single-view hallucinate (300)</p>
       <div class="bar-list" id="covSv"></div>
     </section>
     <section class="chart-card">
@@ -211,7 +211,7 @@ if (VGP.requireAdmin()) {
       <div><b>${perRater.length}</b><span>raters</span></div>
       <div><b>${rows.length}</b><span>label rows</span></div>
       <div><b>${mvCovered}/300</b><span>multiview covered</span></div>
-      <div><b>${svCovered}/300</b><span>rate900 covered</span></div>
+      <div><b>${svCovered}/300</b><span>hallucinate covered</span></div>
       <div><b>${overlapMv + overlapSv}</b><span>videos with ≥2 raters</span></div>`;
 
     const covMax = Math.max(1, ...hist(mvCov).map(x => x[1]), ...hist(svCov).map(x => x[1]));

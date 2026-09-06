@@ -24,13 +24,13 @@
     <div class="eyebrow"><span data-lang="vi">Lô 50 video</span><span data-lang="en">Batch of 50 videos</span></div>
     <h1><span data-lang="vi">Xin chào, </span><span data-lang="en">Hello, </span><span id="helloName"></span></h1>
     <p>
-      <span data-lang="vi">Mỗi lô gồm 25 video multiview (raw, hai camera tĩnh) rồi 25 clip single-view rate900 (~3 giây; chấm đoạn giữa). Nộp được kể cả khi chưa xong. Video ít nhãn được ưu tiên.</span>
-      <span data-lang="en">Each batch is 25 multiview clips (raw, two static cameras) then 25 rate900 single-view clips (~3s; score the middle segment). You can submit before finishing. Least-labeled videos are assigned first.</span>
+      <span data-lang="vi">Mỗi lô gồm 25 video multiview (raw, hai camera tĩnh) rồi 25 clip single-view hallucinate (~3 giây; chấm đoạn giữa). Nộp được kể cả khi chưa xong. Video ít nhãn được ưu tiên.</span>
+      <span data-lang="en">Each batch is 25 multiview clips (raw, two static cameras) then 25 hallucinate single-view clips (~3s; score the middle segment). You can submit before finishing. Least-labeled videos are assigned first.</span>
     </p>
     <div class="stat-row">
       <div><b id="statMv">0</b><span data-lang="vi">multiview đã xong</span><span data-lang="en">multiview done</span></div>
       <div><b id="statSv">0</b><span data-lang="vi">single-view đã xong</span><span data-lang="en">single-view done</span></div>
-      <div><b id="statSeg">0</b><span data-lang="vi">rate900 đã chấm</span><span data-lang="en">rate900 scored</span></div>
+      <div><b id="statSeg">0</b><span data-lang="vi">hallucinate đã chấm</span><span data-lang="en">hallucinate scored</span></div>
       <div><b id="statTotal">0</b><span data-lang="vi">tổng video</span><span data-lang="en">total videos</span></div>
     </div>
     <p class="status" id="status" style="margin-top:.85rem">Loading…</p>
@@ -57,7 +57,7 @@
     </article>
     <article class="phase" id="svPhase">
       <div class="eyebrow">2 / 2</div>
-      <h2><span data-lang="vi">Single view · rate900</span><span data-lang="en">Single view · rate900</span></h2>
+      <h2><span data-lang="vi">Single view · hallucinate</span><span data-lang="en">Single view · hallucinate</span></h2>
       <p>
         <span data-lang="vi">Clip ~3 giây (3×16 frame). Xem cả clip, chấm đoạn giữa.</span>
         <span data-lang="en">~3s clip (3×16 frames). Watch the whole clip; score the middle segment.</span>
@@ -189,8 +189,8 @@ if (VGP.requireGate()) {
     const wasStale = prev && VGP.isStaleOpenBatch(prev, mvAll, svAll);
     batch = VGP.getValidBatch(mvAll, svAll);
     if (wasStale) {
-      setStatus('Catalog đã cập nhật (rate900). Nhận 50 video mới để tiếp tục.',
-        'Catalog updated (rate900). Get a new batch of 50 videos to continue.');
+      setStatus('Catalog đã cập nhật (hallucinate). Nhận 50 video mới để tiếp tục.',
+        'Catalog updated (hallucinate). Get a new batch of 50 videos to continue.');
     }
     if (!batch || batch.submittedAt) $('btnAssign').hidden = false;
     renderBatch();
