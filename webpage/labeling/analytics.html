@@ -22,6 +22,25 @@
   <div class="chart-card admin-stat" id="stats">Loading…</div>
 
   <section class="chart-card">
+    <h2>Conflicts — two raters, different scores</h2>
+    <p class="status" style="margin-bottom:.7rem">
+      Target coverage is 2 distinct raters per video. Reserved reviewers
+      <span class="mono">quang</span> and <span class="mono">thanh</span> are assigned these first.
+    </p>
+    <div class="admin-stat" id="conflictStats" style="margin-bottom:1rem"></div>
+    <div class="phase-grid">
+      <div>
+        <p class="status" style="margin-bottom:.4rem">Geometry conflicts</p>
+        <div class="bar-list" id="conflictMv"></div>
+      </div>
+      <div>
+        <p class="status" style="margin-bottom:.4rem">Hallucinate conflicts</p>
+        <div class="bar-list" id="conflictSv"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="chart-card">
     <h2>By embodiment — human score mix</h2>
     <p class="status" style="margin-bottom:.6rem">Pie = Bad / Medium / Good share. Bars = mean score &amp; label count.</p>
     <div class="pie-row" id="embPies"></div>
@@ -86,9 +105,9 @@
   <div class="phase-grid">
     <section class="chart-card">
       <h2>Coverage</h2>
-      <p class="status" style="margin:.2rem 0 .4rem">Multiview (300)</p>
+      <p class="status" style="margin:.2rem 0 .4rem">Multiview geometry (300 · target 2 raters)</p>
       <div class="bar-list" id="covMv"></div>
-      <p class="status" style="margin:.8rem 0 .4rem">Single-view hallucinate (300)</p>
+      <p class="status" style="margin:.8rem 0 .4rem">Hallucinate (300 · target 2 raters)</p>
       <div class="bar-list" id="covSv"></div>
     </section>
     <section class="chart-card">
@@ -212,7 +231,23 @@ if (VGP.requireAdmin()) {
       <div><b>${rows.length}</b><span>label rows</span></div>
       <div><b>${mvCovered}/300</b><span>multiview covered</span></div>
       <div><b>${svCovered}/300</b><span>hallucinate covered</span></div>
-      <div><b>${overlapMv + overlapSv}</b><span>videos with ≥2 raters</span></div>`;
+      <div><b>${overlapMv + overlapSv}</b><span>videos with ≥2 raters</span></div>
+      <div><b id="statConflicts">0</b><span>score conflicts</span></div>`;
+
+    const mvConflicts = VGP.conflictRows(rows, mvItems);
+    const svConflicts = VGP.conflictRows(rows, svItems);
+    const reviewerDone = rows.filter(r => VGP.isReviewer(r.rater_name)).length;
+    document.getElementById('statConflicts').textContent = mvConflicts.length + svConflicts.length;
+    document.getElementById('conflictStats').innerHTML = `
+      <div><b>${mvConflicts.length}</b><span>geometry conflicts</span></div>
+      <div><b>${svConflicts.length}</b><span>hallucinate conflicts</span></div>
+      <div><b>${reviewerDone}</b><span>quang+thanh labels</span></div>`;
+    const fmtConflict = list => list.slice(0, 12).map(c => {
+      const scores = c.labels.map(l => `${l.rater_name}:${l.score}`).join(' / ');
+      return [c.id, c.labels.length, ` ${scores}`];
+    });
+    bars(document.getElementById('conflictMv'), fmtConflict(mvConflicts).map(([id, n, extra]) => [id, n, extra]), 4);
+    bars(document.getElementById('conflictSv'), fmtConflict(svConflicts).map(([id, n, extra]) => [id, n, extra]), 4);
 
     const covMax = Math.max(1, ...hist(mvCov).map(x => x[1]), ...hist(svCov).map(x => x[1]));
     bars(document.getElementById('covMv'), hist(mvCov).map(([k, n]) => [`MV · ${k} labels`, n]), covMax);

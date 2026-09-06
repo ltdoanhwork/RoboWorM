@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi" data-lang="vi">
+<html lang="en" data-lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VideoWorld — Đánh giá tính nhất quán đa góc nhìn</title>
+<title>VideoWorld — Multiview geometry consistency check</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="app.css">
@@ -11,12 +11,11 @@
 <body>
 <nav>
   <div class="nav-inner">
-    <a class="brand" href="home.html"><span class="brand-mark">VW</span><span>Multiview <span class="brand-sub">consistency · 25 / 50</span></span></a>
+    <a class="brand" href="home.html"><span class="brand-mark">VW</span><span>Multiview geometry <span class="brand-sub">consistency · 25 / 100</span></span></a>
     <div class="nav-actions">
       <span class="nav-meta"><span id="raterChip"></span> · <strong id="nLife">0</strong> <span data-lang="vi">đã chấm</span><span data-lang="en">labeled</span> · <strong id="nLabeled">0</strong>/<span id="nTotal">0</span></span>
       <a class="top-btn" href="home.html"><span data-lang="vi">Lô của tôi</span><span data-lang="en">My batch</span></a>
-      <button class="top-btn accent" id="jumpExamples"><span data-lang="vi">Ví dụ</span><span data-lang="en">Examples</span></button>
-      <button class="top-btn" id="langToggle">EN</button>
+      <button class="top-btn" id="langToggle">VI</button>
       <a class="top-btn" href="#" id="switchUser"><span data-lang="vi">Đổi user</span><span data-lang="en">Switch user</span></a>
     </div>
   </div>
@@ -25,40 +24,30 @@
   <div class="workspace workspace-stack">
     <section class="evaluation">
       <details class="guide" open>
-        <summary><span data-lang="vi">Cách đánh giá · Good / Medium / Bad</span><span data-lang="en">How to rate · Good / Medium / Bad</span></summary>
+        <summary><span data-lang="vi">Rubric · Good / Medium / Bad</span><span data-lang="en">Rubric · Good / Medium / Bad</span></summary>
         <div class="guide-body">
-          <div data-lang="vi">
-            <p class="guide-intro">Chấm độ nhất quán giữa hai camera (chuyển động, hình dạng, màu, vị trí). Camera lý tưởng là tĩnh.</p>
-            <div class="guide-grid">
-              <article class="criterion bad"><h3>Bad · 1</h3><p>Sai khác rõ / kéo dài (&gt;30%). Camera xoay/dịch lớn.</p></article>
-              <article class="criterion medium"><h3>Medium · 2</h3><p>Sai khác nhỏ (≤30%), vẫn cùng hành động. Giật nhẹ OK.</p></article>
-              <article class="criterion good"><h3>Good · 3</h3><p>Gần như đồng nhất; lỗi &lt;10%. Camera gần tĩnh.</p></article>
-            </div>
-            <p class="guide-note"><strong>Không xét</strong> hoàn thành tác vụ / thẩm mỹ. <strong>Hiện tượng bất thường vẫn nhất quán nếu xuất hiện giống nhau và đồng thời ở cả hai view.</strong></p>
-          </div>
-          <div data-lang="en">
-            <p class="guide-intro">Score consistency across the two cameras (motion, shape, color, position). Cameras are ideally static.</p>
-            <div class="guide-grid">
-              <article class="criterion bad"><h3>Bad · 1</h3><p>Clear / lasting mismatch (&gt;30%). Large camera motion.</p></article>
-              <article class="criterion medium"><h3>Medium · 2</h3><p>Minor mismatch (≤30%), same action. Light jitter OK.</p></article>
-              <article class="criterion good"><h3>Good · 3</h3><p>Nearly identical; errors &lt;10%. Cameras nearly static.</p></article>
-            </div>
-            <p class="guide-note"><strong>Ignore</strong> task success / aesthetics. <strong>Abnormal events still count as consistent if identical and simultaneous in both views.</strong></p>
-          </div>
+          <div class="markdown" id="rubricBody">Loading rubric…</div>
         </div>
       </details>
 
       <div class="progress-row">
-        <div class="progress"><div id="bar"></div></div>
         <p class="status" id="status">Loading…</p>
       </div>
+      <div class="step-strip" id="stepStrip"></div>
 
       <section class="assessment">
         <div class="video-wrap video-wrap-lg">
           <video id="vidRaw" controls playsinline muted></video>
         </div>
         <div class="score-area">
-          <p class="score-question"><span data-lang="vi">Hai góc nhìn đồng bộ và ổn định ở mức nào?</span><span data-lang="en">How consistent and stable are the two views?</span></p>
+          <p class="score-question">
+            <span data-lang="en">How consistent and stable are the two camera views?</span>
+            <span data-lang="vi">Hai góc nhìn đồng bộ và ổn định ở mức nào?</span>
+          </p>
+          <p class="score-hint">
+            <span data-lang="en">If you are not sure, open more reference examples below and re-read the rubric.</span>
+            <span data-lang="vi">Nếu chưa chắc, xem thêm ví dụ bên dưới và đọc lại rubric.</span>
+          </p>
           <div class="scores">
             <button class="score" data-s="1">Bad<small>1</small></button>
             <button class="score" data-s="2">Medium<small>2</small></button>
@@ -71,7 +60,7 @@
           <button class="btn" id="btnPrev">← <span data-lang="vi">Trước</span><span data-lang="en">Prev</span></button>
           <button class="btn" id="btnNext"><span data-lang="vi">Tiếp</span><span data-lang="en">Next</span> →</button>
           <button class="btn warn" id="btnSubmit"><span data-lang="vi">Nộp lô</span><span data-lang="en">Submit batch</span></button>
-          <a class="btn primary" href="home.html?continue=sv"><span data-lang="vi">Tiếp tục single view</span><span data-lang="en">Continue single view</span></a>
+          <a class="btn primary" href="home.html"><span data-lang="vi">Về Home</span><span data-lang="en">Back to Home</span></a>
         </div>
       </section>
     </section>
@@ -80,7 +69,7 @@
       <div class="reference-head">
         <div class="eyebrow"><span data-lang="vi">Mở bất kỳ lúc nào</span><span data-lang="en">Available anytime</span></div>
         <h2><span data-lang="vi">Ví dụ tham chiếu</span><span data-lang="en">Reference examples</span></h2>
-        <p><span data-lang="vi">Mỗi mức có đủ Bimanual, Humanoid, Single-arm.</span><span data-lang="en">Each rating includes Bimanual, Humanoid, and Single-arm.</span></p>
+        <p><span data-lang="en">Two static cameras only — wrist / moving views are cropped. 3 clips per embodiment × rating. Videos are preloaded.</span><span data-lang="vi">Chỉ hai camera tĩnh — đã cắt view cổ tay / camera động. 3 clip mỗi embodiment × mức. Video được tải sẵn.</span></p>
       </div>
       <div class="example-tabs">
         <button class="example-tab active" data-rating="bad">Bad</button>
@@ -88,47 +77,16 @@
         <button class="example-tab" data-rating="good">Good</button>
       </div>
       <div class="example-list" id="exampleList"><p class="example-empty">Loading examples…</p></div>
+      <div class="example-stage crop-top" id="exampleStage">
+        <video id="exampleRaw" controls playsinline muted preload="auto"></video>
+        <div class="example-stage-cap" id="exampleCaption">Pick an embodiment to play a cached example.</div>
+      </div>
       <div class="reference-foot">
-        <a class="btn primary" href="home.html?continue=sv"><span data-lang="vi">Tiếp tục single view</span><span data-lang="en">Continue single view</span></a>
-        <a class="btn" href="home.html"><span data-lang="vi">Quay về Home</span><span data-lang="en">Back to Home</span></a>
+        <button class="btn primary" id="moreExample"><span data-lang="vi">Xem thêm ví dụ</span><span data-lang="en">See more examples</span></button>
       </div>
     </aside>
   </div>
 </main>
-
-<dialog id="continueDialog">
-  <div class="dialog-head">
-    <div><div class="dialog-rating"><span data-lang="vi">Nửa multiview xong</span><span data-lang="en">Multiview half done</span></div>
-      <h2><span data-lang="vi">Tiếp tục với single view?</span><span data-lang="en">Continue with single view?</span></h2></div>
-    <button class="dialog-close" id="closeContinue" type="button">×</button>
-  </div>
-  <div class="dialog-body">
-    <p style="color:var(--secondary);font-size:.9rem;margin-bottom:.8rem">
-      <span data-lang="vi">Nộp lô ngay, hoặc sang 25 video single-view. Chưa chấm hết vẫn nộp được.</span>
-      <span data-lang="en">Submit now, or continue to the 25 single-view videos. Partial work is allowed.</span>
-    </p>
-    <div class="dialog-actions">
-      <a class="btn primary" href="segment.html"><span data-lang="vi">Tiếp tục single view</span><span data-lang="en">Continue single view</span></a>
-      <button class="btn warn" id="dlgSubmit" type="button"><span data-lang="vi">Nộp lô này</span><span data-lang="en">Submit batch</span></button>
-    </div>
-  </div>
-</dialog>
-
-<dialog id="exampleDialog">
-  <div class="dialog-head">
-    <div><div class="dialog-rating" id="exampleRating"></div><h2 id="exampleTitle"></h2></div>
-    <button class="dialog-close" id="closeExample" aria-label="Close">×</button>
-  </div>
-  <div class="dialog-body">
-    <div class="pair single" id="examplePair">
-      <div class="pane"><header>RAW</header><video id="exampleRaw" controls playsinline muted></video></div>
-    </div>
-    <div class="dialog-actions">
-      <button class="btn" id="playExample"><span data-lang="vi">Phát</span><span data-lang="en">Play</span></button>
-      <button class="btn primary" id="moreExample"><span data-lang="vi">Xem thêm ví dụ</span><span data-lang="en">See more examples</span></button>
-    </div>
-  </div>
-</dialog>
 
 <script src="config.js"></script>
 <script src="vgp.js"></script>
@@ -147,14 +105,15 @@ if (VGP.requireGate()) {
     location.href = 'gate.html?next=' + encodeURIComponent('home.html');
   };
 
-  function lang(){ return document.documentElement.dataset.lang || 'vi'; }
+  function lang(){ return document.documentElement.dataset.lang || 'en'; }
   function setLang(next){
     document.documentElement.dataset.lang = next;
     document.documentElement.lang = next;
     $('langToggle').textContent = next === 'vi' ? 'EN' : 'VI';
     localStorage.setItem('vgp_lang', next);
+    loadRubric();
   }
-  setLang(localStorage.getItem('vgp_lang') === 'en' ? 'en' : 'vi');
+  setLang(VGP.defaultLang());
   $('langToggle').onclick = () => setLang(lang() === 'vi' ? 'en' : 'vi');
 
   function setStatus(vi, en, cls){
@@ -164,9 +123,6 @@ if (VGP.requireGate()) {
   }
   function nDone(){ return all.filter(it => labels[it.id] != null).length; }
   function refreshLife(){ $('nLife').textContent = VGP.raterStats(labels, mvAll, svAll).totalVideos; }
-  function maybeContinue(){
-    if (all.length && nDone() >= all.length) $('continueDialog').showModal();
-  }
   function submitBatch(){
     VGP.submitBatch();
     location.href = 'home.html';
@@ -175,15 +131,68 @@ if (VGP.requireGate()) {
     v.currentTime = 0;
     v.play().catch(() => {});
   }
+  function cropClass(item){
+    return item && item.crop === 'left-two' ? 'crop-left2' : 'crop-top';
+  }
+  function renderSteps(){
+    VGP.renderStepStrip($('stepStrip'), all, idx, it => labels[it.id] != null);
+    $('stepStrip').onclick = event => {
+      const btn = event.target.closest('.step');
+      if (!btn) return;
+      idx = Number(btn.dataset.idx);
+      render();
+    };
+  }
   function render(){
     const it = all[idx];
     if (!it){ setStatus('Không có video.', 'No videos.', 'err'); return; }
     $('nTotal').textContent = all.length;
     $('nLabeled').textContent = nDone();
     refreshLife();
-    $('bar').style.width = (all.length ? 100 * nDone() / all.length : 0) + '%';
     raw.src = it.video_raw || '';
     document.querySelectorAll('.score').forEach(button => button.classList.toggle('active', labels[it.id] === Number(button.dataset.s)));
+    renderSteps();
+  }
+
+  function escapeHtml(value){ return value.replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+  function inlineMd(value){ return escapeHtml(value).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); }
+  function markdown(value){
+    const lines = value.replace(/\r/g, '').split('\n'), out = []; let list = false, table = [];
+    const flushList = () => { if (list) { out.push('</ul>'); list = false; } };
+    const flushTable = () => {
+      if (!table.length) return;
+      const rows = table.filter(x => !/^[\s|:-]+$/.test(x));
+      if (rows.length) {
+        out.push('<table>');
+        rows.forEach((row, i) => {
+          const cells = row.split('|').slice(1, -1);
+          out.push('<tr>' + cells.map(c => `<${i ? 'td' : 'th'}>${inlineMd(c.trim())}</${i ? 'td' : 'th'}>`).join('') + '</tr>');
+        });
+        out.push('</table>');
+      }
+      table = [];
+    };
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (line.startsWith('|')) { flushList(); table.push(line); continue; }
+      flushTable();
+      if (!line) { flushList(); continue; }
+      const h = line.match(/^(#{1,3})\s+(.+)/);
+      if (h) { flushList(); out.push(`<h${h[1].length}>${inlineMd(h[2])}</h${h[1].length}>`); continue; }
+      const li = line.match(/^[-*]\s+(.+)/);
+      if (li) { if (!list) { out.push('<ul>'); list = true; } out.push(`<li>${inlineMd(li[1])}</li>`); continue; }
+      flushList(); out.push(`<p>${inlineMd(line)}</p>`);
+    }
+    flushList(); flushTable(); return out.join('');
+  }
+  async function loadRubric(){
+    try {
+      const res = await fetch(`rubric.geo.${lang()}.md`);
+      if (!res.ok) throw new Error(res.status);
+      $('rubricBody').innerHTML = markdown(await res.text());
+    } catch {
+      $('rubricBody').textContent = lang() === 'vi' ? 'Không tải được rubric.' : 'Could not load rubric.';
+    }
   }
 
   function refreshUndoBtn(){
@@ -207,7 +216,7 @@ if (VGP.requireGate()) {
       console.error(error); setStatus('Lưu tạm local · sẽ thử lại.', 'Saved locally · will retry.', 'err');
     }
     if (idx < all.length - 1){ idx += 1; render(); }
-    else { setStatus('Đã xong 25 video multiview.', 'Multiview half complete.'); maybeContinue(); }
+    else { setStatus('Đã xong 25 geometry clips. Về Home để làm hallucinate.', 'Geometry half complete. Return Home for hallucinate.'); render(); }
   }
 
   async function undo(){
@@ -248,30 +257,32 @@ if (VGP.requireGate()) {
       const copy = document.createElement('span');
       const title = document.createElement('strong'); title.textContent = embLabel(group.embodiment);
       const hint = document.createElement('span');
-      hint.textContent = lang() === 'vi' ? 'Xem video tham chiếu' : 'Open reference video';
+      hint.textContent = lang() === 'vi' ? `${group.items.length} video · xem ngay` : `${group.items.length} clips · play now`;
       copy.append(title, hint); button.append(icon, copy);
       button.onclick = () => openExampleGroup(group.items); host.append(button);
     });
   }
   function showExampleItem(item, extra){
-    $('exampleRating').textContent = `${item.rating} · score ${item.score}${extra || ''}`;
-    $('exampleTitle').textContent = embLabel(item.embodiment);
-    exampleRaw.src = item.video_raw || item.video || '';
+    const url = item.video_raw || item.video || '';
+    $('exampleStage').className = 'example-stage ' + cropClass(item);
+    if (exampleRaw.src !== url) exampleRaw.src = url;
+    $('exampleCaption').textContent = `${item.rating} · ${embLabel(item.embodiment)}${extra || ''} · two static views`;
+    playOne(exampleRaw);
   }
   function openExampleGroup(items){
     exampleGroup = items;
     exampleCursor = 0;
     showExampleItem(exampleGroup[0], exampleGroup.length > 1 ? ` · 1/${exampleGroup.length}` : '');
-    $('exampleDialog').showModal();
   }
   function moreExample(){
-    if (!exampleGroup.length) return;
+    if (!exampleGroup.length) {
+      const first = examples.filter(item => item.rating === exampleRating);
+      if (first.length) openExampleGroup(first);
+      return;
+    }
     exampleCursor = (exampleCursor + 1) % exampleGroup.length;
-    const item = exampleGroup[exampleCursor];
-    showExampleItem(item, ` · ${exampleCursor + 1}/${exampleGroup.length}`);
-    playOne(exampleRaw);
+    showExampleItem(exampleGroup[exampleCursor], ` · ${exampleCursor + 1}/${exampleGroup.length}`);
   }
-  function closeExample(){ exampleRaw.pause(); exampleRaw.removeAttribute('src'); $('exampleDialog').close(); }
 
   document.querySelectorAll('.score').forEach(button => button.onclick = () => rate(Number(button.dataset.s)));
   document.querySelectorAll('.example-tab').forEach(button => button.onclick = () => {
@@ -280,7 +291,7 @@ if (VGP.requireGate()) {
     renderExamples();
   });
   document.addEventListener('keydown', event => {
-    if ($('exampleDialog').open || $('continueDialog').open || ['INPUT','SELECT','TEXTAREA'].includes(event.target.tagName)) return;
+    if (['INPUT','SELECT','TEXTAREA'].includes(event.target.tagName)) return;
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z'){ event.preventDefault(); undo(); return; }
     if (event.key >= '1' && event.key <= '3'){ event.preventDefault(); rate(Number(event.key)); }
     if (event.key === ' '){ event.preventDefault(); raw.paused ? playOne(raw) : raw.pause(); }
@@ -292,12 +303,6 @@ if (VGP.requireGate()) {
   $('btnPrev').onclick = () => { if (idx > 0){ idx--; render(); } };
   $('btnNext').onclick = () => { if (idx < all.length - 1){ idx++; render(); } };
   $('btnSubmit').onclick = submitBatch;
-  $('dlgSubmit').onclick = submitBatch;
-  $('closeContinue').onclick = () => $('continueDialog').close();
-  $('jumpExamples').onclick = () => $('examplesPanel').scrollIntoView({behavior:'smooth', block:'start'});
-  $('closeExample').onclick = closeExample;
-  $('exampleDialog').addEventListener('click', event => { if (event.target === $('exampleDialog')) closeExample(); });
-  $('playExample').onclick = () => playOne(exampleRaw);
   $('moreExample').onclick = moreExample;
 
   (async () => {
@@ -317,19 +322,21 @@ if (VGP.requireGate()) {
     all = VGP.itemsFromIds(mvAll, batch.mvIds);
     if (!all.length) { location.replace('home.html'); return; }
     if (exampleResult.status === 'fulfilled') examples = exampleResult.value.items || [];
+    VGP.preloadVideos(examples.map(it => it.video_raw || it.video));
     renderExamples();
+    loadRubric();
     try {
       labels = VGP.mergeLabels(await VGP.sbLoadLabels(rater), rater);
       VGP.flushPending(rater).catch(() => {});
       const firstOpen = all.findIndex(it => labels[it.id] == null);
       idx = firstOpen >= 0 ? firstOpen : 0;
-      setStatus('Sẵn sàng · 1–3 chấm (tự lưu), Ctrl+Z hoàn tác.', 'Ready · 1–3 rates (autosave), Ctrl+Z undoes.');
+      setStatus('Sẵn sàng · bấm số trên thanh để nhảy clip. 1–3 chấm, Ctrl+Z hoàn tác.',
+        'Ready · click a numbered step to jump. 1–3 rates, Ctrl+Z undoes.');
     } catch (error) {
       console.error(error); setStatus('Không kết nối được Supabase.', 'Could not reach Supabase.', 'err');
     }
     refreshUndoBtn();
     render();
-    maybeContinue();
   })().catch(error => { console.error(error); setStatus('Không tải được catalog.json.', 'Failed to load catalog.json.', 'err'); });
 }
 </script>

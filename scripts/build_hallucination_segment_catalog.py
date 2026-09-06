@@ -2,7 +2,7 @@
 """Build blind public catalogs for hallucinate-bench rate900 labeling.
 
 Source of truth (HF bucket twanghcmut/hallucinate-bench, revision web):
-  rate900/{group}/clips/{1..100}.mp4   — 48 frames (3×16), rate middle segment
+  rate900/{group}/{1..100}.mp4         — 48 frames (3×16), rate middle segment
   rate900/key.json                     — machine bands / ratios (admin only)
   example/{group}/{low,medium,high}/{1..3}.mp4
   rubric_{vi,en}.md
@@ -93,9 +93,9 @@ def build_catalog(key: dict) -> dict:
                 raise KeyError(f"Missing key entry: {key_id}")
             items.append({
                 "id": f"rate900_{embodiment}_{number:03d}",
-                "video": bucket_url(f"rate900/{embodiment}/clips/{number}.mp4"),
+                "video": bucket_url(f"rate900/{embodiment}/{number}.mp4"),
                 "embodiment": embodiment,
-                "view": "singleview",
+                "view": "mixed",
                 "task": "Robot motion quality assessment",
                 "fps": FPS,
                 "n_frames": N_FRAMES,

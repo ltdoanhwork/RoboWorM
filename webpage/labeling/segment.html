@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi" data-lang="vi">
+<html lang="en" data-lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Video World — Single-view (hallucinate)</title>
+<title>Video World — Hallucinate check</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="app.css">
@@ -11,12 +11,11 @@
 <body>
 <nav>
   <div class="nav-inner">
-    <a class="brand" href="home.html"><span class="brand-mark">VW</span><span>Single view <span class="brand-sub">hallucinate · 25 / 50</span></span></a>
+    <a class="brand" href="home.html"><span class="brand-mark">VW</span><span>Hallucinate check <span class="brand-sub">75 / 100</span></span></a>
     <div class="nav-actions">
       <span class="nav-meta"><span id="raterChip"></span> · <strong id="nLife">0</strong> <span data-lang="vi">đã chấm</span><span data-lang="en">labeled</span> · <strong id="nLabeled">0</strong>/<span id="nTotal">0</span></span>
       <a class="top-btn" href="home.html"><span data-lang="vi">Lô của tôi</span><span data-lang="en">My batch</span></a>
-      <button class="top-btn accent" id="jumpExamples"><span data-lang="vi">Ví dụ</span><span data-lang="en">Examples</span></button>
-      <button class="top-btn" id="langToggle">EN</button>
+      <button class="top-btn" id="langToggle">VI</button>
       <a class="top-btn" href="#" id="switchUser"><span data-lang="vi">Đổi user</span><span data-lang="en">Switch user</span></a>
     </div>
   </div>
@@ -25,37 +24,29 @@
   <div class="workspace workspace-stack">
     <section class="evaluation">
       <details class="guide" open>
-        <summary><span data-lang="vi">Cách đánh giá · Good / Medium / Bad</span><span data-lang="en">How to rate · Good / Medium / Bad</span></summary>
+        <summary><span data-lang="vi">Rubric đầy đủ · Good / Medium / Bad</span><span data-lang="en">Full rubric · Good / Medium / Bad</span></summary>
         <div class="guide-body">
-          <div data-lang="vi">
-            <p class="guide-intro">Mỗi clip ~3 giây (3 đoạn × 16 frame). <strong>Chấm đoạn giữa</strong> (giây 1–2) — hai đoạn đầu/cuối chỉ để có ngữ cảnh. Chỉ xét robot (biến dạng, loang màu, giật, teleport, camera).</p>
-            <div class="guide-grid">
-              <article class="criterion bad"><h3>Bad · 1</h3><p>Lỗi rõ, nặng, kéo dài; robot tan / teleport / phi vật lý.</p></article>
-              <article class="criterion medium"><h3>Medium · 2</h3><p>Lỗi nhìn thấy nhưng vẫn theo dõi được hành động.</p></article>
-              <article class="criterion good"><h3>Good · 3</h3><p>Gần như video thật; chỉ lỗi rất nhỏ, thoáng qua.</p></article>
-            </div>
-          </div>
-          <div data-lang="en">
-            <p class="guide-intro">Each clip is ~3s (3×16 frames). <strong>Score the middle segment</strong> (1–2s); lead/trail are context only. Judge the robot only.</p>
-            <div class="guide-grid">
-              <article class="criterion bad"><h3>Bad · 1</h3><p>Clear severe lasting errors; dissolve / teleport / non-physical.</p></article>
-              <article class="criterion medium"><h3>Medium · 2</h3><p>Visible artifacts, but action still trackable.</p></article>
-              <article class="criterion good"><h3>Good · 3</h3><p>Near real footage; only tiny momentary errors.</p></article>
-            </div>
-          </div>
+          <div class="markdown" id="rubricBody">Loading rubric…</div>
         </div>
       </details>
 
       <div class="progress-row">
-        <div class="progress"><div id="bar"></div></div>
         <p class="status" id="status">Loading…</p>
       </div>
+      <div class="step-strip" id="stepStrip"></div>
 
       <section class="assessment" id="stage" hidden>
         <div class="video-wrap video-wrap-lg"><video id="player" playsinline preload="metadata" controls></video></div>
         <div class="seg-track" id="segTrack" title="lead · middle (score) · trail"></div>
         <div class="score-area">
-          <p class="score-question"><span data-lang="vi">Đoạn giữa chất lượng thế nào?</span><span data-lang="en">How is the middle segment?</span></p>
+          <p class="score-question">
+            <span data-lang="en">How physically intact is the robot in the middle segment?</span>
+            <span data-lang="vi">Robot ở đoạn giữa còn nguyên và hợp vật lý đến mức nào?</span>
+          </p>
+          <p class="score-hint">
+            <span data-lang="en">Watch the whole ~3s clip for context, then score only the middle second. If you are unsure, play more examples below and re-read the rubric.</span>
+            <span data-lang="vi">Xem cả clip ~3 giây để có ngữ cảnh, rồi chỉ chấm đoạn giữa. Nếu chưa chắc, xem thêm ví dụ và đọc lại rubric.</span>
+          </p>
           <div class="scores">
             <button class="score" data-s="1">Bad<small>1</small></button>
             <button class="score" data-s="2">Medium<small>2</small></button>
@@ -68,7 +59,7 @@
           <button class="btn" id="btnPrev">← <span data-lang="vi">Trước</span><span data-lang="en">Prev</span></button>
           <button class="btn" id="nextBtn"><span data-lang="vi">Tiếp</span><span data-lang="en">Next</span> →</button>
           <button class="btn warn" id="btnSubmit"><span data-lang="vi">Nộp lô</span><span data-lang="en">Submit batch</span></button>
-          <a class="btn primary" href="home.html"><span data-lang="vi">Về trang lô</span><span data-lang="en">Back to batch</span></a>
+          <a class="btn primary" href="home.html"><span data-lang="vi">Về Home</span><span data-lang="en">Back to Home</span></a>
         </div>
       </section>
       <section class="card empty" id="empty">Đang tải dữ liệu…</section>
@@ -78,7 +69,7 @@
       <div class="reference-head">
         <div class="eyebrow"><span data-lang="vi">Mở bất kỳ lúc nào</span><span data-lang="en">Available anytime</span></div>
         <h2><span data-lang="vi">Ví dụ tham chiếu</span><span data-lang="en">Reference examples</span></h2>
-        <p><span data-lang="vi">Mỗi mức có đủ Bimanual, Humanoid, Single-arm. Không nằm trong hàng đợi chấm.</span><span data-lang="en">Each rating includes Bimanual, Humanoid, and Single-arm. Never enters the rating queue.</span></p>
+        <p><span data-lang="en">5 clips per embodiment × rating (45 total). Videos are preloaded and never enter the rating queue.</span><span data-lang="vi">5 clip mỗi embodiment × mức (45 tổng). Video được tải sẵn, không nằm trong hàng đợi chấm.</span></p>
       </div>
       <div class="example-tabs">
         <button class="example-tab" data-rating="bad">Bad</button>
@@ -86,31 +77,16 @@
         <button class="example-tab active" data-rating="good">Good</button>
       </div>
       <div class="example-list" id="exampleList"><p class="example-empty">Loading examples…</p></div>
-      <details class="rubric-full"><summary><span data-lang="vi">Rubric đầy đủ</span><span data-lang="en">Full rubric</span></summary>
-        <div class="markdown" id="rubricBody">…</div>
-      </details>
+      <div class="example-stage" id="exampleStage">
+        <video id="examplePlayer" controls playsinline muted preload="auto"></video>
+        <div class="example-stage-cap" id="exampleCaption">Pick an embodiment to play a cached example.</div>
+      </div>
       <div class="reference-foot">
-        <a class="btn" href="home.html"><span data-lang="vi">Quay về Home</span><span data-lang="en">Back to Home</span></a>
+        <button class="btn primary" id="moreExample"><span data-lang="vi">Xem thêm ví dụ</span><span data-lang="en">See more examples</span></button>
       </div>
     </aside>
   </div>
 </main>
-
-<dialog id="exampleDialog">
-  <div class="dialog-head">
-    <div><div class="dialog-rating" id="exampleRating"></div><h2 id="exampleTitle"></h2></div>
-    <button class="dialog-close" id="closeExample" aria-label="Close">×</button>
-  </div>
-  <div class="dialog-body">
-    <div class="pair single">
-      <div class="pane"><header>RAW</header><video id="examplePlayer" controls playsinline muted></video></div>
-    </div>
-    <div class="dialog-actions">
-      <button class="btn" id="playExample"><span data-lang="vi">Phát</span><span data-lang="en">Play</span></button>
-      <button class="btn primary" id="moreExample"><span data-lang="vi">Xem thêm ví dụ</span><span data-lang="en">See more examples</span></button>
-    </div>
-  </div>
-</dialog>
 
 <script src="config.js"></script>
 <script src="vgp.js"></script>
@@ -129,7 +105,7 @@ if (VGP.requireGate()) {
     VGP.clearSession();
     location.href = 'gate.html?next=' + encodeURIComponent('home.html');
   };
-  function lang(){ return document.documentElement.dataset.lang || 'vi'; }
+  function lang(){ return document.documentElement.dataset.lang || 'en'; }
   function setLang(next){
     document.documentElement.dataset.lang = next;
     document.documentElement.lang = next;
@@ -139,7 +115,7 @@ if (VGP.requireGate()) {
     renderExamples();
     if (items[idx]) render();
   }
-  setLang(localStorage.getItem('vgp_lang') === 'en' ? 'en' : 'vi');
+  setLang(VGP.defaultLang());
   $('langToggle').onclick = () => setLang(lang() === 'vi' ? 'en' : 'vi');
 
   function setStatus(vi, en, cls){
@@ -216,28 +192,25 @@ if (VGP.requireGate()) {
     });
   }
   function showExampleItem(item, extra){
-    $('exampleRating').textContent = `${item.rating} · score ${item.score}${extra || ''}`;
-    $('exampleTitle').textContent = embLabel(item.embodiment);
-    if (examplePlayer.dataset.id !== item.id) {
-      examplePlayer.dataset.id = item.id;
-      examplePlayer.src = item.video || item.video_raw || '';
-    }
+    const url = item.video || item.video_raw || '';
+    if (examplePlayer.src !== url) examplePlayer.src = url;
+    $('exampleCaption').textContent = `${item.rating} · ${embLabel(item.embodiment)}${extra || ''}`;
+    playOne(examplePlayer);
   }
   function openExampleGroup(items){
     exampleGroup = items;
     exampleCursor = 0;
     showExampleItem(exampleGroup[0], exampleGroup.length > 1 ? ` · 1/${exampleGroup.length}` : '');
-    $('exampleDialog').showModal();
   }
   function moreExample(){
-    if (!exampleGroup.length) return;
+    if (!exampleGroup.length) {
+      const first = examples.filter(item => item.rating === exampleRating);
+      if (first.length) openExampleGroup(first);
+      return;
+    }
     exampleCursor = (exampleCursor + 1) % exampleGroup.length;
-    const item = exampleGroup[exampleCursor];
-    examplePlayer.dataset.id = '';
-    showExampleItem(item, ` · ${exampleCursor + 1}/${exampleGroup.length}`);
-    playOne(examplePlayer);
+    showExampleItem(exampleGroup[exampleCursor], ` · ${exampleCursor + 1}/${exampleGroup.length}`);
   }
-  function closeExample(){ examplePlayer.pause(); examplePlayer.removeAttribute('src'); examplePlayer.dataset.id = ''; $('exampleDialog').close(); }
 
   function render(){
     if (!items[idx]) return;
@@ -245,8 +218,14 @@ if (VGP.requireGate()) {
     $('nTotal').textContent = items.length;
     $('nLabeled').textContent = nVideosDone();
     refreshLife();
-    $('bar').style.width = (items.length ? 100 * nVideosDone() / items.length : 0) + '%';
     document.querySelectorAll('.score').forEach(b => b.classList.toggle('active', Number(b.dataset.s) === labels[labelId(it)]));
+    VGP.renderStepStrip($('stepStrip'), items, idx, it2 => VGP.videoComplete(it2, labels));
+    $('stepStrip').onclick = event => {
+      const btn = event.target.closest('.step');
+      if (!btn) return;
+      idx = Number(btn.dataset.idx);
+      loadVideo();
+    };
     const track = $('segTrack');
     track.replaceChildren();
     (it.segments || [{}, {}, {}]).forEach((s, i) => {
@@ -294,7 +273,7 @@ if (VGP.requireGate()) {
       setStatus('Lưu tạm local · sẽ thử lại.', 'Saved locally · will retry.', 'err');
     }
     if (idx + 1 < items.length) { idx += 1; loadVideo(); }
-    else setStatus('Đã xong 25 video single-view.', 'Single-view half complete.');
+    else setStatus('Đã xong hallucinate trong lô này.', 'Hallucinate half of this batch is complete.');
   }
 
   async function undo(){
@@ -319,13 +298,10 @@ if (VGP.requireGate()) {
     document.querySelectorAll('.example-tab').forEach(tab => tab.classList.toggle('active', tab === button));
     renderExamples();
   });
-  $('closeExample').onclick = closeExample;
-  $('exampleDialog').addEventListener('click', event => { if (event.target === $('exampleDialog')) closeExample(); });
-  $('playExample').onclick = () => playOne(examplePlayer);
   $('moreExample').onclick = moreExample;
 
   document.addEventListener('keydown', event => {
-    if ($('exampleDialog').open || ['INPUT', 'TEXTAREA'].includes(event.target.tagName)) return;
+    if (['INPUT', 'TEXTAREA'].includes(event.target.tagName)) return;
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); undo(); return; }
     if (event.key >= '1' && event.key <= '3') { event.preventDefault(); rate(Number(event.key)); }
     if (event.key === ' ') {
@@ -342,8 +318,6 @@ if (VGP.requireGate()) {
   $('btnPrev').onclick = () => { if (idx > 0) { idx -= 1; loadVideo(); } };
   $('nextBtn').onclick = () => { if (idx + 1 < items.length) { idx += 1; loadVideo(); } };
   $('btnSubmit').onclick = () => { VGP.submitBatch(); location.href = 'home.html'; };
-  $('jumpExamples').onclick = () => $('examplesPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
-
   (async () => {
     const [catalog, exampleCatalog, mvCat] = await Promise.all([
       fetch('catalog.segment.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
@@ -357,6 +331,7 @@ if (VGP.requireGate()) {
     items = VGP.itemsFromIds(svAll, batch.svIds);
     if (!items.length) { location.replace('home.html'); return; }
     examples = exampleCatalog.items || [];
+    VGP.preloadVideos(examples.map(it => it.video || it.video_raw));
     labels = VGP.mergeLabels(await VGP.sbLoadLabels(rater), rater);
     VGP.flushPending(rater).catch(() => {});
     idx = findResume();
@@ -369,7 +344,7 @@ if (VGP.requireGate()) {
     setStatus('Sẵn sàng · 1–3 chấm (tự lưu), Ctrl+Z hoàn tác.', 'Ready · 1–3 rates (autosave), Ctrl+Z undoes.');
   })().catch(err => {
     console.error(err);
-    $('empty').textContent = lang() === 'vi' ? 'Không tải được dữ liệu. Về trang lô và nhận 50 video mới.' : 'Could not load data. Return home and get a new batch.';
+    $('empty').textContent = lang() === 'vi' ? 'Không tải được dữ liệu. Về Home và nhận 100 video mới.' : 'Could not load data. Return home and get a new batch of 100.';
     setStatus('Lỗi tải. Thử nhận lô mới từ trang chủ.', 'Load error. Get a new batch from home.', 'err');
   });
 }

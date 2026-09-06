@@ -5,7 +5,7 @@
     "medium",
     "good"
   ],
-  "note": "3 clips per embodiment \u00d7 rating. Hosted on doanh25032004/video_gen_physics.",
+  "note": "3 clips per embodiment \u00d7 rating. crop=top-half (2x2) or left-two (3-across static pair).",
   "items": [
     {
       "id": "bad-bimanual-1",
@@ -13,7 +13,8 @@
       "rating": "bad",
       "embodiment": "bimanual",
       "index": 1,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/bimanual/output/multiview/dreamgen/makovian/iter_000120000/insert_gear_onto_shaft_sliding/episode_000020/full_pred.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/bimanual/output/multiview/dreamgen/makovian/iter_000120000/insert_gear_onto_shaft_sliding/episode_000020/full_pred.mp4",
+      "crop": "top-half"
     },
     {
       "id": "bad-bimanual-2",
@@ -21,7 +22,8 @@
       "rating": "bad",
       "embodiment": "bimanual",
       "index": 2,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/bimanual/output/multiview/dreamgen/non_makovian/iter_000120000/fold_big_towel/episode_000025/full_pred.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/bimanual/output/multiview/dreamgen/non_makovian/iter_000120000/fold_big_towel/episode_000025/full_pred.mp4",
+      "crop": "top-half"
     },
     {
       "id": "bad-bimanual-3",
@@ -29,7 +31,8 @@
       "rating": "bad",
       "embodiment": "bimanual",
       "index": 3,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/bimanual/output/multiview/dreamgen/non_makovian/iter_000120000/handover_and_wipe_sponge/episode_000025/full_pred.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/bimanual/output/multiview/dreamgen/non_makovian/iter_000120000/handover_and_wipe_sponge/episode_000025/full_pred.mp4",
+      "crop": "top-half"
     },
     {
       "id": "bad-humanoid-1",
@@ -37,7 +40,8 @@
       "rating": "bad",
       "embodiment": "humanoid",
       "index": 1,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/humanoid/output/multiview/dreamgen/makovian/iter_000100000/Airbot_MMK2_move_pan/episode_000012/full_pred.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/humanoid/output/multiview/dreamgen/makovian/iter_000100000/Airbot_MMK2_move_pan/episode_000012/full_pred.mp4",
+      "crop": "top-half"
     },
     {
       "id": "bad-humanoid-2",
@@ -45,7 +49,8 @@
       "rating": "bad",
       "embodiment": "humanoid",
       "index": 2,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/humanoid/output/multiview/dreamgen/non_makovian/iter_000100000/Airbot_MMK2_doodled_line/episode_000032/full_pred.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/humanoid/output/multiview/dreamgen/non_makovian/iter_000100000/Airbot_MMK2_doodled_line/episode_000032/full_pred.mp4",
+      "crop": "top-half"
     },
     {
       "id": "bad-humanoid-3",
@@ -53,7 +58,8 @@
       "rating": "bad",
       "embodiment": "humanoid",
       "index": 3,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/humanoid/output/multiview/dreamgen/non_makovian/iter_000100000/AIRBOT_MMK2_boxs_storage/episode_000098/full_pred.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/humanoid/output/multiview/dreamgen/non_makovian/iter_000100000/AIRBOT_MMK2_boxs_storage/episode_000098/full_pred.mp4",
+      "crop": "top-half"
     },
     {
       "id": "bad-single-arm-1",
@@ -61,7 +67,8 @@
       "rating": "bad",
       "embodiment": "single_arm",
       "index": 1,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/tmp/lowquality_multiview/episode_007115.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/tmp/lowquality_multiview/episode_007115.mp4",
+      "crop": "top-half"
     },
     {
       "id": "bad-single-arm-2",
@@ -69,7 +76,8 @@
       "rating": "bad",
       "embodiment": "single_arm",
       "index": 2,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/tmp/lowquality_multiview/episode_005137.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/tmp/lowquality_multiview/episode_005137.mp4",
+      "crop": "top-half"
     },
     {
       "id": "bad-single-arm-3",
@@ -77,7 +85,8 @@
       "rating": "bad",
       "embodiment": "single_arm",
       "index": 3,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/tmp/lowquality_multiview/episode_003427.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/tmp/lowquality_multiview/episode_003427.mp4",
+      "crop": "top-half"
     },
     {
       "id": "medium-bimanual-1",
@@ -85,7 +94,8 @@
       "rating": "medium",
       "embodiment": "bimanual",
       "index": 1,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/bimanual/output/multiview/dreamgen/makovian/iter_000120000/put_cup_moved_red_handle_holder/episode_000030/full_pred.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/bimanual/output/multiview/dreamgen/makovian/iter_000120000/put_cup_moved_red_handle_holder/episode_000030/full_pred.mp4",
+      "crop": "top-half"
     },
     {
       "id": "medium-bimanual-2",
@@ -93,7 +103,8 @@
       "rating": "medium",
       "embodiment": "bimanual",
       "index": 2,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/augment/bimanual/output/multiview/ctrlworld/makovian/episode_tape_closed_cardboard__000046__v06_pink/pred_all_views.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/augment/bimanual/output/multiview/ctrlworld/makovian/episode_tape_closed_cardboard__000046__v06_pink/pred_all_views.mp4",
+      "crop": "left-two"
     },
     {
       "id": "medium-bimanual-3",
@@ -101,7 +112,8 @@
       "rating": "medium",
       "embodiment": "bimanual",
       "index": 3,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/bimanual/output/multiview/dreamgen/makovian/iter_000120000/insert_random_shaft_random_small_gear/episode_000055/full_pred.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/bimanual/output/multiview/dreamgen/makovian/iter_000120000/insert_random_shaft_random_small_gear/episode_000055/full_pred.mp4",
+      "crop": "top-half"
     },
     {
       "id": "medium-humanoid-1",
@@ -109,7 +121,8 @@
       "rating": "medium",
       "embodiment": "humanoid",
       "index": 1,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/augment/humanoid/output/multiview/ctrlworld/makovian/episode_AIRBOT_MMK2_mobile_car__000039__v09_black/full_pred.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/augment/humanoid/output/multiview/ctrlworld/makovian/episode_AIRBOT_MMK2_mobile_car__000039__v09_black/full_pred.mp4",
+      "crop": "left-two"
     },
     {
       "id": "medium-humanoid-2",
@@ -117,7 +130,8 @@
       "rating": "medium",
       "embodiment": "humanoid",
       "index": 2,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/humanoid/output/multiview/dreamgen/makovian/iter_000100000/Airbot_MMK2_move_pan/episode_000013/full_pred.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/humanoid/output/multiview/dreamgen/makovian/iter_000100000/Airbot_MMK2_move_pan/episode_000013/full_pred.mp4",
+      "crop": "top-half"
     },
     {
       "id": "medium-humanoid-3",
@@ -125,7 +139,8 @@
       "rating": "medium",
       "embodiment": "humanoid",
       "index": 3,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/humanoid/output/multiview/ctrlworld/non_makovian/episode_Airbot_MMK2_doodled_line__000027/pred_all_views.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/humanoid/output/multiview/ctrlworld/non_makovian/episode_Airbot_MMK2_doodled_line__000027/pred_all_views.mp4",
+      "crop": "left-two"
     },
     {
       "id": "medium-single-arm-1",
@@ -133,7 +148,8 @@
       "rating": "medium",
       "embodiment": "single_arm",
       "index": 1,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/single_arm/output/multiview/dreamgen/non_makovian/episode_000582.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/single_arm/output/multiview/dreamgen/non_makovian/episode_000582.mp4",
+      "crop": "top-half"
     },
     {
       "id": "medium-single-arm-2",
@@ -141,7 +157,8 @@
       "rating": "medium",
       "embodiment": "single_arm",
       "index": 2,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/single_arm/output/multiview/ctrlworld/makovian/episode_016469/pred_all_views.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/single_arm/output/multiview/ctrlworld/makovian/episode_016469/pred_all_views.mp4",
+      "crop": "left-two"
     },
     {
       "id": "medium-single-arm-3",
@@ -149,7 +166,8 @@
       "rating": "medium",
       "embodiment": "single_arm",
       "index": 3,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/tmp/lowquality_multiview/episode_009622.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/tmp/lowquality_multiview/episode_009622.mp4",
+      "crop": "top-half"
     },
     {
       "id": "good-bimanual-1",
@@ -157,7 +175,8 @@
       "rating": "good",
       "embodiment": "bimanual",
       "index": 1,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/bimanual/output/multiview/ctrlworld/makovian/episode_insert_random_shaft_random_medium_gear__000085/pred_all_views.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/bimanual/output/multiview/ctrlworld/makovian/episode_insert_random_shaft_random_medium_gear__000085/pred_all_views.mp4",
+      "crop": "left-two"
     },
     {
       "id": "good-bimanual-2",
@@ -165,7 +184,8 @@
       "rating": "good",
       "embodiment": "bimanual",
       "index": 2,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/bimanual/output/multiview/ctrlworld/makovian/episode_close_toolbox__000030/pred_all_views.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/bimanual/output/multiview/ctrlworld/makovian/episode_close_toolbox__000030/pred_all_views.mp4",
+      "crop": "left-two"
     },
     {
       "id": "good-bimanual-3",
@@ -173,7 +193,8 @@
       "rating": "good",
       "embodiment": "bimanual",
       "index": 3,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/bimanual/output/multiview/ctrlworld/non_makovian/episode_place_the_chinese_spoons_on_the_cloth__000018/pred_all_views.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/bimanual/output/multiview/ctrlworld/non_makovian/episode_place_the_chinese_spoons_on_the_cloth__000018/pred_all_views.mp4",
+      "crop": "left-two"
     },
     {
       "id": "good-humanoid-1",
@@ -181,7 +202,8 @@
       "rating": "good",
       "embodiment": "humanoid",
       "index": 1,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/humanoid/output/multiview/ctrlworld/non_makovian/episode_AIRBOT_MMK2_boxs_storage__000047/pred_all_views.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/humanoid/output/multiview/ctrlworld/non_makovian/episode_AIRBOT_MMK2_boxs_storage__000047/pred_all_views.mp4",
+      "crop": "left-two"
     },
     {
       "id": "good-humanoid-2",
@@ -189,7 +211,8 @@
       "rating": "good",
       "embodiment": "humanoid",
       "index": 2,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/humanoid/output/multiview/ctrlworld/makovian/episode_Airbot_MMK2_move_pan__000035/pred_all_views.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/humanoid/output/multiview/ctrlworld/makovian/episode_Airbot_MMK2_move_pan__000035/pred_all_views.mp4",
+      "crop": "left-two"
     },
     {
       "id": "good-humanoid-3",
@@ -197,7 +220,8 @@
       "rating": "good",
       "embodiment": "humanoid",
       "index": 3,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/humanoid/output/multiview/ctrlworld/non_makovian/episode_Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate__000046/pred_all_views.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/humanoid/output/multiview/ctrlworld/non_makovian/episode_Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate__000046/pred_all_views.mp4",
+      "crop": "left-two"
     },
     {
       "id": "good-single-arm-1",
@@ -205,7 +229,8 @@
       "rating": "good",
       "embodiment": "single_arm",
       "index": 1,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/single_arm/output/multiview/dreamgen/non_makovian/episode_001470.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/single_arm/output/multiview/dreamgen/non_makovian/episode_001470.mp4",
+      "crop": "top-half"
     },
     {
       "id": "good-single-arm-2",
@@ -213,7 +238,8 @@
       "rating": "good",
       "embodiment": "single_arm",
       "index": 2,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/single_arm/output/multiview/dreamgen/makovian/episode_012756.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/single_arm/output/multiview/dreamgen/makovian/episode_012756.mp4",
+      "crop": "top-half"
     },
     {
       "id": "good-single-arm-3",
@@ -221,7 +247,8 @@
       "rating": "good",
       "embodiment": "single_arm",
       "index": 3,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/single_arm/output/multiview/ctrlworld/makovian/episode_017842/pred_all_views.mp4"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/single_arm/output/multiview/ctrlworld/makovian/episode_017842/pred_all_views.mp4",
+      "crop": "left-two"
     }
   ]
 }

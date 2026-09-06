@@ -7,8 +7,12 @@ const VGP = (() => {
   const PASS_KEY = "vgp_pass_ok";
   const ADMIN_KEY = "vgp_admin_ok";
   const BATCH_PREFIX = "vgp_batch::";
-  const BATCH_VERSION = 2; // bump when catalog ids change (e.g. rate900)
-  const HALF = 25;
+  const BATCH_VERSION = 3; // 25 geometry + 75 hallucinate; 2-rater coverage
+  const GEO_N = 25;
+  const HALLU_N = 75;
+  const HALF = GEO_N; // back-compat alias
+  const TARGET_COVER = 2;
+  const REVIEWERS = ["quang", "thanh"];
   const ADMIN_PAGES = /(^|\/)(analytics|admin)\.html?$/i;
 
   function fnv1a(str) {
@@ -114,6 +118,14 @@ const VGP = (() => {
     return item.segments.some((_, s) => labels[segmentId(item.id, s)] != null);
   }
 
+  function defaultLang() {
+    return localStorage.getItem("vgp_lang") === "vi" ? "vi" : "en";
+  }
+
+  function isReviewer(name) {
+    return REVIEWERS.includes(String(name || "").trim().toLowerCase());
+  }
+
   function raterStats(labels, mvItems, svItems) {
     const mvLabeled = (mvItems || []).filter((it) => labels[it.id] != null).length;
     const svDone = (svItems || []).filter((it) => videoComplete(it, labels)).length;
@@ -124,6 +136,7 @@ const VGP = (() => {
     }
     return {
       mvLabeled,
+      halluDone: svDone,
       svDone,
       svTouched,
       svSegments,
@@ -145,19 +158,59 @@ const VGP = (() => {
     return counts;
   }
 
-  // Prefer videos this rater has not finished; among those, least-labeled
-  // first, random among ties. Cross-rater overlap is intentional.
-  function pickLeastLabeled(items, coverage, doneIds, n) {
+  // Each video is assigned to at most TARGET_COVER distinct raters.
+  // Prefer uncovered, then 1-label videos. Reviewers (quang/thanh) are
+  // steered at conflicts first and may exceed the cap.
+  function pickLeastLabeled(items, coverage, doneIds, n, opts) {
+    const options = opts || {};
+    const maxCover = options.maxCover != null ? options.maxCover : TARGET_COVER;
+    const prefer = new Set(options.preferIds || []);
     const fresh = [];
     for (const it of items || []) {
-      if (!doneIds.has(it.id)) fresh.push(it);
+      if (doneIds.has(it.id)) continue;
+      const c = coverage[it.id] || 0;
+      if (c >= maxCover && !prefer.has(it.id)) continue;
+      fresh.push(it);
     }
     fresh.sort((a, b) => {
+      const ap = prefer.has(a.id) ? 0 : 1;
+      const bp = prefer.has(b.id) ? 0 : 1;
+      if (ap !== bp) return ap - bp;
       const d = (coverage[a.id] || 0) - (coverage[b.id] || 0);
       if (d !== 0) return d;
       return Math.random() - 0.5;
     });
     return fresh.slice(0, n);
+  }
+
+  function conflictIds(rows, items) {
+    const known = new Set((items || []).map((it) => it.id));
+    const byVid = new Map();
+    for (const row of rows || []) {
+      const vid = known.has(row.item_id) ? row.item_id : parentVideoId(row.item_id);
+      if (!known.has(vid)) continue;
+      if (!byVid.has(vid)) byVid.set(vid, new Map());
+      byVid.get(vid).set(row.rater_name, row.score);
+    }
+    const out = [];
+    for (const [vid, scores] of byVid) {
+      const uniq = new Set(scores.values());
+      if (scores.size >= 2 && uniq.size >= 2) out.push(vid);
+    }
+    return out;
+  }
+
+  function conflictRows(rows, items) {
+    const ids = new Set(conflictIds(rows, items));
+    const known = new Set((items || []).map((it) => it.id));
+    const grouped = {};
+    for (const row of rows || []) {
+      const vid = known.has(row.item_id) ? row.item_id : parentVideoId(row.item_id);
+      if (!ids.has(vid)) continue;
+      if (!grouped[vid]) grouped[vid] = [];
+      grouped[vid].push(row);
+    }
+    return Object.entries(grouped).map(([id, labels]) => ({ id, labels }));
   }
 
   function batchStorageKey() {
@@ -201,13 +254,23 @@ const VGP = (() => {
     ]);
     const mvDone = new Set((mvItems || []).filter((it) => mine[it.id] != null).map((it) => it.id));
     const svDone = new Set((svItems || []).filter((it) => videoComplete(it, mine)).map((it) => it.id));
-    const mvPick = pickLeastLabeled(mvItems, coverageCounts(allRows, mvItems), mvDone, HALF);
-    const svPick = pickLeastLabeled(svItems, coverageCounts(allRows, svItems), svDone, HALF);
+    const reviewer = isReviewer(getRater());
+    const mvCov = coverageCounts(allRows, mvItems);
+    const svCov = coverageCounts(allRows, svItems);
+    const mvPick = pickLeastLabeled(mvItems, mvCov, mvDone, GEO_N, {
+      maxCover: reviewer ? 99 : TARGET_COVER,
+      preferIds: reviewer ? conflictIds(allRows, mvItems) : [],
+    });
+    const svPick = pickLeastLabeled(svItems, svCov, svDone, HALLU_N, {
+      maxCover: reviewer ? 99 : TARGET_COVER,
+      preferIds: reviewer ? conflictIds(allRows, svItems) : [],
+    });
     return saveBatch({
       id: `${Date.now().toString(36)}-${fnv1a(getRater() + Math.random())}`,
       version: BATCH_VERSION,
       createdAt: new Date().toISOString(),
       submittedAt: null,
+      reviewer: reviewer || undefined,
       mvIds: mvPick.map((it) => it.id),
       svIds: svPick.map((it) => it.id),
     });
@@ -408,18 +471,45 @@ const VGP = (() => {
     return rows;
   }
 
+  function renderStepStrip(host, items, current, isDone) {
+    if (!host) return;
+    host.replaceChildren();
+    (items || []).forEach((it, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "step" + (i === current ? " current" : "") + (isDone(it) ? " done" : "");
+      btn.textContent = String(i + 1);
+      btn.dataset.idx = String(i);
+      host.append(btn);
+    });
+  }
+
+  const exampleCache = new Map();
+  function preloadVideos(urls) {
+    (urls || []).forEach((url) => {
+      if (!url || exampleCache.has(url)) return;
+      const v = document.createElement("video");
+      v.preload = "auto";
+      v.muted = true;
+      v.playsInline = true;
+      v.src = url;
+      v.load();
+      exampleCache.set(url, v);
+    });
+  }
+
   return {
-    HALF,
+    HALF, GEO_N, HALLU_N, TARGET_COVER, REVIEWERS, BATCH_VERSION,
     getRater, setRater, passOk, setPassOk, adminOk, setAdminOk,
     clearSession, isAdminPath, requireGate, requireAdmin,
+    defaultLang, isReviewer,
     segmentId, parentVideoId, scoreableSegmentIndices, videoComplete, videoTouched, raterStats,
-    coverageCounts, pickLeastLabeled,
+    coverageCounts, pickLeastLabeled, conflictIds, conflictRows,
     getBatch, getValidBatch, isStaleOpenBatch, saveBatch, submitBatch, clearBatch, createBatch, getOrCreateBatch,
-    itemsFromIds,
+    itemsFromIds, renderStepStrip, preloadVideos,
     sbUpsertLabel, sbDeleteLabel, sbLoadLabels, sbLoadAllLabels,
     mergeLabels, mirrorLabel, autosaveLabel, flushPending, readPending,
     pushUndo, canUndo, clearUndo, undoLast,
     fnv1a, mulberry32,
-    BATCH_VERSION,
   };
 })();
