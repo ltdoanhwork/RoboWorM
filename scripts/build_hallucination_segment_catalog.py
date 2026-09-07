@@ -84,32 +84,53 @@ def all_segments() -> list[dict]:
     return segs
 
 
+def norm_embodiment(embodiment: str) -> str:
+    return "single_arm" if embodiment == "single_arm_a1x" else embodiment
+
+
 def build_catalog(key: dict) -> dict:
     items = []
+    idx = 0
+    segs = all_segments()
     for embodiment in EMBODIMENTS:
         for number in range(1, 101):
             key_id = f"{embodiment}/{number}"
             if key_id not in key:
                 raise KeyError(f"Missing key entry: {key_id}")
-            items.append({
-                "id": f"rate900_{embodiment}_{number:03d}",
-                "video": bucket_url(f"rate900/{embodiment}/{number}.mp4"),
-                "embodiment": embodiment,
-                "view": "mixed",
-                "task": "Robot motion quality assessment",
-                "fps": FPS,
-                "n_frames": N_FRAMES,
-                "rate_target": "middle",
-                "segments": all_segments(),
-                "score_segment_index": MIDDLE_SEG,
-            })
-    if len(items) != 300:
-        raise ValueError(f"Expected 300 videos, got {len(items)}")
+            clip_id = f"rate900_{embodiment}_{number:03d}"
+            video = bucket_url(f"rate900/{embodiment}/{number}.mp4")
+            for seg_i, seg in enumerate(segs):
+                items.append({
+                    "id": f"h{idx:03d}",
+                    "index": idx,
+                    "clip_id": clip_id,
+                    "video": video,
+                    "embodiment": norm_embodiment(embodiment),
+                    "source_embodiment": embodiment,
+                    "clip": number,
+                    "segment_index": seg_i,
+                    "view": "mixed",
+                    "task": "Robot motion quality assessment",
+                    "fps": FPS,
+                    "n_frames": N_FRAMES,
+                    "rate_target": seg["role"],
+                    "segments": [{**row, "rateable": i == seg_i} for i, row in enumerate(segs)],
+                    "score_segment_index": seg_i,
+                    "check": "hallucinate",
+                })
+                idx += 1
+    if len(items) != 900:
+        raise ValueError(f"Expected 900 segments, got {len(items)}")
     return {
-        "mode": "rate900_middle_segment",
+        "mode": "rate900_segments",
         "n": len(items),
-        "n_segments": len(items),  # one human score per clip
-        "note": "48-frame clips (3×16). Raters watch full clip; score applies to the middle 16 frames.",
+        "n_segments": len(items),
+        "n_clips": 300,
+        "check": "hallucinate",
+        "note": (
+            "900 segments, 300 per embodiment. Each 48-frame clip has lead / middle / trail. "
+            "Raters watch the clip and score the highlighted segment."
+        ),
         "items": items,
     }
 
@@ -128,35 +149,44 @@ def band_to_score(band: str) -> int | None:
 
 def build_metrics(key: dict) -> dict:
     items = []
+    idx = 0
     for embodiment in EMBODIMENTS:
         for number in range(1, 101):
             row = key[f"{embodiment}/{number}"]
-            video_id = f"rate900_{embodiment}_{number:03d}"
+            clip_id = f"rate900_{embodiment}_{number:03d}"
             machine_score = band_to_score(row.get("band") or "")
-            items.append({
-                "id": video_id,  # one score per clip → same id as human label
-                "video_id": video_id,
-                "check": "hallucinate",
-                "embodiment": embodiment,
-                "index": MIDDLE_SEG,
-                "band": row.get("band"),
-                "machine_score": machine_score,
-                "rating": {1: "bad", 2: "medium", 3: "good"}.get(machine_score),
-                "selected_by": row.get("selected_by"),
-                "peak_ratio": row.get("peak_ratio"),
-                "ratios": row.get("ratios") or {},
-                "control": bool(row.get("control")),
-                "reference": bool(row.get("reference")),
-                "bundle": row.get("bundle"),
-                "source_video": row.get("video"),
-                "segment_index_src": row.get("segment_index"),
-                "violated": (row.get("band") in ("high", "middle")),
-            })
+            for seg_i in range(3):
+                items.append({
+                    "id": f"h{idx:03d}",
+                    "index": idx,
+                    "video_id": f"h{idx:03d}",
+                    "clip_id": clip_id,
+                    "check": "hallucinate",
+                    "embodiment": norm_embodiment(embodiment),
+                    "source_embodiment": embodiment,
+                    "clip": number,
+                    "segment_index": seg_i,
+                    "band": row.get("band"),
+                    "machine_score": machine_score,
+                    "rating": {1: "bad", 2: "medium", 3: "good"}.get(machine_score),
+                    "selected_by": row.get("selected_by"),
+                    "peak_ratio": row.get("peak_ratio"),
+                    "ratios": row.get("ratios") or {},
+                    "control": bool(row.get("control")),
+                    "reference": bool(row.get("reference")),
+                    "bundle": row.get("bundle"),
+                    "source_video": row.get("video"),
+                    "segment_index_src": row.get("segment_index"),
+                    "violated": (row.get("band") in ("high", "middle")),
+                })
+                idx += 1
     return {
         "mode": "rate900_key",
         "source": "rate900/key.json",
         "n": len(items),
+        "n_clips": 300,
         "n_violated": sum(1 for it in items if it["violated"]),
+        "check": "hallucinate",
         "items": items,
     }
 
@@ -240,7 +270,7 @@ def main() -> None:
         shutil.copy2(DATA_ROOT / "rubric_en.md", WEB_ROOT / "rubric.segment.en.md")
 
     print(
-        f"Built {catalog['n']} hallucinate clips / {examples['n']} examples / "
+        f"Built {catalog['n']} hallucinate segments / {examples['n']} examples / "
         f"{metrics['n']} key metrics ({metrics['n_violated']} non-clean bands)"
     )
 

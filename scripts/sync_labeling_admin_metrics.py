@@ -83,10 +83,12 @@ def sync_geometry() -> tuple[int, dict]:
         if cat["id"] != pid or met["id"] != pid:
             raise SystemExit(f"id drift at {i}: catalog={cat['id']} metrics={met['id']}")
         cat["embodiment"] = meta["embodiment"]
+        cat["index"] = i
         cat["split"] = meta["split"]
         cat["task"] = meta["task"]
         cat["view"] = "multiview"
         met["embodiment"] = meta["embodiment"]
+        met["index"] = i
         met["robot_type"] = meta["embodiment"]
         met["task"] = meta["task"]
         met["split"] = meta["split"]
@@ -143,8 +145,8 @@ def sync_hallucinate() -> tuple[int, dict]:
     catalog["n_segments"] = catalog["n"]
     catalog["check"] = "hallucinate"
     catalog["note"] = (
-        "Hallucinate pool raters see. 48-frame clips (3×16). "
-        "Score applies to the middle 16 frames."
+        "Hallucinate pool: 900 segments (300 per embodiment). "
+        "Each 48-frame clip has lead / middle / trail."
     )
     metrics["items"] = aligned
     metrics["n"] = len(aligned)

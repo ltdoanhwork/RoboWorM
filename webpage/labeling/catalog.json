@@ -5,7 +5,7 @@
   "hf_repo": "doanh25032004/video_gen_physics",
   "hf_prefix": "assessment/multiview_static2",
   "created_at": "2026-08-26T09:35:38.395330+00:00",
-  "note": "Geometry pool raters see. Two static cameras. Metadata follows assets/all_videos.md (same order as clip ids).",
+  "note": "Geometry pool: 300 multiview videos (100 per embodiment). Two static cameras. Score the whole clip.",
   "items": [
     {
       "id": "00000",
@@ -19,7 +19,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "brush_screws_into_dustpan_human_brush_left_hold",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 0
     },
     {
       "id": "00001",
@@ -33,7 +34,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "hit_mark_with_hammer",
-      "prompt": "spoon red block bowl"
+      "prompt": "spoon red block bowl",
+      "index": 1
     },
     {
       "id": "00002",
@@ -47,7 +49,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "hit_mark_with_hammer",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: close toolbox. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: close toolbox. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 2
     },
     {
       "id": "00003",
@@ -61,7 +64,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "handover_metallic_zip_bag_upright",
-      "prompt": "put the calculator box in the yellow bucket with your left hand and the power bank box in the yellow bucket with your right hand."
+      "prompt": "put the calculator box in the yellow bucket with your left hand and the power bank box in the yellow bucket with your right hand.",
+      "index": 3
     },
     {
       "id": "00004",
@@ -75,7 +79,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "fold_bath_towel",
-      "prompt": "handover metallic zip bag upright"
+      "prompt": "handover metallic zip bag upright",
+      "index": 4
     },
     {
       "id": "00005",
@@ -89,7 +94,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "fold_big_towel",
-      "prompt": "multiview/ctrlworld"
+      "prompt": "multiview/ctrlworld",
+      "index": 5
     },
     {
       "id": "00006",
@@ -103,7 +109,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "place_the_chinese_spoons_on_the_cloth",
-      "prompt": "Multiview/dreamgen"
+      "prompt": "Multiview/dreamgen",
+      "index": 6
     },
     {
       "id": "00007",
@@ -117,7 +124,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "fold_bath_towel",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: put the calculator box in the yellow bucket with your left hand and the power bank box in the yellow bucket with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: put the calculator box in the yellow bucket with your left hand and the power bank box in the yellow bucket with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 7
     },
     {
       "id": "00008",
@@ -131,7 +139,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "fold_blue_towel",
-      "prompt": "Handover pink zip bag upright."
+      "prompt": "Handover pink zip bag upright.",
+      "index": 8
     },
     {
       "id": "00009",
@@ -145,7 +154,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "spoon_red_block_bowl",
-      "prompt": "Airbot MMK2 move pan"
+      "prompt": "Airbot MMK2 move pan",
+      "index": 9
     },
     {
       "id": "00010",
@@ -159,7 +169,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_gear_onto_shaft_sliding",
-      "prompt": "fold towel assist"
+      "prompt": "fold towel assist",
+      "index": 10
     },
     {
       "id": "00011",
@@ -173,7 +184,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "brush_screws_into_dustpan_human_brush_left_hold",
-      "prompt": "multiview/ctrlworld"
+      "prompt": "multiview/ctrlworld",
+      "index": 11
     },
     {
       "id": "00012",
@@ -187,7 +199,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_usb_port_hub",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 12
     },
     {
       "id": "00013",
@@ -201,7 +214,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "handover_and_wipe_sponge",
-      "prompt": "multiview/ctrlworld"
+      "prompt": "multiview/ctrlworld",
+      "index": 13
     },
     {
       "id": "00014",
@@ -215,7 +229,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_rod_board",
-      "prompt": "multiview/dreamgen"
+      "prompt": "multiview/dreamgen",
+      "index": 14
     },
     {
       "id": "00015",
@@ -229,7 +244,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "handover_and_wipe_sponge",
-      "prompt": "Airbot MMK2 doodled line"
+      "prompt": "Airbot MMK2 doodled line",
+      "index": 15
     },
     {
       "id": "00016",
@@ -243,7 +259,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "take_out_reel_clear_zip_bag",
-      "prompt": "Airbot MMK2 move pan"
+      "prompt": "Airbot MMK2 move pan",
+      "index": 16
     },
     {
       "id": "00017",
@@ -257,7 +274,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "close_cardboard_box",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: hit mark with hammer. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: hit mark with hammer. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 17
     },
     {
       "id": "00018",
@@ -271,7 +289,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "tape_closed_cardboard",
-      "prompt": "Take the marker from the brown bowl and put it on the table"
+      "prompt": "Take the marker from the brown bowl and put it on the table",
+      "index": 18
     },
     {
       "id": "00019",
@@ -285,7 +304,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "hook_cable_narrow_8pin",
-      "prompt": "A multi-view video shows that a robot Open the purple drawer. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot Open the purple drawer."
+      "prompt": "A multi-view video shows that a robot Open the purple drawer. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot Open the purple drawer.",
+      "index": 19
     },
     {
       "id": "00020",
@@ -299,7 +319,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_small_gear_shaft",
-      "prompt": "close toolbox"
+      "prompt": "close toolbox",
+      "index": 20
     },
     {
       "id": "00021",
@@ -313,7 +334,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "fit_small_gear_shaft",
-      "prompt": "Orange spoon red block bowl."
+      "prompt": "Orange spoon red block bowl.",
+      "index": 21
     },
     {
       "id": "00022",
@@ -327,7 +349,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_small_gear_shaft",
-      "prompt": "fold light blue towel"
+      "prompt": "fold light blue towel",
+      "index": 22
     },
     {
       "id": "00023",
@@ -341,7 +364,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "find_insert_large_gear_shaft",
-      "prompt": "handover metallic zip bag upright"
+      "prompt": "handover metallic zip bag upright",
+      "index": 23
     },
     {
       "id": "00024",
@@ -355,7 +379,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "fold_big_towel",
-      "prompt": "Open the storage bin"
+      "prompt": "Open the storage bin",
+      "index": 24
     },
     {
       "id": "00025",
@@ -369,7 +394,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_rod_moved_board",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 25
     },
     {
       "id": "00026",
@@ -383,7 +409,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "brush_screws_into_dustpan_human_brush_left_hold",
-      "prompt": "Airbot MMK2 doodled line"
+      "prompt": "Airbot MMK2 doodled line",
+      "index": 26
     },
     {
       "id": "00027",
@@ -397,7 +424,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "spoon_yellow_block_bowl",
-      "prompt": "put cup moved red handle holder"
+      "prompt": "put cup moved red handle holder",
+      "index": 27
     },
     {
       "id": "00028",
@@ -411,7 +439,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "fold_light_blue_towel",
-      "prompt": "Pick up the ballpoint orange pen and leave your handwriting on the paper."
+      "prompt": "Pick up the ballpoint orange pen and leave your handwriting on the paper.",
+      "index": 28
     },
     {
       "id": "00029",
@@ -425,7 +454,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "fold_light_blue_towel",
-      "prompt": "fit small gear shaft"
+      "prompt": "fit small gear shaft",
+      "index": 29
     },
     {
       "id": "00030",
@@ -439,7 +469,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "spoon_yellow_block_bowl",
-      "prompt": "multiview/dreamgen"
+      "prompt": "multiview/dreamgen",
+      "index": 30
     },
     {
       "id": "00031",
@@ -453,7 +484,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "brush_screws_into_dustpan_human_brush_left_hold",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 31
     },
     {
       "id": "00032",
@@ -467,7 +499,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "close_toolbox",
-      "prompt": "A multi-view video shows that a robot knocks the light blue cloth off the table onto the floor. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot knocks the light blue cloth off the table onto the floor."
+      "prompt": "A multi-view video shows that a robot knocks the light blue cloth off the table onto the floor. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot knocks the light blue cloth off the table onto the floor.",
+      "index": 32
     },
     {
       "id": "00033",
@@ -481,7 +514,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "spoon_yellow_block_bowl",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: close cardboard box. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: close cardboard box. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 33
     },
     {
       "id": "00034",
@@ -495,7 +529,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "wipe_the_desk_with_a_sponge",
-      "prompt": "AIRBOT MMK2 boxs storage"
+      "prompt": "AIRBOT MMK2 boxs storage",
+      "index": 34
     },
     {
       "id": "00035",
@@ -509,7 +544,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "spoon_red_block_bowl",
-      "prompt": "Multiview/dreamgen"
+      "prompt": "Multiview/dreamgen",
+      "index": 35
     },
     {
       "id": "00036",
@@ -523,7 +559,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "tape_closed_cardboard",
-      "prompt": "AIRBOT MMK2 mobile car"
+      "prompt": "AIRBOT MMK2 mobile car",
+      "index": 36
     },
     {
       "id": "00037",
@@ -537,7 +574,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "handover_metallic_zip_bag_upright",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 37
     },
     {
       "id": "00038",
@@ -551,7 +589,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "find_hole_and_insert_into_gear",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 38
     },
     {
       "id": "00039",
@@ -565,7 +604,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "find_insert_small_gear_shaft",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: spoon yellow block bowl. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: spoon yellow block bowl. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 39
     },
     {
       "id": "00040",
@@ -579,7 +619,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "put_cup_moved_red_handle_holder",
-      "prompt": "multiview/dreamgen"
+      "prompt": "multiview/dreamgen",
+      "index": 40
     },
     {
       "id": "00041",
@@ -593,7 +634,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "remove_box_from_case",
-      "prompt": "wipe the desk with a sponge"
+      "prompt": "wipe the desk with a sponge",
+      "index": 41
     },
     {
       "id": "00042",
@@ -607,7 +649,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_washer_shaft_both_hands",
-      "prompt": "Airbot MMK2 storage bottle part"
+      "prompt": "Airbot MMK2 storage bottle part",
+      "index": 42
     },
     {
       "id": "00043",
@@ -621,7 +664,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_large_gear_shaft",
-      "prompt": "push the yellow cart to the right with your left hand."
+      "prompt": "push the yellow cart to the right with your left hand.",
+      "index": 43
     },
     {
       "id": "00044",
@@ -635,7 +679,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_lan_cable_into_the_hub",
-      "prompt": "multiview/ctrlworld"
+      "prompt": "multiview/ctrlworld",
+      "index": 44
     },
     {
       "id": "00045",
@@ -649,7 +694,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_random_shaft_random_small_gear",
-      "prompt": "pick up the pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box."
+      "prompt": "pick up the pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box.",
+      "index": 45
     },
     {
       "id": "00046",
@@ -663,7 +709,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "close_toolbox",
-      "prompt": "Airbot MMK2 Airbot MMK2 storage mango pomegranate"
+      "prompt": "Airbot MMK2 Airbot MMK2 storage mango pomegranate",
+      "index": 46
     },
     {
       "id": "00047",
@@ -677,7 +724,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_washer_shaft_both_hands",
-      "prompt": "Remove the pen from the wooden plate and put it on the table"
+      "prompt": "Remove the pen from the wooden plate and put it on the table",
+      "index": 47
     },
     {
       "id": "00048",
@@ -691,7 +739,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_washer_shaft_both_hands",
-      "prompt": "multiview/dreamgen"
+      "prompt": "multiview/dreamgen",
+      "index": 48
     },
     {
       "id": "00049",
@@ -705,7 +754,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_random_shaft_random_small_gear",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold bath towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold bath towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 49
     },
     {
       "id": "00050",
@@ -719,7 +769,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_random_shaft_random_medium_gear",
-      "prompt": "insert rod board"
+      "prompt": "insert rod board",
+      "index": 50
     },
     {
       "id": "00051",
@@ -733,7 +784,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_small_gear_shaft",
-      "prompt": "handover metallic zip bag upright"
+      "prompt": "handover metallic zip bag upright",
+      "index": 51
     },
     {
       "id": "00052",
@@ -747,7 +799,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "handover_metallic_zip_bag_upright",
-      "prompt": "handover and wipe sponge"
+      "prompt": "handover and wipe sponge",
+      "index": 52
     },
     {
       "id": "00053",
@@ -761,7 +814,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "handover_clear_zip_bag_upright",
-      "prompt": "fold bath towel"
+      "prompt": "fold bath towel",
+      "index": 53
     },
     {
       "id": "00054",
@@ -775,7 +829,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "handover_clear_zip_bag_upright",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 54
     },
     {
       "id": "00055",
@@ -789,7 +844,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "handover_and_wipe_sponge",
-      "prompt": "Put the red object on the table on the object on the right"
+      "prompt": "Put the red object on the table on the object on the right",
+      "index": 55
     },
     {
       "id": "00056",
@@ -803,7 +859,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "handover_and_wipe_sponge",
-      "prompt": "Remove the purple circle from the wooden object."
+      "prompt": "Remove the purple circle from the wooden object.",
+      "index": 56
     },
     {
       "id": "00057",
@@ -817,7 +874,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_usb_cable_fix_parts",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 57
     },
     {
       "id": "00058",
@@ -831,7 +889,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "remove_box_from_case_right_arm",
-      "prompt": "insert random shaft random medium gear"
+      "prompt": "insert random shaft random medium gear",
+      "index": 58
     },
     {
       "id": "00059",
@@ -845,7 +904,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "wipe_the_desk_with_a_sponge",
-      "prompt": "Multiview/dreamgen"
+      "prompt": "Multiview/dreamgen",
+      "index": 59
     },
     {
       "id": "00060",
@@ -859,7 +919,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_usb_port_hub",
-      "prompt": "multiview/ctrlworld"
+      "prompt": "multiview/ctrlworld",
+      "index": 60
     },
     {
       "id": "00061",
@@ -873,7 +934,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "fold_green_towel",
-      "prompt": "Airbot MMK2 doodled line"
+      "prompt": "Airbot MMK2 doodled line",
+      "index": 61
     },
     {
       "id": "00062",
@@ -887,7 +949,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "handover_metallic_zip_bag_upright",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: insert small gear shaft. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: insert small gear shaft. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 62
     },
     {
       "id": "00063",
@@ -901,7 +964,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "put_cup_moved_red_handle_holder",
-      "prompt": "multiview/ctrlworld"
+      "prompt": "multiview/ctrlworld",
+      "index": 63
     },
     {
       "id": "00064",
@@ -915,7 +979,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "handover_metallic_zip_bag_upright",
-      "prompt": "Airbot MMK2 move pan"
+      "prompt": "Airbot MMK2 move pan",
+      "index": 64
     },
     {
       "id": "00065",
@@ -929,7 +994,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_random_shaft_random_medium_gear",
-      "prompt": "multiview/ctrlworld"
+      "prompt": "multiview/ctrlworld",
+      "index": 65
     },
     {
       "id": "00066",
@@ -943,7 +1009,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "place_the_chinese_spoons_on_the_cloth",
-      "prompt": "fold towel in random places"
+      "prompt": "fold towel in random places",
+      "index": 66
     },
     {
       "id": "00067",
@@ -957,7 +1024,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_random_shaft_random_medium_gear",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the potato into the left square with your left hand and the pumpkin into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the potato into the left square with your left hand and the pumpkin into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 67
     },
     {
       "id": "00068",
@@ -971,7 +1039,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "handover_and_wipe_sponge",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold towel assist. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold towel assist. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 68
     },
     {
       "id": "00069",
@@ -985,7 +1054,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_shaft_into_gear",
-      "prompt": "Airbot MMK2 doodled line"
+      "prompt": "Airbot MMK2 doodled line",
+      "index": 69
     },
     {
       "id": "00070",
@@ -999,7 +1069,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_gear_onto_shaft_sliding",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fit small gear shaft. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fit small gear shaft. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 70
     },
     {
       "id": "00071",
@@ -1013,7 +1084,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_random_shaft_random_medium_gear",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 71
     },
     {
       "id": "00072",
@@ -1027,7 +1099,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_random_shaft_random_small_gear",
-      "prompt": "AIRBOT MMK2 boxs storage"
+      "prompt": "AIRBOT MMK2 boxs storage",
+      "index": 72
     },
     {
       "id": "00073",
@@ -1041,7 +1114,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_random_shaft_random_medium_gear",
-      "prompt": "multiview/dreamgen"
+      "prompt": "multiview/dreamgen",
+      "index": 73
     },
     {
       "id": "00074",
@@ -1055,7 +1129,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_shaft_into_gear",
-      "prompt": "insert random shaft random medium gear"
+      "prompt": "insert random shaft random medium gear",
+      "index": 74
     },
     {
       "id": "00075",
@@ -1069,7 +1144,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_random_shaft_random_medium_gear",
-      "prompt": "insert washer shaft"
+      "prompt": "insert washer shaft",
+      "index": 75
     },
     {
       "id": "00076",
@@ -1083,7 +1159,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "find_hole_and_insert_into_gear",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 76
     },
     {
       "id": "00077",
@@ -1097,7 +1174,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_random_shaft_random_medium_gear",
-      "prompt": "throw the potato into the left square with your left hand and the pumpkin into the right square with your right hand."
+      "prompt": "throw the potato into the left square with your left hand and the pumpkin into the right square with your right hand.",
+      "index": 77
     },
     {
       "id": "00078",
@@ -1111,7 +1189,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "close_toolbox",
-      "prompt": "put tape white case alternating arms"
+      "prompt": "put tape white case alternating arms",
+      "index": 78
     },
     {
       "id": "00079",
@@ -1125,7 +1204,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_random_shaft_random_medium_gear",
-      "prompt": "Pick up the pen from the white bowl and put it on the table."
+      "prompt": "Pick up the pen from the white bowl and put it on the table.",
+      "index": 79
     },
     {
       "id": "00080",
@@ -1139,7 +1219,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_random_shaft_random_medium_gear",
-      "prompt": "handover and wipe sponge"
+      "prompt": "handover and wipe sponge",
+      "index": 80
     },
     {
       "id": "00081",
@@ -1153,7 +1234,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_random_shaft_random_small_gear",
-      "prompt": "Press the right button on the fridge"
+      "prompt": "Press the right button on the fridge",
+      "index": 81
     },
     {
       "id": "00082",
@@ -1167,7 +1249,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_random_shaft_random_small_gear",
-      "prompt": "Pour some of the contents of the clear lunchbox into the ceramic bowl on the left"
+      "prompt": "Pour some of the contents of the clear lunchbox into the ceramic bowl on the left",
+      "index": 82
     },
     {
       "id": "00083",
@@ -1181,7 +1264,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "close_toolbox",
-      "prompt": "Airbot MMK2 Airbot MMK2 storage mango pomegranate"
+      "prompt": "Airbot MMK2 Airbot MMK2 storage mango pomegranate",
+      "index": 83
     },
     {
       "id": "00084",
@@ -1195,7 +1279,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_random_shaft_random_medium_gear",
-      "prompt": "Remove the marker from the cup and put it on the table"
+      "prompt": "Remove the marker from the cup and put it on the table",
+      "index": 84
     },
     {
       "id": "00085",
@@ -1209,7 +1294,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "close_toolbox",
-      "prompt": "Airbot MMK2 storage bottle part"
+      "prompt": "Airbot MMK2 storage bottle part",
+      "index": 85
     },
     {
       "id": "00086",
@@ -1223,7 +1309,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_random_shaft_random_medium_gear",
-      "prompt": "fold light blue towel"
+      "prompt": "fold light blue towel",
+      "index": 86
     },
     {
       "id": "00087",
@@ -1237,7 +1324,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "close_toolbox",
-      "prompt": "AIRBOT MMK2 mobile car"
+      "prompt": "AIRBOT MMK2 mobile car",
+      "index": 87
     },
     {
       "id": "00088",
@@ -1251,7 +1339,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_random_shaft_random_medium_gear",
-      "prompt": "find hole and insert into gear"
+      "prompt": "find hole and insert into gear",
+      "index": 88
     },
     {
       "id": "00089",
@@ -1265,7 +1354,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_random_shaft_random_small_gear",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold big towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold big towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 89
     },
     {
       "id": "00090",
@@ -1279,7 +1369,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "close_toolbox",
-      "prompt": "Multiview/dreamgen"
+      "prompt": "Multiview/dreamgen",
+      "index": 90
     },
     {
       "id": "00091",
@@ -1293,7 +1384,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "fold_light_blue_towel",
-      "prompt": "AIRBOT MMK2 boxs storage"
+      "prompt": "AIRBOT MMK2 boxs storage",
+      "index": 91
     },
     {
       "id": "00092",
@@ -1307,7 +1399,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "remove_box_from_case",
-      "prompt": "insert random shaft random small gear"
+      "prompt": "insert random shaft random small gear",
+      "index": 92
     },
     {
       "id": "00093",
@@ -1321,7 +1414,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "tape_closed_cardboard",
-      "prompt": "Pick up the yellow pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box."
+      "prompt": "Pick up the yellow pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box.",
+      "index": 93
     },
     {
       "id": "00094",
@@ -1335,7 +1429,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "place_the_chinese_spoons_on_the_cloth",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold bath towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold bath towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 94
     },
     {
       "id": "00095",
@@ -1349,7 +1444,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "remove_box_from_case_right_arm",
-      "prompt": "Pick up the blue marker and put it in the cup"
+      "prompt": "Pick up the blue marker and put it in the cup",
+      "index": 95
     },
     {
       "id": "00096",
@@ -1363,7 +1459,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "handover_clear_zip_bag_upright",
-      "prompt": "pick up the pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box."
+      "prompt": "pick up the pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box.",
+      "index": 96
     },
     {
       "id": "00097",
@@ -1377,7 +1474,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_gear_onto_shaft_sliding",
-      "prompt": "multiview/ctrlworld"
+      "prompt": "multiview/ctrlworld",
+      "index": 97
     },
     {
       "id": "00098",
@@ -1391,7 +1489,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "turn_towel_over",
-      "prompt": "put the calculator box in the yellow bucket with your left hand and the power bank box in the yellow bucket with your right hand."
+      "prompt": "put the calculator box in the yellow bucket with your left hand and the power bank box in the yellow bucket with your right hand.",
+      "index": 98
     },
     {
       "id": "00099",
@@ -1405,7 +1504,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "insert_lan_cable_into_the_hub",
-      "prompt": "Pick up the blue pen from the table and put it in the cardboard box, pick up the black pen from the table and put it in the cardboard box"
+      "prompt": "Pick up the blue pen from the table and put it in the cardboard box, pick up the black pen from the table and put it in the cardboard box",
+      "index": 99
     },
     {
       "id": "00100",
@@ -1419,7 +1519,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "AIRBOT_MMK2_boxs_storage",
-      "prompt": "put the water bottle and handle into the cardboard box."
+      "prompt": "put the water bottle and handle into the cardboard box.",
+      "index": 100
     },
     {
       "id": "00101",
@@ -1433,7 +1534,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "AIRBOT_MMK2_boxs_storage",
-      "prompt": "spoon red block bowl"
+      "prompt": "spoon red block bowl",
+      "index": 101
     },
     {
       "id": "00102",
@@ -1447,7 +1549,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "fold towel in random places"
+      "prompt": "fold towel in random places",
+      "index": 102
     },
     {
       "id": "00103",
@@ -1461,7 +1564,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_storage_bottle_part",
-      "prompt": "Multiview/dreamgen"
+      "prompt": "Multiview/dreamgen",
+      "index": 103
     },
     {
       "id": "00104",
@@ -1475,7 +1579,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_storage_bottle_part",
-      "prompt": "push the pan to the edge of the table with your left hand and place it on the building block with your right hand."
+      "prompt": "push the pan to the edge of the table with your left hand and place it on the building block with your right hand.",
+      "index": 104
     },
     {
       "id": "00105",
@@ -1489,7 +1594,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "AIRBOT_MMK2_boxs_storage",
-      "prompt": "Put the green can in the open upper cabinet."
+      "prompt": "Put the green can in the open upper cabinet.",
+      "index": 105
     },
     {
       "id": "00106",
@@ -1503,7 +1609,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "AIRBOT_MMK2_boxs_storage",
-      "prompt": "take out reel clear zip bag"
+      "prompt": "take out reel clear zip bag",
+      "index": 106
     },
     {
       "id": "00107",
@@ -1517,7 +1624,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "AIRBOT_MMK2_boxs_storage",
-      "prompt": "brush screws into dustpan left brush human hold"
+      "prompt": "brush screws into dustpan left brush human hold",
+      "index": 107
     },
     {
       "id": "00108",
@@ -1531,7 +1639,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_storage_bottle_part",
-      "prompt": "push the yellow cart to the right with your left hand."
+      "prompt": "push the yellow cart to the right with your left hand.",
+      "index": 108
     },
     {
       "id": "00109",
@@ -1545,7 +1654,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "AIRBOT_MMK2_boxs_storage",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold orange towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold orange towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 109
     },
     {
       "id": "00110",
@@ -1559,7 +1669,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "AIRBOT_MMK2_boxs_storage",
-      "prompt": "push the pan to the edge of the table with your left hand and place it on the building block with your right hand."
+      "prompt": "push the pan to the edge of the table with your left hand and place it on the building block with your right hand.",
+      "index": 110
     },
     {
       "id": "00111",
@@ -1573,7 +1684,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_storage_bottle_part",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: pick up the pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the front view, top-right shows the head view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: pick up the pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the front view, top-right shows the head view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 111
     },
     {
       "id": "00112",
@@ -1587,7 +1699,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_storage_bottle_part",
-      "prompt": "multiview/ctrlworld"
+      "prompt": "multiview/ctrlworld",
+      "index": 112
     },
     {
       "id": "00113",
@@ -1601,7 +1714,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_doodled_line",
-      "prompt": "Multiview/dreamgen"
+      "prompt": "Multiview/dreamgen",
+      "index": 113
     },
     {
       "id": "00114",
@@ -1615,7 +1729,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_doodled_line",
-      "prompt": "Remove the black pen from the box and put it on the table"
+      "prompt": "Remove the black pen from the box and put it on the table",
+      "index": 114
     },
     {
       "id": "00115",
@@ -1629,7 +1744,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_doodled_line",
-      "prompt": "multiview/dreamgen"
+      "prompt": "multiview/dreamgen",
+      "index": 115
     },
     {
       "id": "00116",
@@ -1643,7 +1759,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "AIRBOT MMK2 boxs storage"
+      "prompt": "AIRBOT MMK2 boxs storage",
+      "index": 116
     },
     {
       "id": "00117",
@@ -1657,7 +1774,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_doodled_line",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 117
     },
     {
       "id": "00118",
@@ -1671,7 +1789,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "Airbot MMK2 storage bottle part"
+      "prompt": "Airbot MMK2 storage bottle part",
+      "index": 118
     },
     {
       "id": "00119",
@@ -1685,7 +1804,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_storage_bottle_part",
-      "prompt": "insert large gear shaft"
+      "prompt": "insert large gear shaft",
+      "index": 119
     },
     {
       "id": "00120",
@@ -1699,7 +1819,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 120
     },
     {
       "id": "00121",
@@ -1713,7 +1834,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "insert washer shaft both hands"
+      "prompt": "insert washer shaft both hands",
+      "index": 121
     },
     {
       "id": "00122",
@@ -1727,7 +1849,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: put the calculator box in the yellow bucket with your left hand and the power bank box in the yellow bucket with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: put the calculator box in the yellow bucket with your left hand and the power bank box in the yellow bucket with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 122
     },
     {
       "id": "00123",
@@ -1741,7 +1864,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "push the yellow cart to the right with your left hand."
+      "prompt": "push the yellow cart to the right with your left hand.",
+      "index": 123
     },
     {
       "id": "00124",
@@ -1755,7 +1879,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "AIRBOT_MMK2_boxs_storage",
-      "prompt": "insert washer shaft both hands"
+      "prompt": "insert washer shaft both hands",
+      "index": 124
     },
     {
       "id": "00125",
@@ -1769,7 +1894,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "put tape white case alternating arms"
+      "prompt": "put tape white case alternating arms",
+      "index": 125
     },
     {
       "id": "00126",
@@ -1783,7 +1909,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "AIRBOT_MMK2_mobile_car",
-      "prompt": "insert rod moved board"
+      "prompt": "insert rod moved board",
+      "index": 126
     },
     {
       "id": "00127",
@@ -1797,7 +1924,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_storage_bottle_part",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold big towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold big towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 127
     },
     {
       "id": "00128",
@@ -1811,7 +1939,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "AIRBOT_MMK2_mobile_car",
-      "prompt": "push the pan to the edge of the table with your left hand and place it on the building block with your right hand."
+      "prompt": "push the pan to the edge of the table with your left hand and place it on the building block with your right hand.",
+      "index": 128
     },
     {
       "id": "00129",
@@ -1825,7 +1954,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "AIRBOT_MMK2_mobile_car",
-      "prompt": "Multiview/dreamgen"
+      "prompt": "Multiview/dreamgen",
+      "index": 129
     },
     {
       "id": "00130",
@@ -1839,7 +1969,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "AIRBOT_MMK2_mobile_car",
-      "prompt": "multiview/ctrlworld"
+      "prompt": "multiview/ctrlworld",
+      "index": 130
     },
     {
       "id": "00131",
@@ -1853,7 +1984,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "AIRBOT_MMK2_boxs_storage",
-      "prompt": "fit large gear shaft"
+      "prompt": "fit large gear shaft",
+      "index": 131
     },
     {
       "id": "00132",
@@ -1867,7 +1999,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_storage_bottle_part",
-      "prompt": "find hole and insert into gear"
+      "prompt": "find hole and insert into gear",
+      "index": 132
     },
     {
       "id": "00133",
@@ -1881,7 +2014,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate",
-      "prompt": "push the yellow cart to the right with your left hand."
+      "prompt": "push the yellow cart to the right with your left hand.",
+      "index": 133
     },
     {
       "id": "00134",
@@ -1895,7 +2029,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate",
-      "prompt": "fold blue towel"
+      "prompt": "fold blue towel",
+      "index": 134
     },
     {
       "id": "00135",
@@ -1909,7 +2044,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "AIRBOT_MMK2_mobile_car",
-      "prompt": "AIRBOT MMK2 mobile car"
+      "prompt": "AIRBOT MMK2 mobile car",
+      "index": 135
     },
     {
       "id": "00136",
@@ -1923,7 +2059,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate",
-      "prompt": "multiview/ctrlworld"
+      "prompt": "multiview/ctrlworld",
+      "index": 136
     },
     {
       "id": "00137",
@@ -1937,7 +2074,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_storage_bottle_part",
-      "prompt": "Pick up the ballpoint pen and leave your handwriting on the paper."
+      "prompt": "Pick up the ballpoint pen and leave your handwriting on the paper.",
+      "index": 137
     },
     {
       "id": "00138",
@@ -1951,7 +2089,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_doodled_line",
-      "prompt": "A multi-view video shows that a robot picks up the green packet from the counter and places it inside the cardboard box. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot picks up the green packet from the counter and places it inside the cardboard box."
+      "prompt": "A multi-view video shows that a robot picks up the green packet from the counter and places it inside the cardboard box. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot picks up the green packet from the counter and places it inside the cardboard box.",
+      "index": 138
     },
     {
       "id": "00139",
@@ -1965,7 +2104,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: insert small gear shaft. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: insert small gear shaft. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 139
     },
     {
       "id": "00140",
@@ -1979,7 +2119,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "AIRBOT_MMK2_mobile_car",
-      "prompt": "Airbot MMK2 move pan"
+      "prompt": "Airbot MMK2 move pan",
+      "index": 140
     },
     {
       "id": "00141",
@@ -1993,7 +2134,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_doodled_line",
-      "prompt": "push the pan to the edge of the table with your left hand and place it on the building block with your right hand."
+      "prompt": "push the pan to the edge of the table with your left hand and place it on the building block with your right hand.",
+      "index": 141
     },
     {
       "id": "00142",
@@ -2007,7 +2149,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_storage_bottle_part",
-      "prompt": "handover clear zip bag upright"
+      "prompt": "handover clear zip bag upright",
+      "index": 142
     },
     {
       "id": "00143",
@@ -2021,7 +2164,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "AIRBOT_MMK2_mobile_car",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: Pick up the ballpoint pen and leave your handwriting on the paper. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the front view, top-right shows the head view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: Pick up the ballpoint pen and leave your handwriting on the paper. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the front view, top-right shows the head view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 143
     },
     {
       "id": "00144",
@@ -2035,7 +2179,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "AIRBOT_MMK2_boxs_storage",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: insert shaft into gear. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: insert shaft into gear. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 144
     },
     {
       "id": "00145",
@@ -2049,7 +2194,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: Pick up the ballpoint pen and leave your handwriting on the paper. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the front view, top-right shows the head view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: Pick up the ballpoint pen and leave your handwriting on the paper. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the front view, top-right shows the head view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 145
     },
     {
       "id": "00146",
@@ -2063,7 +2209,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate",
-      "prompt": "multiview/ctrlworld"
+      "prompt": "multiview/ctrlworld",
+      "index": 146
     },
     {
       "id": "00147",
@@ -2077,7 +2224,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "Insert purple washer shaft both hands."
+      "prompt": "Insert purple washer shaft both hands.",
+      "index": 147
     },
     {
       "id": "00148",
@@ -2091,7 +2239,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "multiview/dreamgen"
+      "prompt": "multiview/dreamgen",
+      "index": 148
     },
     {
       "id": "00149",
@@ -2105,7 +2254,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "A multi-view video shows that a robot picks up the orange marker and places it inside the white mug. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot picks up the orange marker and places it inside the white mug."
+      "prompt": "A multi-view video shows that a robot picks up the orange marker and places it inside the white mug. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot picks up the orange marker and places it inside the white mug.",
+      "index": 149
     },
     {
       "id": "00150",
@@ -2119,7 +2269,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "AIRBOT_MMK2_mobile_car",
-      "prompt": "multiview/ctrlworld"
+      "prompt": "multiview/ctrlworld",
+      "index": 150
     },
     {
       "id": "00151",
@@ -2133,7 +2284,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_doodled_line",
-      "prompt": "push the yellow cart to the right with your left hand."
+      "prompt": "push the yellow cart to the right with your left hand.",
+      "index": 151
     },
     {
       "id": "00152",
@@ -2147,7 +2299,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "AIRBOT_MMK2_mobile_car",
-      "prompt": "hook cable narrow 8pin"
+      "prompt": "hook cable narrow 8pin",
+      "index": 152
     },
     {
       "id": "00153",
@@ -2161,7 +2314,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_doodled_line",
-      "prompt": "throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand."
+      "prompt": "throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand.",
+      "index": 153
     },
     {
       "id": "00154",
@@ -2175,7 +2329,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "Airbot MMK2 move pan"
+      "prompt": "Airbot MMK2 move pan",
+      "index": 154
     },
     {
       "id": "00155",
@@ -2189,7 +2344,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "A multi-view video shows that a robot interacts with the red ll. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot interacts with the red ll."
+      "prompt": "A multi-view video shows that a robot interacts with the red ll. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot interacts with the red ll.",
+      "index": 155
     },
     {
       "id": "00156",
@@ -2203,7 +2359,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "AIRBOT_MMK2_boxs_storage",
-      "prompt": "place the chinese spoons on the cloth"
+      "prompt": "place the chinese spoons on the cloth",
+      "index": 156
     },
     {
       "id": "00157",
@@ -2217,7 +2374,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "Tape pink closed cardboard."
+      "prompt": "Tape pink closed cardboard.",
+      "index": 157
     },
     {
       "id": "00158",
@@ -2231,7 +2389,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate",
-      "prompt": "Push the tap lever backwards"
+      "prompt": "Push the tap lever backwards",
+      "index": 158
     },
     {
       "id": "00159",
@@ -2245,7 +2404,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "AIRBOT_MMK2_boxs_storage",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: take out reel clear zip bag. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: take out reel clear zip bag. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 159
     },
     {
       "id": "00160",
@@ -2259,7 +2419,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_doodled_line",
-      "prompt": "multiview/dreamgen"
+      "prompt": "multiview/dreamgen",
+      "index": 160
     },
     {
       "id": "00161",
@@ -2273,7 +2434,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "AIRBOT_MMK2_mobile_car",
-      "prompt": "AIRBOT MMK2 boxs storage"
+      "prompt": "AIRBOT MMK2 boxs storage",
+      "index": 161
     },
     {
       "id": "00162",
@@ -2287,7 +2449,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "Pick up the black spatula and put it on the right side of the kitchen counter, pick up the tongs and turn them ninety degrees anticlockwise, put the tongs on the kitchen counter next to the spatula"
+      "prompt": "Pick up the black spatula and put it on the right side of the kitchen counter, pick up the tongs and turn them ninety degrees anticlockwise, put the tongs on the kitchen counter next to the spatula",
+      "index": 162
     },
     {
       "id": "00163",
@@ -2301,7 +2464,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "AIRBOT_MMK2_boxs_storage",
-      "prompt": "multiview/ctrlworld"
+      "prompt": "multiview/ctrlworld",
+      "index": 163
     },
     {
       "id": "00164",
@@ -2315,7 +2479,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_doodled_line",
-      "prompt": "put the water bottle and handle into the cardboard box."
+      "prompt": "put the water bottle and handle into the cardboard box.",
+      "index": 164
     },
     {
       "id": "00165",
@@ -2329,7 +2494,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "AIRBOT_MMK2_boxs_storage",
-      "prompt": "hook cable 8pin"
+      "prompt": "hook cable 8pin",
+      "index": 165
     },
     {
       "id": "00166",
@@ -2343,7 +2509,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "AIRBOT_MMK2_mobile_car",
-      "prompt": "Put the red block on top of the other blocks."
+      "prompt": "Put the red block on top of the other blocks.",
+      "index": 166
     },
     {
       "id": "00167",
@@ -2357,7 +2524,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_storage_bottle_part",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 167
     },
     {
       "id": "00168",
@@ -2371,7 +2539,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "AIRBOT_MMK2_mobile_car",
-      "prompt": "insert lan cable into the hub"
+      "prompt": "insert lan cable into the hub",
+      "index": 168
     },
     {
       "id": "00169",
@@ -2385,7 +2554,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "AIRBOT_MMK2_boxs_storage",
-      "prompt": "Unhang one blue cloth from the hook on the bottom right drawer and place it on the countertop"
+      "prompt": "Unhang one blue cloth from the hook on the bottom right drawer and place it on the countertop",
+      "index": 169
     },
     {
       "id": "00170",
@@ -2399,7 +2569,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "AIRBOT_MMK2_boxs_storage",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: spoon yellow block bowl. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: spoon yellow block bowl. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 170
     },
     {
       "id": "00171",
@@ -2413,7 +2584,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_storage_bottle_part",
-      "prompt": "handover metallic zip bag upright"
+      "prompt": "handover metallic zip bag upright",
+      "index": 171
     },
     {
       "id": "00172",
@@ -2427,7 +2599,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_storage_bottle_part",
-      "prompt": "multiview/ctrlworld"
+      "prompt": "multiview/ctrlworld",
+      "index": 172
     },
     {
       "id": "00173",
@@ -2441,7 +2614,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate",
-      "prompt": "fold orange towel"
+      "prompt": "fold orange towel",
+      "index": 173
     },
     {
       "id": "00174",
@@ -2455,7 +2629,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_doodled_line",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: Pick up the ballpoint pen and leave your handwriting on the paper. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the front view, top-right shows the head view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: Pick up the ballpoint pen and leave your handwriting on the paper. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the front view, top-right shows the head view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 174
     },
     {
       "id": "00175",
@@ -2469,7 +2644,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 175
     },
     {
       "id": "00176",
@@ -2483,7 +2659,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_storage_bottle_part",
-      "prompt": "Multiview/dreamgen"
+      "prompt": "Multiview/dreamgen",
+      "index": 176
     },
     {
       "id": "00177",
@@ -2497,7 +2674,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "AIRBOT_MMK2_mobile_car",
-      "prompt": "multiview/ctrlworld"
+      "prompt": "multiview/ctrlworld",
+      "index": 177
     },
     {
       "id": "00178",
@@ -2511,7 +2689,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "AIRBOT_MMK2_mobile_car",
-      "prompt": "pick up the pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box."
+      "prompt": "pick up the pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box.",
+      "index": 178
     },
     {
       "id": "00179",
@@ -2525,7 +2704,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate",
-      "prompt": "multiview/dreamgen"
+      "prompt": "multiview/dreamgen",
+      "index": 179
     },
     {
       "id": "00180",
@@ -2539,7 +2719,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "AIRBOT_MMK2_boxs_storage",
-      "prompt": "Multiview/dreamgen"
+      "prompt": "Multiview/dreamgen",
+      "index": 180
     },
     {
       "id": "00181",
@@ -2553,7 +2734,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 181
     },
     {
       "id": "00182",
@@ -2567,7 +2749,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "AIRBOT_MMK2_mobile_car",
-      "prompt": "Move the orange tape closer to the coat hanger"
+      "prompt": "Move the orange tape closer to the coat hanger",
+      "index": 182
     },
     {
       "id": "00183",
@@ -2581,7 +2764,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "AIRBOT_MMK2_mobile_car",
-      "prompt": "Multiview/dreamgen"
+      "prompt": "Multiview/dreamgen",
+      "index": 183
     },
     {
       "id": "00184",
@@ -2595,7 +2779,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "AIRBOT_MMK2_mobile_car",
-      "prompt": "Put the white plush bear on the cyan towel."
+      "prompt": "Put the white plush bear on the cyan towel.",
+      "index": 184
     },
     {
       "id": "00185",
@@ -2609,7 +2794,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_doodled_line",
-      "prompt": "Wipe the arm of the chair"
+      "prompt": "Wipe the arm of the chair",
+      "index": 185
     },
     {
       "id": "00186",
@@ -2623,7 +2809,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate",
-      "prompt": "multiview/dreamgen"
+      "prompt": "multiview/dreamgen",
+      "index": 186
     },
     {
       "id": "00187",
@@ -2637,7 +2824,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: close toolbox. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: close toolbox. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 187
     },
     {
       "id": "00188",
@@ -2651,7 +2839,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "AIRBOT_MMK2_boxs_storage",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold orange towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold orange towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 188
     },
     {
       "id": "00189",
@@ -2665,7 +2854,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: find hole and insert into gear. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: find hole and insert into gear. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 189
     },
     {
       "id": "00190",
@@ -2679,7 +2869,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 190
     },
     {
       "id": "00191",
@@ -2693,7 +2884,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "Pick up the objects and put them in the box"
+      "prompt": "Pick up the objects and put them in the box",
+      "index": 191
     },
     {
       "id": "00192",
@@ -2707,7 +2899,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "AIRBOT_MMK2_mobile_car",
-      "prompt": "AIRBOT MMK2 mobile car"
+      "prompt": "AIRBOT MMK2 mobile car",
+      "index": 192
     },
     {
       "id": "00193",
@@ -2721,7 +2914,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the potato into the left square with your left hand and the pumpkin into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the potato into the left square with your left hand and the pumpkin into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 193
     },
     {
       "id": "00194",
@@ -2735,7 +2929,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_doodled_line",
-      "prompt": "Pick up the green grapes from the stove and place them inside the silver pot in the sink"
+      "prompt": "Pick up the green grapes from the stove and place them inside the silver pot in the sink",
+      "index": 194
     },
     {
       "id": "00195",
@@ -2749,7 +2944,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate",
-      "prompt": "Multiview/dreamgen"
+      "prompt": "Multiview/dreamgen",
+      "index": 195
     },
     {
       "id": "00196",
@@ -2763,7 +2959,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "insert random shaft random small gear"
+      "prompt": "insert random shaft random small gear",
+      "index": 196
     },
     {
       "id": "00197",
@@ -2777,7 +2974,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "Airbot MMK2 doodled line"
+      "prompt": "Airbot MMK2 doodled line",
+      "index": 197
     },
     {
       "id": "00198",
@@ -2791,7 +2989,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "Airbot_MMK2_doodled_line",
-      "prompt": "Press the lid ejector button of the clear electric kettle"
+      "prompt": "Press the lid ejector button of the clear electric kettle",
+      "index": 198
     },
     {
       "id": "00199",
@@ -2805,7 +3004,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "Airbot_MMK2_move_pan",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: brush screws into dustpan human brush left hold. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: brush screws into dustpan human brush left hold. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 199
     },
     {
       "id": "00200",
@@ -2819,7 +3019,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "multiview/dreamgen"
+      "prompt": "multiview/dreamgen",
+      "index": 200
     },
     {
       "id": "00201",
@@ -2833,7 +3034,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "fold blue towel"
+      "prompt": "fold blue towel",
+      "index": 201
     },
     {
       "id": "00202",
@@ -2847,7 +3049,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 202
     },
     {
       "id": "00203",
@@ -2861,7 +3064,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "push the pan to the edge of the table with your left hand and place it on the building block with your right hand."
+      "prompt": "push the pan to the edge of the table with your left hand and place it on the building block with your right hand.",
+      "index": 203
     },
     {
       "id": "00204",
@@ -2875,7 +3079,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "insert usb pcbox"
+      "prompt": "insert usb pcbox",
+      "index": 204
     },
     {
       "id": "00205",
@@ -2889,7 +3094,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "find insert small gear shaft"
+      "prompt": "find insert small gear shaft",
+      "index": 205
     },
     {
       "id": "00206",
@@ -2903,7 +3109,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "insert rod moved board"
+      "prompt": "insert rod moved board",
+      "index": 206
     },
     {
       "id": "00207",
@@ -2917,7 +3124,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "Multiview/dreamgen"
+      "prompt": "Multiview/dreamgen",
+      "index": 207
     },
     {
       "id": "00208",
@@ -2931,7 +3139,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video shows that a robot Pick the purple bowl and put it in the sink. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot Pick the purple bowl and put it in the sink."
+      "prompt": "A multi-view video shows that a robot Pick the purple bowl and put it in the sink. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot Pick the purple bowl and put it in the sink.",
+      "index": 208
     },
     {
       "id": "00209",
@@ -2945,7 +3154,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "push the yellow cart to the right with your left hand."
+      "prompt": "push the yellow cart to the right with your left hand.",
+      "index": 209
     },
     {
       "id": "00210",
@@ -2959,7 +3169,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "Multiview/dreamgen"
+      "prompt": "Multiview/dreamgen",
+      "index": 210
     },
     {
       "id": "00211",
@@ -2973,7 +3184,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold big towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold big towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 211
     },
     {
       "id": "00212",
@@ -2987,7 +3199,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "insert random shaft random medium gear"
+      "prompt": "insert random shaft random medium gear",
+      "index": 212
     },
     {
       "id": "00213",
@@ -3001,7 +3214,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "put tape white case alternating arms"
+      "prompt": "put tape white case alternating arms",
+      "index": 213
     },
     {
       "id": "00214",
@@ -3015,7 +3229,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "Pick up the green block and put it on the orange block"
+      "prompt": "Pick up the green block and put it on the orange block",
+      "index": 214
     },
     {
       "id": "00215",
@@ -3029,7 +3244,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "Push the pink pan to the edge of the table with your left hand and place it on the building block with your right hand."
+      "prompt": "Push the pink pan to the edge of the table with your left hand and place it on the building block with your right hand.",
+      "index": 215
     },
     {
       "id": "00216",
@@ -3043,7 +3259,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "Airbot MMK2 move pan"
+      "prompt": "Airbot MMK2 move pan",
+      "index": 216
     },
     {
       "id": "00217",
@@ -3057,7 +3274,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 217
     },
     {
       "id": "00218",
@@ -3071,7 +3289,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "AIRBOT MMK2 mobile car"
+      "prompt": "AIRBOT MMK2 mobile car",
+      "index": 218
     },
     {
       "id": "00219",
@@ -3085,7 +3304,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold towel in random places. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold towel in random places. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 219
     },
     {
       "id": "00220",
@@ -3099,7 +3319,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "Multiview/dreamgen"
+      "prompt": "Multiview/dreamgen",
+      "index": 220
     },
     {
       "id": "00221",
@@ -3113,7 +3334,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "Slide the purple tap to the left."
+      "prompt": "Slide the purple tap to the left.",
+      "index": 221
     },
     {
       "id": "00222",
@@ -3127,7 +3349,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: hook cable narrow 8pin. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: hook cable narrow 8pin. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 222
     },
     {
       "id": "00223",
@@ -3141,7 +3364,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "Airbot MMK2 Airbot MMK2 storage mango pomegranate"
+      "prompt": "Airbot MMK2 Airbot MMK2 storage mango pomegranate",
+      "index": 223
     },
     {
       "id": "00224",
@@ -3155,7 +3379,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "Remove the spoon from the yellow cup and put it on the counter top"
+      "prompt": "Remove the spoon from the yellow cup and put it on the counter top",
+      "index": 224
     },
     {
       "id": "00225",
@@ -3169,7 +3394,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "Handover and wipe orange sponge."
+      "prompt": "Handover and wipe orange sponge.",
+      "index": 225
     },
     {
       "id": "00226",
@@ -3183,7 +3409,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "Pick up the red fruit on the table and put it in the bowl"
+      "prompt": "Pick up the red fruit on the table and put it in the bowl",
+      "index": 226
     },
     {
       "id": "00227",
@@ -3197,7 +3424,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "Airbot MMK2 move pan"
+      "prompt": "Airbot MMK2 move pan",
+      "index": 227
     },
     {
       "id": "00228",
@@ -3211,7 +3439,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "Multiview/dreamgen"
+      "prompt": "Multiview/dreamgen",
+      "index": 228
     },
     {
       "id": "00229",
@@ -3225,7 +3454,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "Push the black cart to the right with your left hand."
+      "prompt": "Push the black cart to the right with your left hand.",
+      "index": 229
     },
     {
       "id": "00230",
@@ -3239,7 +3469,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video shows that a robot picks up the orange from the table and places it inside the green bowl. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot picks up the orange from the table and places it inside the green bowl."
+      "prompt": "A multi-view video shows that a robot picks up the orange from the table and places it inside the green bowl. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot picks up the orange from the table and places it inside the green bowl.",
+      "index": 230
     },
     {
       "id": "00231",
@@ -3253,7 +3484,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold blue towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold blue towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 231
     },
     {
       "id": "00232",
@@ -3267,7 +3499,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "pick up the pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box."
+      "prompt": "pick up the pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box.",
+      "index": 232
     },
     {
       "id": "00233",
@@ -3281,7 +3514,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "Pick up the ballpoint pen and leave your handwriting on the paper."
+      "prompt": "Pick up the ballpoint pen and leave your handwriting on the paper.",
+      "index": 233
     },
     {
       "id": "00234",
@@ -3295,7 +3529,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: find hole and insert into gear. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: find hole and insert into gear. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 234
     },
     {
       "id": "00235",
@@ -3309,7 +3544,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "Pick up the ballpoint pen and leave your handwriting on the paper."
+      "prompt": "Pick up the ballpoint pen and leave your handwriting on the paper.",
+      "index": 235
     },
     {
       "id": "00236",
@@ -3323,7 +3559,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "AIRBOT MMK2 boxs storage"
+      "prompt": "AIRBOT MMK2 boxs storage",
+      "index": 236
     },
     {
       "id": "00237",
@@ -3337,7 +3574,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "Remove the marker from the mug and put it on the table"
+      "prompt": "Remove the marker from the mug and put it on the table",
+      "index": 237
     },
     {
       "id": "00238",
@@ -3351,7 +3589,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 238
     },
     {
       "id": "00239",
@@ -3365,7 +3604,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "Airbot MMK2 move pan"
+      "prompt": "Airbot MMK2 move pan",
+      "index": 239
     },
     {
       "id": "00240",
@@ -3379,7 +3619,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "put the water bottle and handle into the cardboard box."
+      "prompt": "put the water bottle and handle into the cardboard box.",
+      "index": 240
     },
     {
       "id": "00241",
@@ -3393,7 +3634,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "fold yellow towel"
+      "prompt": "fold yellow towel",
+      "index": 241
     },
     {
       "id": "00242",
@@ -3407,7 +3649,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "fold big towel"
+      "prompt": "fold big towel",
+      "index": 242
     },
     {
       "id": "00243",
@@ -3421,7 +3664,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold light blue towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold light blue towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 243
     },
     {
       "id": "00244",
@@ -3435,7 +3679,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "spoon yellow block bowl"
+      "prompt": "spoon yellow block bowl",
+      "index": 244
     },
     {
       "id": "00245",
@@ -3449,7 +3694,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "brush screws into dustpan human brush left hold"
+      "prompt": "brush screws into dustpan human brush left hold",
+      "index": 245
     },
     {
       "id": "00246",
@@ -3463,7 +3709,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "push the yellow cart to the right with your left hand."
+      "prompt": "push the yellow cart to the right with your left hand.",
+      "index": 246
     },
     {
       "id": "00247",
@@ -3477,7 +3724,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "Multiview/dreamgen"
+      "prompt": "Multiview/dreamgen",
+      "index": 247
     },
     {
       "id": "00248",
@@ -3491,7 +3739,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold green towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold green towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 248
     },
     {
       "id": "00249",
@@ -3505,7 +3754,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video shows that a robot Put the white object upright. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot Put the white object upright."
+      "prompt": "A multi-view video shows that a robot Put the white object upright. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot Put the white object upright.",
+      "index": 249
     },
     {
       "id": "00250",
@@ -3519,7 +3769,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "tape closed cardboard"
+      "prompt": "tape closed cardboard",
+      "index": 250
     },
     {
       "id": "00251",
@@ -3533,7 +3784,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "Fold purple towel in random places."
+      "prompt": "Fold purple towel in random places.",
+      "index": 251
     },
     {
       "id": "00252",
@@ -3547,7 +3799,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "Multiview/dreamgen"
+      "prompt": "Multiview/dreamgen",
+      "index": 252
     },
     {
       "id": "00253",
@@ -3561,7 +3814,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "multiview/ctrlworld"
+      "prompt": "multiview/ctrlworld",
+      "index": 253
     },
     {
       "id": "00254",
@@ -3575,7 +3829,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "Place the lid on the pot"
+      "prompt": "Place the lid on the pot",
+      "index": 254
     },
     {
       "id": "00255",
@@ -3589,7 +3844,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video shows that a robot Remove the blue plate from the dishwasher and place it on top of the white plates on the counter. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot Remove the blue plate from the dishwasher and place it on top of the white plates on the counter."
+      "prompt": "A multi-view video shows that a robot Remove the blue plate from the dishwasher and place it on top of the white plates on the counter. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot Remove the blue plate from the dishwasher and place it on top of the white plates on the counter.",
+      "index": 255
     },
     {
       "id": "00256",
@@ -3603,7 +3859,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "Wipe the table with the towel"
+      "prompt": "Wipe the table with the towel",
+      "index": 256
     },
     {
       "id": "00257",
@@ -3617,7 +3874,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: close toolbox. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: close toolbox. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 257
     },
     {
       "id": "00258",
@@ -3631,7 +3889,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "Multiview/dreamgen"
+      "prompt": "Multiview/dreamgen",
+      "index": 258
     },
     {
       "id": "00259",
@@ -3645,7 +3904,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold bath towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold bath towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 259
     },
     {
       "id": "00260",
@@ -3659,7 +3919,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "multiview/dreamgen"
+      "prompt": "multiview/dreamgen",
+      "index": 260
     },
     {
       "id": "00261",
@@ -3673,7 +3934,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "fold light blue towel"
+      "prompt": "fold light blue towel",
+      "index": 261
     },
     {
       "id": "00262",
@@ -3687,7 +3949,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 262
     },
     {
       "id": "00263",
@@ -3701,7 +3964,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "Multiview/dreamgen"
+      "prompt": "Multiview/dreamgen",
+      "index": 263
     },
     {
       "id": "00264",
@@ -3715,7 +3979,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "Multiview/dreamgen"
+      "prompt": "Multiview/dreamgen",
+      "index": 264
     },
     {
       "id": "00265",
@@ -3729,7 +3994,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: hit mark with hammer. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: hit mark with hammer. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 265
     },
     {
       "id": "00266",
@@ -3743,7 +4009,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "Multiview/dreamgen"
+      "prompt": "Multiview/dreamgen",
+      "index": 266
     },
     {
       "id": "00267",
@@ -3757,7 +4024,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "fold light blue towel"
+      "prompt": "fold light blue towel",
+      "index": 267
     },
     {
       "id": "00268",
@@ -3771,7 +4039,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "fold bath towel"
+      "prompt": "fold bath towel",
+      "index": 268
     },
     {
       "id": "00269",
@@ -3785,7 +4054,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video shows that a robot picks up the red die from the table and places it inside the black bowl. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot picks up the red die from the table and places it inside the black bowl."
+      "prompt": "A multi-view video shows that a robot picks up the red die from the table and places it inside the black bowl. The video is split into four views: The top-left view shows the robotic arm from the left side, the top-right view shows it from another left exterior viewing angle, the bottom-left view shows a first-person perspective from the robot's end-effector (gripper), and the bottom-right view is a black screen (inactive view). The robot picks up the red die from the table and places it inside the black bowl.",
+      "index": 269
     },
     {
       "id": "00270",
@@ -3799,7 +4069,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 270
     },
     {
       "id": "00271",
@@ -3813,7 +4084,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "push the pan to the edge of the table with your left hand and place it on the building block with your right hand."
+      "prompt": "push the pan to the edge of the table with your left hand and place it on the building block with your right hand.",
+      "index": 271
     },
     {
       "id": "00272",
@@ -3827,7 +4099,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "multiview/dreamgen"
+      "prompt": "multiview/dreamgen",
+      "index": 272
     },
     {
       "id": "00273",
@@ -3841,7 +4114,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "Multiview/dreamgen"
+      "prompt": "Multiview/dreamgen",
+      "index": 273
     },
     {
       "id": "00274",
@@ -3855,7 +4129,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "fold light blue towel"
+      "prompt": "fold light blue towel",
+      "index": 274
     },
     {
       "id": "00275",
@@ -3869,7 +4144,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "push the pan to the edge of the table with your left hand and place it on the building block with your right hand."
+      "prompt": "push the pan to the edge of the table with your left hand and place it on the building block with your right hand.",
+      "index": 275
     },
     {
       "id": "00276",
@@ -3883,7 +4159,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "find insert small gear shaft"
+      "prompt": "find insert small gear shaft",
+      "index": 276
     },
     {
       "id": "00277",
@@ -3897,7 +4174,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "Open the lid of the electric kettle"
+      "prompt": "Open the lid of the electric kettle",
+      "index": 277
     },
     {
       "id": "00278",
@@ -3911,7 +4189,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "multiview/ctrlworld"
+      "prompt": "multiview/ctrlworld",
+      "index": 278
     },
     {
       "id": "00279",
@@ -3925,7 +4204,8 @@
       "view": "multiview",
       "split": "",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 279
     },
     {
       "id": "00280",
@@ -3939,7 +4219,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "multiview/ctrlworld"
+      "prompt": "multiview/ctrlworld",
+      "index": 280
     },
     {
       "id": "00281",
@@ -3953,7 +4234,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "multiview/dreamgen"
+      "prompt": "multiview/dreamgen",
+      "index": 281
     },
     {
       "id": "00282",
@@ -3967,7 +4249,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "put the water bottle and handle into the cardboard box."
+      "prompt": "put the water bottle and handle into the cardboard box.",
+      "index": 282
     },
     {
       "id": "00283",
@@ -3981,7 +4264,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "wipe the desk with a blue cloth"
+      "prompt": "wipe the desk with a blue cloth",
+      "index": 283
     },
     {
       "id": "00284",
@@ -3995,7 +4279,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "Airbot MMK2 move pan"
+      "prompt": "Airbot MMK2 move pan",
+      "index": 284
     },
     {
       "id": "00285",
@@ -4009,7 +4294,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the potato into the left square with your left hand and the pumpkin into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the potato into the left square with your left hand and the pumpkin into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 285
     },
     {
       "id": "00286",
@@ -4023,7 +4309,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 286
     },
     {
       "id": "00287",
@@ -4037,7 +4324,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: insert washer shaft both hands. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: insert washer shaft both hands. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 287
     },
     {
       "id": "00288",
@@ -4051,7 +4339,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "spoon red block bowl"
+      "prompt": "spoon red block bowl",
+      "index": 288
     },
     {
       "id": "00289",
@@ -4065,7 +4354,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "wipe the desk with a blue cloth"
+      "prompt": "wipe the desk with a blue cloth",
+      "index": 289
     },
     {
       "id": "00290",
@@ -4079,7 +4369,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "AIRBOT MMK2 boxs storage"
+      "prompt": "AIRBOT MMK2 boxs storage",
+      "index": 290
     },
     {
       "id": "00291",
@@ -4093,7 +4384,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: insert rod board. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: insert rod board. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 291
     },
     {
       "id": "00292",
@@ -4107,7 +4399,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "Airbot MMK2 Airbot MMK2 storage mango pomegranate"
+      "prompt": "Airbot MMK2 Airbot MMK2 storage mango pomegranate",
+      "index": 292
     },
     {
       "id": "00293",
@@ -4121,7 +4414,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold green towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold green towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 293
     },
     {
       "id": "00294",
@@ -4135,7 +4429,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "push the yellow cart to the right with your left hand."
+      "prompt": "push the yellow cart to the right with your left hand.",
+      "index": 294
     },
     {
       "id": "00295",
@@ -4149,7 +4444,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: push the yellow cart to the right with your left hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 295
     },
     {
       "id": "00296",
@@ -4163,7 +4459,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the potato into the left square with your left hand and the pumpkin into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of an Airbot MMK2 robot performing: throw the potato into the left square with your left hand and the pumpkin into the right square with your right hand. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the third-person side view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 296
     },
     {
       "id": "00297",
@@ -4177,7 +4474,8 @@
       "view": "multiview",
       "split": "non_makovian",
       "task": "multiview_robot_action",
-      "prompt": "Move the mug to the right."
+      "prompt": "Move the mug to the right.",
+      "index": 297
     },
     {
       "id": "00298",
@@ -4191,7 +4489,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "turn towel over"
+      "prompt": "turn towel over",
+      "index": 298
     },
     {
       "id": "00299",
@@ -4205,7 +4504,8 @@
       "view": "multiview",
       "split": "makovian",
       "task": "multiview_robot_action",
-      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold yellow towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view."
+      "prompt": "A multi-view video of a bimanual ALOHA robot performing: fold yellow towel. The video shows four synchronized camera views arranged in a 2x2 grid: top-left shows the high overhead view, top-right shows the low front view, bottom-left shows the left wrist view, and bottom-right shows the right wrist view.",
+      "index": 299
     }
   ],
   "check": "geometry"

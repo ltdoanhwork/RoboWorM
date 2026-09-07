@@ -25,8 +25,8 @@
     <div class="eyebrow" id="homeEyebrow"><span data-lang="vi">Lô 100 video · 25 + 75</span><span data-lang="en">Batch of 100 videos · 25 + 75</span></div>
     <h1><span data-lang="vi">Xin chào, </span><span data-lang="en">Hello, </span><span id="helloName"></span></h1>
     <p>
-      <span data-lang="en" id="introEn">This study has two checks. Geometry asks whether two static cameras stay aligned — same motion, shape, color, and position — not whether the robot finished the task. Hallucinate asks whether the generated robot stays physically intact. Each batch delivers 25 geometry clips and 75 hallucinate clips. Every video is assigned to two different raters. Conflict checkers quang_check and thanh_check re-score disagreements.</span>
-      <span data-lang="vi" id="introVi">Nghiên cứu có hai phần. Geometry xem hai camera tĩnh có còn khớp nhau không. Hallucinate xem robot sinh ra có còn vật lý. Mỗi lô giao 25 clip geometry và 75 clip hallucinate. Mỗi video được giao cho hai người khác nhau. Tài khoản quang_check và thanh_check chấm lại các video conflict.</span>
+      <span data-lang="en" id="introEn">This study has two checks. Geometry is 300 multiview videos — two static cameras, same motion / shape / color / position. Hallucinate is 900 segments (300 per embodiment) — is the generated robot physically intact. Each batch delivers 25 geometry videos and 75 hallucinate segments. Every item is assigned to two different raters. Conflicts go to quang_check and thanh_check.</span>
+      <span data-lang="vi" id="introVi">Nghiên cứu có hai phần. Geometry gồm 300 video multiview — hai camera tĩnh còn khớp nhau. Hallucinate gồm 900 đoạn (300 mỗi embodiment) — robot sinh ra còn vật lý. Mỗi lô giao 25 video geometry và 75 đoạn hallucinate. Mỗi mục được giao cho hai người. Conflict đưa cho quang_check và thanh_check.</span>
     </p>
     <div class="howto-row">
       <button class="btn primary" type="button" id="btnHowTo"><span data-lang="en">What do I click?</span><span data-lang="vi">Tôi cần bấm gì?</span></button>
@@ -103,10 +103,10 @@
       <div class="eyebrow">2 / 2</div>
       <h2>Hallucinate check</h2>
       <p>
-        <span data-lang="en">Covers single-view and multiview clips. Watch the full ~3s clip; score the middle segment.</span>
-        <span data-lang="vi">Gồm cả clip single-view và multiview. Xem cả clip ~3 giây; chấm đoạn giữa.</span>
+        <span data-lang="en">900 segments, 300 per embodiment. Watch the ~3s clip; score the highlighted lead / middle / trail segment.</span>
+        <span data-lang="vi">900 đoạn, 300 mỗi embodiment. Xem clip ~3 giây; chấm đoạn lead / middle / trail đang highlight.</span>
       </p>
-      <div class="meta-line"><strong id="svProg">0 / 75</strong> · <span data-lang="vi">75 video hallucinate</span><span data-lang="en">75 hallucinate videos</span></div>
+      <div class="meta-line"><strong id="svProg">0 / 75</strong> · <span data-lang="vi">75 đoạn hallucinate</span><span data-lang="en">75 hallucinate segments</span></div>
       <div class="progress"><div id="svBar"></div></div>
       <div class="home-actions">
         <a class="btn primary" href="segment.html" id="goSv"><span data-lang="vi">Chấm hallucinate</span><span data-lang="en">Rate hallucinate</span></a>
@@ -132,8 +132,8 @@
         <span data-lang="vi"><strong>Chấm geometry</strong> — mở thẻ đầu. Xem hai camera tĩnh. Bấm <em>Bad / Medium / Good</em> (hoặc phím 1–3). Bấm ô số để quay lại sửa.</span>
       </li>
       <li>
-        <span data-lang="en"><strong>Back to Home</strong>, then <strong>Rate hallucinate</strong>. Watch the ~3s clip; score only the middle segment for physical integrity.</span>
-        <span data-lang="vi"><strong>Về Home</strong>, rồi <strong>Chấm hallucinate</strong>. Xem clip ~3 giây; chỉ chấm đoạn giữa về tính vật lý.</span>
+        <span data-lang="en"><strong>Back to Home</strong>, then <strong>Rate hallucinate</strong>. Watch the ~3s clip; score the highlighted segment for physical integrity.</span>
+        <span data-lang="vi"><strong>Về Home</strong>, rồi <strong>Chấm hallucinate</strong>. Xem clip ~3 giây; chấm đoạn đang highlight về tính vật lý.</span>
       </li>
       <li>
         <span data-lang="en"><strong>Submit this batch</strong> when you are done (or earlier — partial is OK). Then you can get another 100.</span>
@@ -292,8 +292,8 @@ if (VGP.requireGate()) {
     const wasStale = prev && VGP.isStaleOpenBatch(prev, mvAll, svAll);
     batch = VGP.getValidBatch(mvAll, svAll);
     if (wasStale) {
-      setStatus('Catalog / kích thước lô đã đổi (25 + 75). Nhận 100 video mới.',
-        'Catalog / batch size changed (25 + 75). Get a new batch of 100 videos.');
+      setStatus('Catalog đã đánh index lại (300 geometry + 900 hallucinate). Nhận 100 video mới.',
+        'Catalog was reindexed (300 geometry + 900 hallucinate). Get a new batch of 100 videos.');
     }
     if (!batch || batch.submittedAt) $('btnAssign').hidden = false;
     renderBatch();

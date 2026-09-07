@@ -19,129 +19,49 @@
   </div>
 </nav>
 <main>
-  <div class="chart-card admin-stat" id="stats">Loading…</div>
-
   <section class="chart-card">
-    <h2>Conflicts — two raters, different scores</h2>
+    <h2>Labeling pool</h2>
     <p class="status" style="margin-bottom:.7rem">
-      Target coverage is 2 distinct raters per video. Checkers
-      <span class="mono">quang_check</span> and <span class="mono">thanh_check</span>
-      log in on the rater gate and only receive these clips.
+      Geometry = <strong>300 videos</strong> (100 per embodiment), multiview consistency.
+      Hallucinate = <strong>900 segments</strong> (300 per embodiment; lead / middle / trail of 300 clips).
+      Each item needs <strong>2 regular raters</strong>. Score conflicts go to
+      <span class="mono">quang_check</span> and <span class="mono">thanh_check</span>.
     </p>
-    <div class="admin-stat" id="conflictStats" style="margin-bottom:1rem"></div>
-    <div class="phase-grid">
-      <div>
-        <p class="status" style="margin-bottom:.4rem">Geometry conflicts</p>
-        <div class="bar-list" id="conflictGeo"></div>
-      </div>
-      <div>
-        <p class="status" style="margin-bottom:.4rem">Hallucinate conflicts</p>
-        <div class="bar-list" id="conflictHallu"></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="chart-card">
-    <h2>Conflict check progress</h2>
-    <p class="status" style="margin-bottom:.7rem">
-      Open = no checker score yet. One / both = how many of
-      <span class="mono">quang_check</span> and <span class="mono">thanh_check</span>
-      have re-scored that clip.
-    </p>
-    <div class="admin-stat" id="checkProgStats" style="margin-bottom:1rem"></div>
-    <div class="phase-grid">
-      <div>
-        <p class="status" style="margin-bottom:.4rem">Geometry check</p>
-        <div class="bar-list" id="checkProgGeo"></div>
-      </div>
-      <div>
-        <p class="status" style="margin-bottom:.4rem">Hallucinate check</p>
-        <div class="bar-list" id="checkProgHallu"></div>
-      </div>
-    </div>
-    <p class="status" style="margin:1rem 0 .4rem">Checker accounts</p>
-    <div class="bar-list" id="checkProgRaters"></div>
-  </section>
-
-  <section class="chart-card">
-    <h2>By embodiment — human score mix</h2>
-    <p class="status" style="margin-bottom:.6rem">Pie = Bad / Medium / Good share. Bars = mean score &amp; label count.</p>
-    <div class="pie-row" id="embPies"></div>
-    <div class="bar-list" id="embBars"></div>
-  </section>
-
-  <section class="chart-card">
-    <h2>Geometry — machine vs human</h2>
-    <p class="status" style="margin-bottom:.7rem">
-      Same <span class="mono" id="geoPoolN">300</span> geometry clips raters score.
-      Machine score uses the same Bad / Medium / Good scale.
-    </p>
-    <div class="admin-stat" id="mvMetricStats" style="margin-bottom:1rem"></div>
-    <div class="pie-row" id="mvPies"></div>
-    <div class="phase-grid">
-      <div>
-        <p class="status" style="margin-bottom:.4rem">Machine score mix</p>
-        <div class="bar-list" id="mvScoreMix"></div>
-        <p class="status" style="margin:.9rem 0 .4rem">Mean combined_score by embodiment</p>
-        <div class="bar-list" id="mvEmbMean"></div>
-      </div>
-      <div>
-        <p class="status" style="margin-bottom:.4rem">Metric means</p>
-        <div class="bar-list" id="mvMetricDist"></div>
-        <p class="status" style="margin:.9rem 0 .4rem">Human vs machine</p>
-        <div class="bar-list" id="mvHumanMachine"></div>
-      </div>
-    </div>
-    <p class="status" style="margin:1rem 0 .4rem">Confusion (machine → human)</p>
-    <div class="bar-list" id="mvAgree"></div>
-  </section>
-
-  <section class="chart-card">
-    <h2>Hallucinate — machine vs human</h2>
-    <p class="status" style="margin-bottom:.7rem">
-      Same <span class="mono" id="halluPoolN">300</span> hallucinate clips raters score.
-      Machine map: high → Bad, medium → Medium, low → Good.
-    </p>
-    <div class="admin-stat" id="metricStats" style="margin-bottom:1rem"></div>
-    <div class="pie-row" id="svPies"></div>
-    <div class="phase-grid">
-      <div>
-        <p class="status" style="margin-bottom:.4rem">Machine score mix</p>
-        <div class="bar-list" id="metricProgress"></div>
-        <p class="status" style="margin:.9rem 0 .4rem">Mean human by band</p>
-        <div class="bar-list" id="metricMean"></div>
-      </div>
-      <div>
-        <p class="status" style="margin-bottom:.4rem">Human vs machine</p>
-        <div class="bar-list" id="metricMix"></div>
-        <p class="status" style="margin:.9rem 0 .4rem">Agreement (same 1 / 2 / 3 scale)</p>
-        <div class="bar-list" id="metricAgree"></div>
-      </div>
-    </div>
-    <p class="status" style="margin:1rem 0 .4rem">Selected-by detector (batch composition)</p>
-    <div class="bar-list" id="metricDet"></div>
-    <p class="status" style="margin:1rem 0 .4rem">Per embodiment — labeled / total · mean human</p>
-    <div class="bar-list" id="metricEmb"></div>
+    <div class="admin-stat" id="stats">Loading…</div>
   </section>
 
   <div class="phase-grid">
     <section class="chart-card">
-      <h2>Coverage</h2>
+      <h2>Coverage · 2 raters</h2>
       <p class="status" style="margin:.2rem 0 .4rem" id="covGeoCap">Geometry</p>
       <div class="bar-list" id="covGeo"></div>
       <p class="status" style="margin:.8rem 0 .4rem" id="covHalluCap">Hallucinate</p>
       <div class="bar-list" id="covHallu"></div>
     </section>
     <section class="chart-card">
-      <h2>Overall score mix</h2>
-      <div class="bar-list" id="scoreMix"></div>
-      <h2 style="margin-top:1.2rem">Labels per rater</h2>
-      <div class="bar-list" id="raterBars"></div>
+      <h2>Conflicts + checkers</h2>
+      <div class="admin-stat" id="conflictStats" style="margin-bottom:.8rem"></div>
+      <div class="bar-list" id="checkProgRaters"></div>
+      <p class="status" style="margin:.8rem 0 .4rem">Open conflicts</p>
+      <div class="bar-list" id="conflictOpen"></div>
     </section>
   </div>
+
   <section class="chart-card">
-    <h2>Rater table</h2>
-    <table class="data" id="table"><thead><tr><th>Rater</th><th>Labels</th><th>Videos</th><th>Mean</th><th>Last update</th></tr></thead><tbody></tbody></table>
+    <h2>Confusion · Geometry (machine → human)</h2>
+    <p class="status" style="margin-bottom:.6rem">Resolved human label only: two raters agree, or a checker decides a conflict. Rows = machine, columns = human.</p>
+    <div class="cm-grid" id="cmGeo"></div>
+  </section>
+
+  <section class="chart-card">
+    <h2>Confusion · Hallucinate (machine → human)</h2>
+    <p class="status" style="margin-bottom:.6rem">Same 1 / 2 / 3 scale. Machine map: high → Bad, medium → Medium, low → Good. Split 300 / 300 / 300 by embodiment.</p>
+    <div class="cm-grid" id="cmHallu"></div>
+  </section>
+
+  <section class="chart-card">
+    <h2>Raters</h2>
+    <table class="data" id="table"><thead><tr><th>Rater</th><th>Labels</th><th>Items</th><th>Mean</th><th>Last update</th></tr></thead><tbody></tbody></table>
   </section>
 </main>
 <script src="config.js"></script>
@@ -149,7 +69,8 @@
 <script>
 if (VGP.requireAdmin()) {
   let rows = [], geoItems = [], halluItems = [], geoMetrics = [], halluMetrics = [];
-  const COLORS = { 1: '#c2413b', 2: '#a16207', 3: '#16835b' };
+  let exportBundle = { geometry: { items: [] }, hallucinate: { items: [] } };
+  const LABELS = ['Bad', 'Medium', 'Good'];
 
   function bars(host, entries, max){
     host.innerHTML = entries.map(([label, n, extra]) => {
@@ -158,322 +79,212 @@ if (VGP.requireAdmin()) {
     }).join('') || '<p class="status">No data.</p>';
   }
 
-  function pie(slices){
-    const total = slices.reduce((a, s) => a + s.n, 0) || 1;
-    let acc = 0;
-    const stops = slices.map(s => {
-      const start = (acc / total) * 360;
-      acc += s.n;
-      const end = (acc / total) * 360;
-      return `${s.color} ${start}deg ${end}deg`;
-    }).join(', ');
-    const legend = slices.map(s =>
-      `<span><i class="pie-dot" style="background:${s.color}"></i>${s.label} ${s.n} (${Math.round(100 * s.n / total)}%)</span>`
-    ).join('');
-    return `<div class="pie" style="background:conic-gradient(${stops})"></div><div class="pie-legend">${legend}</div>`;
-  }
-
-  function hist(counts){
-    const bins = { '0': 0, '1': 0, '2': 0, '3': 0, '4+': 0 };
+  function histCover(counts){
+    const bins = { 0: 0, 1: 0, 2: 0 };
     for (const n of Object.values(counts)) {
-      if (n >= 4) bins['4+'] += 1;
-      else bins[String(n)] += 1;
+      if (n >= 2) bins[2] += 1;
+      else bins[n] = (bins[n] || 0) + 1;
     }
-    return Object.entries(bins);
+    return [['0 raters', bins[0]], ['1 rater', bins[1]], ['2 raters', bins[2]]];
   }
 
-  function videoId(itemId, known){
-    if (known.has(itemId)) return itemId;
-    return VGP.parentVideoId(itemId);
+  function emptyMatrix(){
+    return { 1: {1:0,2:0,3:0}, 2: {1:0,2:0,3:0}, 3: {1:0,2:0,3:0} };
   }
 
-  function mean(xs){ return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0; }
+  function addCell(m, machine, human){
+    if (!machine || !human) return;
+    m[machine][human] += 1;
+  }
 
-  function renderEmbodimentPies(){
-    const itemEmb = new Map([...geoItems, ...halluItems].map(it => [it.id, VGP.normalizeEmbodiment(it.embodiment)]));
+  function matrixStats(m){
+    let n = 0, agree = 0;
+    for (let i = 1; i <= 3; i++) for (let j = 1; j <= 3; j++) {
+      n += m[i][j];
+      if (i === j) agree += m[i][j];
+    }
+    return { n, agree, acc: n ? agree / n : 0 };
+  }
+
+  function renderMatrix(title, m){
+    const s = matrixStats(m);
+    const cell = (i, j) => {
+      const v = m[i][j];
+      return `<td class="${i === j ? 'diag' : ''}">${v}</td>`;
+    };
+    return `<div class="cm-card"><h3>${title}</h3>
+      <table class="cm">
+        <thead><tr><th></th><th>H Bad</th><th>H Med</th><th>H Good</th></tr></thead>
+        <tbody>
+          <tr><th>M Bad</th>${cell(1,1)}${cell(1,2)}${cell(1,3)}</tr>
+          <tr><th>M Med</th>${cell(2,1)}${cell(2,2)}${cell(2,3)}</tr>
+          <tr><th>M Good</th>${cell(3,1)}${cell(3,2)}${cell(3,3)}</tr>
+        </tbody>
+      </table>
+      <p class="status">n=${s.n} · agree ${s.agree} · acc ${s.n ? (100 * s.acc).toFixed(1) : '—'}%</p>
+    </div>`;
+  }
+
+  function confusionFor(items, metrics, resolved){
+    const byId = new Map(metrics.map(it => [it.id, it]));
+    const overall = emptyMatrix();
     const byEmb = {};
-    for (const r of rows) {
-      const vid = videoId(r.item_id, new Set([...itemEmb.keys()]));
-      const emb = itemEmb.get(vid) || itemEmb.get(r.item_id) || 'unknown';
-      if (!byEmb[emb]) byEmb[emb] = { 1: 0, 2: 0, 3: 0, sum: 0, n: 0 };
-      byEmb[emb][r.score] = (byEmb[emb][r.score] || 0) + 1;
-      byEmb[emb].sum += r.score;
-      byEmb[emb].n += 1;
+    for (const it of items) {
+      const human = resolved[it.id]?.human_score;
+      const machine = VGP.machineScore(byId.get(it.id) || it);
+      if (human == null || !machine) continue;
+      const emb = VGP.normalizeEmbodiment(it.embodiment);
+      if (!byEmb[emb]) byEmb[emb] = emptyMatrix();
+      addCell(overall, machine, human);
+      addCell(byEmb[emb], machine, human);
     }
-    const host = document.getElementById('embPies');
-    const embs = Object.keys(byEmb).sort();
-    if (!embs.length) {
-      host.innerHTML = '<p class="status">No human labels yet.</p>';
-      document.getElementById('embBars').innerHTML = '<p class="status">No data.</p>';
-      return;
-    }
-    host.innerHTML = embs.map(emb => {
-      const e = byEmb[emb];
-      return `<div class="pie-card"><h3>${VGP.embLabel(emb)}</h3>${pie([
-        { label: 'Bad', n: e[1] || 0, color: COLORS[1] },
-        { label: 'Med', n: e[2] || 0, color: COLORS[2] },
-        { label: 'Good', n: e[3] || 0, color: COLORS[3] },
-      ])}</div>`;
-    }).join('');
-    bars(document.getElementById('embBars'), embs.map(emb => {
-      const e = byEmb[emb];
-      return [`${VGP.embLabel(emb)} · mean ${e.n ? (e.sum / e.n).toFixed(2) : '—'} · n=${e.n}`, e.n];
-    }), Math.max(1, ...embs.map(e => byEmb[e].n)));
+    return { overall, byEmb };
   }
 
-  function render(){
-    const geoN = geoItems.length;
-    const halluN = halluItems.length;
-    const poolN = geoN + halluN;
-    const geoIds = new Set(geoItems.map(it => it.id));
-    const halluIds = new Set(halluItems.map(it => it.id));
-    const known = new Set([...geoIds, ...halluIds]);
-    const geoCov = VGP.coverageCounts(rows, geoItems);
-    const halluCov = VGP.coverageCounts(rows, halluItems);
-    const raters = new Map();
-    const scores = { 1: 0, 2: 0, 3: 0 };
-
-    for (const r of rows) {
-      scores[r.score] = (scores[r.score] || 0) + 1;
-      if (!raters.has(r.rater_name)) raters.set(r.rater_name, { n: 0, sum: 0, last: r.updated_at, videos: new Set() });
-      const e = raters.get(r.rater_name);
-      e.n += 1; e.sum += r.score;
-      if (r.updated_at > e.last) e.last = r.updated_at;
-      e.videos.add(videoId(r.item_id, known));
-    }
-
-    const perRater = [...raters.entries()].map(([rater, v]) => ({
-      rater, n: v.n, videos: v.videos.size, mean: (v.sum / v.n).toFixed(2), last: v.last,
-    })).sort((a, b) => b.n - a.n);
-
-    const geoCovered = Object.values(geoCov).filter(n => n > 0).length;
-    const halluCovered = Object.values(halluCov).filter(n => n > 0).length;
-    const overlapGeo = Object.values(geoCov).filter(n => n >= 2).length;
-    const overlapHallu = Object.values(halluCov).filter(n => n >= 2).length;
-
-    document.getElementById('geoPoolN').textContent = String(geoN);
-    document.getElementById('halluPoolN').textContent = String(halluN);
-    document.getElementById('covGeoCap').textContent = `Geometry (${geoN} · target ${VGP.TARGET_COVER} raters)`;
-    document.getElementById('covHalluCap').textContent = `Hallucinate (${halluN} · target ${VGP.TARGET_COVER} raters)`;
-
-    document.getElementById('stats').innerHTML = `
-      <div><b>${perRater.length}</b><span>raters</span></div>
-      <div><b>${rows.length}</b><span>label rows</span></div>
-      <div><b>${geoCovered}/${geoN}</b><span>geometry covered</span></div>
-      <div><b>${halluCovered}/${halluN}</b><span>hallucinate covered</span></div>
-      <div><b>${overlapGeo + overlapHallu}/${poolN}</b><span>videos with ≥2 raters</span></div>
-      <div><b id="statConflicts">0</b><span>score conflicts</span></div>`;
-
-    const geoConflicts = VGP.conflictRows(rows, geoItems);
-    const halluConflicts = VGP.conflictRows(rows, halluItems);
-    const geoCheck = VGP.conflictCheckProgress(rows, geoItems);
-    const halluCheck = VGP.conflictCheckProgress(rows, halluItems);
-    const conflictTotal = geoCheck.total + halluCheck.total;
-    const conflictOpen = geoCheck.open + halluCheck.open;
-    const conflictBoth = geoCheck.both + halluCheck.both;
-    document.getElementById('statConflicts').textContent = conflictTotal;
-    document.getElementById('conflictStats').innerHTML = `
-      <div><b>${geoCheck.total}</b><span>geometry conflicts</span></div>
-      <div><b>${halluCheck.total}</b><span>hallucinate conflicts</span></div>
-      <div><b>${conflictOpen}</b><span>open (no checker)</span></div>
-      <div><b>${conflictBoth}</b><span>checked by both</span></div>`;
-    document.getElementById('checkProgStats').innerHTML = `
-      <div><b>${conflictTotal}</b><span>conflicts total</span></div>
-      <div><b>${conflictOpen}</b><span>open</span></div>
-      <div><b>${geoCheck.one + halluCheck.one}</b><span>checked by one</span></div>
-      <div><b>${conflictBoth}</b><span>checked by both</span></div>
-      <div><b>${(geoCheck.per.quang_check || 0) + (halluCheck.per.quang_check || 0)}/${conflictTotal || 0}</b><span>quang_check</span></div>
-      <div><b>${(geoCheck.per.thanh_check || 0) + (halluCheck.per.thanh_check || 0)}/${conflictTotal || 0}</b><span>thanh_check</span></div>`;
-    const checkBars = (host, p) => bars(host, [
-      ['Open', p.open],
-      ['Checked by one', p.one],
-      ['Checked by both', p.both],
-    ], Math.max(1, p.total));
-    checkBars(document.getElementById('checkProgGeo'), geoCheck);
-    checkBars(document.getElementById('checkProgHallu'), halluCheck);
-    bars(document.getElementById('checkProgRaters'), [
-      [`quang_check · ${ (geoCheck.per.quang_check || 0) + (halluCheck.per.quang_check || 0) }/${conflictTotal}`, (geoCheck.per.quang_check || 0) + (halluCheck.per.quang_check || 0)],
-      [`thanh_check · ${ (geoCheck.per.thanh_check || 0) + (halluCheck.per.thanh_check || 0) }/${conflictTotal}`, (geoCheck.per.thanh_check || 0) + (halluCheck.per.thanh_check || 0)],
-    ], Math.max(1, conflictTotal));
-    const fmtConflict = list => list.slice(0, 12).map(c => {
-      const scores = c.labels.map(l => `${l.rater_name}:${l.score}`).join(' / ');
-      return [c.id, c.labels.length, ` ${scores}`];
+  function joinExport(items, metrics, resolved, check){
+    const byId = new Map(metrics.map(it => [it.id, it]));
+    return items.map(it => {
+      const machine = byId.get(it.id) || {};
+      const human = resolved[it.id] || {};
+      const row = { ...machine };
+      row.id = it.id;
+      row.index = it.index != null ? it.index : machine.index;
+      row.check = check;
+      row.embodiment = VGP.normalizeEmbodiment(it.embodiment || machine.embodiment);
+      if (it.task) row.task = it.task;
+      if (it.split) row.split = it.split;
+      if (it.clip_id) row.clip_id = it.clip_id;
+      if (it.segment_index != null) row.segment_index = it.segment_index;
+      if (it.rate_target) row.rate_target = it.rate_target;
+      row.machine_score = VGP.machineScore(machine);
+      row.rating = machine.rating || (row.machine_score != null ? LABELS[row.machine_score - 1].toLowerCase() : null);
+      row.human_score = human.human_score;
+      row.human_rating = human.human_rating;
+      row.n_raters = human.n_raters || 0;
+      row.conflict = !!human.conflict;
+      row.consensus = human.consensus;
+      row.rater_scores = human.rater_scores || {};
+      row.checker_scores = human.checker_scores || {};
+      return row;
     });
-    bars(document.getElementById('conflictGeo'), fmtConflict(geoConflicts).map(([id, n, extra]) => [id, n, extra]), 4);
-    bars(document.getElementById('conflictHallu'), fmtConflict(halluConflicts).map(([id, n, extra]) => [id, n, extra]), 4);
-
-    const covMax = Math.max(1, ...hist(geoCov).map(x => x[1]), ...hist(halluCov).map(x => x[1]));
-    bars(document.getElementById('covGeo'), hist(geoCov).map(([k, n]) => [`Geometry · ${k} labels`, n]), covMax);
-    bars(document.getElementById('covHallu'), hist(halluCov).map(([k, n]) => [`Hallucinate · ${k} labels`, n]), covMax);
-
-    const scoreMax = Math.max(1, scores[1], scores[2], scores[3]);
-    bars(document.getElementById('scoreMix'), [
-      ['1 Bad', scores[1] || 0],
-      ['2 Medium', scores[2] || 0],
-      ['3 Good', scores[3] || 0],
-    ], scoreMax);
-
-    const rMax = Math.max(1, ...perRater.map(r => r.n), 1);
-    bars(document.getElementById('raterBars'), perRater.map(r => [r.rater, r.n]), rMax);
-
-    document.querySelector('#table tbody').innerHTML = perRater.map(r =>
-      `<tr><td>${r.rater}${VGP.isReviewer(r.rater) ? ' <span class="mono">checker</span>' : ''}</td><td>${r.n}</td><td>${r.videos}</td><td>${r.mean}</td><td class="mono">${new Date(r.last).toLocaleString()}</td></tr>`
-    ).join('') || '<tr><td colspan="5">No labels yet.</td></tr>';
-
-    renderEmbodimentPies();
-    renderCheckMetrics('geometry');
-    renderCheckMetrics('hallucinate');
   }
 
-  function pearson(xs, ys){
-    if (xs.length < 2) return 0;
-    const n2 = xs.length, mx = mean(xs), my = mean(ys);
-    let num = 0, dx = 0, dy = 0;
-    for (let i = 0; i < n2; i++) {
-      const a = xs[i] - mx, b = ys[i] - my;
-      num += a * b; dx += a * a; dy += b * b;
-    }
-    return (dx && dy) ? num / Math.sqrt(dx * dy) : 0;
+  function flattenScores(obj){
+    return Object.entries(obj || {}).map(([k, v]) => `${k}:${v}`).join('|');
   }
 
-  function renderCheckMetrics(check){
-    const isGeo = check === 'geometry';
-    const catalog = isGeo ? geoItems : halluItems;
-    const metrics = isGeo ? geoMetrics : halluMetrics;
-    const catalogIds = new Set(catalog.map(it => it.id));
-    const byId = new Map(metrics.filter(it => catalogIds.has(it.id)).map(it => [it.id, it]));
-    const labeled = rows.map(r => ({ ...r, item_id: videoId(r.item_id, catalogIds) }))
-      .filter(r => catalogIds.has(r.item_id) && byId.has(r.item_id));
-    const scores = { 1: 0, 2: 0, 3: 0 };
-    const embScores = {};
-    let geoSum = 0, poseSum = 0, combSum = 0;
-    const pool = [...byId.values()];
-    for (const it of pool) {
-      const ms = VGP.machineScore(it);
-      if (ms) scores[ms] = (scores[ms] || 0) + 1;
-      const emb = VGP.normalizeEmbodiment(it.embodiment || it.robot_type);
-      if (!embScores[emb]) embScores[emb] = { n: 0, sum: 0 };
-      embScores[emb].n += 1;
-      embScores[emb].sum += it.combined_score != null ? it.combined_score : (ms || 0);
-      geoSum += it.geometric_consistency || 0;
-      poseSum += it.pose_stability || 0;
-      combSum += it.combined_score || 0;
+  function toCsv(items){
+    const keys = [
+      'id', 'index', 'check', 'embodiment', 'task', 'split', 'clip_id', 'segment_index', 'rate_target',
+      'video_path', 'source_video', 'score', 'machine_score', 'rating',
+      'geometric_consistency', 'pose_stability', 'num_disjoint_frames', 'disjoint_frame_ratio', 'combined_score',
+      'band', 'selected_by', 'peak_ratio', 'bundle', 'violated',
+      'human_score', 'human_rating', 'n_raters', 'conflict', 'consensus', 'rater_scores', 'checker_scores',
+    ];
+    const esc = v => {
+      if (v == null) return '';
+      if (typeof v === 'object') return JSON.stringify(v).replaceAll('"', '""');
+      const s = String(v);
+      return /[",\n]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s;
+    };
+    const lines = [keys.join(',')];
+    for (const it of items) {
+      const row = { ...it, rater_scores: flattenScores(it.rater_scores), checker_scores: flattenScores(it.checker_scores) };
+      lines.push(keys.map(k => esc(row[k])).join(','));
     }
-    const n = pool.length || 1;
-    const humanByMachine = { 1: {1:0,2:0,3:0}, 2: {1:0,2:0,3:0}, 3: {1:0,2:0,3:0} };
-    let exactAgree = 0;
-    const humanScores = [], machineScores = [];
-    for (const r of labeled) {
-      const m = VGP.machineScore(byId.get(r.item_id));
-      if (!m) continue;
-      humanByMachine[m][r.score] += 1;
-      if (m === r.score) exactAgree += 1;
-      humanScores.push(r.score);
-      machineScores.push(m);
-    }
-
-    const statHost = document.getElementById(isGeo ? 'mvMetricStats' : 'metricStats');
-    if (isGeo) {
-      statHost.innerHTML = `
-        <div><b>${pool.length}/${catalog.length}</b><span>geometry clips</span></div>
-        <div><b>${labeled.length}</b><span>human-joined</span></div>
-        <div><b>${(combSum / n).toFixed(3)}</b><span>mean combined</span></div>
-        <div><b>${(geoSum / n).toFixed(3)}</b><span>mean geometric</span></div>
-        <div><b>${(poseSum / n).toFixed(3)}</b><span>mean pose</span></div>`;
-    } else {
-      statHost.innerHTML = `
-        <div><b>${pool.length}/${catalog.length}</b><span>hallucinate clips</span></div>
-        <div><b>${labeled.length}</b><span>human-joined</span></div>
-        <div><b>${scores[1] || 0}</b><span>machine Bad</span></div>
-        <div><b>${scores[2] || 0}</b><span>machine Medium</span></div>
-        <div><b>${scores[3] || 0}</b><span>machine Good</span></div>`;
-    }
-
-    const pieHost = document.getElementById(isGeo ? 'mvPies' : 'svPies');
-    pieHost.innerHTML = Object.keys(embScores).sort().map(emb => {
-      const items = pool.filter(it => VGP.normalizeEmbodiment(it.embodiment || it.robot_type) === emb);
-      const sc = { 1: 0, 2: 0, 3: 0 };
-      for (const it of items) sc[VGP.machineScore(it)] = (sc[VGP.machineScore(it)] || 0) + 1;
-      const extra = isGeo && embScores[emb].n
-        ? `<p class="status">combined ${(embScores[emb].sum / embScores[emb].n).toFixed(3)}</p>`
-        : `<p class="status">human ${items.filter(it => labeled.some(r => r.item_id === it.id)).length}/${items.length}</p>`;
-      return `<div class="pie-card"><h3>${VGP.embLabel(emb)} · machine</h3>${pie([
-        { label: 'Bad', n: sc[1] || 0, color: COLORS[1] },
-        { label: 'Med', n: sc[2] || 0, color: COLORS[2] },
-        { label: 'Good', n: sc[3] || 0, color: COLORS[3] },
-      ])}${extra}</div>`;
-    }).join('') || '<p class="status">No machine metrics for this catalog.</p>';
-
-    const mixHost = document.getElementById(isGeo ? 'mvScoreMix' : 'metricProgress');
-    bars(mixHost, [
-      ['Bad', scores[1] || 0], ['Medium', scores[2] || 0], ['Good', scores[3] || 0],
-    ], Math.max(1, scores[1], scores[2], scores[3]));
-
-    if (isGeo) {
-      bars(document.getElementById('mvEmbMean'), Object.keys(embScores).sort().map(emb => [
-        VGP.embLabel(emb), Number((embScores[emb].sum / embScores[emb].n).toFixed(3)),
-      ]), 1);
-      bars(document.getElementById('mvMetricDist'), [
-        ['geometric_consistency', Number((geoSum / n).toFixed(3))],
-        ['pose_stability', Number((poseSum / n).toFixed(3))],
-        ['combined_score', Number((combSum / n).toFixed(3))],
-      ], 1);
-    } else {
-      const byBandHuman = {};
-      for (const r of labeled) {
-        const band = byId.get(r.item_id).band || VGP.scoreLabel(VGP.machineScore(byId.get(r.item_id)));
-        if (!byBandHuman[band]) byBandHuman[band] = [];
-        byBandHuman[band].push(r.score);
-      }
-      bars(document.getElementById('metricMean'), Object.keys(byBandHuman).sort().map(b => [
-        `mean human · ${b} (${VGP.scoreLabel(VGP.BAND_TO_SCORE[b])})`,
-        Number(mean(byBandHuman[b]).toFixed(2)),
-      ]), 3);
-      const dets = {};
-      for (const it of pool) {
-        const d = it.selected_by || 'none';
-        dets[d] = (dets[d] || 0) + 1;
-      }
-      bars(document.getElementById('metricDet'), Object.entries(dets).sort((a, b) => b[1] - a[1]), Math.max(1, ...Object.values(dets), 1));
-      const embs = [...new Set(pool.map(it => VGP.normalizeEmbodiment(it.embodiment)))].sort();
-      bars(document.getElementById('metricEmb'), embs.map(emb => {
-        const all = pool.filter(it => VGP.normalizeEmbodiment(it.embodiment) === emb);
-        const done = all.filter(it => labeled.some(r => r.item_id === it.id));
-        const sc = done.length ? mean(labeled.filter(r => VGP.normalizeEmbodiment(byId.get(r.item_id)?.embodiment) === emb).map(r => r.score)) : 0;
-        return [`${VGP.embLabel(emb)} ${done.length}/${all.length} · mean ${done.length ? sc.toFixed(2) : '—'}`, done.length];
-      }), Math.max(1, ...embs.map(emb => pool.filter(it => VGP.normalizeEmbodiment(it.embodiment) === emb).length)));
-    }
-
-    const hmHost = document.getElementById(isGeo ? 'mvHumanMachine' : 'metricMix');
-    const agreeHost = document.getElementById(isGeo ? 'mvAgree' : 'metricAgree');
-    if (labeled.length) {
-      bars(hmHost, [
-        ['Mean human', Number(mean(humanScores).toFixed(2))],
-        ['Mean machine', Number(mean(machineScores).toFixed(2))],
-        ['Pearson r', Number(pearson(humanScores, machineScores).toFixed(2))],
-        ['Exact agree', exactAgree],
-      ], Math.max(3, labeled.length));
-      bars(agreeHost, [
-        ['M-Bad→H-Bad', humanByMachine[1][1]], ['M-Bad→H-Med', humanByMachine[1][2]], ['M-Bad→H-Good', humanByMachine[1][3]],
-        ['M-Med→H-Bad', humanByMachine[2][1]], ['M-Med→H-Med', humanByMachine[2][2]], ['M-Med→H-Good', humanByMachine[2][3]],
-        ['M-Good→H-Bad', humanByMachine[3][1]], ['M-Good→H-Med', humanByMachine[3][2]], ['M-Good→H-Good', humanByMachine[3][3]],
-      ], Math.max(1, ...Object.values(humanByMachine).flatMap(o => Object.values(o))));
-    } else {
-      hmHost.innerHTML = `<p class="status">No human ${check} labels yet.</p>`;
-      agreeHost.innerHTML = `<p class="status">No human ${check} labels yet.</p>`;
-    }
+    return lines.join('\n');
   }
 
-  function toCsv(data){
-    const header = 'rater_name,item_id,score,updated_at';
-    return [header, ...data.map(r => [r.rater_name, r.item_id, r.score, r.updated_at].join(','))].join('\n');
-  }
   function download(filename, content, type){
     const blob = new Blob([content], { type });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = filename;
     a.click();
+  }
+
+  function render(){
+    const geoN = geoItems.length;
+    const halluN = halluItems.length;
+    const geoCov = VGP.coverageCounts(rows, geoItems);
+    const halluCov = VGP.coverageCounts(rows, halluItems);
+    const geoResolved = VGP.resolveHuman(rows, geoItems);
+    const halluResolved = VGP.resolveHuman(rows, halluItems);
+    const geo2 = Object.values(geoCov).filter(n => n >= 2).length;
+    const hallu2 = Object.values(halluCov).filter(n => n >= 2).length;
+    const geo1 = Object.values(geoCov).filter(n => n === 1).length;
+    const hallu1 = Object.values(halluCov).filter(n => n === 1).length;
+    const geoCheck = VGP.conflictCheckProgress(rows, geoItems);
+    const halluCheck = VGP.conflictCheckProgress(rows, halluItems);
+    const conflicts = geoCheck.total + halluCheck.total;
+    const open = geoCheck.open + halluCheck.open;
+
+    const raters = new Map();
+    for (const r of rows) {
+      if (!raters.has(r.rater_name)) raters.set(r.rater_name, { n: 0, sum: 0, last: r.updated_at, videos: new Set() });
+      const e = raters.get(r.rater_name);
+      e.n += 1; e.sum += r.score;
+      if (r.updated_at > e.last) e.last = r.updated_at;
+      e.videos.add(r.item_id);
+    }
+    const perRater = [...raters.entries()].map(([rater, v]) => ({
+      rater, n: v.n, videos: v.videos.size, mean: (v.sum / v.n).toFixed(2), last: v.last,
+    })).sort((a, b) => b.n - a.n);
+
+    document.getElementById('stats').innerHTML = `
+      <div><b>${geoN}</b><span>geometry videos</span></div>
+      <div><b>${halluN}</b><span>hallucinate segments</span></div>
+      <div><b>${geo2}/${geoN}</b><span>geometry with 2 raters</span></div>
+      <div><b>${hallu2}/${halluN}</b><span>hallucinate with 2 raters</span></div>
+      <div><b>${geo1 + hallu1}</b><span>waiting 2nd rater</span></div>
+      <div><b>${conflicts}</b><span>score conflicts</span></div>
+      <div><b>${open}</b><span>conflicts still open</span></div>
+      <div><b>${perRater.filter(r => !VGP.isReviewer(r.rater)).length}</b><span>regular raters</span></div>`;
+
+    document.getElementById('covGeoCap').textContent = `Geometry · ${geoN} videos · 100 / embodiment`;
+    document.getElementById('covHalluCap').textContent = `Hallucinate · ${halluN} segments · 300 / embodiment`;
+    const geoHist = histCover(geoCov);
+    const halluHist = histCover(halluCov);
+    bars(document.getElementById('covGeo'), geoHist, Math.max(1, geoN));
+    bars(document.getElementById('covHallu'), halluHist, Math.max(1, halluN));
+
+    document.getElementById('conflictStats').innerHTML = `
+      <div><b>${geoCheck.total}</b><span>geometry conflicts</span></div>
+      <div><b>${halluCheck.total}</b><span>hallucinate conflicts</span></div>
+      <div><b>${open}</b><span>open</span></div>
+      <div><b>${geoCheck.both + halluCheck.both}</b><span>checked by both</span></div>`;
+    bars(document.getElementById('checkProgRaters'), [
+      [`quang_check ${(geoCheck.per.quang_check || 0) + (halluCheck.per.quang_check || 0)}/${conflicts || 0}`, (geoCheck.per.quang_check || 0) + (halluCheck.per.quang_check || 0)],
+      [`thanh_check ${(geoCheck.per.thanh_check || 0) + (halluCheck.per.thanh_check || 0)}/${conflicts || 0}`, (geoCheck.per.thanh_check || 0) + (halluCheck.per.thanh_check || 0)],
+    ], Math.max(1, conflicts));
+    const openRows = [...VGP.conflictRows(rows, geoItems), ...VGP.conflictRows(rows, halluItems)]
+      .filter(c => !c.labels.some(l => VGP.isReviewer(l.rater_name)))
+      .slice(0, 12)
+      .map(c => [c.id, c.labels.length, ' ' + c.labels.map(l => `${l.rater_name}:${l.score}`).join(' / ')]);
+    bars(document.getElementById('conflictOpen'), openRows, 4);
+
+    const geoCm = confusionFor(geoItems, geoMetrics, geoResolved);
+    const halluCm = confusionFor(halluItems, halluMetrics, halluResolved);
+    const embs = ['bimanual', 'humanoid', 'single_arm'];
+    document.getElementById('cmGeo').innerHTML = [
+      renderMatrix('Overall', geoCm.overall),
+      ...embs.map(emb => renderMatrix(VGP.embLabel(emb), geoCm.byEmb[emb] || emptyMatrix())),
+    ].join('');
+    document.getElementById('cmHallu').innerHTML = [
+      renderMatrix('Overall', halluCm.overall),
+      ...embs.map(emb => renderMatrix(VGP.embLabel(emb), halluCm.byEmb[emb] || emptyMatrix())),
+    ].join('');
+
+    document.querySelector('#table tbody').innerHTML = perRater.map(r =>
+      `<tr><td>${r.rater}${VGP.isReviewer(r.rater) ? ' <span class="mono">checker</span>' : ''}</td><td>${r.n}</td><td>${r.videos}</td><td>${r.mean}</td><td class="mono">${new Date(r.last).toLocaleString()}</td></tr>`
+    ).join('') || '<tr><td colspan="5">No labels yet.</td></tr>';
+
+    exportBundle = {
+      exported_at: new Date().toISOString(),
+      target_raters: VGP.TARGET_COVER,
+      geometry: { n: geoN, check: 'geometry', items: joinExport(geoItems, geoMetrics, geoResolved, 'geometry') },
+      hallucinate: { n: halluN, check: 'hallucinate', items: joinExport(halluItems, halluMetrics, halluResolved, 'hallucinate') },
+    };
   }
 
   async function refresh(){
@@ -496,8 +307,10 @@ if (VGP.requireAdmin()) {
   }
 
   document.getElementById('btnRefresh').onclick = refresh;
-  document.getElementById('btnCsv').onclick = () => download('vgp_labels.csv', toCsv(rows), 'text/csv');
-  document.getElementById('btnJson').onclick = () => download('vgp_labels.json', JSON.stringify(rows, null, 2), 'application/json');
+  document.getElementById('btnJson').onclick = () =>
+    download('vgp_labels.json', JSON.stringify(exportBundle, null, 2), 'application/json');
+  document.getElementById('btnCsv').onclick = () =>
+    download('vgp_labels.csv', toCsv([...(exportBundle.geometry.items || []), ...(exportBundle.hallucinate.items || [])]), 'text/csv');
   refresh().catch(err => { document.getElementById('stats').textContent = 'Failed to load.'; console.error(err); });
 }
 </script>

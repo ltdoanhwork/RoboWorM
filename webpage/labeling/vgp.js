@@ -7,7 +7,7 @@ const VGP = (() => {
   const PASS_KEY = "vgp_pass_ok";
   const ADMIN_KEY = "vgp_admin_ok";
   const BATCH_PREFIX = "vgp_batch::";
-  const BATCH_VERSION = 4; // checkers get conflict-only batches
+  const BATCH_VERSION = 5; // 900 hallu segments, reindexed ids, cache reset
   const GEO_N = 25;
   const HALLU_N = 75;
   const HALF = GEO_N; // back-compat alias
@@ -228,15 +228,40 @@ const VGP = (() => {
       if (c >= maxCover && !prefer.has(it.id)) continue;
       fresh.push(it);
     }
-    fresh.sort((a, b) => {
+    const rank = (a, b) => {
       const ap = prefer.has(a.id) ? 0 : 1;
       const bp = prefer.has(b.id) ? 0 : 1;
       if (ap !== bp) return ap - bp;
       const d = (coverage[a.id] || 0) - (coverage[b.id] || 0);
       if (d !== 0) return d;
       return Math.random() - 0.5;
-    });
-    return fresh.slice(0, n);
+    };
+    fresh.sort(rank);
+    if (options.stratify === false || fresh.length <= n) return fresh.slice(0, n);
+    const groups = new Map();
+    for (const it of fresh) {
+      const emb = normalizeEmbodiment(it.embodiment);
+      if (!groups.has(emb)) groups.set(emb, []);
+      groups.get(emb).push(it);
+    }
+    const embs = [...groups.keys()].sort();
+    if (embs.length <= 1) return fresh.slice(0, n);
+    embs.forEach((emb) => groups.get(emb).sort(rank));
+    const picked = [];
+    const cursor = Object.fromEntries(embs.map((emb) => [emb, 0]));
+    let guard = 0;
+    while (picked.length < n && guard < n * embs.length + embs.length) {
+      const emb = embs[guard % embs.length];
+      const list = groups.get(emb);
+      const i = cursor[emb];
+      if (i < list.length) {
+        picked.push(list[i]);
+        cursor[emb] = i + 1;
+      }
+      guard += 1;
+      if (embs.every((e) => cursor[e] >= groups.get(e).length)) break;
+    }
+    return picked;
   }
 
   function labelsByVideo(rows, items) {
@@ -280,6 +305,47 @@ const VGP = (() => {
     const fresh = (items || []).filter((it) => want.has(it.id) && !doneIds.has(it.id));
     fresh.sort(() => Math.random() - 0.5);
     return n != null ? fresh.slice(0, n) : fresh;
+  }
+
+  function resolveHuman(rows, items) {
+    const byVid = labelsByVideo(rows, items);
+    const out = {};
+    for (const it of items || []) {
+      const labels = byVid.get(it.id) || new Map();
+      const regular = [...labels.values()].filter((row) => !isReviewer(row.rater_name));
+      const checkers = [...labels.values()].filter((row) => isReviewer(row.rater_name));
+      const raterScores = {};
+      const checkerScores = {};
+      regular.forEach((row) => { raterScores[row.rater_name] = row.score; });
+      checkers.forEach((row) => { checkerScores[row.rater_name] = row.score; });
+      const uniq = new Set(regular.map((row) => row.score));
+      let humanScore = null;
+      let consensus = null;
+      const conflict = regular.length >= 2 && uniq.size >= 2;
+      if (regular.length >= 2 && uniq.size === 1) {
+        humanScore = regular[0].score;
+        consensus = "raters";
+      } else if (conflict) {
+        const cuniq = new Set(checkers.map((row) => row.score));
+        if (checkers.length >= 2 && cuniq.size === 1) {
+          humanScore = checkers[0].score;
+          consensus = "checkers";
+        } else if (checkers.length === 1) {
+          humanScore = checkers[0].score;
+          consensus = "checker";
+        }
+      }
+      out[it.id] = {
+        human_score: humanScore,
+        human_rating: humanScore != null ? (SCORE_LABEL[humanScore] || "").toLowerCase() : null,
+        n_raters: new Set(regular.map((row) => normalizeName(row.rater_name))).size,
+        rater_scores: raterScores,
+        checker_scores: checkerScores,
+        conflict,
+        consensus,
+      };
+    }
+    return out;
   }
 
   function conflictCheckProgress(rows, items) {
@@ -414,8 +480,8 @@ const VGP = (() => {
   }
 
   // --- local autosave mirror + undo stack ---------------------------------
-  const LABEL_CACHE_PREFIX = "vgp_labels_cache::";
-  const PENDING_PREFIX = "vgp_labels_pending::";
+  const LABEL_CACHE_PREFIX = "vgp_labels_cache::v" + BATCH_VERSION + "::";
+  const PENDING_PREFIX = "vgp_labels_pending::v" + BATCH_VERSION + "::";
   const UNDO_MAX = 40;
   let undoStack = [];
 
@@ -628,7 +694,7 @@ const VGP = (() => {
     clearSession, isAdminPath, requireGate, requireAdmin,
     defaultLang, applyLang, isReviewer, raterPassOk, conflictCheckProgress,
     segmentId, parentVideoId, scoreableSegmentIndices, videoComplete, videoTouched, raterStats,
-    coverageCounts, pickLeastLabeled, conflictIds, conflictRows,
+    coverageCounts, pickLeastLabeled, conflictIds, conflictRows, resolveHuman,
     getBatch, getValidBatch, isStaleOpenBatch, saveBatch, submitBatch, clearBatch, createBatch, getOrCreateBatch,
     itemsFromIds, renderStepStrip, preloadVideos, anyDialogOpen, bindExampleRemind,
     sbUpsertLabel, sbDeleteLabel, sbLoadLabels, sbLoadAllLabels,

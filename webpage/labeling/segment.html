@@ -41,12 +41,12 @@
         <div class="seg-track" id="segTrack" title="lead · middle (score) · trail"></div>
         <div class="score-area">
           <p class="score-question">
-            <span data-lang="en">How physically intact is the robot in the middle segment?</span>
-            <span data-lang="vi">Robot ở đoạn giữa còn nguyên và hợp vật lý đến mức nào?</span>
+            <span data-lang="en" id="scoreQEn">How physically intact is the robot in the highlighted segment?</span>
+            <span data-lang="vi" id="scoreQVi">Robot ở đoạn đang highlight còn nguyên và hợp vật lý đến mức nào?</span>
           </p>
           <p class="score-hint">
-            <span data-lang="en">Watch the whole ~3s clip for context, then score only the middle second. If you are unsure, play more examples below and re-read the rubric.</span>
-            <span data-lang="vi">Xem cả clip ~3 giây để có ngữ cảnh, rồi chỉ chấm đoạn giữa. Nếu chưa chắc, xem thêm ví dụ và đọc lại rubric.</span>
+            <span data-lang="en">Watch the whole ~3s clip for context, then score the highlighted lead / middle / trail segment. If you are unsure, play more examples below and re-read the rubric.</span>
+            <span data-lang="vi">Xem cả clip ~3 giây để có ngữ cảnh, rồi chấm đoạn lead / middle / trail đang highlight. Nếu chưa chắc, xem thêm ví dụ và đọc lại rubric.</span>
           </p>
           <div class="scores">
             <button class="score" data-s="1">Bad<small>1</small></button>
@@ -97,12 +97,12 @@
   </div>
   <div class="dialog-body">
     <p>
-      <span data-lang="en">Before you score, play the <strong>Bad / Medium / Good</strong> clips in <em>Reference examples</em>. Score only the middle segment for physical integrity — melt, teleport, non-physical motion.</span>
-      <span data-lang="vi">Trước khi chấm, xem clip <strong>Bad / Medium / Good</strong> ở <em>ví dụ tham chiếu</em>. Chỉ chấm đoạn giữa về tính vật lý — tan, teleport, chuyển động phi vật lý.</span>
+      <span data-lang="en">Before you score, play the <strong>Bad / Medium / Good</strong> clips in <em>Reference examples</em>. Score the highlighted segment for physical integrity — melt, teleport, non-physical motion.</span>
+      <span data-lang="vi">Trước khi chấm, xem clip <strong>Bad / Medium / Good</strong> ở <em>ví dụ tham chiếu</em>. Chấm đoạn đang highlight về tính vật lý — tan, teleport, chuyển động phi vật lý.</span>
     </p>
     <ol class="howto-ol">
       <li><span data-lang="en">Open Bad, then Medium, then Good so the scale is calibrated.</span><span data-lang="vi">Mở Bad, rồi Medium, rồi Good để thống nhất thang điểm.</span></li>
-      <li><span data-lang="en">Then watch each assigned ~3s clip and score the middle second.</span><span data-lang="vi">Sau đó xem clip ~3 giây được giao và chỉ chấm đoạn giữa.</span></li>
+      <li><span data-lang="en">Then watch each assigned ~3s clip and score the highlighted segment.</span><span data-lang="vi">Sau đó xem clip ~3 giây được giao và chấm đoạn đang highlight.</span></li>
     </ol>
     <div class="dialog-actions">
       <button class="btn primary" id="showExRemind" type="button"><span data-lang="en">Show examples</span><span data-lang="vi">Xem ví dụ</span></button>
@@ -255,6 +255,9 @@ if (VGP.requireGate()) {
       if (labels[labelId(it)] != null && (s.rateable || i === (it.score_segment_index ?? 1))) tick.classList.add('done');
       track.append(tick);
     });
+    const role = it.rate_target || ['lead', 'middle', 'trail'][it.score_segment_index ?? 1];
+    if ($('scoreQEn')) $('scoreQEn').textContent = `How physically intact is the robot in the ${role} segment?`;
+    if ($('scoreQVi')) $('scoreQVi').textContent = `Robot ở đoạn ${role} còn nguyên và hợp vật lý đến mức nào?`;
   }
 
   function loadVideo(){

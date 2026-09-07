@@ -106,6 +106,12 @@ main{max-width:1500px;margin:auto;padding:1.15rem 1.25rem 2rem}
 .pie-legend{font-size:.72rem;color:var(--secondary);text-align:left;display:grid;gap:.2rem}
 .pie-legend span{display:flex;align-items:center;gap:.35rem}
 .pie-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.cm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
+.cm-card h3{font-size:.85rem;margin-bottom:.4rem}
+.cm{width:100%;border-collapse:collapse;font-size:.78rem}
+.cm th,.cm td{border:1px solid var(--border);padding:.38rem .45rem;text-align:center}
+.cm thead th,.cm tbody th{background:#f3f4f6;font-size:.7rem;font-weight:700}
+.cm td.diag{background:var(--good-soft);font-weight:800}
 .emb-section{margin-top:1rem;padding-top:.75rem;border-top:1px solid var(--border)}
 .emb-section h3{font-size:.9rem;margin-bottom:.55rem}
 .segment-strip{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:0 1rem .2rem;color:var(--muted);font-size:.8rem}
