@@ -24,10 +24,6 @@
   <section class="home-hero">
     <div class="eyebrow" id="homeEyebrow"><span data-lang="vi">Lô 100 video · 25 + 75</span><span data-lang="en">Batch of 100 videos · 25 + 75</span></div>
     <h1><span data-lang="vi">Xin chào, </span><span data-lang="en">Hello, </span><span id="helloName"></span></h1>
-    <p>
-      <span data-lang="en" id="introEn">This study has two checks. Geometry is 300 multiview videos — two static cameras, same motion / shape / color / position. Hallucinate is 900 segments (300 per embodiment) — is the generated robot physically intact. Each batch delivers 25 geometry videos and 75 hallucinate segments. Every item is assigned to two different raters. Conflicts go to quang_check and thanh_check.</span>
-      <span data-lang="vi" id="introVi">Nghiên cứu có hai phần. Geometry gồm 300 video multiview — hai camera tĩnh còn khớp nhau. Hallucinate gồm 900 đoạn (300 mỗi embodiment) — robot sinh ra còn vật lý. Mỗi lô giao 25 video geometry và 75 đoạn hallucinate. Mỗi mục được giao cho hai người. Conflict đưa cho quang_check và thanh_check.</span>
-    </p>
     <div class="howto-row">
       <button class="btn primary" type="button" id="btnHowTo"><span data-lang="en">What do I click?</span><span data-lang="vi">Tôi cần bấm gì?</span></button>
     </div>
@@ -79,9 +75,9 @@
     </div>
     <p class="status" id="status" style="margin-top:.85rem">Loading…</p>
     <div class="home-actions">
-      <button class="btn primary" id="btnAssign" hidden><span data-lang="vi">Nhận 100 video</span><span data-lang="en">Get 100 videos</span></button>
+      <button class="btn primary" id="btnAssign" hidden><span data-lang="vi">Bắt đầu chấm 100</span><span data-lang="en">Start to label 100</span></button>
       <button class="btn warn" id="btnSubmit" hidden><span data-lang="vi">Nộp lô này</span><span data-lang="en">Submit this batch</span></button>
-      <button class="btn" id="btnNew" hidden><span data-lang="vi">Nhận 100 video mới</span><span data-lang="en">Get a new batch</span></button>
+      <button class="btn" id="btnNew" hidden><span data-lang="vi">Bắt đầu chấm 100</span><span data-lang="en">Start to label 100</span></button>
     </div>
   </section>
 
@@ -124,8 +120,8 @@
   <div class="dialog-body">
     <ol class="howto-ol">
       <li>
-        <span data-lang="en"><strong>Get 100 videos</strong> — first time only. This assigns 25 geometry + 75 hallucinate clips that still need a second rater.</span>
-        <span data-lang="vi"><strong>Nhận 100 video</strong> — lần đầu. Lô gồm 25 geometry + 75 hallucinate chưa đủ 2 người chấm.</span>
+        <span data-lang="en"><strong>Start to label 100</strong> — first time only. This assigns 25 geometry + 75 hallucinate clips that still need a second rater.</span>
+        <span data-lang="vi"><strong>Bắt đầu chấm 100</strong> — lần đầu. Lô gồm 25 geometry + 75 hallucinate chưa đủ 2 người chấm.</span>
       </li>
       <li>
         <span data-lang="en"><strong>Rate geometry</strong> — open the first card. Watch both static cameras. Click <em>Bad / Medium / Good</em> (or keys 1–3). Click a numbered step to jump back and change a score.</span>
@@ -177,10 +173,8 @@ if (VGP.requireGate()) {
   const checker = VGP.isReviewer(rater);
   if (checker) {
     $('homeEyebrow').innerHTML = '<span data-lang="vi">Tài khoản check conflict</span><span data-lang="en">Conflict checker account</span>';
-    $('introEn').textContent = 'You only receive videos where two raters already disagreed. Score them again on the same Bad / Medium / Good scale.';
-    $('introVi').textContent = 'Bạn chỉ nhận video mà hai rater đã chấm khác nhau. Chấm lại trên thang Bad / Medium / Good.';
-    $('btnAssign').innerHTML = '<span data-lang="vi">Nhận video conflict</span><span data-lang="en">Get conflict videos</span>';
-    $('btnNew').innerHTML = '<span data-lang="vi">Nhận conflict mới</span><span data-lang="en">Get more conflicts</span>';
+    $('btnAssign').innerHTML = '<span data-lang="vi">Bắt đầu check conflict</span><span data-lang="en">Start to check conflicts</span>';
+    $('btnNew').innerHTML = '<span data-lang="vi">Check conflict tiếp</span><span data-lang="en">Start to check more</span>';
   }
   function lang(){ return document.documentElement.dataset.lang || 'en'; }
   function setLang(next){
@@ -213,8 +207,8 @@ if (VGP.requireGate()) {
     $('btnNew').hidden = !(batch && batch.submittedAt);
     if (!batch){
       setStatus(
-        checker ? 'Chưa có lô. Nhận video conflict để bắt đầu.' : 'Chưa có lô. Nhận 100 video để bắt đầu.',
-        checker ? 'No batch yet. Get conflict videos to start.' : 'No batch yet. Get 100 videos to start.'
+        checker ? 'Chưa có lô. Bắt đầu check conflict.' : 'Chưa có lô. Bắt đầu chấm 100.',
+        checker ? 'No batch yet. Start to check conflicts.' : 'No batch yet. Start to label 100.'
       );
       return;
     }
@@ -292,8 +286,8 @@ if (VGP.requireGate()) {
     const wasStale = prev && VGP.isStaleOpenBatch(prev, mvAll, svAll);
     batch = VGP.getValidBatch(mvAll, svAll);
     if (wasStale) {
-      setStatus('Catalog đã đánh index lại (300 geometry + 900 hallucinate). Nhận 100 video mới.',
-        'Catalog was reindexed (300 geometry + 900 hallucinate). Get a new batch of 100 videos.');
+      setStatus('Catalog đã đánh index lại (300 geometry + 900 hallucinate). Bắt đầu chấm 100.',
+        'Catalog was reindexed (300 geometry + 900 hallucinate). Start to label 100.');
     }
     if (!batch || batch.submittedAt) $('btnAssign').hidden = false;
     renderBatch();

@@ -30,6 +30,31 @@
     <div class="admin-stat" id="stats">Loading…</div>
   </section>
 
+  <section class="chart-card">
+    <h2>Dataset — unique videos</h2>
+    <p class="status" style="margin-bottom:.6rem">
+      Geometry split is on the source path. Hallucinate has no makovian tag — 900 segments reverse to 300 clips (3 segments = 1 video).
+      39 single-arm geometry clips come from <span class="mono">tmp/lowquality_multiview</span> with no split.
+    </p>
+    <p class="status" style="margin:.2rem 0 .4rem">Geometry · 300 videos</p>
+    <div id="dsGeo"></div>
+    <p class="status" style="margin:.9rem 0 .4rem">Hallucinate · 900 segments → unique clips</p>
+    <div id="dsHallu"></div>
+  </section>
+
+  <div class="phase-grid">
+    <section class="chart-card">
+      <h2>Quang — makovian / non-makovian</h2>
+      <p class="status" style="margin-bottom:.6rem">Unique videos after reversing hallu segments to clips. Geometry carries the split.</p>
+      <div id="raterQuang"></div>
+    </section>
+    <section class="chart-card">
+      <h2>Thành — embodiment × split</h2>
+      <p class="status" style="margin-bottom:.6rem">Unique videos. Hallucinate clips count as unknown split.</p>
+      <div id="raterThanh"></div>
+    </section>
+  </div>
+
   <div class="phase-grid">
     <section class="chart-card">
       <h2>Coverage · 2 raters</h2>
@@ -203,6 +228,72 @@ if (VGP.requireAdmin()) {
     a.click();
   }
 
+  const EMBS = ['bimanual', 'humanoid', 'single_arm'];
+
+  function uniqueFromItems(items){
+    const videos = new Map();
+    for (const it of items || []) {
+      const vid = VGP.videoKey(it);
+      if (!vid) continue;
+      videos.set(vid, {
+        split: VGP.itemSplit(it),
+        emb: VGP.normalizeEmbodiment(it.embodiment),
+      });
+    }
+    return [...videos.values()];
+  }
+
+  function uniqueFromRater(bucket){
+    const byId = new Map([...geoItems, ...halluItems].map(it => [it.id, it]));
+    const seen = new Map();
+    let nLabels = 0;
+    for (const r of rows) {
+      if (VGP.raterBucket(r.rater_name) !== bucket) continue;
+      nLabels += 1;
+      const it = byId.get(r.item_id);
+      if (!it) continue;
+      seen.set(VGP.videoKey(it), {
+        split: VGP.itemSplit(it),
+        emb: VGP.normalizeEmbodiment(it.embodiment),
+      });
+    }
+    return { nLabels, videos: [...seen.values()] };
+  }
+
+  function splitTable(videos, withEmb){
+    const keys = withEmb ? EMBS : ['all'];
+    const counts = {};
+    for (const e of keys) counts[e] = { makovian: 0, non_makovian: 0, unknown: 0, n: 0 };
+    for (const v of videos) {
+      const e = withEmb ? v.emb : 'all';
+      if (!counts[e]) continue;
+      counts[e][v.split] += 1;
+      counts[e].n += 1;
+    }
+    const labelOf = e => withEmb ? VGP.embLabel(e) : 'All';
+    let html = '<table class="data"><thead><tr><th>' + (withEmb ? 'Embodiment' : '') + '</th><th>Makovian</th><th>Non-makovian</th><th>Unknown</th><th>Videos</th></tr></thead><tbody>';
+    html += keys.map(e => {
+      const c = counts[e];
+      return `<tr><td>${labelOf(e)}</td><td>${c.makovian}</td><td>${c.non_makovian}</td><td>${c.unknown}</td><td>${c.n}</td></tr>`;
+    }).join('');
+    if (withEmb) {
+      const tot = { makovian: 0, non_makovian: 0, unknown: 0, n: videos.length };
+      videos.forEach(v => { tot[v.split] += 1; });
+      html += `<tr><td><strong>All</strong></td><td>${tot.makovian}</td><td>${tot.non_makovian}</td><td>${tot.unknown}</td><td>${tot.n}</td></tr>`;
+    }
+    return html + '</tbody></table>';
+  }
+
+  function fillRater(id, bucket, twoD){
+    const { nLabels, videos } = uniqueFromRater(bucket);
+    const host = document.getElementById(id);
+    if (!nLabels) {
+      host.innerHTML = '<p class="status">No labels yet.</p>';
+      return;
+    }
+    host.innerHTML = `<p class="status" style="margin-bottom:.4rem">${nLabels} labels → ${videos.length} unique videos</p>` + splitTable(videos, twoD);
+  }
+
   function render(){
     const geoN = geoItems.length;
     const halluN = halluItems.length;
@@ -240,6 +331,13 @@ if (VGP.requireAdmin()) {
       <div><b>${conflicts}</b><span>score conflicts</span></div>
       <div><b>${open}</b><span>conflicts still open</span></div>
       <div><b>${perRater.filter(r => !VGP.isReviewer(r.rater)).length}</b><span>regular raters</span></div>`;
+
+    document.getElementById('dsGeo').innerHTML = splitTable(uniqueFromItems(geoItems), true);
+    document.getElementById('dsHallu').innerHTML =
+      `<p class="status" style="margin-bottom:.4rem">${halluN} segments → ${uniqueFromItems(halluItems).length} unique clips</p>` +
+      splitTable(uniqueFromItems(halluItems), true);
+    fillRater('raterQuang', 'quang', false);
+    fillRater('raterThanh', 'thanh', true);
 
     document.getElementById('covGeoCap').textContent = `Geometry · ${geoN} videos · 100 / embodiment`;
     document.getElementById('covHalluCap').textContent = `Hallucinate · ${halluN} segments · 300 / embodiment`;

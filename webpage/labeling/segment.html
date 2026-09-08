@@ -147,37 +147,7 @@ if (VGP.requireGate()) {
   function refreshLife(){ $('nLife').textContent = VGP.raterStats(labels, mvAll, svAll).totalVideos; }
   function labelId(it){ return it.id; }
 
-  function escapeHtml(value){ return value.replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
-  function inlineMd(value){ return escapeHtml(value).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); }
-  function markdown(value){
-    const lines = value.replace(/\r/g, '').split('\n'), out = []; let list = false, table = [];
-    const flushList = () => { if (list) { out.push('</ul>'); list = false; } };
-    const flushTable = () => {
-      if (!table.length) return;
-      const rows = table.filter(x => !/^[\s|:-]+$/.test(x));
-      if (rows.length) {
-        out.push('<table>');
-        rows.forEach((row, i) => {
-          const cells = row.split('|').slice(1, -1);
-          out.push('<tr>' + cells.map(c => `<${i ? 'td' : 'th'}>${inlineMd(c.trim())}</${i ? 'td' : 'th'}>`).join('') + '</tr>');
-        });
-        out.push('</table>');
-      }
-      table = [];
-    };
-    for (const raw of lines) {
-      const line = raw.trim();
-      if (line.startsWith('|')) { flushList(); table.push(line); continue; }
-      flushTable();
-      if (!line) { flushList(); continue; }
-      const h = line.match(/^(#{1,3})\s+(.+)/);
-      if (h) { flushList(); out.push(`<h${h[1].length}>${inlineMd(h[2])}</h${h[1].length}>`); continue; }
-      const li = line.match(/^[-*]\s+(.+)/);
-      if (li) { if (!list) { out.push('<ul>'); list = true; } out.push(`<li>${inlineMd(li[1])}</li>`); continue; }
-      flushList(); out.push(`<p>${inlineMd(line)}</p>`);
-    }
-    flushList(); flushTable(); return out.join('');
-  }
+  function markdown(value){ return VGP.renderMarkdown(value); }
   async function loadRubric(){
     try {
       const res = await fetch(`rubric.segment.${lang()}.md`);

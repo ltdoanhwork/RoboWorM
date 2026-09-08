@@ -687,6 +687,75 @@ const VGP = (() => {
     });
   }
 
+  function videoKey(item) {
+    if (!item) return null;
+    return item.clip_id || item.id;
+  }
+
+  function itemSplit(item) {
+    const s = String((item && item.split) || "").toLowerCase();
+    if (s === "makovian") return "makovian";
+    if (s === "non_makovian" || s === "non-makovian") return "non_makovian";
+    return "unknown";
+  }
+
+  function raterBucket(name) {
+    const n = normalizeName(name).normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (n === "quang" || (n.startsWith("quang") && !n.includes("check"))) return "quang";
+    if (n === "thanh" || n === "thanhnv" || (n.startsWith("thanh") && !n.includes("check"))) return "thanh";
+    return n;
+  }
+
+  function renderMarkdown(value) {
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>'"]/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;",
+      }[c]));
+    }
+    function inlineMd(s) {
+      return escapeHtml(s)
+        .replace(/&lt;br\s*\/?&gt;/gi, "<br>")
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    }
+    const lines = String(value || "").replace(/\r/g, "").split("\n");
+    const out = [];
+    let list = false;
+    let table = [];
+    const flushList = () => { if (list) { out.push("</ul>"); list = false; } };
+    const flushTable = () => {
+      if (!table.length) return;
+      const rows = table.filter((x) => !/^[\s|:-]+$/.test(x));
+      if (rows.length) {
+        out.push("<table>");
+        rows.forEach((row, i) => {
+          const cells = row.split("|").slice(1, -1);
+          out.push("<tr>" + cells.map((c) => `<${i ? "td" : "th"}>${inlineMd(c.trim())}</${i ? "td" : "th"}>`).join("") + "</tr>");
+        });
+        out.push("</table>");
+      }
+      table = [];
+    };
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (line.startsWith("|")) { flushList(); table.push(line); continue; }
+      flushTable();
+      if (!line) { flushList(); continue; }
+      const h = line.match(/^(#{1,3})\s+(.+)/);
+      if (h) { flushList(); out.push(`<h${h[1].length}>${inlineMd(h[2])}</h${h[1].length}>`); continue; }
+      const li = line.match(/^[-*]\s+(.+)/);
+      if (li) {
+        if (!list) { out.push("<ul>"); list = true; }
+        out.push(`<li>${inlineMd(li[1])}</li>`);
+        continue;
+      }
+      flushList();
+      out.push(`<p>${inlineMd(line)}</p>`);
+    }
+    flushTable();
+    flushList();
+    return out.join("\n");
+  }
+
   return {
     HALF, GEO_N, HALLU_N, TARGET_COVER, REVIEWERS, BATCH_VERSION,
     CHECK, SCORE_LABEL, BAND_TO_SCORE, normalizeEmbodiment, embLabel, scoreLabel, checkLabel, machineScore,
@@ -697,6 +766,7 @@ const VGP = (() => {
     coverageCounts, pickLeastLabeled, conflictIds, conflictRows, resolveHuman,
     getBatch, getValidBatch, isStaleOpenBatch, saveBatch, submitBatch, clearBatch, createBatch, getOrCreateBatch,
     itemsFromIds, renderStepStrip, preloadVideos, anyDialogOpen, bindExampleRemind,
+    videoKey, itemSplit, raterBucket, renderMarkdown,
     sbUpsertLabel, sbDeleteLabel, sbLoadLabels, sbLoadAllLabels,
     mergeLabels, mirrorLabel, autosaveLabel, flushPending, readPending,
     pushUndo, canUndo, clearUndo, undoLast,
