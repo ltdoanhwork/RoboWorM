@@ -22,7 +22,7 @@
 </nav>
 <main>
   <section class="home-hero">
-    <div class="eyebrow" id="homeEyebrow"><span data-lang="vi">Mỗi lô · 25 video geometry + ~75 đoạn hallucinate</span><span data-lang="en">Each batch · 25 geometry videos + ~75 hallucinate segments</span></div>
+    <div class="eyebrow" id="homeEyebrow"><span data-lang="vi">Mỗi lô · 25 video geometry + 25 video hallucinate</span><span data-lang="en">Each batch · 25 geometry videos + 25 hallucinate videos</span></div>
     <h1><span data-lang="vi">Xin chào, </span><span data-lang="en">Hello, </span><span id="helloName"></span></h1>
     <div class="howto-row">
       <button class="btn primary" type="button" id="btnHowTo"><span data-lang="en">What do I click?</span><span data-lang="vi">Tôi cần bấm gì?</span></button>
@@ -120,8 +120,8 @@
   <div class="dialog-body">
     <ol class="howto-ol">
       <li>
-        <span data-lang="en"><strong>Start to label 100</strong> — first time only. This assigns 25 geometry videos plus enough hallucinate clips to make about 75 segments that still need a second rater.</span>
-        <span data-lang="vi"><strong>Bắt đầu chấm 100</strong> — lần đầu. Lô gồm 25 video geometry và đủ clip hallucinate cho khoảng 75 đoạn chưa đủ 2 người chấm.</span>
+        <span data-lang="en"><strong>Start to label 100</strong> — first time only. This assigns 25 geometry videos and 25 hallucinate videos that still need a second rater. A hallucinate video holds many 1-second segments, so it takes far longer than a geometry clip.</span>
+        <span data-lang="vi"><strong>Bắt đầu chấm 100</strong> — lần đầu. Lô gồm 25 video geometry và 25 video hallucinate chưa đủ 2 người chấm. Một video hallucinate có nhiều đoạn 1 giây nên mất nhiều thời gian hơn video geometry.</span>
       </li>
       <li>
         <span data-lang="en"><strong>Rate geometry</strong> — open the first card. Watch both static cameras. Click <em>Bad / Medium / Good</em> (or keys 1–3). Click a numbered step to jump back and change a score.</span>
@@ -291,8 +291,8 @@ if (VGP.requireGate()) {
     const wasStale = prev && VGP.isStaleOpenBatch(prev, mvAll, svAll);
     batch = VGP.getValidBatch(mvAll, svAll);
     if (wasStale) {
-      setStatus('Data hallucinate đã đổi sang bộ 300vid (291 video, chấm theo từng đoạn). Bắt đầu lô mới.',
-        'Hallucinate data moved to the 300vid pool (291 videos, scored segment by segment). Start a new batch.');
+      setStatus('Lô đã đổi thành 25 video geometry + 25 video hallucinate. Điểm bạn đã chấm vẫn được giữ. Bắt đầu lô mới.',
+        'A batch is now 25 geometry videos + 25 hallucinate videos. Scores you already submitted are kept. Start a new batch.');
     }
     if (!batch || batch.submittedAt) $('btnAssign').hidden = false;
     renderBatch();

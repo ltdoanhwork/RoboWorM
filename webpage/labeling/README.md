@@ -6,7 +6,7 @@ Supabase Free, as long as this stays a non-commercial research deployment
 
 ```
 gate.html     rater passcode + name  |  admin passcode (analytics only)
-home.html     hub: batch = 25 geometry videos + ~75 hallucinate segments, lifetime stats
+home.html     hub: batch = 25 geometry videos + 25 hallucinate videos, lifetime stats
 index.html    Geometry — 25 clips / batch, raw + flow, Bad/Medium/Good
 segment.html  Hallucinate — the clip pauses at every 16-frame segment for one score
 analytics.html admin-only charts (coverage, confusion, raters). Not linked from rater UI.
@@ -99,10 +99,12 @@ cd webpage/labeling && python3 -m http.server 8899
 
 ## Rater assignment
 
-Each batch is **25 geometry videos + hallucinate clips worth ~75 segments**
-(whole clips only — a clip is never split across raters, so the actual count
-lands between 75 and 94). The batch is stored in `localStorage` so refresh does
-not re-roll. **Submit works before the batch is finished.**
+Each batch is **25 geometry videos + 25 hallucinate videos**. Geometry is one
+score per clip; a hallucinate clip is scored segment by segment, and clip length
+varies a lot (6-144 segments, bimanual averages 46), so 25 clips work out to
+roughly **690 segment scores** — the two halves are equal in clips, not in
+effort. The batch is stored in `localStorage` so refresh does not re-roll.
+**Submit works before the batch is finished.**
 
 Assignment reads current Supabase labels and picks items this rater has not
 finished, **least-labeled first**, random among ties, round-robin across

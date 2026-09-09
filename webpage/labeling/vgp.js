@@ -7,10 +7,9 @@ const VGP = (() => {
   const PASS_KEY = "vgp_pass_ok";
   const ADMIN_KEY = "vgp_admin_ok";
   const BATCH_PREFIX = "vgp_batch::";
-  const BATCH_VERSION = 6; // 300vid pool: 291 hallu videos scored segment by segment
+  const BATCH_VERSION = 7; // batch is 25 geometry videos + 25 hallucinate videos
   const GEO_N = 25;
-  const HALLU_SEG_N = 75; // hallucinate budget is counted in 16-frame segments
-  const HALLU_N = HALLU_SEG_N; // back-compat alias
+  const HALLU_N = 25; // whole clips; each one is then scored segment by segment
   const HALF = GEO_N; // back-compat alias
   const TARGET_COVER = 2;
   const REVIEWERS = ["quang_check", "thanh_check"];
@@ -293,33 +292,6 @@ const VGP = (() => {
       return Math.random() - 0.5;
     };
     fresh.sort(rank);
-    // Hallucinate: a batch is a segment budget, so whole videos are added until
-    // it is met (never split a clip — the rater watches it end to end).
-    if (options.segmentBudget) {
-      const budget = options.segmentBudget;
-      const ceiling = Math.round(budget * 1.25);
-      const queues = new Map();
-      for (const it of fresh) {
-        const emb = normalizeEmbodiment(it.embodiment);
-        if (!queues.has(emb)) queues.set(emb, []);
-        queues.get(emb).push(it);
-      }
-      const embs = [...queues.keys()].sort();
-      const picked = [];
-      let total = 0;
-      let turn = 0;
-      while (total < budget && embs.some((e) => queues.get(e).length)) {
-        const list = queues.get(embs[turn % embs.length]);
-        turn += 1;
-        const it = list.shift();
-        if (!it) continue;
-        const size = segmentCount(it);
-        if (total && total + size > ceiling) continue;
-        picked.push(it);
-        total += size;
-      }
-      return picked;
-    }
     if (options.stratify === false || fresh.length <= n) return fresh.slice(0, n);
     const groups = new Map();
     for (const it of fresh) {
@@ -571,9 +543,7 @@ const VGP = (() => {
       svPick.forEach((it) => { svSegs[it.id] = sv.segments[it.id] || []; });
     } else {
       mvPick = pickLeastLabeled(mvItems, coverageCounts(allRows, mvItems), mvDone, GEO_N);
-      svPick = pickLeastLabeled(svItems, coverageCounts(allRows, svItems), svDone, null, {
-        segmentBudget: HALLU_SEG_N,
-      });
+      svPick = pickLeastLabeled(svItems, coverageCounts(allRows, svItems), svDone, HALLU_N);
     }
     if (reviewer && !mvPick.length && !svPick.length) {
       clearBatch();
@@ -921,7 +891,7 @@ const VGP = (() => {
   }
 
   return {
-    HALF, GEO_N, HALLU_N, HALLU_SEG_N, TARGET_COVER, REVIEWERS, BATCH_VERSION,
+    HALF, GEO_N, HALLU_N, TARGET_COVER, REVIEWERS, BATCH_VERSION,
     CHECK, SCORE_LABEL, BAND_TO_SCORE, normalizeEmbodiment, embLabel, scoreLabel, checkLabel, machineScore,
     getRater, setRater, passOk, setPassOk, adminOk, setAdminOk,
     clearSession, isAdminPath, requireGate, requireAdmin,
