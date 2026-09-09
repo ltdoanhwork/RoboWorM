@@ -9,6 +9,8 @@ Each video is split into short segments. Rate every segment on the scale:
 
 Where **Good** is the best level (little to no deformation — the segment looks clean, like a real video), and **Bad** is the most severe error level.
 
+Note: rate each segment independently. A segment may be corrupted while the robot recovers and looks clean again in later segments — those later segments should still be rated Good; do not let an earlier segment influence a later one.
+
 ## What to focus on
 Focus on the robot itself:
 

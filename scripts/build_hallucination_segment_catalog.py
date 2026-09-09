@@ -345,7 +345,24 @@ def build_examples() -> dict:
     }
 
 
-def relabel_scale(text: str) -> str:
+# The bucket rubric dropped this line, but the player now stops at every segment
+# and takes one score, so raters must be told not to carry a verdict forward.
+INDEPENDENCE_NOTE = {
+    "vi": (
+        "Lưu ý: chấm mỗi đoạn độc lập. Một đoạn có thể bẩn nhưng các đoạn sau đó robot "
+        "sạch trở lại — khi đó đoạn sau vẫn chấm Good, đừng để đoạn trước ảnh hưởng đoạn sau."
+    ),
+    "en": (
+        "Note: rate each segment independently. A segment may be corrupted while the robot "
+        "recovers and looks clean again in later segments — those later segments should still "
+        "be rated Good; do not let an earlier segment influence a later one."
+    ),
+}
+# paragraph the note is appended to: the one naming the best/worst level
+SCALE_ANCHOR = {"vi": "là mức tốt nhất", "en": "is the best level"}
+
+
+def relabel_scale(text: str, lang: str) -> str:
     """Rename the bucket's Low/Medium/High levels to the UI's Good/Medium/Bad."""
     swaps = [
         ("Thang điểm: Low – Medium – High", "Thang điểm: Good – Medium – Bad"),
@@ -358,7 +375,13 @@ def relabel_scale(text: str) -> str:
     for leftover in ("Low", "High"):
         if leftover in text:
             raise ValueError(f"rubric still mentions {leftover!r} after relabelling; check the bucket wording")
-    return text
+
+    lines = text.splitlines()
+    anchor = next((i for i, line in enumerate(lines) if SCALE_ANCHOR[lang] in line), None)
+    if anchor is None:
+        raise ValueError(f"rubric_{lang}: no scale paragraph to attach the independence note to")
+    lines.insert(anchor + 1, "\n" + INDEPENDENCE_NOTE[lang])
+    return "\n".join(lines) + "\n"
 
 
 def sync_rubrics() -> None:
@@ -367,12 +390,13 @@ def sync_rubrics() -> None:
     The bucket names the levels Low / Medium / High (the machine band names,
     Low = cleanest). The rater UI has always used Bad / Medium / Good, so the
     text is rewritten to match what the buttons say — otherwise the rubric
-    tells raters to pick a level that does not exist on screen.
+    tells raters to pick a level that does not exist on screen. The
+    score-each-segment-independently note is re-attached as well.
     """
     DATA_ROOT.mkdir(parents=True, exist_ok=True)
     for lang in ("vi", "en"):
         text = fetch_bytes(bucket_url(f"rubric_video_robot_{lang}.md")).decode("utf-8")
-        (DATA_ROOT / f"rubric_{lang}.md").write_text(relabel_scale(text), encoding="utf-8")
+        (DATA_ROOT / f"rubric_{lang}.md").write_text(relabel_scale(text, lang), encoding="utf-8")
 
 
 def main() -> None:

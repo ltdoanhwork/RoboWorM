@@ -9,6 +9,8 @@ Mỗi video được chia thành các segment ngắn. Đánh giá từng segment
 
 Trong đó **Good** là mức tốt nhất (ít/không biến dạng — segment trông sạch, giống video thật), **Bad** là mức lỗi nghiêm trọng nhất.
 
+Lưu ý: chấm mỗi đoạn độc lập. Một đoạn có thể bẩn nhưng các đoạn sau đó robot sạch trở lại — khi đó đoạn sau vẫn chấm Good, đừng để đoạn trước ảnh hưởng đoạn sau.
+
 ## Những gì cần tập trung
 Tập trung vào bản thân robot:
 
