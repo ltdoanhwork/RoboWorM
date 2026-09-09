@@ -75,9 +75,9 @@
     </div>
     <p class="status" id="status" style="margin-top:.85rem">Loading…</p>
     <div class="home-actions">
-      <button class="btn primary" id="btnAssign" hidden><span data-lang="vi">Bắt đầu chấm 100</span><span data-lang="en">Start to label 100</span></button>
+      <button class="btn primary" id="btnAssign" hidden><span data-lang="vi">Bắt đầu chấm 50</span><span data-lang="en">Start to label 50</span></button>
       <button class="btn warn" id="btnSubmit" hidden><span data-lang="vi">Nộp lô này</span><span data-lang="en">Submit this batch</span></button>
-      <button class="btn" id="btnNew" hidden><span data-lang="vi">Bắt đầu chấm 100</span><span data-lang="en">Start to label 100</span></button>
+      <button class="btn" id="btnNew" hidden><span data-lang="vi">Bắt đầu chấm 50</span><span data-lang="en">Start to label 50</span></button>
     </div>
   </section>
 
@@ -120,8 +120,8 @@
   <div class="dialog-body">
     <ol class="howto-ol">
       <li>
-        <span data-lang="en"><strong>Start to label 100</strong> — first time only. This assigns 25 geometry videos and 25 hallucinate videos that still need a second rater. A hallucinate video holds many 1-second segments, so it takes far longer than a geometry clip.</span>
-        <span data-lang="vi"><strong>Bắt đầu chấm 100</strong> — lần đầu. Lô gồm 25 video geometry và 25 video hallucinate chưa đủ 2 người chấm. Một video hallucinate có nhiều đoạn 1 giây nên mất nhiều thời gian hơn video geometry.</span>
+        <span data-lang="en"><strong>Start to label 50</strong> — first time only. This assigns 25 geometry videos and 25 hallucinate videos that still need a second rater. A hallucinate video holds many 1-second segments, so it takes far longer than a geometry clip.</span>
+        <span data-lang="vi"><strong>Bắt đầu chấm 50</strong> — lần đầu. Lô gồm 25 video geometry và 25 video hallucinate chưa đủ 2 người chấm. Một video hallucinate có nhiều đoạn 1 giây nên mất nhiều thời gian hơn video geometry.</span>
       </li>
       <li>
         <span data-lang="en"><strong>Rate geometry</strong> — open the first card. Watch both static cameras. Click <em>Bad / Medium / Good</em> (or keys 1–3). Click a numbered step to jump back and change a score.</span>
@@ -132,8 +132,8 @@
         <span data-lang="vi"><strong>Về Home</strong>, rồi <strong>Chấm hallucinate</strong>. Clip dừng mỗi 1 giây — chấm đoạn đó về tính vật lý rồi video chạy tiếp.</span>
       </li>
       <li>
-        <span data-lang="en"><strong>Submit this batch</strong> when you are done (or earlier — partial is OK). Then you can get another 100.</span>
-        <span data-lang="vi"><strong>Nộp lô này</strong> khi xong (hoặc sớm hơn — chưa hết vẫn nộp được). Sau đó nhận thêm 100 video.</span>
+        <span data-lang="en"><strong>Submit this batch</strong> when you are done (or earlier — partial is OK). Then you can get another 50.</span>
+        <span data-lang="vi"><strong>Nộp lô này</strong> khi xong (hoặc sớm hơn — chưa hết vẫn nộp được). Sau đó nhận thêm 50 video.</span>
       </li>
     </ol>
     <div class="dialog-actions">
@@ -207,8 +207,8 @@ if (VGP.requireGate()) {
     $('btnNew').hidden = !(batch && batch.submittedAt);
     if (!batch){
       setStatus(
-        checker ? 'Chưa có lô. Bắt đầu check conflict.' : 'Chưa có lô. Bắt đầu chấm 100.',
-        checker ? 'No batch yet. Start to check conflicts.' : 'No batch yet. Start to label 100.'
+        checker ? 'Chưa có lô. Bắt đầu check conflict.' : 'Chưa có lô. Bắt đầu chấm 50.',
+        checker ? 'No batch yet. Start to check conflicts.' : 'No batch yet. Start to label 50.'
       );
       return;
     }
