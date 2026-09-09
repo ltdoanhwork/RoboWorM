@@ -72,7 +72,7 @@
       <div class="reference-head">
         <div class="eyebrow"><span data-lang="vi">Mở bất kỳ lúc nào</span><span data-lang="en">Available anytime</span></div>
         <h2><span data-lang="vi">Ví dụ tham chiếu</span><span data-lang="en">Reference examples</span></h2>
-        <p><span data-lang="en">5 clips per embodiment × rating (45 total). Videos are preloaded and never enter the rating queue.</span><span data-lang="vi">5 clip mỗi embodiment × mức (45 tổng). Video được tải sẵn, không nằm trong hàng đợi chấm.</span></p>
+        <p><span data-lang="en">Whole clips, <strong id="exCount">34</strong> of them, 3–6 per embodiment × rating. They come from the same generators as your batch but are held out of the rating queue.</span><span data-lang="vi">Clip đầy đủ, <strong id="exCountVi">34</strong> clip, 3–6 clip mỗi embodiment × mức. Cùng nguồn sinh với lô của bạn nhưng không nằm trong hàng đợi chấm.</span></p>
       </div>
       <div class="example-tabs">
         <button class="example-tab" data-rating="bad">Bad</button>
@@ -195,7 +195,9 @@ if (VGP.requireGate()) {
   function showExampleItem(item, extra){
     const url = item.video || item.video_raw || '';
     if (examplePlayer.src !== url) examplePlayer.src = url;
-    $('exampleCaption').textContent = `${item.rating} · ${embLabel(item.embodiment)}${extra || ''}`;
+    // one 16-frame segment at 16 fps is one second, so n_segments is the length
+    const secs = item.n_segments ? ` · ${item.n_segments}s` : '';
+    $('exampleCaption').textContent = `${item.rating} · ${embLabel(item.embodiment)}${secs}${extra || ''}`;
     playOne(examplePlayer);
   }
   function openExampleGroup(list){
@@ -472,6 +474,7 @@ if (VGP.requireGate()) {
     items = VGP.itemsFromIds(svAll, batch.svIds);
     if (!items.length) { location.replace('home.html'); return; }
     examples = exampleCatalog.items || [];
+    $('exCount').textContent = $('exCountVi').textContent = examples.length;
     VGP.preloadVideos(examples.map(it => it.video || it.video_raw));
     labels = VGP.mergeLabels(await VGP.sbLoadLabels(rater), rater);
     VGP.flushPending(rater).catch(() => {});

@@ -16,7 +16,7 @@ vgp.js        least-labeled batch assignment + Supabase REST
 catalog.json  Mode A public catalog (HF URLs)
 examples.json 9 references: 3 ratings × 3 robot embodiments
 catalog.segment.json  Mode B blind public catalog (291 videos, explicit frame ranges)
-examples.segment.json 45 references: 3 ratings × 3 robot embodiments × 5 clips
+examples.segment.json 34 references: whole clips, 3-6 per rating × embodiment
 rubric.segment.{vi,en}.md Mode B bilingual rubrics shown during labeling
 ```
 
@@ -141,6 +141,14 @@ and caches the frame counts in
 not optional: `key.json` lists 161 phantom segments past the end of file on 7
 single_arm clips, and 16 clips have one trailing frame no segment covers. Pass
 `--reprobe` after the bucket changes.
+
+Reference examples come from `300vid/example/key.json` — 34 whole clips (3-6
+per embodiment × rating) from the same generators as the pool but held out of
+it, so showing them leaks no answer. Their `band` is a per-video verdict, not
+per-segment, which is why they supplement the rubric rather than replace it.
+The bucket names the levels Low / Medium / High; `relabel_scale()` rewrites the
+rubric to the Good / Medium / Bad the buttons show, and fails loudly if a
+future bucket edit changes that wording.
 
 `metrics.segment.json` (admin-only) holds `items` = one row per segment
 (`ratio`, `violated`, frame range) and `videos` = the per-video rollup

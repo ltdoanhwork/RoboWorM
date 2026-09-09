@@ -4,8 +4,8 @@
 Source of truth (HF bucket twanghcmut/hallucinate-bench, revision web):
   300vid/{robot}/key.json                              — videos + segments + machine bands
   300vid/{robot}/{markov,non_markov}/{high,medium,low}/{n}.mp4
-  300vid/example/key.json                              — 18 walkthrough clips
-  example/{robot}/{low,medium,high}/{1..5}.mp4         — 45 rubric reference clips
+  300vid/example/key.json                              — rubric reference clips
+  300vid/example/{robot}/{high,medium,low}/{n}.mp4
   rubric_{vi,en}.md
 
 One catalog item = one VIDEO. A video carries its 16-frame segments; the rater
@@ -34,7 +34,7 @@ BUCKET_BASE = "https://huggingface.co/buckets/twanghcmut/hallucinate-bench/resol
 ROBOTS = ("bimanual", "humanoid", "single_arm")
 SPLITS = ("markov", "non_markov")
 BANDS = ("high", "medium", "low")
-# example folders: low=cleanest→Good, high=extreme→Bad (see example/manifest.json)
+# band folders: low=cleanest→Good, high=extreme→Bad (see 300vid/example/key.json)
 RATING = {"low": ("good", 3), "medium": ("medium", 2), "high": ("bad", 1)}
 FPS = 16.0
 SEG_LEN = 16
@@ -296,39 +296,83 @@ def build_metrics(keys: dict, frames: dict) -> dict:
 
 
 def build_examples() -> dict:
-    """45 rubric reference clips (unchanged pool) + the 18 300vid walkthroughs."""
-    manifest = fetch_json(bucket_url("example/manifest.json"))
-    declared = set(manifest.get("videos", {}).keys())
+    """Reference clips from 300vid/example/key.json.
+
+    These are whole clips drawn from the same generators as the rating pool but
+    held out of it, so their band is a per-video verdict, not a per-segment one.
+    The rater watches them to calibrate the Bad / Medium / Good scale; the
+    machine internals (bundle, scores, violation fractions) stay out.
+    """
+    key = fetch_json(bucket_url("300vid/example/key.json"))
     items = []
-    for robot in ("bimanual", "humanoid", "single_arm_a1x"):
-        for level, (rating, score) in RATING.items():
-            for index in range(1, 6):
-                relative = f"{robot}/{level}/{index}.mp4"
-                if declared and relative not in declared:
-                    raise ValueError(f"Example missing from manifest: {relative}")
-                items.append({
-                    "id": f"example_{robot}_{rating}_{index}",
-                    "video": bucket_url(f"example/{relative}"),
-                    "embodiment": "single_arm" if robot == "single_arm_a1x" else robot,
-                    "rating": rating,
-                    "score": score,
-                    "level": level,
-                    "index": index,
-                })
-    if len(items) != 45:
-        raise ValueError(f"Expected 45 examples (3×3×5), got {len(items)}")
+    counts: dict[tuple[str, str], int] = {}
+    for relative, meta in sorted(key["videos"].items()):
+        robot, band = meta["robot"], meta["band"]
+        if robot not in ROBOTS:
+            raise ValueError(f"Example {relative}: unknown robot {robot!r}")
+        if band not in RATING:
+            raise ValueError(f"Example {relative}: unknown band {band!r}")
+        rating, score = RATING[band]
+        counts[(robot, band)] = counts.get((robot, band), 0) + 1
+        items.append({
+            "id": f"example_{robot}_{rating}_{counts[(robot, band)]}",
+            "video": bucket_url(f"300vid/{relative}"),
+            "video_path": relative,
+            "embodiment": robot,
+            "rating": rating,
+            "score": score,
+            "level": band,
+            "index": counts[(robot, band)],
+            "split": SPLIT_ALIAS[meta["split"]],
+            "n_segments": meta["n_segments"],
+            "segment_len_frames": SEG_LEN,
+            "fps": FPS,
+        })
+    missing = [(r, b) for r in ROBOTS for b in RATING if not counts.get((r, b))]
+    if missing:
+        raise ValueError(f"No example clip for {missing}")
     return {
         "n": len(items),
-        "note": "low=cleanest→good, high=extreme→bad (example/manifest.json). 5 clips per embodiment×level.",
+        "note": (
+            "300vid/example/key.json — whole clips held out of the rating pool. "
+            "low=cleanest→good, high=extreme→bad; band is a per-video verdict."
+        ),
+        "per_embodiment_rating": {
+            f"{robot}_{RATING[band][0]}": counts.get((robot, band), 0)
+            for robot in ROBOTS for band in RATING
+        },
         "items": items,
     }
 
 
+def relabel_scale(text: str) -> str:
+    """Rename the bucket's Low/Medium/High levels to the UI's Good/Medium/Bad."""
+    swaps = [
+        ("Thang điểm: Low – Medium – High", "Thang điểm: Good – Medium – Bad"),
+        ("Scale: Low – Medium – High", "Scale: Good – Medium – Bad"),
+        ("**Low**", "**Good**"),
+        ("**High**", "**Bad**"),
+    ]
+    for old, new in swaps:
+        text = text.replace(old, new)
+    for leftover in ("Low", "High"):
+        if leftover in text:
+            raise ValueError(f"rubric still mentions {leftover!r} after relabelling; check the bucket wording")
+    return text
+
+
 def sync_rubrics() -> None:
+    """Pull the bucket rubric and relabel its scale to the site's buttons.
+
+    The bucket names the levels Low / Medium / High (the machine band names,
+    Low = cleanest). The rater UI has always used Bad / Medium / Good, so the
+    text is rewritten to match what the buttons say — otherwise the rubric
+    tells raters to pick a level that does not exist on screen.
+    """
     DATA_ROOT.mkdir(parents=True, exist_ok=True)
     for lang in ("vi", "en"):
-        data = fetch_bytes(bucket_url(f"rubric_{lang}.md"))
-        (DATA_ROOT / f"rubric_{lang}.md").write_bytes(data)
+        text = fetch_bytes(bucket_url(f"rubric_video_robot_{lang}.md")).decode("utf-8")
+        (DATA_ROOT / f"rubric_{lang}.md").write_text(relabel_scale(text), encoding="utf-8")
 
 
 def main() -> None:
