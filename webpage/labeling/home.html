@@ -24,6 +24,15 @@
   <section class="home-hero">
     <div class="eyebrow" id="homeEyebrow"><span data-lang="vi">Mỗi lô · 25 video geometry + 25 video hallucinate</span><span data-lang="en">Each batch · 25 geometry videos + 25 hallucinate videos</span></div>
     <h1><span data-lang="vi">Xin chào, </span><span data-lang="en">Hello, </span><span id="helloName"></span></h1>
+    <figure class="tutorial">
+      <figcaption class="tutorial-cap">
+        <strong><span data-lang="en">Watch this first — full walkthrough</span><span data-lang="vi">Xem cái này trước — hướng dẫn đầy đủ</span></strong>
+        <span data-lang="en">Press play. It shows both checks end to end: how a batch is assigned, how you score a geometry clip, and how a hallucinate clip stops at every segment.</span>
+        <span data-lang="vi">Bấm play. Video chỉ hết cả hai phần: cách nhận lô, cách chấm clip geometry, và cách clip hallucinate dừng ở từng đoạn.</span>
+      </figcaption>
+      <video id="tutorialVideo" controls playsinline preload="none"
+             poster="assets/how_to_label-poster.jpg" src="assets/how_to_label.mp4"></video>
+    </figure>
     <div class="howto-row">
       <button class="btn primary" type="button" id="btnHowTo"><span data-lang="en">What do I click?</span><span data-lang="vi">Tôi cần bấm gì?</span></button>
     </div>
@@ -170,6 +179,14 @@ if (VGP.requireGate()) {
 
   $('raterChip').textContent = rater;
   $('helloName').textContent = rater;
+
+  // The walkthrough is preload="none", so nothing downloads until it is played.
+  // Clicking the frame plays it — the native play button is small on a phone.
+  const tutorial = $('tutorialVideo');
+  tutorial.addEventListener('click', event => {
+    if (event.offsetY > tutorial.clientHeight - 40) return; // leave the control bar alone
+    if (tutorial.paused) tutorial.play().catch(() => {}); else tutorial.pause();
+  });
   const checker = VGP.isReviewer(rater);
   if (checker) {
     $('homeEyebrow').innerHTML = '<span data-lang="vi">Tài khoản check conflict</span><span data-lang="en">Conflict checker account</span>';
