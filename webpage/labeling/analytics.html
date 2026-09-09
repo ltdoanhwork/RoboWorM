@@ -15,6 +15,7 @@
       <button class="top-btn accent" id="btnRefresh">Refresh</button>
       <button class="top-btn" id="btnCsv">CSV</button>
       <button class="top-btn" id="btnJson">JSON</button>
+      <button class="top-btn" id="btnKey">key.json</button>
     </div>
   </div>
 </nav>
@@ -22,35 +23,36 @@
   <section class="chart-card">
     <h2>Labeling pool</h2>
     <p class="status" style="margin-bottom:.7rem">
-      Geometry = <strong>300 videos</strong> (100 per embodiment), multiview consistency.
-      Hallucinate = <strong>900 segments</strong> (300 per embodiment; lead / middle / trail of 300 clips).
-      Each item needs <strong>2 regular raters</strong>. Score conflicts go to
+      Geometry = <strong>300 videos</strong> (100 per embodiment), one score per clip.
+      Hallucinate = <strong id="poolHallu">the 300vid pool</strong> — 16-frame segments; the clip stops at every
+      segment and the rater scores it. Every <em>segment</em> needs <strong>2 regular raters</strong>; disagreements go to
       <span class="mono">quang_check</span> and <span class="mono">thanh_check</span>.
     </p>
     <div class="admin-stat" id="stats">Loading…</div>
   </section>
 
   <section class="chart-card">
-    <h2>Dataset — unique videos</h2>
+    <h2>Dataset</h2>
     <p class="status" style="margin-bottom:.6rem">
-      Geometry split is on the source path. Hallucinate has no makovian tag — 900 segments reverse to 300 clips (3 segments = 1 video).
-      39 single-arm geometry clips come from <span class="mono">tmp/lowquality_multiview</span> with no split.
+      Hallucinate now carries a real markov / non-markov split from <span class="mono">300vid/{robot}/key.json</span>.
+      Geometry split comes from the source path — 39 single-arm clips live in
+      <span class="mono">tmp/lowquality_multiview</span> and have none.
     </p>
-    <p class="status" style="margin:.2rem 0 .4rem">Geometry · 300 videos</p>
+    <p class="status" style="margin:.2rem 0 .4rem" id="dsGeoCap">Geometry</p>
     <div id="dsGeo"></div>
-    <p class="status" style="margin:.9rem 0 .4rem">Hallucinate · 900 segments → unique clips</p>
+    <p class="status" style="margin:.9rem 0 .4rem" id="dsHalluCap">Hallucinate</p>
     <div id="dsHallu"></div>
   </section>
 
   <div class="phase-grid">
     <section class="chart-card">
-      <h2>Quang — makovian / non-makovian</h2>
-      <p class="status" style="margin-bottom:.6rem">Unique videos after reversing hallu segments to clips. Geometry carries the split.</p>
+      <h2>Quang</h2>
+      <p class="status" style="margin-bottom:.6rem">Labels reversed to the videos they came from, split by makovian / non-makovian.</p>
       <div id="raterQuang"></div>
     </section>
     <section class="chart-card">
-      <h2>Thành — embodiment × split</h2>
-      <p class="status" style="margin-bottom:.6rem">Unique videos. Hallucinate clips count as unknown split.</p>
+      <h2>Thành</h2>
+      <p class="status" style="margin-bottom:.6rem">Same, broken out by embodiment × split.</p>
       <div id="raterThanh"></div>
     </section>
   </div>
@@ -74,28 +76,42 @@
 
   <section class="chart-card">
     <h2>Confusion · Geometry (machine → human)</h2>
-    <p class="status" style="margin-bottom:.6rem">Resolved human label only: two raters agree, or a checker decides a conflict. Rows = machine, columns = human.</p>
+    <p class="status" style="margin-bottom:.6rem">Resolved human label only: two raters agree, or a checker decides. Rows = machine, columns = human.</p>
     <div class="cm-grid" id="cmGeo"></div>
   </section>
 
   <section class="chart-card">
-    <h2>Confusion · Hallucinate (machine → human)</h2>
-    <p class="status" style="margin-bottom:.6rem">Same 1 / 2 / 3 scale. Machine map: high → Bad, medium → Medium, low → Good. Split 300 / 300 / 300 by embodiment.</p>
-    <div class="cm-grid" id="cmHallu"></div>
+    <h2>Confusion · Hallucinate video (band → human)</h2>
+    <p class="status" style="margin-bottom:.6rem">
+      Machine band: high → Bad, medium → Medium, low → Good. Human video score = mean of its segment flags
+      (good 0, medium 1, bad 2) rounded back, counted only once every segment of the video is resolved.
+    </p>
+    <div class="cm-grid" id="cmHalluVideo"></div>
+  </section>
+
+  <section class="chart-card">
+    <h2>Confusion · Hallucinate segment (violated → human)</h2>
+    <p class="status" style="margin-bottom:.6rem">
+      The per-segment machine signal is binary: <span class="mono">violated</span> = motion ratio ≥ 1 against the
+      real-data p95 threshold. Rows = machine, columns = resolved human score.
+    </p>
+    <div class="cm-grid" id="cmHalluSeg"></div>
   </section>
 
   <section class="chart-card">
     <h2>Raters</h2>
-    <table class="data" id="table"><thead><tr><th>Rater</th><th>Labels</th><th>Items</th><th>Mean</th><th>Last update</th></tr></thead><tbody></tbody></table>
+    <table class="data" id="table"><thead><tr><th>Rater</th><th>Labels</th><th>Geometry</th><th>Hallu segments</th><th>Mean</th><th>Last update</th></tr></thead><tbody></tbody></table>
   </section>
 </main>
 <script src="config.js"></script>
 <script src="vgp.js"></script>
 <script>
 if (VGP.requireAdmin()) {
-  let rows = [], geoItems = [], halluItems = [], geoMetrics = [], halluMetrics = [];
-  let exportBundle = { geometry: { items: [] }, hallucinate: { items: [] } };
+  let rows = [], geoItems = [], halluItems = [], geoMetrics = [], halluSegMetrics = [], halluVideoMetrics = [];
+  let exportBundle = { geometry: { items: [] }, hallucinate: { videos: [], segments: [] } };
+  let keyExport = {};
   const LABELS = ['Bad', 'Medium', 'Good'];
+  const EMBS = ['bimanual', 'humanoid', 'single_arm'];
 
   function bars(host, entries, max){
     host.innerHTML = entries.map(([label, n, extra]) => {
@@ -117,81 +133,225 @@ if (VGP.requireAdmin()) {
     return { 1: {1:0,2:0,3:0}, 2: {1:0,2:0,3:0}, 3: {1:0,2:0,3:0} };
   }
 
-  function addCell(m, machine, human){
-    if (!machine || !human) return;
-    m[machine][human] += 1;
-  }
-
   function matrixStats(m){
     let n = 0, agree = 0;
-    for (let i = 1; i <= 3; i++) for (let j = 1; j <= 3; j++) {
+    for (const i of Object.keys(m)) for (let j = 1; j <= 3; j++) {
       n += m[i][j];
-      if (i === j) agree += m[i][j];
+      if (Number(i) === j) agree += m[i][j];
     }
     return { n, agree, acc: n ? agree / n : 0 };
   }
 
-  function renderMatrix(title, m){
+  function renderMatrix(title, m, rowLabels){
     const s = matrixStats(m);
-    const cell = (i, j) => {
-      const v = m[i][j];
-      return `<td class="${i === j ? 'diag' : ''}">${v}</td>`;
-    };
+    const keys = Object.keys(m);
+    const labelOf = i => (rowLabels ? rowLabels[i] : `M ${['Bad','Med','Good'][i - 1]}`);
+    const body = keys.map(i =>
+      `<tr><th>${labelOf(i)}</th>` + [1,2,3].map(j =>
+        `<td class="${rowLabels ? '' : (Number(i) === j ? 'diag' : '')}">${m[i][j]}</td>`).join('') + '</tr>'
+    ).join('');
+    const acc = rowLabels ? '' : ` · agree ${s.agree} · acc ${s.n ? (100 * s.acc).toFixed(1) : '—'}%`;
     return `<div class="cm-card"><h3>${title}</h3>
       <table class="cm">
         <thead><tr><th></th><th>H Bad</th><th>H Med</th><th>H Good</th></tr></thead>
-        <tbody>
-          <tr><th>M Bad</th>${cell(1,1)}${cell(1,2)}${cell(1,3)}</tr>
-          <tr><th>M Med</th>${cell(2,1)}${cell(2,2)}${cell(2,3)}</tr>
-          <tr><th>M Good</th>${cell(3,1)}${cell(3,2)}${cell(3,3)}</tr>
-        </tbody>
+        <tbody>${body}</tbody>
       </table>
-      <p class="status">n=${s.n} · agree ${s.agree} · acc ${s.n ? (100 * s.acc).toFixed(1) : '—'}%</p>
+      <p class="status">n=${s.n}${acc}</p>
     </div>`;
   }
 
-  function confusionFor(items, metrics, resolved){
+  /** items with a machine score vs their resolved human score. */
+  function confusionFor(items, metrics, resolved, idOf){
     const byId = new Map(metrics.map(it => [it.id, it]));
     const overall = emptyMatrix();
     const byEmb = {};
     for (const it of items) {
-      const human = resolved[it.id]?.human_score;
+      const key = idOf ? idOf(it) : it.id;
+      const human = resolved[key]?.human_score;
       const machine = VGP.machineScore(byId.get(it.id) || it);
       if (human == null || !machine) continue;
       const emb = VGP.normalizeEmbodiment(it.embodiment);
       if (!byEmb[emb]) byEmb[emb] = emptyMatrix();
-      addCell(overall, machine, human);
-      addCell(byEmb[emb], machine, human);
+      overall[machine][human] += 1;
+      byEmb[emb][machine][human] += 1;
     }
     return { overall, byEmb };
   }
 
-  function joinExport(items, metrics, resolved, check){
-    const byId = new Map(metrics.map(it => [it.id, it]));
-    return items.map(it => {
+  /** violated (yes/no) vs resolved human score, per segment. */
+  function violatedConfusion(segMetrics, segResolved){
+    const blank = () => ({ yes: {1:0,2:0,3:0}, no: {1:0,2:0,3:0} });
+    const overall = blank();
+    const byEmb = {};
+    for (const seg of segMetrics) {
+      const human = segResolved[seg.id]?.human_score;
+      if (human == null) continue;
+      const row = seg.violated ? 'yes' : 'no';
+      const emb = VGP.normalizeEmbodiment(seg.embodiment);
+      if (!byEmb[emb]) byEmb[emb] = blank();
+      overall[row][human] += 1;
+      byEmb[emb][row][human] += 1;
+    }
+    return { overall, byEmb };
+  }
+
+  const VIOL_LABELS = { yes: 'M violated', no: 'M clean' };
+
+  // --- dataset / rater tables ---------------------------------------------
+  function videoRecords(items){
+    const out = new Map();
+    for (const it of items || []) {
+      out.set(VGP.videoKey(it), {
+        split: VGP.itemSplit(it),
+        emb: VGP.normalizeEmbodiment(it.embodiment),
+        segments: VGP.segmentCount(it),
+      });
+    }
+    return [...out.values()];
+  }
+
+  function splitTable(records, withEmb, showSegments, segWord){
+    const keys = withEmb ? EMBS : ['all'];
+    const blank = () => ({ makovian: 0, non_makovian: 0, unknown: 0, n: 0, seg: 0, segBySplit: { makovian: 0, non_makovian: 0, unknown: 0 } });
+    const counts = {};
+    for (const e of keys) counts[e] = blank();
+    const total = blank();
+    for (const v of records) {
+      const e = withEmb ? v.emb : 'all';
+      const bucket = counts[e];
+      if (bucket) {
+        bucket[v.split] += 1; bucket.n += 1;
+        bucket.seg += v.segments; bucket.segBySplit[v.split] += v.segments;
+      }
+      total[v.split] += 1; total.n += 1;
+      total.seg += v.segments; total.segBySplit[v.split] += v.segments;
+    }
+    const word = segWord || 'seg';
+    const pair = (v, s) => `<td>${v} <span class="mono">/ ${s}</span></td>`;
+    const cells = c => showSegments
+      ? pair(c.makovian, c.segBySplit.makovian) + pair(c.non_makovian, c.segBySplit.non_makovian)
+        + pair(c.unknown, c.segBySplit.unknown) + pair(c.n, c.seg)
+      : `<td>${c.makovian}</td><td>${c.non_makovian}</td><td>${c.unknown}</td><td>${c.n}</td>`;
+    const col = name => `<th>${name} <span class="mono">vid / ${word}</span></th>`;
+    const head = showSegments
+      ? col('Makovian') + col('Non-makovian') + col('Unknown') + col('All')
+      : '<th>Makovian</th><th>Non-makovian</th><th>Unknown</th><th>Videos</th>';
+    let html = `<table class="data"><thead><tr><th>${withEmb ? 'Embodiment' : ''}</th>${head}</tr></thead><tbody>`;
+    html += keys.map(e => `<tr><td>${withEmb ? VGP.embLabel(e) : 'All'}</td>${cells(counts[e])}</tr>`).join('');
+    if (withEmb) html += `<tr><td><strong>All</strong></td>${cells(total)}</tr>`;
+    return html + '</tbody></table>';
+  }
+
+  /** One rater's labels reversed onto the videos they belong to. */
+  function raterWork(bucket){
+    const byId = new Map([...geoItems, ...halluItems].map(it => [it.id, it]));
+    const seen = new Map();
+    let nLabels = 0, nGeo = 0, nSeg = 0;
+    for (const r of rows) {
+      if (VGP.raterBucket(r.rater_name) !== bucket) continue;
+      nLabels += 1;
+      const it = byId.get(VGP.parentVideoId(r.item_id));
+      if (!it) continue;
+      if (it.segments) nSeg += 1; else nGeo += 1;
+      const key = VGP.videoKey(it);
+      if (!seen.has(key)) {
+        seen.set(key, { split: VGP.itemSplit(it), emb: VGP.normalizeEmbodiment(it.embodiment), segments: 0 });
+      }
+      seen.get(key).segments += 1;
+    }
+    return { nLabels, nGeo, nSeg, records: [...seen.values()] };
+  }
+
+  function fillRater(id, bucket, withEmb){
+    const { nLabels, nGeo, nSeg, records } = raterWork(bucket);
+    const host = document.getElementById(id);
+    if (!nLabels) { host.innerHTML = '<p class="status">No labels yet.</p>'; return; }
+    host.innerHTML =
+      `<p class="status" style="margin-bottom:.4rem">${nLabels} labels (${nGeo} geometry + ${nSeg} hallucinate segments) → ${records.length} videos touched</p>` +
+      splitTable(records, withEmb, true, 'scored');
+  }
+
+  // --- exports -------------------------------------------------------------
+  function joinGeometry(resolved){
+    const byId = new Map(geoMetrics.map(it => [it.id, it]));
+    return geoItems.map(it => {
       const machine = byId.get(it.id) || {};
       const human = resolved[it.id] || {};
-      const row = { ...machine };
-      row.id = it.id;
-      row.index = it.index != null ? it.index : machine.index;
-      row.check = check;
-      row.embodiment = VGP.normalizeEmbodiment(it.embodiment || machine.embodiment);
-      if (it.task) row.task = it.task;
-      if (it.split) row.split = it.split;
-      if (it.clip_id) row.clip_id = it.clip_id;
-      if (it.segment_index != null) row.segment_index = it.segment_index;
-      if (it.rate_target) row.rate_target = it.rate_target;
-      row.machine_score = VGP.machineScore(machine);
-      row.rating = machine.rating || (row.machine_score != null ? LABELS[row.machine_score - 1].toLowerCase() : null);
-      row.human_score = human.human_score;
-      row.human_rating = human.human_rating;
-      row.n_raters = human.n_raters || 0;
-      row.conflict = !!human.conflict;
-      row.consensus = human.consensus;
-      row.rater_scores = human.rater_scores || {};
-      row.checker_scores = human.checker_scores || {};
-      return row;
+      return {
+        ...machine,
+        id: it.id,
+        index: it.index != null ? it.index : machine.index,
+        check: 'geometry',
+        embodiment: VGP.normalizeEmbodiment(it.embodiment || machine.embodiment),
+        task: it.task,
+        split: it.split,
+        machine_score: VGP.machineScore(machine),
+        rating: machine.rating,
+        human_score: human.human_score,
+        human_rating: human.human_rating,
+        n_raters: human.n_raters || 0,
+        conflict: !!human.conflict,
+        consensus: human.consensus,
+        rater_scores: human.rater_scores || {},
+        checker_scores: human.checker_scores || {},
+      };
     });
+  }
+
+  function joinHallucinate(videoResolved, segResolved){
+    const videos = halluVideoMetrics.map(met => {
+      const human = videoResolved[met.id] || {};
+      return {
+        ...met,
+        human_score: human.human_score,
+        human_rating: human.human_rating,
+        flag: human.human_rating || null,
+        mean_flag: human.mean_flag,
+        n_resolved: human.n_resolved || 0,
+        n_conflicts: human.n_conflicts || 0,
+        n_raters: human.n_raters || 0,
+      };
+    });
+    const segments = halluSegMetrics.map(met => {
+      const human = segResolved[met.id] || {};
+      return {
+        ...met,
+        human_score: human.human_score,
+        human_rating: human.human_rating,
+        flag: human.human_rating || null,
+        n_raters: human.n_raters || 0,
+        conflict: !!human.conflict,
+        consensus: human.consensus,
+        rater_scores: human.rater_scores || {},
+        checker_scores: human.checker_scores || {},
+      };
+    });
+    return { videos, segments };
+  }
+
+  /** Same shape the machine ships: {robot: {videos:{path:…}, segments:{path#i:…}}}. */
+  function buildKeyExport(hallu){
+    const out = {};
+    for (const v of hallu.videos) {
+      const robot = v.embodiment;
+      if (!out[robot]) out[robot] = { robot, segment_len_frames: 16, videos: {}, segments: {} };
+      out[robot].videos[v.video_path] = {
+        robot, split: v.split_src || v.split, band: v.band, bundle: v.bundle, video: v.source_video,
+        n_segments: v.n_segments, score_mean: v.score_mean, score_p90: v.score_p90, score_max: v.score_max,
+        frac_violating: v.frac_violating, real_multiple: v.real_multiple,
+        flag: v.flag, mean_flag: v.mean_flag, n_resolved: v.n_resolved,
+      };
+    }
+    for (const s of hallu.segments) {
+      const robot = s.embodiment;
+      if (!out[robot]) continue;
+      out[robot].segments[`${s.video_path}#${s.segment_index}`] = {
+        video: s.video_path, index: s.segment_index, start: s.start_frame, end: s.end_frame,
+        ratio_rigidity: s.ratio_rigidity, ratio_jerk: s.ratio_jerk, ratio: s.ratio,
+        violated: s.violated, flag: s.flag, n_raters: s.n_raters, conflict: s.conflict,
+      };
+    }
+    return out;
   }
 
   function flattenScores(obj){
@@ -200,15 +360,18 @@ if (VGP.requireAdmin()) {
 
   function toCsv(items){
     const keys = [
-      'id', 'index', 'check', 'embodiment', 'task', 'split', 'clip_id', 'segment_index', 'rate_target',
-      'video_path', 'source_video', 'score', 'machine_score', 'rating',
+      'id', 'index', 'check', 'embodiment', 'task', 'split', 'video_path', 'clip_id',
+      'video_id', 'segment_index', 'start_frame', 'end_frame',
+      'score', 'machine_score', 'rating', 'band', 'bundle', 'source_video',
+      'ratio', 'ratio_rigidity', 'ratio_jerk', 'violated',
       'geometric_consistency', 'pose_stability', 'num_disjoint_frames', 'disjoint_frame_ratio', 'combined_score',
-      'band', 'selected_by', 'peak_ratio', 'bundle', 'violated',
-      'human_score', 'human_rating', 'n_raters', 'conflict', 'consensus', 'rater_scores', 'checker_scores',
+      'score_mean', 'score_p90', 'score_max', 'frac_violating', 'real_multiple',
+      'human_score', 'human_rating', 'flag', 'mean_flag', 'n_resolved', 'n_raters', 'conflict', 'consensus',
+      'rater_scores', 'checker_scores',
     ];
     const esc = v => {
       if (v == null) return '';
-      if (typeof v === 'object') return JSON.stringify(v).replaceAll('"', '""');
+      if (typeof v === 'object') return `"${JSON.stringify(v).replaceAll('"', '""')}"`;
       const s = String(v);
       return /[",\n]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s;
     };
@@ -228,83 +391,24 @@ if (VGP.requireAdmin()) {
     a.click();
   }
 
-  const EMBS = ['bimanual', 'humanoid', 'single_arm'];
-
-  function uniqueFromItems(items){
-    const videos = new Map();
-    for (const it of items || []) {
-      const vid = VGP.videoKey(it);
-      if (!vid) continue;
-      videos.set(vid, {
-        split: VGP.itemSplit(it),
-        emb: VGP.normalizeEmbodiment(it.embodiment),
-      });
-    }
-    return [...videos.values()];
-  }
-
-  function uniqueFromRater(bucket){
-    const byId = new Map([...geoItems, ...halluItems].map(it => [it.id, it]));
-    const seen = new Map();
-    let nLabels = 0;
-    for (const r of rows) {
-      if (VGP.raterBucket(r.rater_name) !== bucket) continue;
-      nLabels += 1;
-      const it = byId.get(r.item_id);
-      if (!it) continue;
-      seen.set(VGP.videoKey(it), {
-        split: VGP.itemSplit(it),
-        emb: VGP.normalizeEmbodiment(it.embodiment),
-      });
-    }
-    return { nLabels, videos: [...seen.values()] };
-  }
-
-  function splitTable(videos, withEmb){
-    const keys = withEmb ? EMBS : ['all'];
-    const counts = {};
-    for (const e of keys) counts[e] = { makovian: 0, non_makovian: 0, unknown: 0, n: 0 };
-    for (const v of videos) {
-      const e = withEmb ? v.emb : 'all';
-      if (!counts[e]) continue;
-      counts[e][v.split] += 1;
-      counts[e].n += 1;
-    }
-    const labelOf = e => withEmb ? VGP.embLabel(e) : 'All';
-    let html = '<table class="data"><thead><tr><th>' + (withEmb ? 'Embodiment' : '') + '</th><th>Makovian</th><th>Non-makovian</th><th>Unknown</th><th>Videos</th></tr></thead><tbody>';
-    html += keys.map(e => {
-      const c = counts[e];
-      return `<tr><td>${labelOf(e)}</td><td>${c.makovian}</td><td>${c.non_makovian}</td><td>${c.unknown}</td><td>${c.n}</td></tr>`;
-    }).join('');
-    if (withEmb) {
-      const tot = { makovian: 0, non_makovian: 0, unknown: 0, n: videos.length };
-      videos.forEach(v => { tot[v.split] += 1; });
-      html += `<tr><td><strong>All</strong></td><td>${tot.makovian}</td><td>${tot.non_makovian}</td><td>${tot.unknown}</td><td>${tot.n}</td></tr>`;
-    }
-    return html + '</tbody></table>';
-  }
-
-  function fillRater(id, bucket, twoD){
-    const { nLabels, videos } = uniqueFromRater(bucket);
-    const host = document.getElementById(id);
-    if (!nLabels) {
-      host.innerHTML = '<p class="status">No labels yet.</p>';
-      return;
-    }
-    host.innerHTML = `<p class="status" style="margin-bottom:.4rem">${nLabels} labels → ${videos.length} unique videos</p>` + splitTable(videos, twoD);
-  }
-
+  // --- render --------------------------------------------------------------
   function render(){
     const geoN = geoItems.length;
     const halluN = halluItems.length;
+    const halluSegN = halluItems.reduce((n, it) => n + VGP.segmentCount(it), 0);
+
     const geoCov = VGP.coverageCounts(rows, geoItems);
-    const halluCov = VGP.coverageCounts(rows, halluItems);
+    const halluSegCov = VGP.segmentCoverage(rows, halluItems);
     const geoResolved = VGP.resolveHuman(rows, geoItems);
     const halluResolved = VGP.resolveHuman(rows, halluItems);
+    const halluSegResolved = VGP.resolveSegments(rows, halluItems);
+
     const geo2 = Object.values(geoCov).filter(n => n >= 2).length;
-    const hallu2 = Object.values(halluCov).filter(n => n >= 2).length;
     const geo1 = Object.values(geoCov).filter(n => n === 1).length;
-    const hallu1 = Object.values(halluCov).filter(n => n === 1).length;
+    const seg2 = Object.values(halluSegCov).filter(n => n >= 2).length;
+    const seg1 = Object.values(halluSegCov).filter(n => n === 1).length;
+    const halluVideosDone = halluItems.filter(it => halluResolved[it.id]?.human_score != null).length;
+
     const geoCheck = VGP.conflictCheckProgress(rows, geoItems);
     const halluCheck = VGP.conflictCheckProgress(rows, halluItems);
     const conflicts = geoCheck.total + halluCheck.total;
@@ -312,49 +416,53 @@ if (VGP.requireAdmin()) {
 
     const raters = new Map();
     for (const r of rows) {
-      if (!raters.has(r.rater_name)) raters.set(r.rater_name, { n: 0, sum: 0, last: r.updated_at, videos: new Set() });
+      if (!raters.has(r.rater_name)) raters.set(r.rater_name, { n: 0, sum: 0, last: r.updated_at, geo: 0, seg: 0 });
       const e = raters.get(r.rater_name);
       e.n += 1; e.sum += r.score;
       if (r.updated_at > e.last) e.last = r.updated_at;
-      e.videos.add(r.item_id);
+      if (/_s\d{3}$/.test(r.item_id)) e.seg += 1; else e.geo += 1;
     }
     const perRater = [...raters.entries()].map(([rater, v]) => ({
-      rater, n: v.n, videos: v.videos.size, mean: (v.sum / v.n).toFixed(2), last: v.last,
+      rater, n: v.n, geo: v.geo, seg: v.seg, mean: (v.sum / v.n).toFixed(2), last: v.last,
     })).sort((a, b) => b.n - a.n);
 
     document.getElementById('stats').innerHTML = `
       <div><b>${geoN}</b><span>geometry videos</span></div>
-      <div><b>${halluN}</b><span>hallucinate segments</span></div>
+      <div><b>${halluN}</b><span>hallucinate videos</span></div>
+      <div><b>${halluSegN.toLocaleString()}</b><span>hallucinate segments</span></div>
+      <div><b>${(geoN + halluSegN).toLocaleString()}</b><span>scoring units × 2 raters = ${(2 * (geoN + halluSegN)).toLocaleString()} labels</span></div>
       <div><b>${geo2}/${geoN}</b><span>geometry with 2 raters</span></div>
-      <div><b>${hallu2}/${halluN}</b><span>hallucinate with 2 raters</span></div>
-      <div><b>${geo1 + hallu1}</b><span>waiting 2nd rater</span></div>
+      <div><b>${seg2.toLocaleString()}/${halluSegN.toLocaleString()}</b><span>segments with 2 raters</span></div>
+      <div><b>${halluVideosDone}/${halluN}</b><span>hallucinate videos fully resolved</span></div>
+      <div><b>${geo1 + seg1}</b><span>waiting 2nd rater</span></div>
       <div><b>${conflicts}</b><span>score conflicts</span></div>
       <div><b>${open}</b><span>conflicts still open</span></div>
       <div><b>${perRater.filter(r => !VGP.isReviewer(r.rater)).length}</b><span>regular raters</span></div>`;
 
-    document.getElementById('dsGeo').innerHTML = splitTable(uniqueFromItems(geoItems), true);
-    document.getElementById('dsHallu').innerHTML =
-      `<p class="status" style="margin-bottom:.4rem">${halluN} segments → ${uniqueFromItems(halluItems).length} unique clips</p>` +
-      splitTable(uniqueFromItems(halluItems), true);
+    document.getElementById('poolHallu').textContent =
+      `${halluN} videos / ${halluSegN.toLocaleString()} segments`;
+    document.getElementById('dsGeoCap').textContent = `Geometry · ${geoN} videos`;
+    document.getElementById('dsHalluCap').textContent =
+      `Hallucinate · ${halluN} videos / ${halluSegN.toLocaleString()} segments`;
+    document.getElementById('dsGeo').innerHTML = splitTable(videoRecords(geoItems), true, false);
+    document.getElementById('dsHallu').innerHTML = splitTable(videoRecords(halluItems), true, true);
     fillRater('raterQuang', 'quang', false);
     fillRater('raterThanh', 'thanh', true);
 
-    document.getElementById('covGeoCap').textContent = `Geometry · ${geoN} videos · 100 / embodiment`;
-    document.getElementById('covHalluCap').textContent = `Hallucinate · ${halluN} segments · 300 / embodiment`;
-    const geoHist = histCover(geoCov);
-    const halluHist = histCover(halluCov);
-    bars(document.getElementById('covGeo'), geoHist, Math.max(1, geoN));
-    bars(document.getElementById('covHallu'), halluHist, Math.max(1, halluN));
+    document.getElementById('covGeoCap').textContent = `Geometry · ${geoN} videos`;
+    document.getElementById('covHalluCap').textContent = `Hallucinate · ${halluSegN.toLocaleString()} segments`;
+    bars(document.getElementById('covGeo'), histCover(geoCov), Math.max(1, geoN));
+    bars(document.getElementById('covHallu'), histCover(halluSegCov), Math.max(1, halluSegN));
 
     document.getElementById('conflictStats').innerHTML = `
       <div><b>${geoCheck.total}</b><span>geometry conflicts</span></div>
-      <div><b>${halluCheck.total}</b><span>hallucinate conflicts</span></div>
+      <div><b>${halluCheck.total}</b><span>hallucinate segment conflicts</span></div>
       <div><b>${open}</b><span>open</span></div>
       <div><b>${geoCheck.both + halluCheck.both}</b><span>checked by both</span></div>`;
-    bars(document.getElementById('checkProgRaters'), [
-      [`quang_check ${(geoCheck.per.quang_check || 0) + (halluCheck.per.quang_check || 0)}/${conflicts || 0}`, (geoCheck.per.quang_check || 0) + (halluCheck.per.quang_check || 0)],
-      [`thanh_check ${(geoCheck.per.thanh_check || 0) + (halluCheck.per.thanh_check || 0)}/${conflicts || 0}`, (geoCheck.per.thanh_check || 0) + (halluCheck.per.thanh_check || 0)],
-    ], Math.max(1, conflicts));
+    const perChecker = name => (geoCheck.per[name] || 0) + (halluCheck.per[name] || 0);
+    bars(document.getElementById('checkProgRaters'), VGP.REVIEWERS.map(name =>
+      [`${name} ${perChecker(name)}/${conflicts || 0}`, perChecker(name)]
+    ), Math.max(1, conflicts));
     const openRows = [...VGP.conflictRows(rows, geoItems), ...VGP.conflictRows(rows, halluItems)]
       .filter(c => !c.labels.some(l => VGP.isReviewer(l.rater_name)))
       .slice(0, 12)
@@ -362,26 +470,40 @@ if (VGP.requireAdmin()) {
     bars(document.getElementById('conflictOpen'), openRows, 4);
 
     const geoCm = confusionFor(geoItems, geoMetrics, geoResolved);
-    const halluCm = confusionFor(halluItems, halluMetrics, halluResolved);
-    const embs = ['bimanual', 'humanoid', 'single_arm'];
+    const halluCm = confusionFor(halluItems, halluVideoMetrics, halluResolved);
+    const segCm = violatedConfusion(halluSegMetrics, halluSegResolved);
     document.getElementById('cmGeo').innerHTML = [
       renderMatrix('Overall', geoCm.overall),
-      ...embs.map(emb => renderMatrix(VGP.embLabel(emb), geoCm.byEmb[emb] || emptyMatrix())),
+      ...EMBS.map(emb => renderMatrix(VGP.embLabel(emb), geoCm.byEmb[emb] || emptyMatrix())),
     ].join('');
-    document.getElementById('cmHallu').innerHTML = [
+    document.getElementById('cmHalluVideo').innerHTML = [
       renderMatrix('Overall', halluCm.overall),
-      ...embs.map(emb => renderMatrix(VGP.embLabel(emb), halluCm.byEmb[emb] || emptyMatrix())),
+      ...EMBS.map(emb => renderMatrix(VGP.embLabel(emb), halluCm.byEmb[emb] || emptyMatrix())),
+    ].join('');
+    const blankViol = { yes: {1:0,2:0,3:0}, no: {1:0,2:0,3:0} };
+    document.getElementById('cmHalluSeg').innerHTML = [
+      renderMatrix('Overall', segCm.overall, VIOL_LABELS),
+      ...EMBS.map(emb => renderMatrix(VGP.embLabel(emb), segCm.byEmb[emb] || blankViol, VIOL_LABELS)),
     ].join('');
 
     document.querySelector('#table tbody').innerHTML = perRater.map(r =>
-      `<tr><td>${r.rater}${VGP.isReviewer(r.rater) ? ' <span class="mono">checker</span>' : ''}</td><td>${r.n}</td><td>${r.videos}</td><td>${r.mean}</td><td class="mono">${new Date(r.last).toLocaleString()}</td></tr>`
-    ).join('') || '<tr><td colspan="5">No labels yet.</td></tr>';
+      `<tr><td>${r.rater}${VGP.isReviewer(r.rater) ? ' <span class="mono">checker</span>' : ''}</td><td>${r.n}</td><td>${r.geo}</td><td>${r.seg}</td><td>${r.mean}</td><td class="mono">${new Date(r.last).toLocaleString()}</td></tr>`
+    ).join('') || '<tr><td colspan="6">No labels yet.</td></tr>';
 
+    const hallu = joinHallucinate(halluResolved, halluSegResolved);
+    keyExport = buildKeyExport(hallu);
     exportBundle = {
       exported_at: new Date().toISOString(),
       target_raters: VGP.TARGET_COVER,
-      geometry: { n: geoN, check: 'geometry', items: joinExport(geoItems, geoMetrics, geoResolved, 'geometry') },
-      hallucinate: { n: halluN, check: 'hallucinate', items: joinExport(halluItems, halluMetrics, halluResolved, 'hallucinate') },
+      scale: { 1: 'bad', 2: 'medium', 3: 'good', flag_value: 'good=0, medium=1, bad=2' },
+      geometry: { n: geoN, check: 'geometry', items: joinGeometry(geoResolved) },
+      hallucinate: {
+        check: 'hallucinate',
+        n_videos: halluN,
+        n_segments: halluSegN,
+        videos: hallu.videos,
+        segments: hallu.segments,
+      },
     };
   }
 
@@ -400,7 +522,8 @@ if (VGP.requireAdmin()) {
     const geoIds = new Set(geoItems.map(it => it.id));
     const halluIds = new Set(halluItems.map(it => it.id));
     geoMetrics = (mvMetrics.items || []).filter(it => geoIds.has(it.id));
-    halluMetrics = (metrics.items || []).filter(it => halluIds.has(it.id));
+    halluSegMetrics = (metrics.items || []).filter(it => halluIds.has(it.video_id));
+    halluVideoMetrics = (metrics.videos || []).filter(it => halluIds.has(it.id));
     render();
   }
 
@@ -408,7 +531,12 @@ if (VGP.requireAdmin()) {
   document.getElementById('btnJson').onclick = () =>
     download('vgp_labels.json', JSON.stringify(exportBundle, null, 2), 'application/json');
   document.getElementById('btnCsv').onclick = () =>
-    download('vgp_labels.csv', toCsv([...(exportBundle.geometry.items || []), ...(exportBundle.hallucinate.items || [])]), 'text/csv');
+    download('vgp_labels.csv', toCsv([
+      ...(exportBundle.geometry.items || []),
+      ...(exportBundle.hallucinate.segments || []),
+    ]), 'text/csv');
+  document.getElementById('btnKey').onclick = () =>
+    download('hallucinate_key_labeled.json', JSON.stringify(keyExport, null, 2), 'application/json');
   refresh().catch(err => { document.getElementById('stats').textContent = 'Failed to load.'; console.error(err); });
 }
 </script>

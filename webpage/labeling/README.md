@@ -6,16 +6,16 @@ Supabase Free, as long as this stays a non-commercial research deployment
 
 ```
 gate.html     rater passcode + name  |  admin passcode (analytics only)
-home.html     hub: 100-video batch (25 geometry + 75 hallucinate), lifetime stats
+home.html     hub: batch = 25 geometry videos + ~75 hallucinate segments, lifetime stats
 index.html    Geometry — 25 clips / batch, raw + flow, Bad/Medium/Good
-segment.html  Hallucinate — 75 clips / batch, score the middle 16 frames
-analytics.html admin-only charts (coverage, scores, raters). Not linked from rater UI.
+segment.html  Hallucinate — the clip pauses at every 16-frame segment for one score
+analytics.html admin-only charts (coverage, confusion, raters). Not linked from rater UI.
 admin.html    redirect → analytics.html
 app.css       shared UI
 vgp.js        least-labeled batch assignment + Supabase REST
 catalog.json  Mode A public catalog (HF URLs)
 examples.json 9 references: 3 ratings × 3 robot embodiments
-catalog.segment.json  Mode B blind public catalog (300 videos / explicit frame ranges)
+catalog.segment.json  Mode B blind public catalog (291 videos, explicit frame ranges)
 examples.segment.json 45 references: 3 ratings × 3 robot embodiments × 5 clips
 rubric.segment.{vi,en}.md Mode B bilingual rubrics shown during labeling
 ```
@@ -99,38 +99,58 @@ cd webpage/labeling && python3 -m http.server 8899
 
 ## Rater assignment
 
-Each rater gets **100 videos at a time** (25 geometry, then 75 hallucinate).
-The batch is stored in `localStorage` so refresh does not re-roll. **Submit
-works before the batch is finished.** After submit they can request another 100.
+Each batch is **25 geometry videos + hallucinate clips worth ~75 segments**
+(whole clips only — a clip is never split across raters, so the actual count
+lands between 75 and 94). The batch is stored in `localStorage` so refresh does
+not re-roll. **Submit works before the batch is finished.**
 
-Assignment reads current Supabase labels and picks videos this rater has not
-finished, **least-labeled first**, random among ties. That evens coverage
-while keeping intentional overlap across raters. Same display name restores
-lifetime counts (multiview videos + completed single-view videos + segments).
+Assignment reads current Supabase labels and picks items this rater has not
+finished, **least-labeled first**, random among ties, round-robin across
+embodiments. A hallucinate clip counts as covered only when *every* one of its
+segments has that many raters, so partial work leaves it open. Same display
+name restores lifetime counts.
 
-## Hallucinate segments (Mode B)
+Conflict checkers (`quang_check`, `thanh_check`) get only the clips holding a
+disagreement, and inside them only the disputed segment indices (`svSegs` on
+the batch).
 
-Do not cut 8k tiny MP4s. `scripts/build_hallucination_segment_catalog.py`
-copies `start_frame` / `end_frame` / `n_frames` from
-`sampling_dataset/data_for_web/hallucinate_bench/300-prune/{robot}/segments.json`
-(including the last short tail — 297 of 8370 segments are &lt;16 frames).
-The browser streams the full HF video and seeks:
+## Hallucinate segments (Mode B, 300vid pool)
+
+Source: the HF bucket `twanghcmut/hallucinate-bench`, revision `web`, path
+`300vid/{robot}/key.json` — 291 videos (bimanual 100, humanoid 100,
+single_arm 91) cut into 8,093 segments of 16 frames at 16 fps, each carrying a
+markov / non-markov split and a machine band.
+
+One catalog item = one video. Labels are per segment (`{videoId}_s{index}`);
+the player streams the clip and pauses at each boundary:
 
 ```
-start_time = start_frame / fps
-end_time   = (end_frame + 1) / fps
+end_time = (end_frame + 1) / fps
 ```
 
-Rebuild after HF metadata changes:
+Rebuild:
 
 ```bash
 python scripts/build_hallucination_segment_catalog.py --sync-web
+python scripts/sync_labeling_admin_metrics.py   # validates the pair
 ```
 
-`--sync-web` also writes `metrics.segment.json` (admin-only): per-segment
-rigidity / jerk / teleport / joint_limit / self_collision from each
-`300-prune/{robot}/segments.json`. Analytics compares those machine flags
-to human 1–2–3. The rater catalog stays blind.
+The builder **ffprobes every video** (HTTP range requests, ~40s for all 291)
+and caches the frame counts in
+`sampling_dataset/data_for_web/hallucinate_bench/300vid/frames.json`. This is
+not optional: `key.json` lists 161 phantom segments past the end of file on 7
+single_arm clips, and 16 clips have one trailing frame no segment covers. Pass
+`--reprobe` after the bucket changes.
+
+`metrics.segment.json` (admin-only) holds `items` = one row per segment
+(`ratio`, `violated`, frame range) and `videos` = the per-video rollup
+(`band`, `bundle`, `score_mean`, …). The rater catalog stays blind — no band,
+bundle, ratio or violation ever reaches `catalog.segment.json`.
+
+Analytics exports three files: `vgp_labels.json`, `vgp_labels.csv`, and
+`hallucinate_key_labeled.json`, the last one shaped exactly like the machine
+`key.json` (`{robot: {videos, segments}}`) with the `flag` fields filled in
+from resolved human scores.
 
 ## Design tradeoffs (why it's free)
 

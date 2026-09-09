@@ -22,7 +22,7 @@
 </nav>
 <main>
   <section class="home-hero">
-    <div class="eyebrow" id="homeEyebrow"><span data-lang="vi">Lô 100 video · 25 + 75</span><span data-lang="en">Batch of 100 videos · 25 + 75</span></div>
+    <div class="eyebrow" id="homeEyebrow"><span data-lang="vi">Mỗi lô · 25 video geometry + ~75 đoạn hallucinate</span><span data-lang="en">Each batch · 25 geometry videos + ~75 hallucinate segments</span></div>
     <h1><span data-lang="vi">Xin chào, </span><span data-lang="en">Hello, </span><span id="helloName"></span></h1>
     <div class="howto-row">
       <button class="btn primary" type="button" id="btnHowTo"><span data-lang="en">What do I click?</span><span data-lang="vi">Tôi cần bấm gì?</span></button>
@@ -99,10 +99,10 @@
       <div class="eyebrow">2 / 2</div>
       <h2>Hallucinate check</h2>
       <p>
-        <span data-lang="en">900 segments, 300 per embodiment. Watch the ~3s clip; score the highlighted lead / middle / trail segment.</span>
-        <span data-lang="vi">900 đoạn, 300 mỗi embodiment. Xem clip ~3 giây; chấm đoạn lead / middle / trail đang highlight.</span>
+        <span data-lang="en">The clip plays and stops at the end of every 1-second segment. Score that segment, and it keeps playing.</span>
+        <span data-lang="vi">Clip chạy và tự dừng ở cuối mỗi đoạn 1 giây. Chấm đoạn đó xong video chạy tiếp.</span>
       </p>
-      <div class="meta-line"><strong id="svProg">0 / 75</strong> · <span data-lang="vi">75 đoạn hallucinate</span><span data-lang="en">75 hallucinate segments</span></div>
+      <div class="meta-line"><strong id="svProg">0 / 0</strong> · <span data-lang="vi">đoạn đã chấm</span><span data-lang="en">segments scored</span> · <span id="svVideos">0</span> <span data-lang="vi">video</span><span data-lang="en">videos</span></div>
       <div class="progress"><div id="svBar"></div></div>
       <div class="home-actions">
         <a class="btn primary" href="segment.html" id="goSv"><span data-lang="vi">Chấm hallucinate</span><span data-lang="en">Rate hallucinate</span></a>
@@ -120,16 +120,16 @@
   <div class="dialog-body">
     <ol class="howto-ol">
       <li>
-        <span data-lang="en"><strong>Start to label 100</strong> — first time only. This assigns 25 geometry + 75 hallucinate clips that still need a second rater.</span>
-        <span data-lang="vi"><strong>Bắt đầu chấm 100</strong> — lần đầu. Lô gồm 25 geometry + 75 hallucinate chưa đủ 2 người chấm.</span>
+        <span data-lang="en"><strong>Start to label 100</strong> — first time only. This assigns 25 geometry videos plus enough hallucinate clips to make about 75 segments that still need a second rater.</span>
+        <span data-lang="vi"><strong>Bắt đầu chấm 100</strong> — lần đầu. Lô gồm 25 video geometry và đủ clip hallucinate cho khoảng 75 đoạn chưa đủ 2 người chấm.</span>
       </li>
       <li>
         <span data-lang="en"><strong>Rate geometry</strong> — open the first card. Watch both static cameras. Click <em>Bad / Medium / Good</em> (or keys 1–3). Click a numbered step to jump back and change a score.</span>
         <span data-lang="vi"><strong>Chấm geometry</strong> — mở thẻ đầu. Xem hai camera tĩnh. Bấm <em>Bad / Medium / Good</em> (hoặc phím 1–3). Bấm ô số để quay lại sửa.</span>
       </li>
       <li>
-        <span data-lang="en"><strong>Back to Home</strong>, then <strong>Rate hallucinate</strong>. Watch the ~3s clip; score the highlighted segment for physical integrity.</span>
-        <span data-lang="vi"><strong>Về Home</strong>, rồi <strong>Chấm hallucinate</strong>. Xem clip ~3 giây; chấm đoạn đang highlight về tính vật lý.</span>
+        <span data-lang="en"><strong>Back to Home</strong>, then <strong>Rate hallucinate</strong>. The clip pauses every 1 second — score that segment for physical integrity and it plays on.</span>
+        <span data-lang="vi"><strong>Về Home</strong>, rồi <strong>Chấm hallucinate</strong>. Clip dừng mỗi 1 giây — chấm đoạn đó về tính vật lý rồi video chạy tiếp.</span>
       </li>
       <li>
         <span data-lang="en"><strong>Submit this batch</strong> when you are done (or earlier — partial is OK). Then you can get another 100.</span>
@@ -150,8 +150,8 @@
   </div>
   <div class="dialog-body">
     <p style="color:var(--secondary);font-size:.9rem;margin-bottom:.8rem">
-      <span data-lang="en">Submit now, or go home and open the 75 hallucinate clips. Partial work is allowed.</span>
-      <span data-lang="vi">Nộp ngay, hoặc về Home rồi mở 75 clip hallucinate. Chưa xong vẫn nộp được.</span>
+      <span data-lang="en">Submit now, or go home and open the hallucinate clips. Partial work is allowed.</span>
+      <span data-lang="vi">Nộp ngay, hoặc về Home rồi mở phần hallucinate. Chưa xong vẫn nộp được.</span>
     </p>
     <div class="dialog-actions">
       <a class="btn primary" href="home.html"><span data-lang="vi">Về Home</span><span data-lang="en">Back to Home</span></a>
@@ -214,12 +214,17 @@ if (VGP.requireGate()) {
     }
     const mvItems = VGP.itemsFromIds(mvAll, batch.mvIds);
     const svItems = VGP.itemsFromIds(svAll, batch.svIds);
+    const svSegs = batch.svSegs || null;
+    const only = it => (svSegs ? svSegs[it.id] : null);
     const mvDone = mvItems.filter(it => labels[it.id] != null).length;
-    const svDone = svItems.filter(it => VGP.videoComplete(it, labels)).length;
+    const svDone = svItems.filter(it => VGP.videoComplete(it, labels, only(it))).length;
+    const segIds = svItems.flatMap(it => VGP.itemLabelIds(it, only(it)));
+    const segDone = segIds.filter(id => labels[id] != null).length;
     $('mvProg').textContent = `${mvDone} / ${mvItems.length}`;
-    $('svProg').textContent = `${svDone} / ${svItems.length}`;
+    $('svProg').textContent = `${segDone} / ${segIds.length}`;
+    $('svVideos').textContent = `${svDone} / ${svItems.length}`;
     $('mvBar').style.width = (mvItems.length ? 100 * mvDone / mvItems.length : 0) + '%';
-    $('svBar').style.width = (svItems.length ? 100 * svDone / svItems.length : 0) + '%';
+    $('svBar').style.width = (segIds.length ? 100 * segDone / segIds.length : 0) + '%';
     $('goMv').closest('.phase').hidden = checker && !mvItems.length;
     $('svPhase').hidden = checker && !svItems.length;
     const extra = checker
@@ -229,8 +234,8 @@ if (VGP.requireGate()) {
       setStatus(`Đã nộp lô này. Tổng ${VGP.raterStats(labels, mvAll, svAll).totalVideos} video.` + extra,
         `Batch submitted. ${VGP.raterStats(labels, mvAll, svAll).totalVideos} videos labeled in total.` + extra);
     } else {
-      setStatus(`Lô ${batch.mvIds.length + batch.svIds.length} video (${batch.mvIds.length} geometry + ${batch.svIds.length} hallucinate).` + extra,
-        `Batch of ${batch.mvIds.length + batch.svIds.length} videos (${batch.mvIds.length} geometry + ${batch.svIds.length} hallucinate).` + extra);
+      setStatus(`Lô này: ${batch.mvIds.length} video geometry + ${svItems.length} video hallucinate (${segIds.length} đoạn).` + extra,
+        `This batch: ${batch.mvIds.length} geometry videos + ${svItems.length} hallucinate videos (${segIds.length} segments).` + extra);
     }
   }
   async function assign(){
@@ -286,8 +291,8 @@ if (VGP.requireGate()) {
     const wasStale = prev && VGP.isStaleOpenBatch(prev, mvAll, svAll);
     batch = VGP.getValidBatch(mvAll, svAll);
     if (wasStale) {
-      setStatus('Catalog đã đánh index lại (300 geometry + 900 hallucinate). Bắt đầu chấm 100.',
-        'Catalog was reindexed (300 geometry + 900 hallucinate). Start to label 100.');
+      setStatus('Data hallucinate đã đổi sang bộ 300vid (291 video, chấm theo từng đoạn). Bắt đầu lô mới.',
+        'Hallucinate data moved to the 300vid pool (291 videos, scored segment by segment). Start a new batch.');
     }
     if (!batch || batch.submittedAt) $('btnAssign').hidden = false;
     renderBatch();

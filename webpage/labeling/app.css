@@ -117,12 +117,14 @@ main{max-width:1500px;margin:auto;padding:1.15rem 1.25rem 2rem}
 .segment-strip{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:0 1rem .2rem;color:var(--muted);font-size:.8rem}
 .segment-strip b{color:var(--text)}
 .wait-banner{margin:.55rem 1rem 0;padding:.55rem .7rem;border-radius:8px;background:var(--accent-soft);color:var(--accent);font-size:.8rem;font-weight:700}
+.wait-banner.playing{background:#f3f4f6;color:var(--secondary);font-weight:600}
 .wait-banner[hidden]{display:none!important}
 .seg-track{display:flex;gap:2px;padding:.55rem 1rem .15rem;flex-wrap:nowrap;overflow:hidden}
-.seg-tick{flex:1;min-width:3px;height:8px;border-radius:99px;background:#e5e7eb}
+.seg-tick{flex:1;min-width:3px;height:8px;border-radius:99px;background:#e5e7eb;cursor:pointer}
 .seg-tick.done{background:#a7f3d0}
 .seg-tick.current{background:var(--accent)}
-.seg-tick.wait{background:#fbbf24}
+.seg-tick.wait{background:#fbbf24;box-shadow:0 0 0 2px rgba(251,191,36,.35)}
+.seg-tick.muted{background:#f3f4f6;cursor:default;opacity:.6}
 .score-area{border-top:1px solid var(--border);padding:.8rem 1rem .35rem}
 .score-question{font-size:1.15rem;font-weight:800;color:var(--text);margin-bottom:.35rem;line-height:1.35}
 .score-hint{font-size:.82rem;color:var(--secondary);margin-bottom:.7rem;max-width:62ch}

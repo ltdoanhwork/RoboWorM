@@ -5,8 +5,9 @@ Geometry clips follow assets/all_videos.md order (id 00000..). Catalog metadata
 must come from those paths — not a stale manifest — so admin embodiment pies
 and human↔machine joins match the HF clip behind each id.
 
-Hallucinate clips are rate900_{emb}_{nnn}. Machine bands from key.json:
-  high → Bad (1), medium → Medium (2), low → Good (3).
+Hallucinate comes from the 300vid pool and is only validated here (the builder
+owns it): one catalog item per video, one metrics row per 16-frame segment.
+Machine bands from key.json: high → Bad (1), medium → Medium (2), low → Good (3).
 """
 from __future__ import annotations
 
@@ -115,58 +116,51 @@ def sync_geometry() -> tuple[int, dict]:
     return catalog["n"], emb_n
 
 
-def sync_hallucinate() -> tuple[int, dict]:
+def sync_hallucinate() -> tuple[int, int, dict]:
+    """Validate the 300vid pair written by build_hallucination_segment_catalog.py.
+
+    Catalog item = one video; metrics `items` = one row per 16-frame segment and
+    metrics `videos` = the per-video machine rollup. Nothing is rewritten here —
+    the builder owns the content; this only fails loudly on drift.
+    """
     catalog = json.loads((WEB / "catalog.segment.json").read_text())
     metrics = json.loads((WEB / "metrics.segment.json").read_text())
-    cat_ids = [it["id"] for it in catalog["items"]]
-    met_by_id = {it["id"]: it for it in metrics["items"]}
-    missing = [i for i in cat_ids if i not in met_by_id]
-    extra = [i for i in met_by_id if i not in set(cat_ids)]
-    if missing or extra:
-        raise SystemExit(f"hallu id mismatch missing={len(missing)} extra={len(extra)}")
-    aligned = []
+    cat_by_id = {it["id"]: it for it in catalog["items"]}
+    met_videos = {it["id"]: it for it in metrics.get("videos", [])}
+    if set(cat_by_id) != set(met_videos):
+        raise SystemExit(
+            f"hallu video id drift: catalog={len(cat_by_id)} metrics={len(met_videos)}"
+        )
+    seg_per_video: dict[str, int] = {}
+    for seg in metrics["items"]:
+        if seg["video_id"] not in cat_by_id:
+            raise SystemExit(f"segment {seg['id']} has no catalog video")
+        seg_per_video[seg["video_id"]] = seg_per_video.get(seg["video_id"], 0) + 1
     bands = {}
-    for cat in catalog["items"]:
-        met = met_by_id[cat["id"]]
+    for vid, cat in cat_by_id.items():
+        met = met_videos[vid]
+        if seg_per_video.get(vid, 0) != cat["n_segments"]:
+            raise SystemExit(
+                f"{vid}: catalog {cat['n_segments']} segments, metrics {seg_per_video.get(vid, 0)}"
+            )
         band = met.get("band") or "unknown"
-        score = BAND_TO_SCORE.get(band)
-        if score is None:
-            raise SystemExit(f"unknown band {band!r} on {cat['id']}")
-        met["check"] = "hallucinate"
-        met["machine_score"] = score
-        met["rating"] = SCORE_TO_RATING[score]
-        met["violated"] = band in ("high", "middle")
-        met["embodiment"] = cat["embodiment"]
-        aligned.append(met)
+        if BAND_TO_SCORE.get(band) is None:
+            raise SystemExit(f"unknown band {band!r} on {vid}")
+        if met["machine_score"] != BAND_TO_SCORE[band]:
+            raise SystemExit(f"{vid}: band {band} vs machine_score {met['machine_score']}")
+        if met["rating"] != SCORE_TO_RATING[met["machine_score"]]:
+            raise SystemExit(f"{vid}: rating drift")
+        if any(k in cat for k in ("band", "bundle", "ratio", "violated")):
+            raise SystemExit(f"{vid}: machine fields leaked into the public catalog")
         bands[band] = bands.get(band, 0) + 1
-        cat["check"] = "hallucinate"
-        cat["view"] = "mixed"
-    catalog["n"] = len(catalog["items"])
-    catalog["n_segments"] = catalog["n"]
-    catalog["check"] = "hallucinate"
-    catalog["note"] = (
-        "Hallucinate pool: 900 segments (300 per embodiment). "
-        "Each 48-frame clip has lead / middle / trail."
-    )
-    metrics["items"] = aligned
-    metrics["n"] = len(aligned)
-    metrics["check"] = "hallucinate"
-    metrics["n_violated"] = sum(1 for it in aligned if it["violated"])
-    metrics["created_at"] = datetime.now(timezone.utc).isoformat()
-    metrics["note"] = (
-        "Machine hallucinate scores for the same catalog.segment.json ids. "
-        "high→Bad(1), medium→Medium(2), low→Good(3)."
-    )
-    write_json(WEB / "catalog.segment.json", catalog)
-    write_json(WEB / "metrics.segment.json", metrics, indent=None)
-    return catalog["n"], bands
+    return len(cat_by_id), len(metrics["items"]), bands
 
 
 def main() -> None:
     geo_n, geo_emb = sync_geometry()
-    hallu_n, hallu_bands = sync_hallucinate()
+    hallu_v, hallu_s, hallu_bands = sync_hallucinate()
     print(f"geometry {geo_n}  {geo_emb}")
-    print(f"hallucinate {hallu_n}  bands {hallu_bands}")
+    print(f"hallucinate {hallu_v} videos / {hallu_s} segments  bands {hallu_bands}")
 
 
 if __name__ == "__main__":

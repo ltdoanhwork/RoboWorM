@@ -1,7 +1,7 @@
 {
   "source": "sampling_dataset/data_for_web/data_for_web.csv",
   "n": 300,
-  "created_at": "2026-09-06T12:44:21.728187+00:00",
+  "created_at": "2026-09-09T07:04:37.879881+00:00",
   "note": "Machine geometry scores for the same 300 catalog.json ids raters label. score/machine_score: 1 Bad, 2 Medium, 3 Good.",
   "items": [
     {

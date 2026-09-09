@@ -7,9 +7,10 @@ const VGP = (() => {
   const PASS_KEY = "vgp_pass_ok";
   const ADMIN_KEY = "vgp_admin_ok";
   const BATCH_PREFIX = "vgp_batch::";
-  const BATCH_VERSION = 5; // 900 hallu segments, reindexed ids, cache reset
+  const BATCH_VERSION = 6; // 300vid pool: 291 hallu videos scored segment by segment
   const GEO_N = 25;
-  const HALLU_N = 75;
+  const HALLU_SEG_N = 75; // hallucinate budget is counted in 16-frame segments
+  const HALLU_N = HALLU_SEG_N; // back-compat alias
   const HALF = GEO_N; // back-compat alias
   const TARGET_COVER = 2;
   const REVIEWERS = ["quang_check", "thanh_check"];
@@ -118,35 +119,41 @@ const VGP = (() => {
     return m ? m[1] : itemId;
   }
 
-  function scoreableSegmentIndices(item) {
+  /** Segment indices a rater must score. `only` restricts it (conflict review). */
+  function scoreableSegmentIndices(item, only) {
     if (!item || !item.segments) return null;
-    if (Number.isInteger(item.score_segment_index)) return [item.score_segment_index];
-    const rated = item.segments
+    const all = item.segments
       .map((seg, i) => (seg && seg.rateable === false ? null : i))
       .filter((i) => i != null);
-    return rated.length ? rated : item.segments.map((_, i) => i);
+    const idxs = all.length ? all : item.segments.map((_, i) => i);
+    if (!only || !only.length) return idxs;
+    const want = new Set(only.map(Number));
+    const kept = idxs.filter((i) => want.has(i));
+    return kept.length ? kept : idxs;
   }
 
-  function videoComplete(item, labels) {
-    if (!item) return false;
-    if (!item.segments) return labels[item.id] != null;
-    // rate900: one score on video id OR on the middle segment id
-    if (item.rate_target === "middle" || Number.isInteger(item.score_segment_index)) {
-      const s = item.score_segment_index ?? 1;
-      return labels[item.id] != null || labels[segmentId(item.id, s)] != null;
-    }
-    const idxs = scoreableSegmentIndices(item) || [];
-    return idxs.every((s) => labels[segmentId(item.id, s)] != null);
+  /** Label ids one item produces: one per segment, or the bare id if unsegmented. */
+  function itemLabelIds(item, only) {
+    if (!item) return [];
+    if (!item.segments) return [item.id];
+    return (scoreableSegmentIndices(item, only) || []).map((s) => segmentId(item.id, s));
   }
 
-  function videoTouched(item, labels) {
+  function segmentCount(item) {
+    if (!item) return 0;
+    return item.segments ? item.segments.length : 1;
+  }
+
+  function videoComplete(item, labels, only) {
     if (!item) return false;
     if (!item.segments) return labels[item.id] != null;
-    if (item.rate_target === "middle" || Number.isInteger(item.score_segment_index)) {
-      const s = item.score_segment_index ?? 1;
-      return labels[item.id] != null || labels[segmentId(item.id, s)] != null;
-    }
-    return item.segments.some((_, s) => labels[segmentId(item.id, s)] != null);
+    return itemLabelIds(item, only).every((id) => labels[id] != null);
+  }
+
+  function videoTouched(item, labels, only) {
+    if (!item) return false;
+    if (!item.segments) return labels[item.id] != null;
+    return itemLabelIds(item, only).some((id) => labels[id] != null);
   }
 
   function defaultLang() {
@@ -181,13 +188,14 @@ const VGP = (() => {
     return String(pass || "") === String((typeof CONFIG !== "undefined" && CONFIG.ACCESS_PASSCODE) || "");
   }
 
-  function raterStats(labels, mvItems, svItems) {
+  function raterStats(labels, mvItems, svItems, svSegs) {
+    const only = (it) => (svSegs ? svSegs[it.id] : null);
     const mvLabeled = (mvItems || []).filter((it) => labels[it.id] != null).length;
-    const svDone = (svItems || []).filter((it) => videoComplete(it, labels)).length;
-    const svTouched = (svItems || []).filter((it) => videoTouched(it, labels)).length;
+    const svDone = (svItems || []).filter((it) => videoComplete(it, labels, only(it))).length;
+    const svTouched = (svItems || []).filter((it) => videoTouched(it, labels, only(it))).length;
     let svSegments = 0;
     for (const id of Object.keys(labels)) {
-      if (/_s\d{3}$/.test(id) || /^rate900_/.test(id)) svSegments += 1;
+      if (/_s\d{3}$/.test(id)) svSegments += 1;
     }
     return {
       mvLabeled,
@@ -199,18 +207,66 @@ const VGP = (() => {
     };
   }
 
-  function coverageCounts(rows, items) {
-    const known = new Set((items || []).map((it) => it.id));
-    const raters = new Map();
-    for (const row of rows || []) {
-      if (isReviewer(row.rater_name)) continue;
-      const vid = known.has(row.item_id) ? row.item_id : parentVideoId(row.item_id);
-      if (!known.has(vid)) continue;
-      if (!raters.has(vid)) raters.set(vid, new Set());
-      raters.get(vid).add(normalizeName(row.rater_name));
+  /**
+   * rows grouped by scoring unit (segment id, or item id when unsegmented).
+   * Map unitId -> { itemId, segIndex, raters: Map(name -> row) }.
+   */
+  function labelsByUnit(rows, items) {
+    const units = new Map();
+    for (const it of items || []) {
+      for (const uid of itemLabelIds(it)) {
+        const m = String(uid).match(/_s(\d{3})$/);
+        units.set(uid, { itemId: it.id, segIndex: m ? Number(m[1]) : null, raters: new Map() });
+      }
     }
+    for (const row of rows || []) {
+      const unit = units.get(row.item_id);
+      if (!unit) continue;
+      unit.raters.set(normalizeName(row.rater_name), row);
+    }
+    return units;
+  }
+
+  function unitsByItem(units) {
+    const byItem = new Map();
+    for (const [uid, unit] of units) {
+      if (!byItem.has(unit.itemId)) byItem.set(unit.itemId, []);
+      byItem.get(unit.itemId).push([uid, unit]);
+    }
+    for (const list of byItem.values()) list.sort((a, b) => (a[1].segIndex ?? 0) - (b[1].segIndex ?? 0));
+    return byItem;
+  }
+
+  function regularOf(unit) {
+    return [...unit.raters.values()].filter((row) => !isReviewer(row.rater_name));
+  }
+  function checkersOf(unit) {
+    return [...unit.raters.values()].filter((row) => isReviewer(row.rater_name));
+  }
+
+  /** Distinct regular raters per scoring unit. */
+  function segmentCoverage(rows, items) {
+    const units = labelsByUnit(rows, items);
     const counts = {};
-    for (const it of items || []) counts[it.id] = (raters.get(it.id) || new Set()).size;
+    for (const [uid, unit] of units) {
+      counts[uid] = new Set(regularOf(unit).map((row) => normalizeName(row.rater_name))).size;
+    }
+    return counts;
+  }
+
+  /** Item coverage = the weakest of its segments, so partial work keeps it open. */
+  function coverageCounts(rows, items) {
+    const units = labelsByUnit(rows, items);
+    const byItem = unitsByItem(units);
+    const counts = {};
+    for (const it of items || []) {
+      const list = byItem.get(it.id) || [];
+      let min = Infinity;
+      for (const [, unit] of list) {
+        min = Math.min(min, new Set(regularOf(unit).map((row) => normalizeName(row.rater_name))).size);
+      }
+      counts[it.id] = Number.isFinite(min) ? min : 0;
+    }
     return counts;
   }
 
@@ -237,6 +293,33 @@ const VGP = (() => {
       return Math.random() - 0.5;
     };
     fresh.sort(rank);
+    // Hallucinate: a batch is a segment budget, so whole videos are added until
+    // it is met (never split a clip — the rater watches it end to end).
+    if (options.segmentBudget) {
+      const budget = options.segmentBudget;
+      const ceiling = Math.round(budget * 1.25);
+      const queues = new Map();
+      for (const it of fresh) {
+        const emb = normalizeEmbodiment(it.embodiment);
+        if (!queues.has(emb)) queues.set(emb, []);
+        queues.get(emb).push(it);
+      }
+      const embs = [...queues.keys()].sort();
+      const picked = [];
+      let total = 0;
+      let turn = 0;
+      while (total < budget && embs.some((e) => queues.get(e).length)) {
+        const list = queues.get(embs[turn % embs.length]);
+        turn += 1;
+        const it = list.shift();
+        if (!it) continue;
+        const size = segmentCount(it);
+        if (total && total + size > ceiling) continue;
+        picked.push(it);
+        total += size;
+      }
+      return picked;
+    }
     if (options.stratify === false || fresh.length <= n) return fresh.slice(0, n);
     const groups = new Map();
     for (const it of fresh) {
@@ -264,105 +347,170 @@ const VGP = (() => {
     return picked;
   }
 
-  function labelsByVideo(rows, items) {
-    const known = new Set((items || []).map((it) => it.id));
-    const byVid = new Map();
-    for (const row of rows || []) {
-      const vid = known.has(row.item_id) ? row.item_id : parentVideoId(row.item_id);
-      if (!known.has(vid)) continue;
-      if (!byVid.has(vid)) byVid.set(vid, new Map());
-      byVid.get(vid).set(normalizeName(row.rater_name), row);
+  /** Resolve one scoring unit: 2 agreeing raters, else a checker decides. */
+  function resolveUnit(unit) {
+    const regular = regularOf(unit);
+    const checkers = checkersOf(unit);
+    const raterScores = {};
+    const checkerScores = {};
+    regular.forEach((row) => { raterScores[row.rater_name] = row.score; });
+    checkers.forEach((row) => { checkerScores[row.rater_name] = row.score; });
+    const uniq = new Set(regular.map((row) => row.score));
+    const conflict = regular.length >= 2 && uniq.size >= 2;
+    let humanScore = null;
+    let consensus = null;
+    if (regular.length >= 2 && uniq.size === 1) {
+      humanScore = regular[0].score;
+      consensus = "raters";
+    } else if (conflict) {
+      const cuniq = new Set(checkers.map((row) => row.score));
+      if (checkers.length >= 2 && cuniq.size === 1) {
+        humanScore = checkers[0].score;
+        consensus = "checkers";
+      } else if (checkers.length === 1) {
+        humanScore = checkers[0].score;
+        consensus = "checker";
+      }
     }
-    return byVid;
+    return {
+      human_score: humanScore,
+      human_rating: humanScore != null ? (SCORE_LABEL[humanScore] || "").toLowerCase() : null,
+      n_raters: new Set(regular.map((row) => normalizeName(row.rater_name))).size,
+      n_checkers: checkers.length,
+      rater_scores: raterScores,
+      checker_scores: checkerScores,
+      conflict,
+      consensus,
+    };
   }
 
-  function conflictIds(rows, items) {
-    const byVid = labelsByVideo(rows, items);
-    const out = [];
-    for (const [vid, scores] of byVid) {
-      const regular = [...scores.values()].filter((row) => !isReviewer(row.rater_name));
-      const uniq = new Set(regular.map((row) => row.score));
-      if (regular.length >= 2 && uniq.size >= 2) out.push(vid);
-    }
+  /** Per-segment resolution keyed by label id. */
+  function resolveSegments(rows, items) {
+    const units = labelsByUnit(rows, items);
+    const out = {};
+    for (const [uid, unit] of units) out[uid] = resolveUnit(unit);
     return out;
   }
 
-  function conflictRows(rows, items) {
-    const ids = new Set(conflictIds(rows, items));
-    const known = new Set((items || []).map((it) => it.id));
-    const grouped = {};
-    for (const row of rows || []) {
-      const vid = known.has(row.item_id) ? row.item_id : parentVideoId(row.item_id);
-      if (!ids.has(vid)) continue;
-      if (!grouped[vid]) grouped[vid] = [];
-      grouped[vid].push(row);
-    }
-    return Object.entries(grouped).map(([id, labels]) => ({ id, labels }));
+  // key.json scale: good=0, medium=1, bad=2. A video score is the mean of its
+  // segment flags, rounded back onto the 1 / 2 / 3 rater scale.
+  function scoreToFlagValue(score) {
+    return 3 - score;
+  }
+  function flagValueToScore(value) {
+    return 3 - Math.round(value);
   }
 
-  function pickConflictItems(items, rows, doneIds, n) {
-    const want = new Set(conflictIds(rows, items));
-    const fresh = (items || []).filter((it) => want.has(it.id) && !doneIds.has(it.id));
-    fresh.sort(() => Math.random() - 0.5);
-    return n != null ? fresh.slice(0, n) : fresh;
-  }
-
+  /** Per-item resolution; segmented items aggregate their segment scores. */
   function resolveHuman(rows, items) {
-    const byVid = labelsByVideo(rows, items);
+    const units = labelsByUnit(rows, items);
+    const byItem = unitsByItem(units);
     const out = {};
     for (const it of items || []) {
-      const labels = byVid.get(it.id) || new Map();
-      const regular = [...labels.values()].filter((row) => !isReviewer(row.rater_name));
-      const checkers = [...labels.values()].filter((row) => isReviewer(row.rater_name));
+      const list = byItem.get(it.id) || [];
+      if (!it.segments) {
+        const unit = list.length ? list[0][1] : { raters: new Map() };
+        out[it.id] = { ...resolveUnit(unit), n_segments: 1, n_resolved: 0 };
+        out[it.id].n_resolved = out[it.id].human_score != null ? 1 : 0;
+        continue;
+      }
+      const resolved = [];
       const raterScores = {};
       const checkerScores = {};
-      regular.forEach((row) => { raterScores[row.rater_name] = row.score; });
-      checkers.forEach((row) => { checkerScores[row.rater_name] = row.score; });
-      const uniq = new Set(regular.map((row) => row.score));
-      let humanScore = null;
-      let consensus = null;
-      const conflict = regular.length >= 2 && uniq.size >= 2;
-      if (regular.length >= 2 && uniq.size === 1) {
-        humanScore = regular[0].score;
-        consensus = "raters";
-      } else if (conflict) {
-        const cuniq = new Set(checkers.map((row) => row.score));
-        if (checkers.length >= 2 && cuniq.size === 1) {
-          humanScore = checkers[0].score;
-          consensus = "checkers";
-        } else if (checkers.length === 1) {
-          humanScore = checkers[0].score;
-          consensus = "checker";
-        }
+      let conflicts = 0;
+      let raterSet = new Set();
+      for (const [uid, unit] of list) {
+        const r = resolveUnit(unit);
+        if (r.conflict) conflicts += 1;
+        if (r.human_score != null) resolved.push(r.human_score);
+        Object.keys(r.rater_scores).forEach((name) => raterSet.add(normalizeName(name)));
+        raterScores[uid] = r.rater_scores;
+        checkerScores[uid] = r.checker_scores;
       }
+      const complete = list.length > 0 && resolved.length === list.length;
+      const meanFlag = resolved.length
+        ? resolved.reduce((a, s) => a + scoreToFlagValue(s), 0) / resolved.length
+        : null;
+      const humanScore = complete ? flagValueToScore(meanFlag) : null;
       out[it.id] = {
         human_score: humanScore,
         human_rating: humanScore != null ? (SCORE_LABEL[humanScore] || "").toLowerCase() : null,
-        n_raters: new Set(regular.map((row) => normalizeName(row.rater_name))).size,
+        mean_flag: meanFlag != null ? Number(meanFlag.toFixed(4)) : null,
+        n_segments: list.length,
+        n_resolved: resolved.length,
+        n_raters: raterSet.size,
         rater_scores: raterScores,
         checker_scores: checkerScores,
-        conflict,
-        consensus,
+        conflict: conflicts > 0,
+        n_conflicts: conflicts,
+        consensus: complete ? "segments" : null,
       };
     }
     return out;
   }
 
+  /** Label ids where the two raters disagree. */
+  function conflictUnitIds(rows, items) {
+    const units = labelsByUnit(rows, items);
+    const out = [];
+    for (const [uid, unit] of units) {
+      if (resolveUnit(unit).conflict) out.push(uid);
+    }
+    return out;
+  }
+
+  /** Item ids holding at least one conflicting unit. */
+  function conflictIds(rows, items) {
+    return [...new Set(conflictUnitIds(rows, items).map((uid) => parentVideoId(uid)))];
+  }
+
+  /** { itemId: [segIndex, …] } so a checker only re-scores the disputed parts. */
+  function conflictSegmentsByItem(rows, items) {
+    const out = {};
+    const units = labelsByUnit(rows, items);
+    for (const uid of conflictUnitIds(rows, items)) {
+      const unit = units.get(uid);
+      const itemId = unit ? unit.itemId : parentVideoId(uid);
+      if (!out[itemId]) out[itemId] = [];
+      if (unit && unit.segIndex != null) out[itemId].push(unit.segIndex);
+    }
+    for (const list of Object.values(out)) list.sort((a, b) => a - b);
+    return out;
+  }
+
+  function conflictRows(rows, items) {
+    const units = labelsByUnit(rows, items);
+    const out = [];
+    for (const uid of conflictUnitIds(rows, items)) {
+      const unit = units.get(uid);
+      out.push({ id: uid, itemId: unit ? unit.itemId : parentVideoId(uid), labels: [...unit.raters.values()] });
+    }
+    return out;
+  }
+
+  function pickConflictItems(items, rows, doneIds, n) {
+    const bySeg = conflictSegmentsByItem(rows, items);
+    const fresh = (items || []).filter((it) => bySeg[it.id] && !doneIds.has(it.id));
+    fresh.sort(() => Math.random() - 0.5);
+    const picked = n != null ? fresh.slice(0, n) : fresh;
+    return { items: picked, segments: bySeg };
+  }
+
   function conflictCheckProgress(rows, items) {
-    const ids = conflictIds(rows, items);
-    const byVid = labelsByVideo(rows, items);
+    const units = labelsByUnit(rows, items);
     const per = {};
     for (const name of REVIEWERS) per[name] = 0;
-    let open = 0, one = 0, both = 0;
-    for (const id of ids) {
-      const labels = byVid.get(id) || new Map();
-      const checkers = REVIEWERS.filter((name) => labels.has(name));
+    let total = 0, open = 0, one = 0, both = 0;
+    for (const uid of conflictUnitIds(rows, items)) {
+      total += 1;
+      const unit = units.get(uid);
+      const checkers = REVIEWERS.filter((name) => unit.raters.has(name));
       checkers.forEach((name) => { per[name] += 1; });
       if (checkers.length === 0) open += 1;
       else if (checkers.length === 1) one += 1;
       else both += 1;
     }
-    return { total: ids.length, open, one, both, per };
+    return { total, open, one, both, per };
   }
 
   function batchStorageKey() {
@@ -404,15 +552,29 @@ const VGP = (() => {
       sbLoadLabels(getRater()),
       sbLoadAllLabels(),
     ]);
-    const mvDone = new Set((mvItems || []).filter((it) => mine[it.id] != null).map((it) => it.id));
-    const svDone = new Set((svItems || []).filter((it) => videoComplete(it, mine)).map((it) => it.id));
     const reviewer = isReviewer(getRater());
-    const mvPick = reviewer
-      ? pickConflictItems(mvItems, allRows, mvDone)
-      : pickLeastLabeled(mvItems, coverageCounts(allRows, mvItems), mvDone, GEO_N);
-    const svPick = reviewer
-      ? pickConflictItems(svItems, allRows, svDone)
-      : pickLeastLabeled(svItems, coverageCounts(allRows, svItems), svDone, HALLU_N);
+    const svConflicts = reviewer ? conflictSegmentsByItem(allRows, svItems) : null;
+    const mvDone = new Set((mvItems || []).filter((it) => mine[it.id] != null).map((it) => it.id));
+    const svDone = new Set(
+      (svItems || [])
+        .filter((it) => videoComplete(it, mine, svConflicts ? svConflicts[it.id] : null))
+        .map((it) => it.id)
+    );
+    let mvPick;
+    let svPick;
+    let svSegs;
+    if (reviewer) {
+      mvPick = pickConflictItems(mvItems, allRows, mvDone).items;
+      const sv = pickConflictItems(svItems, allRows, svDone);
+      svPick = sv.items;
+      svSegs = {};
+      svPick.forEach((it) => { svSegs[it.id] = sv.segments[it.id] || []; });
+    } else {
+      mvPick = pickLeastLabeled(mvItems, coverageCounts(allRows, mvItems), mvDone, GEO_N);
+      svPick = pickLeastLabeled(svItems, coverageCounts(allRows, svItems), svDone, null, {
+        segmentBudget: HALLU_SEG_N,
+      });
+    }
     if (reviewer && !mvPick.length && !svPick.length) {
       clearBatch();
       return { id: null, version: BATCH_VERSION, reviewer: true, mvIds: [], svIds: [], empty: true };
@@ -425,6 +587,8 @@ const VGP = (() => {
       reviewer: reviewer || undefined,
       mvIds: mvPick.map((it) => it.id),
       svIds: svPick.map((it) => it.id),
+      svSegs: svSegs,
+      svSegments: svPick.reduce((n, it) => n + (svSegs ? (svSegs[it.id] || []).length : segmentCount(it)), 0),
     });
   }
 
@@ -757,13 +921,16 @@ const VGP = (() => {
   }
 
   return {
-    HALF, GEO_N, HALLU_N, TARGET_COVER, REVIEWERS, BATCH_VERSION,
+    HALF, GEO_N, HALLU_N, HALLU_SEG_N, TARGET_COVER, REVIEWERS, BATCH_VERSION,
     CHECK, SCORE_LABEL, BAND_TO_SCORE, normalizeEmbodiment, embLabel, scoreLabel, checkLabel, machineScore,
     getRater, setRater, passOk, setPassOk, adminOk, setAdminOk,
     clearSession, isAdminPath, requireGate, requireAdmin,
     defaultLang, applyLang, isReviewer, raterPassOk, conflictCheckProgress,
-    segmentId, parentVideoId, scoreableSegmentIndices, videoComplete, videoTouched, raterStats,
-    coverageCounts, pickLeastLabeled, conflictIds, conflictRows, resolveHuman,
+    segmentId, parentVideoId, scoreableSegmentIndices, itemLabelIds, segmentCount,
+    videoComplete, videoTouched, raterStats,
+    coverageCounts, segmentCoverage, pickLeastLabeled, conflictIds, conflictUnitIds,
+    conflictSegmentsByItem, conflictRows, resolveHuman, resolveSegments,
+    scoreToFlagValue, flagValueToScore,
     getBatch, getValidBatch, isStaleOpenBatch, saveBatch, submitBatch, clearBatch, createBatch, getOrCreateBatch,
     itemsFromIds, renderStepStrip, preloadVideos, anyDialogOpen, bindExampleRemind,
     videoKey, itemSplit, raterBucket, renderMarkdown,

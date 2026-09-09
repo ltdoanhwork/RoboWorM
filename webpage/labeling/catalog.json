@@ -5,7 +5,7 @@
   "hf_repo": "doanh25032004/video_gen_physics",
   "hf_prefix": "assessment/multiview_static2",
   "created_at": "2026-08-26T09:35:38.395330+00:00",
-  "note": "Geometry pool: 300 multiview videos (100 per embodiment). Two static cameras. Score the whole clip.",
+  "note": "Geometry pool raters see. Two static cameras. Metadata follows assets/all_videos.md (same order as clip ids).",
   "items": [
     {
       "id": "00000",
