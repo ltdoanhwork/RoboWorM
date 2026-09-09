@@ -325,6 +325,13 @@ if (VGP.requireGate()) {
     if ($('scoreQEn')) $('scoreQEn').textContent = `How physically intact is the robot in segment ${label}?`;
     if ($('scoreQVi')) $('scoreQVi').textContent = `Robot ở đoạn ${label} còn nguyên và hợp vật lý đến mức nào?`;
 
+    // Only the segments still short of a rater are assigned, so a clip someone
+    // else started shows a greyed head and opens partway in. Say why.
+    const covered = (it.segments || []).length - list.length;
+    const partial = covered > 0
+      ? (lang() === 'vi' ? ` · ${covered} đoạn đã đủ người chấm` : ` · ${covered} segments already covered`)
+      : '';
+
     const banner = $('waitBanner');
     banner.classList.toggle('playing', !awaiting);
     if (awaiting) {
@@ -335,8 +342,8 @@ if (VGP.requireGate()) {
     } else {
       banner.hidden = false;
       banner.textContent = lang() === 'vi'
-        ? `Đang phát đoạn ${label} của ${embLabel(it.embodiment)} · video ${idx + 1}/${items.length}`
-        : `Playing segment ${label} · ${embLabel(it.embodiment)} · video ${idx + 1}/${items.length}`;
+        ? `Đang phát đoạn ${label} của ${embLabel(it.embodiment)} · video ${idx + 1}/${items.length}${partial}`
+        : `Playing segment ${label} · ${embLabel(it.embodiment)} · video ${idx + 1}/${items.length}${partial}`;
     }
   }
 

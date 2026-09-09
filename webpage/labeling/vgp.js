@@ -7,7 +7,7 @@ const VGP = (() => {
   const PASS_KEY = "vgp_pass_ok";
   const ADMIN_KEY = "vgp_admin_ok";
   const BATCH_PREFIX = "vgp_batch::";
-  const BATCH_VERSION = 7; // batch is 25 geometry videos + 25 hallucinate videos
+  const BATCH_VERSION = 8; // 25 + 25 videos, hallucinate narrowed to needy segments
   const GEO_N = 25;
   const HALLU_N = 25; // whole clips; each one is then scored segment by segment
   const HALF = GEO_N; // back-compat alias
@@ -544,6 +544,19 @@ const VGP = (() => {
     } else {
       mvPick = pickLeastLabeled(mvItems, coverageCounts(allRows, mvItems), mvDone, GEO_N);
       svPick = pickLeastLabeled(svItems, coverageCounts(allRows, svItems), svDone, HALLU_N);
+      // A clip is picked while its weakest segment is short of raters, which is
+      // what keeps half-finished work in the queue. Hand over only the segments
+      // that are actually short, or every later rater re-scores the covered head
+      // of the clip forever and the tail never gets its second rater.
+      const segCover = segmentCoverage(allRows, svItems);
+      svSegs = {};
+      svPick.forEach((it) => {
+        svSegs[it.id] = (scoreableSegmentIndices(it) || []).filter((s) => {
+          const uid = segmentId(it.id, s);
+          return (segCover[uid] || 0) < TARGET_COVER && mine[uid] == null;
+        });
+      });
+      svPick = svPick.filter((it) => svSegs[it.id].length);
     }
     if (reviewer && !mvPick.length && !svPick.length) {
       clearBatch();
