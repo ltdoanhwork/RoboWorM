@@ -43,6 +43,8 @@ main{max-width:1500px;margin:auto;padding:1.15rem 1.25rem 2rem}
 .example-stage.crop-top video{height:200%;max-height:none;object-fit:cover;object-position:top center}
 .example-stage.crop-left2{aspect-ratio:10/3}
 .example-stage.crop-left2 video{width:150%;max-height:none;object-fit:cover;object-position:left center}
+.example-stage.crop-left2-of4{aspect-ratio:10/3}
+.example-stage.crop-left2-of4 video{width:200%;max-height:none;object-fit:cover;object-position:left center}
 .example-stage-cap{padding:.45rem .75rem .7rem;font-size:.78rem;color:var(--muted);background:#fff;border-top:1px solid var(--border)}
 .reference-foot{padding:0 1rem 1.05rem;display:flex;gap:.5rem;flex-wrap:wrap}
 .example-card{width:100%;border:1px solid var(--border);background:#fff;border-radius:10px;padding:.68rem .75rem;text-align:left;display:flex;align-items:center;gap:.7rem;color:var(--text)}

@@ -5,7 +5,7 @@
     "medium",
     "good"
   ],
-  "note": "3 clips per embodiment \u00d7 rating. crop=top-half (2x2) or left-two (3-across static pair).",
+  "note": "3 clips per embodiment \u00d7 rating. crop=top-half (2x2), left-two (3-view single-arm), or left-two-of-four (4-view bimanual/humanoid static pair).",
   "items": [
     {
       "id": "bad-bimanual-1",
@@ -103,8 +103,8 @@
       "rating": "medium",
       "embodiment": "bimanual",
       "index": 2,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/augment/bimanual/output/multiview/ctrlworld/makovian/episode_tape_closed_cardboard__000046__v06_pink/pred_all_views.mp4",
-      "crop": "left-two"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/augment/bimanual/output/multiview/ctrlworld_4view_grid/makovian/episode_tape_closed_cardboard__000046__v06_pink/pred_all_views.mp4",
+      "crop": "left-two-of-four"
     },
     {
       "id": "medium-bimanual-3",
@@ -121,8 +121,8 @@
       "rating": "medium",
       "embodiment": "humanoid",
       "index": 1,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/augment/humanoid/output/multiview/ctrlworld/makovian/episode_AIRBOT_MMK2_mobile_car__000039__v09_black/full_pred.mp4",
-      "crop": "left-two"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/augment/humanoid/output/multiview/ctrlworld_4view_grid/makovian/episode_AIRBOT_MMK2_mobile_car__000039__v09_black/full_pred.mp4",
+      "crop": "left-two-of-four"
     },
     {
       "id": "medium-humanoid-2",
@@ -139,8 +139,8 @@
       "rating": "medium",
       "embodiment": "humanoid",
       "index": 3,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/humanoid/output/multiview/ctrlworld/non_makovian/episode_Airbot_MMK2_doodled_line__000027/pred_all_views.mp4",
-      "crop": "left-two"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/humanoid/output/multiview/ctrlworld_4view_grid/non_makovian/episode_Airbot_MMK2_doodled_line__000027/pred_all_views.mp4",
+      "crop": "left-two-of-four"
     },
     {
       "id": "medium-single-arm-1",
@@ -175,8 +175,8 @@
       "rating": "good",
       "embodiment": "bimanual",
       "index": 1,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/bimanual/output/multiview/ctrlworld/makovian/episode_insert_random_shaft_random_medium_gear__000085/pred_all_views.mp4",
-      "crop": "left-two"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/bimanual/output/multiview/ctrlworld_4view_grid/makovian/episode_insert_random_shaft_random_medium_gear__000085/pred_all_views.mp4",
+      "crop": "left-two-of-four"
     },
     {
       "id": "good-bimanual-2",
@@ -184,8 +184,8 @@
       "rating": "good",
       "embodiment": "bimanual",
       "index": 2,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/bimanual/output/multiview/ctrlworld/makovian/episode_close_toolbox__000030/pred_all_views.mp4",
-      "crop": "left-two"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/bimanual/output/multiview/ctrlworld_4view_grid/makovian/episode_close_toolbox__000030/pred_all_views.mp4",
+      "crop": "left-two-of-four"
     },
     {
       "id": "good-bimanual-3",
@@ -193,8 +193,8 @@
       "rating": "good",
       "embodiment": "bimanual",
       "index": 3,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/bimanual/output/multiview/ctrlworld/non_makovian/episode_place_the_chinese_spoons_on_the_cloth__000018/pred_all_views.mp4",
-      "crop": "left-two"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/bimanual/output/multiview/ctrlworld_4view_grid/non_makovian/episode_place_the_chinese_spoons_on_the_cloth__000018/pred_all_views.mp4",
+      "crop": "left-two-of-four"
     },
     {
       "id": "good-humanoid-1",
@@ -202,8 +202,8 @@
       "rating": "good",
       "embodiment": "humanoid",
       "index": 1,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/humanoid/output/multiview/ctrlworld/non_makovian/episode_AIRBOT_MMK2_boxs_storage__000047/pred_all_views.mp4",
-      "crop": "left-two"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/worldcache/humanoid/output/multiview/ctrlworld_4view_grid/non_makovian/episode_AIRBOT_MMK2_boxs_storage__000047/pred_all_views.mp4",
+      "crop": "left-two-of-four"
     },
     {
       "id": "good-humanoid-2",
@@ -211,8 +211,8 @@
       "rating": "good",
       "embodiment": "humanoid",
       "index": 2,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/humanoid/output/multiview/ctrlworld/makovian/episode_Airbot_MMK2_move_pan__000035/pred_all_views.mp4",
-      "crop": "left-two"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/humanoid/output/multiview/ctrlworld_4view_grid/makovian/episode_Airbot_MMK2_move_pan__000035/pred_all_views.mp4",
+      "crop": "left-two-of-four"
     },
     {
       "id": "good-humanoid-3",
@@ -220,8 +220,8 @@
       "rating": "good",
       "embodiment": "humanoid",
       "index": 3,
-      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/humanoid/output/multiview/ctrlworld/non_makovian/episode_Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate__000046/pred_all_views.mp4",
-      "crop": "left-two"
+      "video_raw": "https://huggingface.co/datasets/doanh25032004/video_gen_physics/resolve/main/dense/humanoid/output/multiview/ctrlworld_4view_grid/non_makovian/episode_Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate__000046/pred_all_views.mp4",
+      "crop": "left-two-of-four"
     },
     {
       "id": "good-single-arm-1",

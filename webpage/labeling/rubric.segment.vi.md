@@ -5,9 +5,9 @@ Bạn sẽ xem các segment video robot do mô hình tạo ra và đánh giá m�
 
 Mỗi video được chia thành các segment ngắn. Đánh giá từng segment theo thang điểm:
 
-**Thang điểm: Good – Medium – Bad**
+**Mức hallucination: Low – Medium – High**
 
-Trong đó **Good** là mức tốt nhất (ít/không biến dạng — segment trông sạch, giống video thật), **Bad** là mức lỗi nghiêm trọng nhất.
+Giao diện lưu điểm chất lượng tương ứng: **Good (3) = Low hallucination**, **Medium (2) = Medium hallucination**, **Bad (1) = High hallucination**. Low là tốt nhất: ít hoặc không biến dạng, giống video thật sạch. High là mức lỗi nghiêm trọng nhất.
 
 Lưu ý: chấm mỗi đoạn độc lập. Một đoạn có thể bẩn nhưng các đoạn sau đó robot sạch trở lại — khi đó đoạn sau vẫn chấm Good, đừng để đoạn trước ảnh hưởng đoạn sau.
 
@@ -29,8 +29,8 @@ Các hiện tượng bất thường xảy ra với robot đều tính là lỗi
 
 ## Tiêu chí chấm điểm (theo từng segment)
 
-| Mức độ | Tiêu chuẩn |
+| Mức hallucination · điểm trên UI | Tiêu chuẩn |
 |---|---|
-| **Good** | Segment nét, cánh tay robot chuyển động giật bình thường, quan sát rõ robot đang làm gì. Cánh tay không biến dạng. Robot không bị nhòe, không chảy xệ. |
-| **Medium** | Segment tương đối mờ nhưng cánh tay robot không quá biến dạng; hoặc cánh tay robot biến dạng ít. Robot vẫn nhận diện rõ ràng và có thể theo dõi được hành động. |
-| **Bad** | Segment mờ, hình ảnh chảy xệ (nhòe/méo nặng); hoặc segment nét nhưng gripper bị biến dạng; hoặc cánh tay robot biến dạng mạnh; hoặc mọc ra thành phần lạ / robot biến thành vật thể khác. Hành động khó hoặc không thể theo dõi. |
+| **Low · Good (3)** | Segment nét, cánh tay robot có độ rung bình thường, quan sát rõ robot đang làm gì. Cánh tay không biến dạng. Robot không bị nhòe hoặc chảy xệ. |
+| **Medium · Medium (2)** | Segment tương đối mờ nhưng cánh tay robot không quá biến dạng; hoặc cánh tay robot biến dạng nhẹ. Robot vẫn nhận diện rõ và vẫn theo dõi được hành động. |
+| **High · Bad (1)** | Segment mờ hoặc nhòe/méo nặng; hoặc segment nét nhưng gripper biến dạng; hoặc cánh tay robot biến dạng mạnh; hoặc xuất hiện thành phần lạ / robot biến thành vật thể khác. Hành động khó hoặc không thể theo dõi. |
