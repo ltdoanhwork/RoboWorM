@@ -108,13 +108,15 @@ effort. The batch is stored in `localStorage` so refresh does not re-roll.
 
 Assignment reads current Supabase labels and picks items this rater has not
 finished, **least-labeled first**, random among ties, round-robin across
-embodiments. A hallucinate clip counts as covered only when *every* one of its
-segments has that many raters, so partial work leaves it open. Same display
+embodiments. Hallucinate coverage is indexed by video: one rater counts only
+after scoring every rateable segment. Each assigned rater receives the whole
+video, so two per-rater overall scores can be compared directly. Same display
 name restores lifetime counts.
 
 Conflict checkers (`quang_check`, `thanh_check`) get only the clips holding a
-disagreement, and inside them only the disputed segment indices (`svSegs` on
-the batch).
+whole-video overall disagreement. A checker sees both original raters' overall
+and per-segment labels, then re-scores every rateable segment in that video.
+Per-segment disagreement alone does not create a conflict.
 
 ## Hallucinate segments (Mode B, 300vid pool)
 

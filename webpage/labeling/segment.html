@@ -38,6 +38,11 @@
 
       <section class="assessment" id="stage" hidden>
         <div class="video-wrap video-wrap-sm"><video id="player" playsinline preload="metadata" controls></video></div>
+        <section class="review-context" id="reviewContext" hidden>
+          <h3><span data-lang="vi">Hai lượt chấm gốc</span><span data-lang="en">Original rater labels</span></h3>
+          <p><span data-lang="vi">Conflict tính theo overall toàn video. Checker vẫn chấm lại mọi segment.</span><span data-lang="en">Conflict uses whole-video overall. Checker re-scores every segment.</span></p>
+          <div class="review-score-table" id="reviewScores"></div>
+        </section>
         <div class="wait-banner" id="waitBanner" hidden></div>
         <div class="seg-track" id="segTrack"></div>
         <div class="score-area">
@@ -120,7 +125,7 @@ if (VGP.requireGate()) {
   const $ = id => document.getElementById(id);
   const rater = VGP.getRater();
   let items = [], mvAll = [], svAll = [], examples = [], labels = {}, idx = 0;
-  let batch = null, segAllow = null;           // segAllow: reviewer-only segment filter
+  let batch = null, segAllow = null, allRows = [];
   let segs = [], seg = 0, awaiting = false;    // current video's rateable segments
   let exampleRating = 'good', exampleCursor = 0, exampleGroup = [];
   const player = $('player'), examplePlayer = $('examplePlayer');
@@ -158,6 +163,45 @@ if (VGP.requireGate()) {
   }
   function nSegsTotal(){ return items.reduce((n, it) => n + segIndices(it).length, 0); }
   function refreshLife(){ $('nLife').textContent = VGP.raterStats(labels, mvAll, svAll, segAllow).totalVideos; }
+
+  function renderReviewContext(it){
+    const host = $('reviewContext');
+    if (!batch?.reviewer) { host.hidden = true; return; }
+    const profiles = VGP.videoRaterScores(allRows, it, false);
+    const entries = Object.entries(profiles);
+    host.hidden = false;
+    const table = $('reviewScores');
+    table.replaceChildren();
+    if (!entries.length) {
+      table.textContent = lang() === 'vi' ? 'Chưa đủ hai lượt chấm hoàn chỉnh.' : 'Two complete original ratings are not available.';
+      return;
+    }
+    const grid = document.createElement('table');
+    grid.className = 'data review-labels';
+    const head = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    ['Rater', 'Overall', ...(it.segments || []).map((_, i) => `S${i + 1}`)].forEach(value => {
+      const th = document.createElement('th'); th.textContent = value; headRow.append(th);
+    });
+    head.append(headRow); grid.append(head);
+    const body = document.createElement('tbody');
+    entries.forEach(([name, profile]) => {
+      const row = document.createElement('tr');
+      const nameCell = document.createElement('td'); nameCell.textContent = name; row.append(nameCell);
+      const overall = document.createElement('td');
+      overall.textContent = `${VGP.scoreLabel(profile.overall_score)} (${profile.overall_score})`;
+      overall.className = 'review-overall'; row.append(overall);
+      (it.segments || []).forEach((_, i) => {
+        const td = document.createElement('td');
+        const score = profile.segment_scores[VGP.segmentId(it.id, i)];
+        td.textContent = score == null ? '—' : String(score);
+        if (i === seg) td.className = 'current-seg-label';
+        row.append(td);
+      });
+      body.append(row);
+    });
+    grid.append(body); table.append(grid);
+  }
 
   function markdown(value){ return VGP.renderMarkdown(value); }
   async function loadRubric(){
@@ -292,6 +336,7 @@ if (VGP.requireGate()) {
     const list = segIndices(it);
     const pos = Math.max(0, list.indexOf(seg));
     const scored = labels[segLabelId(it, seg)];
+    renderReviewContext(it);
     $('nTotal').textContent = items.length;
     $('nLabeled').textContent = nVideosDone();
     $('brandSub').textContent = `${nSegsDone()} / ${nSegsTotal()} segments`;
@@ -316,7 +361,7 @@ if (VGP.requireGate()) {
       if (i === seg) cls += awaiting ? ' wait' : ' current';
       if (!rateable) cls += ' muted';
       tick.className = cls;
-      tick.title = `#${i + 1}${rateable ? '' : ' · not yours'}`;
+      tick.title = `#${i + 1}${rateable ? '' : ' · not rateable'}`;
       if (rateable) tick.onclick = () => gotoSegment(i);
       track.append(tick);
     });
@@ -325,11 +370,9 @@ if (VGP.requireGate()) {
     if ($('scoreQEn')) $('scoreQEn').textContent = `How physically intact is the robot in segment ${label}?`;
     if ($('scoreQVi')) $('scoreQVi').textContent = `Robot ở đoạn ${label} còn nguyên và hợp vật lý đến mức nào?`;
 
-    // Only the segments still short of a rater are assigned, so a clip someone
-    // else started shows a greyed head and opens partway in. Say why.
-    const covered = (it.segments || []).length - list.length;
-    const partial = covered > 0
-      ? (lang() === 'vi' ? ` · ${covered} đoạn đã đủ người chấm` : ` · ${covered} segments already covered`)
+    const excluded = (it.segments || []).length - list.length;
+    const partial = excluded > 0
+      ? (lang() === 'vi' ? ` · ${excluded} đoạn không chấm` : ` · ${excluded} non-rateable segments`)
       : '';
 
     const banner = $('waitBanner');
@@ -483,7 +526,12 @@ if (VGP.requireGate()) {
     examples = exampleCatalog.items || [];
     $('exCount').textContent = $('exCountVi').textContent = examples.length;
     VGP.preloadVideos(examples.map(it => it.video || it.video_raw));
-    labels = VGP.mergeLabels(await VGP.sbLoadLabels(rater), rater);
+    const loaded = await Promise.all([
+      VGP.sbLoadLabels(rater),
+      batch.reviewer ? VGP.sbLoadAllLabels() : Promise.resolve([]),
+    ]);
+    labels = VGP.mergeLabels(loaded[0], rater);
+    allRows = loaded[1];
     VGP.flushPending(rater).catch(() => {});
     idx = findResume();
     $('empty').hidden = true;

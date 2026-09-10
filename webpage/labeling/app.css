@@ -213,6 +213,18 @@ dialog::backdrop{background:rgba(13,18,31,.62);backdrop-filter:blur(3px)}
 .dialog-body video{width:100%;display:block;background:#08090c;aspect-ratio:16/7;object-fit:contain}
 .dialog-actions{display:flex;gap:.5rem;padding-top:.7rem;flex-wrap:wrap}
 .dialog-rating{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;font-weight:800;color:var(--accent)}
+.review-context{margin:.75rem 0;padding:.8rem;border:1px solid #f59e0b;border-radius:12px;background:#fffbeb}
+.review-context h3{font-size:.92rem;margin-bottom:.2rem}
+.review-context p{font-size:.78rem;color:var(--muted);margin-bottom:.55rem}
+.review-score-table{overflow-x:auto}
+.review-labels th,.review-labels td{white-space:nowrap;text-align:center}
+.review-labels th:first-child,.review-labels td:first-child{text-align:left;position:sticky;left:0;background:#fffbeb}
+.review-labels .review-overall{font-weight:800;color:var(--accent)}
+.review-labels .current-seg-label{background:#fef3c7;font-weight:800}
+.rater-link{border:0;background:none;padding:0;color:var(--accent);font:inherit;font-weight:800;text-decoration:underline;cursor:pointer}
+.admin-detail-scroll{max-height:70vh;overflow:auto;margin-top:.6rem}
+.admin-detail-scroll .data{min-width:900px}
+.rater-label-seq{white-space:normal;min-width:300px}
 [hidden]{display:none!important}
 body [data-lang="vi"]{display:none}
 html[data-lang="vi"] body [data-lang="vi"]{display:unset}

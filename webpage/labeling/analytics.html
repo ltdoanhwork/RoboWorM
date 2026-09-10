@@ -25,8 +25,9 @@
     <p class="status" style="margin-bottom:.7rem">
       Geometry = <strong>300 videos</strong> (100 per embodiment), one score per clip.
       Hallucinate = <strong id="poolHallu">the 300vid pool</strong> — 16-frame segments; the clip stops at every
-      segment and the rater scores it. Every <em>segment</em> needs <strong>2 regular raters</strong>; disagreements go to
-      <span class="mono">quang_check</span> and <span class="mono">thanh_check</span>.
+      segment and the rater scores it. Every <em>video</em> needs <strong>2 complete regular ratings</strong>. Only a
+      disagreement between their whole-video overall scores goes to <span class="mono">quang_check</span> and
+      <span class="mono">thanh_check</span>; checker re-scores the full video.
     </p>
     <div class="admin-stat" id="stats">Loading…</div>
   </section>
@@ -100,9 +101,26 @@
 
   <section class="chart-card">
     <h2>Raters</h2>
+    <p class="status" style="margin-bottom:.6rem">Click a rater to inspect scores grouped by video.</p>
     <table class="data" id="table"><thead><tr><th>Rater</th><th>Labels</th><th>Geometry</th><th>Hallu segments</th><th>Mean</th><th>Last update</th></tr></thead><tbody></tbody></table>
   </section>
 </main>
+
+<dialog id="raterDialog">
+  <div class="dialog-head">
+    <div><div class="dialog-rating">Rater detail</div><h2 id="raterDetailTitle">Rater</h2></div>
+    <button class="dialog-close" id="raterDetailClose" type="button">×</button>
+  </div>
+  <div class="dialog-body">
+    <p class="status" id="raterDetailSummary"></p>
+    <div class="admin-detail-scroll">
+      <table class="data" id="raterDetailTable">
+        <thead><tr><th>Video</th><th>Check</th><th>Embodiment</th><th>Overall</th><th>Labels</th><th>Updated</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</dialog>
 <script src="config.js"></script>
 <script src="vgp.js"></script>
 <script>
@@ -271,6 +289,77 @@ if (VGP.requireAdmin()) {
       splitTable(records, withEmb, true, 'scored');
   }
 
+  function openRaterDetail(raterName){
+    const name = String(raterName || '');
+    const normalized = name.trim().toLowerCase();
+    const itemMap = new Map([...geoItems, ...halluItems].map(it => [it.id, it]));
+    const own = rows.filter(row => String(row.rater_name || '').trim().toLowerCase() === normalized);
+    const grouped = new Map();
+    own.forEach(row => {
+      const videoId = VGP.parentVideoId(row.item_id);
+      if (!grouped.has(videoId)) grouped.set(videoId, []);
+      grouped.get(videoId).push(row);
+    });
+    const records = [...grouped.entries()].map(([videoId, labels]) => {
+      const item = itemMap.get(videoId);
+      const isHallu = !!item?.segments;
+      const ordered = labels.slice().sort((a, b) => a.item_id.localeCompare(b.item_id));
+      let overall = null;
+      if (isHallu) {
+        const ids = VGP.itemLabelIds(item);
+        const scoreById = new Map(ordered.map(row => [row.item_id, Number(row.score)]));
+        if (ids.every(id => scoreById.has(id))) {
+          const meanFlag = ids.reduce((sum, id) => sum + VGP.scoreToFlagValue(scoreById.get(id)), 0) / ids.length;
+          overall = VGP.flagValueToScore(meanFlag);
+        }
+      } else if (ordered.length) {
+        overall = Number(ordered[0].score);
+      }
+      return {
+        videoId,
+        item,
+        isHallu,
+        labels: ordered,
+        overall,
+        updated: ordered.reduce((latest, row) => row.updated_at > latest ? row.updated_at : latest, ''),
+      };
+    }).sort((a, b) => String(b.updated).localeCompare(String(a.updated)));
+
+    document.getElementById('raterDetailTitle').textContent = name;
+    document.getElementById('raterDetailSummary').textContent =
+      `${own.length} labels · ${records.length} videos · ${records.filter(r => r.isHallu && r.overall != null).length} complete hallucinate ratings`;
+    const body = document.querySelector('#raterDetailTable tbody');
+    body.replaceChildren();
+    records.forEach(record => {
+      const tr = document.createElement('tr');
+      const videoCell = document.createElement('td');
+      if (record.item?.video || record.item?.video_raw) {
+        const link = document.createElement('a');
+        link.href = record.item.video || record.item.video_raw;
+        link.target = '_blank'; link.rel = 'noopener'; link.textContent = record.videoId;
+        videoCell.append(link);
+      } else videoCell.textContent = record.videoId;
+      const checkCell = document.createElement('td'); checkCell.textContent = record.isHallu ? 'Hallucinate' : 'Geometry';
+      const embCell = document.createElement('td'); embCell.textContent = VGP.embLabel(record.item?.embodiment);
+      const overallCell = document.createElement('td');
+      overallCell.textContent = record.overall == null ? 'Incomplete' : `${VGP.scoreLabel(record.overall)} (${record.overall})`;
+      const labelsCell = document.createElement('td'); labelsCell.className = 'mono rater-label-seq';
+      labelsCell.textContent = record.labels.map(row => {
+        const match = row.item_id.match(/_s(\d{3})$/);
+        return match ? `S${Number(match[1]) + 1}:${row.score}` : String(row.score);
+      }).join(' · ');
+      const updatedCell = document.createElement('td'); updatedCell.className = 'mono';
+      updatedCell.textContent = record.updated ? new Date(record.updated).toLocaleString() : '—';
+      tr.append(videoCell, checkCell, embCell, overallCell, labelsCell, updatedCell);
+      body.append(tr);
+    });
+    if (!records.length) {
+      const tr = document.createElement('tr'); const td = document.createElement('td');
+      td.colSpan = 6; td.textContent = 'No labels.'; tr.append(td); body.append(tr);
+    }
+    document.getElementById('raterDialog').showModal();
+  }
+
   // --- exports -------------------------------------------------------------
   function joinGeometry(resolved){
     const byId = new Map(geoMetrics.map(it => [it.id, it]));
@@ -310,6 +399,13 @@ if (VGP.requireAdmin()) {
         n_resolved: human.n_resolved || 0,
         n_conflicts: human.n_conflicts || 0,
         n_raters: human.n_raters || 0,
+        n_checkers: human.n_checkers || 0,
+        conflict: !!human.conflict,
+        consensus: human.consensus,
+        rater_scores: human.rater_scores || {},
+        checker_scores: human.checker_scores || {},
+        rater_segment_scores: human.rater_segment_scores || {},
+        checker_segment_scores: human.checker_segment_scores || {},
       };
     });
     const segments = halluSegMetrics.map(met => {
@@ -321,6 +417,7 @@ if (VGP.requireAdmin()) {
         flag: human.human_rating || null,
         n_raters: human.n_raters || 0,
         conflict: !!human.conflict,
+        video_conflict: !!human.video_conflict,
         consensus: human.consensus,
         rater_scores: human.rater_scores || {},
         checker_scores: human.checker_scores || {},
@@ -398,15 +495,15 @@ if (VGP.requireAdmin()) {
     const halluSegN = halluItems.reduce((n, it) => n + VGP.segmentCount(it), 0);
 
     const geoCov = VGP.coverageCounts(rows, geoItems);
-    const halluSegCov = VGP.segmentCoverage(rows, halluItems);
+    const halluCov = VGP.coverageCounts(rows, halluItems);
     const geoResolved = VGP.resolveHuman(rows, geoItems);
     const halluResolved = VGP.resolveHuman(rows, halluItems);
     const halluSegResolved = VGP.resolveSegments(rows, halluItems);
 
     const geo2 = Object.values(geoCov).filter(n => n >= 2).length;
     const geo1 = Object.values(geoCov).filter(n => n === 1).length;
-    const seg2 = Object.values(halluSegCov).filter(n => n >= 2).length;
-    const seg1 = Object.values(halluSegCov).filter(n => n === 1).length;
+    const hallu2 = Object.values(halluCov).filter(n => n >= 2).length;
+    const hallu1 = Object.values(halluCov).filter(n => n === 1).length;
     const halluVideosDone = halluItems.filter(it => halluResolved[it.id]?.human_score != null).length;
 
     const geoCheck = VGP.conflictCheckProgress(rows, geoItems);
@@ -430,11 +527,11 @@ if (VGP.requireAdmin()) {
       <div><b>${geoN}</b><span>geometry videos</span></div>
       <div><b>${halluN}</b><span>hallucinate videos</span></div>
       <div><b>${halluSegN.toLocaleString()}</b><span>hallucinate segments</span></div>
-      <div><b>${(geoN + halluSegN).toLocaleString()}</b><span>scoring units × 2 raters = ${(2 * (geoN + halluSegN)).toLocaleString()} labels</span></div>
+      <div><b>${geoN + halluN}</b><span>videos indexed for 2-rater coverage</span></div>
       <div><b>${geo2}/${geoN}</b><span>geometry with 2 raters</span></div>
-      <div><b>${seg2.toLocaleString()}/${halluSegN.toLocaleString()}</b><span>segments with 2 raters</span></div>
+      <div><b>${hallu2}/${halluN}</b><span>hallucinate videos with 2 complete raters</span></div>
       <div><b>${halluVideosDone}/${halluN}</b><span>hallucinate videos fully resolved</span></div>
-      <div><b>${geo1 + seg1}</b><span>waiting 2nd rater</span></div>
+      <div><b>${geo1 + hallu1}</b><span>videos waiting 2nd complete rater</span></div>
       <div><b>${conflicts}</b><span>score conflicts</span></div>
       <div><b>${open}</b><span>conflicts still open</span></div>
       <div><b>${perRater.filter(r => !VGP.isReviewer(r.rater)).length}</b><span>regular raters</span></div>`;
@@ -450,13 +547,13 @@ if (VGP.requireAdmin()) {
     fillRater('raterThanh', 'thanh', true);
 
     document.getElementById('covGeoCap').textContent = `Geometry · ${geoN} videos`;
-    document.getElementById('covHalluCap').textContent = `Hallucinate · ${halluSegN.toLocaleString()} segments`;
+    document.getElementById('covHalluCap').textContent = `Hallucinate · ${halluN} videos`;
     bars(document.getElementById('covGeo'), histCover(geoCov), Math.max(1, geoN));
-    bars(document.getElementById('covHallu'), histCover(halluSegCov), Math.max(1, halluSegN));
+    bars(document.getElementById('covHallu'), histCover(halluCov), Math.max(1, halluN));
 
     document.getElementById('conflictStats').innerHTML = `
       <div><b>${geoCheck.total}</b><span>geometry conflicts</span></div>
-      <div><b>${halluCheck.total}</b><span>hallucinate segment conflicts</span></div>
+      <div><b>${halluCheck.total}</b><span>hallucinate video-overall conflicts</span></div>
       <div><b>${open}</b><span>open</span></div>
       <div><b>${geoCheck.both + halluCheck.both}</b><span>checked by both</span></div>`;
     const perChecker = name => (geoCheck.per[name] || 0) + (halluCheck.per[name] || 0);
@@ -487,8 +584,11 @@ if (VGP.requireAdmin()) {
     ].join('');
 
     document.querySelector('#table tbody').innerHTML = perRater.map(r =>
-      `<tr><td>${r.rater}${VGP.isReviewer(r.rater) ? ' <span class="mono">checker</span>' : ''}</td><td>${r.n}</td><td>${r.geo}</td><td>${r.seg}</td><td>${r.mean}</td><td class="mono">${new Date(r.last).toLocaleString()}</td></tr>`
+      `<tr><td><button class="rater-link" type="button" data-rater="${encodeURIComponent(r.rater)}">${r.rater}</button>${VGP.isReviewer(r.rater) ? ' <span class="mono">checker</span>' : ''}</td><td>${r.n}</td><td>${r.geo}</td><td>${r.seg}</td><td>${r.mean}</td><td class="mono">${new Date(r.last).toLocaleString()}</td></tr>`
     ).join('') || '<tr><td colspan="6">No labels yet.</td></tr>';
+    document.querySelectorAll('.rater-link').forEach(button => {
+      button.onclick = () => openRaterDetail(decodeURIComponent(button.dataset.rater || ''));
+    });
 
     const hallu = joinHallucinate(halluResolved, halluSegResolved);
     keyExport = buildKeyExport(hallu);
@@ -528,6 +628,10 @@ if (VGP.requireAdmin()) {
   }
 
   document.getElementById('btnRefresh').onclick = refresh;
+  document.getElementById('raterDetailClose').onclick = () => document.getElementById('raterDialog').close();
+  document.getElementById('raterDialog').onclick = event => {
+    if (event.target === document.getElementById('raterDialog')) document.getElementById('raterDialog').close();
+  };
   document.getElementById('btnJson').onclick = () =>
     download('vgp_labels.json', JSON.stringify(exportBundle, null, 2), 'application/json');
   document.getElementById('btnCsv').onclick = () =>

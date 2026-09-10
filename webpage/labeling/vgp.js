@@ -7,7 +7,7 @@ const VGP = (() => {
   const PASS_KEY = "vgp_pass_ok";
   const ADMIN_KEY = "vgp_admin_ok";
   const BATCH_PREFIX = "vgp_batch::";
-  const BATCH_VERSION = 8; // 25 + 25 videos, hallucinate narrowed to needy segments
+  const BATCH_VERSION = 9; // hallucinate coverage/conflicts are indexed by whole video
   const GEO_N = 25;
   const HALLU_N = 25; // whole clips; each one is then scored segment by segment
   const HALF = GEO_N; // back-compat alias
@@ -253,13 +253,20 @@ const VGP = (() => {
     return counts;
   }
 
-  /** Item coverage = the weakest of its segments, so partial work keeps it open. */
+  /**
+   * Item coverage. Geometry has one unit. Hallucinate counts only regular raters
+   * who finished every rateable segment, because assignment/conflict is per video.
+   */
   function coverageCounts(rows, items) {
     const units = labelsByUnit(rows, items);
     const byItem = unitsByItem(units);
     const counts = {};
     for (const it of items || []) {
       const list = byItem.get(it.id) || [];
+      if (it.segments) {
+        counts[it.id] = Object.keys(videoRaterScores(rows, it, false)).length;
+        continue;
+      }
       let min = Infinity;
       for (const [, unit] of list) {
         min = Math.min(min, new Set(regularOf(unit).map((row) => normalizeName(row.rater_name))).size);
@@ -356,11 +363,47 @@ const VGP = (() => {
     };
   }
 
-  /** Per-segment resolution keyed by label id. */
+  /**
+   * Per-segment resolution keyed by label id. Segment disagreements never open
+   * a checker task; hallucinate conflict is decided only by whole-video overall.
+   */
   function resolveSegments(rows, items) {
     const units = labelsByUnit(rows, items);
     const out = {};
-    for (const [uid, unit] of units) out[uid] = resolveUnit(unit);
+    for (const it of items || []) {
+      if (!it.segments) {
+        const unit = units.get(it.id);
+        if (unit) out[it.id] = resolveUnit(unit);
+        continue;
+      }
+      const video = resolveHalluVideo(rows, it);
+      const regular = videoRaterScores(rows, it, false);
+      const checkers = videoRaterScores(rows, it, true);
+      const adjudicated = video.conflict && video.human_score != null && Object.keys(checkers).length;
+      const chosen = adjudicated ? checkers : regular;
+      for (const uid of itemLabelIds(it)) {
+        const raterScores = Object.fromEntries(
+          Object.entries(regular).map(([name, p]) => [name, p.segment_scores[uid]])
+        );
+        const checkerScores = Object.fromEntries(
+          Object.entries(checkers).map(([name, p]) => [name, p.segment_scores[uid]])
+        );
+        const scores = Object.values(chosen).map((p) => p.segment_scores[uid]);
+        const uniq = new Set(scores);
+        const humanScore = scores.length && uniq.size === 1 ? scores[0] : null;
+        out[uid] = {
+          human_score: humanScore,
+          human_rating: humanScore != null ? (SCORE_LABEL[humanScore] || "").toLowerCase() : null,
+          n_raters: Object.keys(regular).length,
+          n_checkers: Object.keys(checkers).length,
+          rater_scores: raterScores,
+          checker_scores: checkerScores,
+          conflict: false,
+          video_conflict: video.conflict,
+          consensus: humanScore != null ? (adjudicated ? video.consensus : "raters") : null,
+        };
+      }
+    }
     return out;
   }
 
@@ -371,6 +414,76 @@ const VGP = (() => {
   }
   function flagValueToScore(value) {
     return 3 - Math.round(value);
+  }
+
+  /**
+   * Complete per-rater hallucinate profiles for one video.
+   * Result: name -> { overall_score, mean_flag, segment_scores }.
+   */
+  function videoRaterScores(rows, item, reviewers) {
+    if (!item || !item.segments) return {};
+    const ids = itemLabelIds(item);
+    const wanted = new Set(ids);
+    const grouped = new Map();
+    for (const row of rows || []) {
+      if (!wanted.has(row.item_id)) continue;
+      const reviewer = isReviewer(row.rater_name);
+      if (reviewers === true && !reviewer) continue;
+      if (reviewers === false && reviewer) continue;
+      const name = normalizeName(row.rater_name);
+      if (!grouped.has(name)) grouped.set(name, new Map());
+      grouped.get(name).set(row.item_id, Number(row.score));
+    }
+    const out = {};
+    for (const [name, scores] of grouped) {
+      if (!ids.every((id) => scores.has(id))) continue;
+      const ordered = ids.map((id) => scores.get(id));
+      const meanFlag = ordered.reduce((sum, score) => sum + scoreToFlagValue(score), 0) / ordered.length;
+      out[name] = {
+        overall_score: flagValueToScore(meanFlag),
+        mean_flag: Number(meanFlag.toFixed(4)),
+        segment_scores: Object.fromEntries(ids.map((id, i) => [id, ordered[i]])),
+      };
+    }
+    return out;
+  }
+
+  /** Whole-video hallucinate consensus/conflict. */
+  function resolveHalluVideo(rows, item) {
+    const regular = videoRaterScores(rows, item, false);
+    const checkers = videoRaterScores(rows, item, true);
+    const regularEntries = Object.entries(regular);
+    const checkerEntries = Object.entries(checkers);
+    const regularScores = new Set(regularEntries.map(([, p]) => p.overall_score));
+    const conflict = regularEntries.length >= TARGET_COVER && regularScores.size >= 2;
+    let humanScore = null;
+    let consensus = null;
+    if (regularEntries.length >= TARGET_COVER && regularScores.size === 1) {
+      humanScore = regularEntries[0][1].overall_score;
+      consensus = "raters";
+    } else if (conflict && checkerEntries.length) {
+      const checkerScores = new Set(checkerEntries.map(([, p]) => p.overall_score));
+      if (checkerEntries.length === 1 || checkerScores.size === 1) {
+        humanScore = checkerEntries[0][1].overall_score;
+        consensus = checkerEntries.length === 1 ? "checker" : "checkers";
+      }
+    }
+    return {
+      human_score: humanScore,
+      human_rating: humanScore != null ? (SCORE_LABEL[humanScore] || "").toLowerCase() : null,
+      mean_flag: humanScore != null ? scoreToFlagValue(humanScore) : null,
+      n_segments: itemLabelIds(item).length,
+      n_resolved: humanScore != null ? itemLabelIds(item).length : 0,
+      n_raters: regularEntries.length,
+      n_checkers: checkerEntries.length,
+      rater_scores: Object.fromEntries(regularEntries.map(([name, p]) => [name, p.overall_score])),
+      checker_scores: Object.fromEntries(checkerEntries.map(([name, p]) => [name, p.overall_score])),
+      rater_segment_scores: Object.fromEntries(regularEntries.map(([name, p]) => [name, p.segment_scores])),
+      checker_segment_scores: Object.fromEntries(checkerEntries.map(([name, p]) => [name, p.segment_scores])),
+      conflict,
+      n_conflicts: conflict ? 1 : 0,
+      consensus,
+    };
   }
 
   /** Per-item resolution; segmented items aggregate their segment scores. */
@@ -386,47 +499,22 @@ const VGP = (() => {
         out[it.id].n_resolved = out[it.id].human_score != null ? 1 : 0;
         continue;
       }
-      const resolved = [];
-      const raterScores = {};
-      const checkerScores = {};
-      let conflicts = 0;
-      let raterSet = new Set();
-      for (const [uid, unit] of list) {
-        const r = resolveUnit(unit);
-        if (r.conflict) conflicts += 1;
-        if (r.human_score != null) resolved.push(r.human_score);
-        Object.keys(r.rater_scores).forEach((name) => raterSet.add(normalizeName(name)));
-        raterScores[uid] = r.rater_scores;
-        checkerScores[uid] = r.checker_scores;
-      }
-      const complete = list.length > 0 && resolved.length === list.length;
-      const meanFlag = resolved.length
-        ? resolved.reduce((a, s) => a + scoreToFlagValue(s), 0) / resolved.length
-        : null;
-      const humanScore = complete ? flagValueToScore(meanFlag) : null;
-      out[it.id] = {
-        human_score: humanScore,
-        human_rating: humanScore != null ? (SCORE_LABEL[humanScore] || "").toLowerCase() : null,
-        mean_flag: meanFlag != null ? Number(meanFlag.toFixed(4)) : null,
-        n_segments: list.length,
-        n_resolved: resolved.length,
-        n_raters: raterSet.size,
-        rater_scores: raterScores,
-        checker_scores: checkerScores,
-        conflict: conflicts > 0,
-        n_conflicts: conflicts,
-        consensus: complete ? "segments" : null,
-      };
+      out[it.id] = resolveHalluVideo(rows, it);
     }
     return out;
   }
 
-  /** Label ids where the two raters disagree. */
+  /** Conflict ids: geometry unit ids; hallucinate whole-video ids. */
   function conflictUnitIds(rows, items) {
     const units = labelsByUnit(rows, items);
     const out = [];
-    for (const [uid, unit] of units) {
-      if (resolveUnit(unit).conflict) out.push(uid);
+    for (const it of items || []) {
+      if (it.segments) {
+        if (resolveHalluVideo(rows, it).conflict) out.push(it.id);
+      } else {
+        const unit = units.get(it.id);
+        if (unit && resolveUnit(unit).conflict) out.push(it.id);
+      }
     }
     return out;
   }
@@ -436,26 +524,37 @@ const VGP = (() => {
     return [...new Set(conflictUnitIds(rows, items).map((uid) => parentVideoId(uid)))];
   }
 
-  /** { itemId: [segIndex, …] } so a checker only re-scores the disputed parts. */
+  /** Hallucinate conflicts always assign every rateable segment in the video. */
   function conflictSegmentsByItem(rows, items) {
     const out = {};
-    const units = labelsByUnit(rows, items);
-    for (const uid of conflictUnitIds(rows, items)) {
-      const unit = units.get(uid);
-      const itemId = unit ? unit.itemId : parentVideoId(uid);
-      if (!out[itemId]) out[itemId] = [];
-      if (unit && unit.segIndex != null) out[itemId].push(unit.segIndex);
+    const conflicts = new Set(conflictIds(rows, items));
+    for (const it of items || []) {
+      if (!conflicts.has(it.id)) continue;
+      out[it.id] = it.segments ? scoreableSegmentIndices(it) : [];
     }
-    for (const list of Object.values(out)) list.sort((a, b) => a - b);
     return out;
   }
 
   function conflictRows(rows, items) {
     const units = labelsByUnit(rows, items);
     const out = [];
-    for (const uid of conflictUnitIds(rows, items)) {
-      const unit = units.get(uid);
-      out.push({ id: uid, itemId: unit ? unit.itemId : parentVideoId(uid), labels: [...unit.raters.values()] });
+    for (const it of items || []) {
+      if (it.segments) {
+        const video = resolveHalluVideo(rows, it);
+        if (!video.conflict) continue;
+        const regular = videoRaterScores(rows, it, false);
+        const checkers = videoRaterScores(rows, it, true);
+        const labels = [
+          ...Object.entries(regular).map(([name, p]) => ({ rater_name: name, score: p.overall_score, segment_scores: p.segment_scores })),
+          ...Object.entries(checkers).map(([name, p]) => ({ rater_name: name, score: p.overall_score, segment_scores: p.segment_scores })),
+        ];
+        out.push({ id: it.id, itemId: it.id, labels, overall: true });
+      } else {
+        const unit = units.get(it.id);
+        if (unit && resolveUnit(unit).conflict) {
+          out.push({ id: it.id, itemId: it.id, labels: [...unit.raters.values()], overall: false });
+        }
+      }
     }
     return out;
   }
@@ -475,8 +574,10 @@ const VGP = (() => {
     let total = 0, open = 0, one = 0, both = 0;
     for (const uid of conflictUnitIds(rows, items)) {
       total += 1;
-      const unit = units.get(uid);
-      const checkers = REVIEWERS.filter((name) => unit.raters.has(name));
+      const item = (items || []).find((it) => it.id === parentVideoId(uid));
+      const checkers = item && item.segments
+        ? REVIEWERS.filter((name) => videoRaterScores(rows, item, true)[name])
+        : REVIEWERS.filter((name) => units.get(uid)?.raters.has(name));
       checkers.forEach((name) => { per[name] += 1; });
       if (checkers.length === 0) open += 1;
       else if (checkers.length === 1) one += 1;
@@ -544,19 +645,12 @@ const VGP = (() => {
     } else {
       mvPick = pickLeastLabeled(mvItems, coverageCounts(allRows, mvItems), mvDone, GEO_N);
       svPick = pickLeastLabeled(svItems, coverageCounts(allRows, svItems), svDone, HALLU_N);
-      // A clip is picked while its weakest segment is short of raters, which is
-      // what keeps half-finished work in the queue. Hand over only the segments
-      // that are actually short, or every later rater re-scores the covered head
-      // of the clip forever and the tail never gets its second rater.
-      const segCover = segmentCoverage(allRows, svItems);
+      // Hallucinate assignment is atomic by video. Every regular rater scores
+      // every rateable segment so their per-video overall scores are comparable.
       svSegs = {};
       svPick.forEach((it) => {
-        svSegs[it.id] = (scoreableSegmentIndices(it) || []).filter((s) => {
-          const uid = segmentId(it.id, s);
-          return (segCover[uid] || 0) < TARGET_COVER && mine[uid] == null;
-        });
+        svSegs[it.id] = scoreableSegmentIndices(it) || [];
       });
-      svPick = svPick.filter((it) => svSegs[it.id].length);
     }
     if (reviewer && !mvPick.length && !svPick.length) {
       clearBatch();
@@ -913,6 +1007,7 @@ const VGP = (() => {
     videoComplete, videoTouched, raterStats,
     coverageCounts, segmentCoverage, pickLeastLabeled, conflictIds, conflictUnitIds,
     conflictSegmentsByItem, conflictRows, resolveHuman, resolveSegments,
+    videoRaterScores, resolveHalluVideo,
     scoreToFlagValue, flagValueToScore,
     getBatch, getValidBatch, isStaleOpenBatch, saveBatch, submitBatch, clearBatch, createBatch, getOrCreateBatch,
     itemsFromIds, renderStepStrip, preloadVideos, anyDialogOpen, bindExampleRemind,
