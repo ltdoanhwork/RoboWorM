@@ -113,6 +113,7 @@
   </div>
   <div class="dialog-body">
     <p class="status" id="raterDetailSummary"></p>
+    <div class="cm-grid rater-cm-grid" id="raterDetailMatrices"></div>
     <div class="admin-detail-scroll">
       <table class="data" id="raterDetailTable">
         <thead><tr><th>Video</th><th>Check</th><th>Embodiment</th><th>Overall</th><th>Labels</th><th>Updated</th></tr></thead>
@@ -160,9 +161,10 @@ if (VGP.requireAdmin()) {
     return { n, agree, acc: n ? agree / n : 0 };
   }
 
-  function renderMatrix(title, m, rowLabels){
+  function renderMatrix(title, m, rowLabels, columnPrefix){
     const s = matrixStats(m);
     const keys = Object.keys(m);
+    const prefix = columnPrefix || 'H';
     const labelOf = i => (rowLabels ? rowLabels[i] : `M ${['Bad','Med','Good'][i - 1]}`);
     const body = keys.map(i =>
       `<tr><th>${labelOf(i)}</th>` + [1,2,3].map(j =>
@@ -171,7 +173,7 @@ if (VGP.requireAdmin()) {
     const acc = rowLabels ? '' : ` · agree ${s.agree} · acc ${s.n ? (100 * s.acc).toFixed(1) : '—'}%`;
     return `<div class="cm-card"><h3>${title}</h3>
       <table class="cm">
-        <thead><tr><th></th><th>H Bad</th><th>H Med</th><th>H Good</th></tr></thead>
+        <thead><tr><th></th><th>${prefix} Bad</th><th>${prefix} Med</th><th>${prefix} Good</th></tr></thead>
         <tbody>${body}</tbody>
       </table>
       <p class="status">n=${s.n}${acc}</p>
@@ -325,9 +327,36 @@ if (VGP.requireAdmin()) {
       };
     }).sort((a, b) => String(b.updated).localeCompare(String(a.updated)));
 
+    const geoMetricById = new Map(geoMetrics.map(metric => [metric.id, metric]));
+    const halluVideoMetricById = new Map(halluVideoMetrics.map(metric => [metric.id, metric]));
+    const halluSegmentMetricById = new Map(halluSegMetrics.map(metric => [metric.id, metric]));
+    const geoMatrix = emptyMatrix();
+    const halluVideoMatrix = emptyMatrix();
+    const halluSegmentMatrix = { yes: {1:0,2:0,3:0}, no: {1:0,2:0,3:0} };
+    records.forEach(record => {
+      if (!record.isHallu) {
+        const machine = VGP.machineScore(geoMetricById.get(record.videoId) || record.item);
+        if (machine && record.overall) geoMatrix[machine][record.overall] += 1;
+        return;
+      }
+      const machine = VGP.machineScore(halluVideoMetricById.get(record.videoId) || record.item);
+      if (machine && record.overall) halluVideoMatrix[machine][record.overall] += 1;
+      record.labels.forEach(label => {
+        const metric = halluSegmentMetricById.get(label.item_id);
+        const score = Number(label.score);
+        if (!metric || ![1, 2, 3].includes(score)) return;
+        halluSegmentMatrix[metric.violated ? 'yes' : 'no'][score] += 1;
+      });
+    });
+
     document.getElementById('raterDetailTitle').textContent = name;
     document.getElementById('raterDetailSummary').textContent =
       `${own.length} labels · ${records.length} videos · ${records.filter(r => r.isHallu && r.overall != null).length} complete hallucinate ratings`;
+    document.getElementById('raterDetailMatrices').innerHTML = [
+      renderMatrix('Geometry · machine → rater', geoMatrix, null, 'R'),
+      renderMatrix('Hallucinate video · band → rater overall', halluVideoMatrix, null, 'R'),
+      renderMatrix('Hallucinate segment · violated → rater', halluSegmentMatrix, VIOL_LABELS, 'R'),
+    ].join('');
     const body = document.querySelector('#raterDetailTable tbody');
     body.replaceChildren();
     records.forEach(record => {
