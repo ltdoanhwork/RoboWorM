@@ -13,7 +13,7 @@
 #
 # Checkpoint:
 #   exp_logs/dreamgen_logs/posttraining/singleview/humanoid_singleview_16fps
-#   default iter_000050000 (override with ITER_NAME=iter_000040000 etc.)
+#   default iter_000090000 (files on disk: 90k / 120k — 50k does NOT exist)
 #
 # Usage:
 #   bash scripts/run_humanoid_singleview_dreamgen_static16fps.sh
@@ -36,7 +36,7 @@ export PYTHONPATH="${ROOT}/models/dreamgen:${PYTHONPATH:-}"
 
 # --- Checkpoint (posttrained humanoid_singleview_16fps) ---
 CKPT_BASE="${ROOT}/exp_logs/dreamgen_logs/posttraining/singleview/humanoid_singleview_16fps"
-ITER_NAME="${ITER_NAME:-iter_000050000}"
+ITER_NAME="${ITER_NAME:-iter_000090000}"
 DIT_PATH="${DIT_PATH:-${CKPT_BASE}/checkpoints_40_per/model/${ITER_NAME}.pt}"
 
 if [[ ! -f "${DIT_PATH}" ]]; then
