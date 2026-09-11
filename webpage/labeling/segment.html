@@ -352,6 +352,7 @@ if (VGP.requireGate()) {
     };
 
     const track = $('segTrack');
+    track.classList.toggle('long', (it.segments || []).length > 40);
     track.replaceChildren();
     (it.segments || []).forEach((s, i) => {
       const tick = document.createElement('span');

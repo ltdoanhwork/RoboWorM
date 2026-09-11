@@ -123,6 +123,8 @@ main{max-width:1500px;margin:auto;padding:1.15rem 1.25rem 2rem}
 .wait-banner[hidden]{display:none!important}
 .seg-track{display:flex;gap:2px;padding:.55rem 1rem .15rem;flex-wrap:nowrap;overflow:hidden}
 .seg-tick{flex:1;min-width:3px;height:8px;border-radius:99px;background:#e5e7eb;cursor:pointer}
+.seg-track.long{flex-wrap:wrap;overflow:visible;gap:4px 3px}
+.seg-track.long .seg-tick{flex:0 0 16px;min-width:16px;height:12px;border-radius:4px}
 .seg-tick.done{background:#a7f3d0}
 .seg-tick.current{background:var(--accent)}
 .seg-tick.wait{background:#fbbf24;box-shadow:0 0 0 2px rgba(251,191,36,.35)}
