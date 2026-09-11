@@ -27,6 +27,7 @@ if str(_REPO) not in sys.path:
 from metrics.phyworld.schema import EMBODIMENT_PHRASES
 from metrics.phyworld.scoring import (
     actor_dynamics_score,
+    actor_motion_score,
     continuity_gap,
     entity_presence_score,
     kinetic_drift,
@@ -161,9 +162,15 @@ def score_dyn_actor(video_path, embodiment, instruction, grounder, img_pred, vid
         obj, emb, "cuda", max_frames=None, stride=stride,
     )
     raw = float(r.get("med_fg_vs_bg", float("nan")))
+    am_raw = float(r.get("mean_fg_flow_med", float("nan")))
     return {
         "actor_dynamics_raw": raw,
         "actor_dynamics": actor_dynamics_score(raw) if raw == raw else float("nan"),
+        # ActorMotion: subject-only flow, no bg subtraction — catches smooth-but-inactive
+        # (Continuity saturates near 99 regardless; this doesn't). Report raw beside
+        # PhyDyn, never folded into its mean.
+        "actor_motion_raw": am_raw,
+        "actor_motion": actor_motion_score(am_raw) if am_raw == am_raw else float("nan"),
         "actor_fg_cov_pct": r.get("mean_fg_cov_pct"),
         "actor_n_object_dets": r.get("n_object_dets"),
         "actor_n_arm_dets": r.get("n_arm_dets"),
@@ -346,6 +353,7 @@ def main():
                         payload["actor_dynamics"], payload["motion_continuity"],
                     )
                 print(f"  KineticBudget={payload.get('kinetic_budget', float('nan')):.3f} "
+                      f"ActorMotion={payload.get('actor_motion_raw', float('nan')):.3f} "
                       f"Actor={payload.get('actor_dynamics', float('nan')):.1f} "
                       f"Cont={payload.get('motion_continuity', float('nan')):.1f} "
                       f"PhyDyn={payload.get('phy_dyn', float('nan')):.1f}", flush=True)
@@ -373,6 +381,12 @@ def main():
                     pred.get("kinetic_budget", float("nan")),
                     dens.get("kinetic_budget", float("nan")),
                 )
+                # ActorMotionDrift: same |log ratio| formula, subject-only magnitude.
+                # Diagnostic beside PhyFid, not folded into its mean (see schema.py).
+                amd = kinetic_drift(
+                    pred.get("actor_motion_raw", float("nan")),
+                    dens.get("actor_motion_raw", float("nan")),
+                )
                 cg = continuity_gap(
                     dens.get("motion_continuity_ssim", float("nan")),
                     pred.get("motion_continuity_ssim", float("nan")),
@@ -383,6 +397,7 @@ def main():
                 )
                 fid.update({
                     "kinetic_drift": kd,
+                    "actor_motion_drift": amd if amd == amd else None,
                     "continuity_gap": cg if cg == cg else None,
                     "look_drift": ld if ld == ld else None,
                 })
@@ -397,7 +412,8 @@ def main():
                 stored[(method, ep)] = pred
                 merge_json(Path(rec["episode_dir"]) / "phyworld.json", pred)
                 print(f"  MotionFid={fid['motion_fidelity']:.3f} "
-                      f"KinDrift={kd:.3f} PhyFid={fid['phy_fid']:.1f}", flush=True)
+                      f"KinDrift={kd:.3f} ActorMotionDrift={amd:.3f} "
+                      f"PhyFid={fid['phy_fid']:.1f}", flush=True)
 
     # summaries
     def _mean(method, key):
@@ -417,8 +433,10 @@ def main():
             k: _mean(method, k)
             for k in (
                 "phy_qual", "scene_integrity", "task_lock", "entity_presence",
-                "kinetic_budget", "actor_dynamics", "motion_continuity", "phy_dyn",
-                "motion_fidelity", "kinetic_drift", "continuity_gap", "look_drift", "phy_fid",
+                "kinetic_budget", "actor_motion_raw", "actor_motion",
+                "actor_dynamics", "motion_continuity", "phy_dyn",
+                "motion_fidelity", "kinetic_drift", "actor_motion_drift",
+                "continuity_gap", "look_drift", "phy_fid",
             )
         }
     out_sum = ds / "phyworld_tables.json"

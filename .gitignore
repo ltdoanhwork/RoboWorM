@@ -237,3 +237,4 @@ metrics/sim2real_out/*
 # the passcode any time by editing config.js and pushing.
 !webpage/labeling/
 !webpage/labeling/**
+compare/*

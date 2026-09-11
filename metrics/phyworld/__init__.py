@@ -3,6 +3,7 @@
 from .schema import *  # noqa: F401,F403
 from .scoring import (  # noqa: F401
     actor_dynamics_score,
+    actor_motion_score,
     continuity_gap,
     entity_presence_score,
     kinetic_drift,

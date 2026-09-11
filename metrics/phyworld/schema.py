@@ -19,11 +19,13 @@ PHY_QUAL = "phy_qual"
 
 KINETIC_BUDGET = "kinetic_budget"
 ACTOR_DYNAMICS = "actor_dynamics"
+ACTOR_MOTION = "actor_motion"  # subject-only kinetic budget (RBench MAS, adapted)
 MOTION_CONTINUITY = "motion_continuity"
 PHY_DYN = "phy_dyn"
 
 MOTION_FIDELITY = "motion_fidelity"
 KINETIC_DRIFT = "kinetic_drift"
+ACTOR_MOTION_DRIFT = "actor_motion_drift"
 CONTINUITY_GAP = "continuity_gap"
 LOOK_DRIFT = "look_drift"
 PHY_FID = "phy_fid"
@@ -36,14 +38,17 @@ WORLDSCORE_LINEAGE = {
     ENTITY_PRESENCE: "object_detection",
     KINETIC_BUDGET: "motion_magnitude",
     ACTOR_DYNAMICS: "motion_accuracy",
+    ACTOR_MOTION: "RBench Motion-Aware Score (MAS), adapted — flow-on-mask not CoTracker",
     MOTION_CONTINUITY: "motion_smoothness",
     MOTION_FIDELITY: "flow_epe vs dense (ours)",
 }
 
-# Paper tables
+# Paper tables. ActorMotion sits beside KineticBudget (raw, reported not averaged) —
+# Continuity rewards stillness, ActorMotion penalizes it; folding both into PhyDyn's
+# mean would cancel the signal. Same reasoning keeps ActorMotionDrift out of PhyFid's mean.
 PAPER_QUAL = [SCENE_INTEGRITY, TASK_LOCK, ENTITY_PRESENCE, PHY_QUAL]
-PAPER_DYN = [KINETIC_BUDGET, ACTOR_DYNAMICS, MOTION_CONTINUITY, PHY_DYN]
-PAPER_FID = [MOTION_FIDELITY, KINETIC_DRIFT, CONTINUITY_GAP, LOOK_DRIFT, PHY_FID]
+PAPER_DYN = [KINETIC_BUDGET, ACTOR_MOTION, ACTOR_DYNAMICS, MOTION_CONTINUITY, PHY_DYN]
+PAPER_FID = [MOTION_FIDELITY, KINETIC_DRIFT, ACTOR_MOTION_DRIFT, CONTINUITY_GAP, LOOK_DRIFT, PHY_FID]
 
 # GroundingDINO phrases for EntityPresence / ActorDynamics
 EMBODIMENT_PHRASES = {

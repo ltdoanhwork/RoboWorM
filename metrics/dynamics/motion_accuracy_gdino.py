@@ -309,6 +309,10 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
         "mean_obj_flow_med": mean("obj_flow_med"),
         "mean_arm_flow_med": mean("arm_flow_med"),
         "mean_bg_flow_med": mean("bg_flow_med"),
+        # ActorMotion (PhyWorld): subject-only kinetic budget, arm∪object mask, no bg
+        # subtraction. Adapted from RBench's Motion-Aware Score (MAS) — same "does the
+        # subject actually move" question, flow-on-mask instead of CoTracker.
+        "mean_fg_flow_med": mean("fg_flow_med"),
         "mean_fg_cov_pct": mean("fg_cov_pct"),
         "per_frame": per_frame,
     }
@@ -316,7 +320,8 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
         json.dump(result, f, indent=2)
     print(f"[{tag}] ws_fg_vs_bg={result['ws_fg_vs_bg']:.3f} ws_obj_vs_bg={result['ws_obj_vs_bg']:.3f} "
           f"med_fg_vs_bg={result['med_fg_vs_bg']:.4f} | obj_med={result['mean_obj_flow_med']:.3f} "
-          f"arm_med={result['mean_arm_flow_med']:.3f} bg_med={result['mean_bg_flow_med']:.3f}")
+          f"arm_med={result['mean_arm_flow_med']:.3f} bg_med={result['mean_bg_flow_med']:.3f} "
+          f"actor_motion={result['mean_fg_flow_med']:.4f}")
     shutil.rmtree(work, ignore_errors=True)
     return result
 

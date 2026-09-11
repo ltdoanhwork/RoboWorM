@@ -36,6 +36,13 @@ def motion_continuity_score(ssim: float) -> float:
     return float(max(0.0, min(1.0, ssim)) * 100.0)
 
 
+def actor_motion_score(mean_fg_flow_med: float, scale: float = 2.0) -> float:
+    """Optional 0-100 map of subject-only flow (RBench MAS, adapted). Diagnostic only —
+    never averaged into phy_dyn: Continuity rewards stillness, this penalizes it."""
+    x = math.tanh(max(0.0, mean_fg_flow_med) / max(scale, _EPS))
+    return float(100.0 * x)
+
+
 def phy_dyn(actor_mapped: float, continuity_mapped: float) -> float:
     return float((actor_mapped + continuity_mapped) / 2.0)
 
