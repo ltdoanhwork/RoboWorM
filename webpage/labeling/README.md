@@ -103,7 +103,9 @@ Each batch is **25 geometry videos + 25 hallucinate videos**. Geometry is one
 score per clip; a hallucinate clip is scored segment by segment, and clip length
 varies a lot (6-144 segments, bimanual averages 46), so 25 clips work out to
 roughly **690 segment scores** — the two halves are equal in clips, not in
-effort. The batch is stored in `localStorage` so refresh does not re-roll.
+effort. The batch is stored in `localStorage` so refresh does not re-roll, and
+mirrored to Supabase `rating_batches` with exact Geometry/Hallucinate order for
+audit. Older open batches are backfilled when each rater next opens the site.
 **Submit works before the batch is finished.**
 
 Assignment reads current Supabase labels and picks items this rater has not

@@ -273,16 +273,16 @@ if (VGP.requireGate()) {
     }
     renderBatch();
   }
-  function submit(){
-    batch = VGP.submitBatch();
+  async function submit(){
+    batch = await VGP.submitBatch();
     $('continueDialog').close();
     renderBatch();
   }
 
   $('btnAssign').onclick = () => assign().catch(err => { console.error(err); setStatus('Không tạo được lô.', 'Could not create a batch.', 'err'); });
   $('btnNew').onclick = () => { VGP.clearBatch(); batch = null; assign().catch(err => { console.error(err); setStatus('Không tạo được lô.', 'Could not create a batch.', 'err'); }); };
-  $('btnSubmit').onclick = submit;
-  $('dlgSubmit').onclick = submit;
+  $('btnSubmit').onclick = () => submit().catch(err => { console.error(err); setStatus('Không lưu được trạng thái lô.', 'Could not save batch status.', 'err'); });
+  $('dlgSubmit').onclick = () => submit().catch(err => { console.error(err); setStatus('Không lưu được trạng thái lô.', 'Could not save batch status.', 'err'); });
   $('closeContinue').onclick = () => $('continueDialog').close();
   function openHowTo(){ $('howtoDialog').showModal(); }
   function closeHowTo(){
@@ -307,6 +307,7 @@ if (VGP.requireGate()) {
     const prev = VGP.getBatch();
     const wasStale = prev && VGP.isStaleOpenBatch(prev, mvAll, svAll);
     batch = VGP.getValidBatch(mvAll, svAll);
+    if (batch) await VGP.sbUpsertBatch(batch);
     if (wasStale) {
       setStatus('Lô đã đổi thành 25 video geometry + 25 video hallucinate. Điểm bạn đã chấm vẫn được giữ. Bắt đầu lô mới.',
         'A batch is now 25 geometry videos + 25 hallucinate videos. Scores you already submitted are kept. Start a new batch.');

@@ -603,11 +603,13 @@ const VGP = (() => {
     return batch;
   }
 
-  function submitBatch() {
+  async function submitBatch() {
     const batch = getBatch();
     if (!batch) return null;
     batch.submittedAt = new Date().toISOString();
-    return saveBatch(batch);
+    saveBatch(batch);
+    await sbUpsertBatch(batch);
+    return batch;
   }
 
   function clearBatch() {
@@ -616,7 +618,11 @@ const VGP = (() => {
 
   async function getOrCreateBatch(mvItems, svItems) {
     const existing = getValidBatch(mvItems, svItems);
-    if (existing) return existing;
+    if (existing) {
+      // Backfill batches created before server-side audit storage existed.
+      await sbUpsertBatch(existing);
+      return existing;
+    }
     return createBatch(mvItems, svItems);
   }
 
@@ -656,7 +662,7 @@ const VGP = (() => {
       clearBatch();
       return { id: null, version: BATCH_VERSION, reviewer: true, mvIds: [], svIds: [], empty: true };
     }
-    return saveBatch({
+    const batch = {
       id: `${Date.now().toString(36)}-${fnv1a(getRater() + Math.random())}`,
       version: BATCH_VERSION,
       createdAt: new Date().toISOString(),
@@ -666,7 +672,10 @@ const VGP = (() => {
       svIds: svPick.map((it) => it.id),
       svSegs: svSegs,
       svSegments: svPick.reduce((n, it) => n + (svSegs ? (svSegs[it.id] || []).length : segmentCount(it)), 0),
-    });
+    };
+    saveBatch(batch);
+    await sbUpsertBatch(batch);
+    return batch;
   }
 
   function itemsFromIds(allItems, ids) {
@@ -702,6 +711,50 @@ const VGP = (() => {
       Authorization: `Bearer ${CONFIG.SUPABASE_PUBLISHABLE_KEY}`,
       "Content-Type": "application/json",
     };
+  }
+
+  function batchDbRow(batch) {
+    return {
+      id: batch.id,
+      rater_name: getRater(),
+      version: Number(batch.version || BATCH_VERSION),
+      reviewer: !!batch.reviewer,
+      mv_ids: batch.mvIds || [],
+      sv_ids: batch.svIds || [],
+      sv_segments: batch.svSegs || {},
+      created_at: batch.createdAt || new Date().toISOString(),
+      submitted_at: batch.submittedAt || null,
+    };
+  }
+
+  function missingBatchTable(status, body) {
+    return status === 404 || /rating_batches|PGRST205|schema cache/i.test(body || "");
+  }
+
+  async function sbUpsertBatch(batch) {
+    if (!batch || !batch.id) return false;
+    const url = `${CONFIG.SUPABASE_URL}/rest/v1/rating_batches`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { ...sbHeaders(), Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify([batchDbRow(batch)]),
+    });
+    if (res.ok) return true;
+    const body = await res.text();
+    if (missingBatchTable(res.status, body)) {
+      console.warn("Batch audit table missing; run supabase/batch_audit.sql.");
+      return false;
+    }
+    throw new Error(`Supabase batch upsert failed: ${res.status} ${body}`);
+  }
+
+  async function sbLoadAllBatches() {
+    const url = `${CONFIG.SUPABASE_URL}/rest/v1/rating_batches?select=*&order=created_at.desc`;
+    const res = await fetch(url, { headers: sbHeaders() });
+    if (res.ok) return res.json();
+    const body = await res.text();
+    if (missingBatchTable(res.status, body)) return [];
+    throw new Error(`Supabase batch load failed: ${res.status} ${body}`);
   }
 
   async function sbUpsertLabel(raterName, itemId, score) {
@@ -1012,7 +1065,7 @@ const VGP = (() => {
     getBatch, getValidBatch, isStaleOpenBatch, saveBatch, submitBatch, clearBatch, createBatch, getOrCreateBatch,
     itemsFromIds, renderStepStrip, preloadVideos, anyDialogOpen, bindExampleRemind,
     videoKey, itemSplit, raterBucket, renderMarkdown,
-    sbUpsertLabel, sbDeleteLabel, sbLoadLabels, sbLoadAllLabels,
+    sbUpsertLabel, sbDeleteLabel, sbLoadLabels, sbLoadAllLabels, sbUpsertBatch, sbLoadAllBatches,
     mergeLabels, mirrorLabel, autosaveLabel, flushPending, readPending,
     pushUndo, canUndo, clearUndo, undoLast,
     fnv1a, mulberry32,

@@ -116,7 +116,7 @@
     <div class="cm-grid rater-cm-grid" id="raterDetailMatrices"></div>
     <div class="admin-detail-scroll">
       <table class="data" id="raterDetailTable">
-        <thead><tr><th>Video</th><th>Check</th><th>Embodiment</th><th>Overall</th><th>Labels</th><th>Updated</th></tr></thead>
+        <thead><tr><th>Video</th><th>Batch index</th><th>Check</th><th>Embodiment</th><th>Overall</th><th>Labels</th><th>Updated</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -126,7 +126,7 @@
 <script src="vgp.js"></script>
 <script>
 if (VGP.requireAdmin()) {
-  let rows = [], geoItems = [], halluItems = [], geoMetrics = [], halluSegMetrics = [], halluVideoMetrics = [];
+  let rows = [], batches = [], geoItems = [], halluItems = [], geoMetrics = [], halluSegMetrics = [], halluVideoMetrics = [];
   let exportBundle = { geometry: { items: [] }, hallucinate: { videos: [], segments: [] } };
   let keyExport = {};
   const LABELS = ['Bad', 'Medium', 'Good'];
@@ -296,6 +296,13 @@ if (VGP.requireAdmin()) {
     const normalized = name.trim().toLowerCase();
     const itemMap = new Map([...geoItems, ...halluItems].map(it => [it.id, it]));
     const own = rows.filter(row => String(row.rater_name || '').trim().toLowerCase() === normalized);
+    const ownBatches = batches.filter(batch => String(batch.rater_name || '').trim().toLowerCase() === normalized);
+    const positions = new Map();
+    ownBatches.slice().sort((a, b) => String(a.created_at).localeCompare(String(b.created_at))).forEach((batch, batchIndex) => {
+      const prefix = `B${batchIndex + 1}`;
+      (batch.mv_ids || []).forEach((id, index) => positions.set(id, `${prefix} · G #${index + 1}`));
+      (batch.sv_ids || []).forEach((id, index) => positions.set(id, `${prefix} · H #${index + 1}`));
+    });
     const grouped = new Map();
     own.forEach(row => {
       const videoId = VGP.parentVideoId(row.item_id);
@@ -351,7 +358,7 @@ if (VGP.requireAdmin()) {
 
     document.getElementById('raterDetailTitle').textContent = name;
     document.getElementById('raterDetailSummary').textContent =
-      `${own.length} labels · ${records.length} videos · ${records.filter(r => r.isHallu && r.overall != null).length} complete hallucinate ratings`;
+      `${own.length} labels · ${records.length} videos · ${records.filter(r => r.isHallu && r.overall != null).length} complete hallucinate ratings · ${ownBatches.length} audited batches`;
     document.getElementById('raterDetailMatrices').innerHTML = [
       renderMatrix('Geometry · machine → rater', geoMatrix, null, 'R'),
       renderMatrix('Hallucinate video · band → rater overall', halluVideoMatrix, null, 'R'),
@@ -368,6 +375,8 @@ if (VGP.requireAdmin()) {
         link.target = '_blank'; link.rel = 'noopener'; link.textContent = record.videoId;
         videoCell.append(link);
       } else videoCell.textContent = record.videoId;
+      const positionCell = document.createElement('td');
+      positionCell.className = 'mono'; positionCell.textContent = positions.get(record.videoId) || 'legacy';
       const checkCell = document.createElement('td'); checkCell.textContent = record.isHallu ? 'Hallucinate' : 'Geometry';
       const embCell = document.createElement('td'); embCell.textContent = VGP.embLabel(record.item?.embodiment);
       const overallCell = document.createElement('td');
@@ -379,12 +388,12 @@ if (VGP.requireAdmin()) {
       }).join(' · ');
       const updatedCell = document.createElement('td'); updatedCell.className = 'mono';
       updatedCell.textContent = record.updated ? new Date(record.updated).toLocaleString() : '—';
-      tr.append(videoCell, checkCell, embCell, overallCell, labelsCell, updatedCell);
+      tr.append(videoCell, positionCell, checkCell, embCell, overallCell, labelsCell, updatedCell);
       body.append(tr);
     });
     if (!records.length) {
       const tr = document.createElement('tr'); const td = document.createElement('td');
-      td.colSpan = 6; td.textContent = 'No labels.'; tr.append(td); body.append(tr);
+      td.colSpan = 7; td.textContent = 'No labels.'; tr.append(td); body.append(tr);
     }
     document.getElementById('raterDialog').showModal();
   }
@@ -638,14 +647,16 @@ if (VGP.requireAdmin()) {
 
   async function refresh(){
     document.getElementById('stats').textContent = 'Loading…';
-    const [all, mv, sv, metrics, mvMetrics] = await Promise.all([
+    const [all, batchRows, mv, sv, metrics, mvMetrics] = await Promise.all([
       VGP.sbLoadAllLabels(),
+      VGP.sbLoadAllBatches(),
       fetch('catalog.json').then(r => r.json()),
       fetch('catalog.segment.json').then(r => r.json()),
       fetch('metrics.segment.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
       fetch('metrics.multiview.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
     ]);
     rows = all;
+    batches = batchRows;
     geoItems = mv.items || [];
     halluItems = sv.items || [];
     const geoIds = new Set(geoItems.map(it => it.id));
