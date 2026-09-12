@@ -15,7 +15,7 @@ app.css       shared UI
 vgp.js        fixed two-rater assignment + conflict logic + Supabase REST
 ACCOUNTS.md   rater names, account IDs, assignment contract
 catalog.json  Mode A public catalog (HF URLs)
-examples.json 9 references: 3 ratings × 3 robot embodiments
+examples.json 27 references: 3 videos × 3 ratings × 3 robot embodiments
 catalog.segment.json  Mode B blind public catalog (291 videos, explicit frame ranges)
 examples.segment.json 34 references: whole clips, 3-6 per rating × embodiment
 rubric.segment.{vi,en}.md Mode B bilingual rubrics shown during labeling

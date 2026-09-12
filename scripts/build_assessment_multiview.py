@@ -97,19 +97,19 @@ def write_mp4(path: Path, frames: list[np.ndarray], fps: float) -> None:
 
 
 def static_pair(frame: np.ndarray) -> tuple[np.ndarray, np.ndarray, str]:
-    """Crop the two static cameras out of a tiled multiview frame."""
+    """Crop two known static cameras; reject every unknown layout."""
     h, w = frame.shape[:2]
-    if h <= 240 and w % 320 == 0:
-        n = w // 320
-        if n < 2:
-            raise ValueError(f"strip too narrow: {w}x{h}")
+    if (h, w) in ((192, 960), (192, 1280)):
         a = frame[:, 0:320]
         b = frame[:, 320:640]
-        return a, b, f"strip{n}"
-    th, tw = h // 2, w // 2
-    a = frame[:th, :tw]
-    b = frame[:th, tw:tw * 2]
-    return a, b, "grid2x2"
+        return a, b, f"strip{w // 320}"
+    if (h, w) == (432, 768):
+        a = frame[:216, :384]
+        b = frame[:216, 384:768]
+        return a, b, "grid2x2"
+    raise ValueError(
+        f"unsupported multiview layout {w}x{h}; expected 768x432, 960x192, or 1280x192"
+    )
 
 
 def hstack_pair(a: np.ndarray, b: np.ndarray) -> np.ndarray:
@@ -179,7 +179,12 @@ def static_pair_source(source_path: str, embodiment: str, model: str, video_root
     if model != "ctrlworld" or embodiment not in ("bimanual", "humanoid"):
         return source_path
     grid = source_path.replace("/ctrlworld/", "/ctrlworld_4view_grid/")
-    return grid if (video_root / PurePosixPath(grid)).is_file() else source_path
+    grid_path = video_root / PurePosixPath(grid)
+    if not grid_path.is_file():
+        raise FileNotFoundError(
+            f"two-static-camera source missing for {source_path}: expected {grid_path}"
+        )
+    return grid
 
 
 def source_record(source_path: str, video_root: Path, metadata: dict[str, dict]) -> dict:
@@ -231,31 +236,50 @@ def collect_sources(n: int, video_root: Path = SAMPLING, videos_path: Path = ALL
 
 
 def collect_examples(video_root: Path = SAMPLING, examples_path: Path = EXAMPLES) -> list[dict]:
-    """Load Bad/Medium/Good × embodiment reference examples."""
+    """Load exactly three Bad/Medium/Good references per embodiment."""
     rating = ""
+    embodiment = ""
     score_by_rating = {"bad": 1, "medium": 2, "good": 3}
     metadata = _manifest_metadata()
     rows = []
+    counts = {}
+    source_paths = set()
     for raw_line in examples_path.read_text().splitlines():
         line = raw_line.strip()
         if line.endswith(":") and not line.startswith("-"):
             rating = line[:-1].strip().lower()
+            embodiment = ""
             continue
-        if not line.startswith("- "):
+        if line.startswith("- ") and line.endswith(":"):
+            embodiment = line[2:-1].strip().lower()
             continue
-        embodiment, source_path = line[2:].split(": ", 1)
+        if line.startswith("- ") and ": " in line:
+            embodiment, source_path = line[2:].split(": ", 1)
+            embodiment = embodiment.strip().lower()
+        elif line and embodiment:
+            source_path = line
+        else:
+            continue
         if rating not in score_by_rating:
             raise ValueError(f"example has no valid rating: {raw_line}")
+        key = (rating, embodiment)
+        counts[key] = counts.get(key, 0) + 1
+        if source_path in source_paths:
+            raise ValueError(f"duplicate example source: {source_path}")
+        source_paths.add(source_path)
         record = source_record(source_path, video_root, metadata)
         record.update(
             rating=rating,
             score=score_by_rating[rating],
-            embodiment=embodiment.strip().lower(),
-            example_id=f"{rating}-{embodiment.strip().lower().replace('_', '-')}",
+            embodiment=embodiment,
+            example_id=f"{rating}-{embodiment.replace('_', '-')}-{counts[key]}",
         )
         rows.append(record)
-    if len(rows) != 9:
-        raise ValueError(f"expected 9 examples in {examples_path}, found {len(rows)}")
+    expected = {(r, e): 3 for r in score_by_rating for e in ("bimanual", "humanoid", "single_arm")}
+    if counts != expected or len(rows) != 27:
+        raise ValueError(
+            f"expected 3 examples for every rating/embodiment pair in {examples_path}; found {counts}"
+        )
     return rows
 
 
@@ -403,9 +427,11 @@ def main() -> int:
     ap.add_argument("--n", type=int, default=N_VIDEOS)
     ap.add_argument("--limit", type=int, default=0, help="process only the first N (smoke test)")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--examples-only", action="store_true", help="reuse catalog and rebuild only references")
     ap.add_argument("--hf-repo", default=HF_REPO)
     ap.add_argument("--hf-prefix", default=HF_PREFIX)
     ap.add_argument("--video-root", type=Path, default=SAMPLING)
+    ap.add_argument("--dest", type=Path, default=DEST)
     ap.add_argument("--videos", type=Path, default=ALL_VIDEOS)
     ap.add_argument("--examples", type=Path, default=EXAMPLES)
     ap.add_argument("--seed-points", type=Path, default=SEED_POINTS)
@@ -427,6 +453,7 @@ def main() -> int:
         help="copy public catalog + examples into webpage/labeling",
     )
     args = ap.parse_args()
+    dest = args.dest
 
     n = args.n
     print(f"collecting {n} unique full-length multiview sources…")
@@ -451,9 +478,9 @@ def main() -> int:
     if args.dry_run:
         return 0
 
-    if not args.keep_existing and DEST.exists():
-        shutil.rmtree(DEST)
-    clips_dir = DEST / "clips"
+    if not args.keep_existing and dest.exists():
+        shutil.rmtree(dest)
+    clips_dir = dest / "clips"
     clips_dir.mkdir(parents=True, exist_ok=True)
 
     base_url = f"https://huggingface.co/datasets/{args.hf_repo}/resolve/main/{args.hf_prefix}/clips"
@@ -465,6 +492,14 @@ def main() -> int:
         pid = f"{i:05d}"
         out_dir = clips_dir / pid
         meta_path = out_dir / "meta.json"
+        if args.examples_only:
+            if not meta_path.is_file():
+                raise FileNotFoundError(f"missing catalog metadata: {meta_path}")
+            row = json.loads(meta_path.read_text())
+            if row.get("source_path") != src["source_path"]:
+                raise ValueError(f"catalog/source mismatch for {pid}")
+            catalog_items.append({k: v for k, v in row.items() if k not in {"episode", "pool", "source_path", "render_path", "seed_key"}})
+            continue
         if (
             args.keep_existing
             and (out_dir / "raw.mp4").is_file()
@@ -516,10 +551,15 @@ def main() -> int:
                     catalog_items.append(row)
     catalog_items.sort(key=lambda r: r["id"])
 
-    # Eight references are also evaluation items; reuse their rendered files.
+    # References that are also evaluation items reuse their rendered files.
     # Process only examples outside this batch (currently Good/single_arm).
     source_to_id = {src["source_path"]: f"{i:05d}" for i, src in enumerate(todo)}
     catalog_by_id = {row["id"]: row for row in catalog_items}
+    existing_examples = {}
+    for meta_path in (dest / "examples").glob("*/meta.json"):
+        row = json.loads(meta_path.read_text())
+        if row.get("source_path"):
+            existing_examples[row["source_path"]] = row
     example_items = []
     if not args.limit:
         example_base_url = (
@@ -527,7 +567,7 @@ def main() -> int:
             f"{args.hf_prefix}/examples"
         )
         for example in examples:
-            reused = catalog_by_id.get(source_to_id.get(example["source_path"], ""))
+            reused = catalog_by_id.get(source_to_id.get(example["source_path"], "")) or existing_examples.get(example["source_path"])
             if reused:
                 row = dict(reused)
                 row["id"] = example["example_id"]
@@ -536,7 +576,7 @@ def main() -> int:
                     {
                         "pid": example["example_id"],
                         "src": example,
-                        "out_dir": str(DEST / "examples" / example["example_id"]),
+                        "out_dir": str(dest / "examples" / example["example_id"]),
                         "base_url": example_base_url,
                         "overlay_mode": args.overlay,
                         "seeds": seed_db.get(example["seed_key"], {}),
@@ -562,26 +602,26 @@ def main() -> int:
         "note": "Curated full-length multiview videos. Two static cameras; raw + diagnostic overlay.",
         "items": catalog_items,
     }
-    DEST.mkdir(parents=True, exist_ok=True)
-    (DEST / "catalog.json").write_text(json.dumps(catalog, indent=2) + "\n")
+    dest.mkdir(parents=True, exist_ok=True)
+    (dest / "catalog.json").write_text(json.dumps(catalog, indent=2) + "\n")
     public = dict(catalog)
-    (DEST / "catalog.public.json").write_text(json.dumps(public, indent=2) + "\n")
+    (dest / "catalog.public.json").write_text(json.dumps(public, indent=2) + "\n")
     examples_public = {
         "n": len(example_items),
         "scale": ["bad", "medium", "good"],
         "items": example_items,
     }
-    (DEST / "examples.public.json").write_text(json.dumps(examples_public, indent=2) + "\n")
+    (dest / "examples.public.json").write_text(json.dumps(examples_public, indent=2) + "\n")
     if args.sync_web:
-        shutil.copy2(DEST / "catalog.public.json", REPO / "webpage" / "labeling" / "catalog.json")
-        shutil.copy2(DEST / "examples.public.json", REPO / "webpage" / "labeling" / "examples.json")
-    (DEST / "README.md").write_text(
+        shutil.copy2(dest / "catalog.public.json", REPO / "webpage" / "labeling" / "catalog.json")
+        shutil.copy2(dest / "examples.public.json", REPO / "webpage" / "labeling" / "examples.json")
+    (dest / "README.md").write_text(
         f"""# Multiview static-pair batch (curated 300 videos)
 
 - **{len(catalog_items)} full-length videos** (not 16-frame cuts)
 - Each video shows **two static cameras** only
 - `raw.mp4` + `{overlay_name}` ({args.overlay}; empty seeds fall back to flow)
-- 9 reference examples: Bad / Medium / Good × 3 embodiments
+- 27 reference examples: 3 per Bad / Medium / Good × embodiment
 - Score **Bad (1) / Medium (2) / Good (3)** once per video
 
 ```bash
@@ -589,7 +629,7 @@ models/dreamgen/.venv/bin/python scripts/build_assessment_multiview.py --sync-we
 ```
 """
     )
-    print(f"\nwrote {DEST}  ({len(catalog_items)} items, {len(example_items)} examples)")
+    print(f"\nwrote {dest}  ({len(catalog_items)} items, {len(example_items)} examples)")
     return 0
 
 

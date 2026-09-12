@@ -293,7 +293,6 @@ if (VGP.requireGate()) {
   $('closeHowTo').onclick = closeHowTo;
   $('okHowTo').onclick = closeHowTo;
   $('howtoDialog').addEventListener('click', event => { if (event.target === $('howtoDialog')) closeHowTo(); });
-  if (!localStorage.getItem('vgp_howto_seen')) openHowTo();
 
   (async () => {
     const [mvCat, svCat] = await Promise.all([

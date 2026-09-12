@@ -19,9 +19,10 @@ OUT_PATH = REPO / "webpage" / "labeling" / "metrics.multiview.json"
 CLIPS = REPO / "sampling_dataset" / "data_for_web" / "assessment" / "multiview_static2" / "clips"
 
 
-def check_clip_alignment(rows: list[dict]) -> None:
+def check_clip_alignment(rows: list[dict]) -> list[dict]:
     if not CLIPS.is_dir():
         raise SystemExit(f"{CLIPS} not found — render the batch before building metrics")
+    metas = []
     for i, row in enumerate(rows):
         meta_path = CLIPS / f"{i:05d}" / "meta.json"
         if not meta_path.is_file():
@@ -32,17 +33,20 @@ def check_clip_alignment(rows: list[dict]) -> None:
                 f"clip {i:05d} was rendered from {meta.get('source_path')!r} but CSV row {i} "
                 f"scores {row['video_path']!r} — rebuild the batch"
             )
+        metas.append(meta)
+    return metas
 
 
 def main() -> None:
     rows = list(csv.DictReader(CSV_PATH.open()))
-    check_clip_alignment(rows)
+    metas = check_clip_alignment(rows)
     items = []
-    for i, row in enumerate(rows):
+    for i, (row, meta) in enumerate(zip(rows, metas)):
         score = int(float(row["score"]))
         items.append(
             {
                 "id": f"{i:05d}",
+                "index": i,
                 "check": "geometry",
                 "video_path": row["video_path"],
                 "score": score,
@@ -54,6 +58,8 @@ def main() -> None:
                 "disjoint_frame_ratio": float(row["disjoint_frame_ratio"]),
                 "robot_type": row["robot_type"],
                 "embodiment": row["robot_type"],
+                "split": meta.get("split", ""),
+                "task": meta.get("task", ""),
                 "combined_score": float(row["combined_score"]),
             }
         )
