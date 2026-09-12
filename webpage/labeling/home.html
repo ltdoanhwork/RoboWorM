@@ -22,7 +22,7 @@
 </nav>
 <main>
   <section class="home-hero">
-    <div class="eyebrow" id="homeEyebrow"><span data-lang="vi">Mỗi lô · 25 video geometry + 25 video hallucinate</span><span data-lang="en">Each batch · 25 geometry videos + 25 hallucinate videos</span></div>
+    <div class="eyebrow" id="homeEyebrow"><span data-lang="vi">Đã phân sẵn · 50 geometry + 48–49 hallucinate</span><span data-lang="en">Preassigned · 50 geometry + 48–49 hallucinate</span></div>
     <h1><span data-lang="vi">Xin chào, </span><span data-lang="en">Hello, </span><span id="helloName"></span></h1>
     <figure class="tutorial">
       <figcaption class="tutorial-cap">
@@ -84,9 +84,9 @@
     </div>
     <p class="status" id="status" style="margin-top:.85rem">Loading…</p>
     <div class="home-actions">
-      <button class="btn primary" id="btnAssign" hidden><span data-lang="vi">Bắt đầu chấm 50</span><span data-lang="en">Start to label 50</span></button>
+      <button class="btn primary" id="btnAssign" hidden><span data-lang="vi">Bắt đầu chấm</span><span data-lang="en">Start labeling</span></button>
       <button class="btn warn" id="btnSubmit" hidden><span data-lang="vi">Nộp lô này</span><span data-lang="en">Submit this batch</span></button>
-      <button class="btn" id="btnNew" hidden><span data-lang="vi">Bắt đầu chấm 50</span><span data-lang="en">Start to label 50</span></button>
+      <button class="btn" id="btnNew" hidden><span data-lang="vi">Check conflict tiếp</span><span data-lang="en">Check more conflicts</span></button>
     </div>
   </section>
 
@@ -98,7 +98,7 @@
         <span data-lang="en">Judge only the two static cameras. Score 1 / 2 / 3 for the whole clip.</span>
         <span data-lang="vi">Chỉ xét hai camera tĩnh. Chấm cả clip 1 / 2 / 3.</span>
       </p>
-      <div class="meta-line"><strong id="mvProg">0 / 25</strong> · <span data-lang="vi">25 video geometry</span><span data-lang="en">25 geometry videos</span></div>
+      <div class="meta-line"><strong id="mvProg">0 / 50</strong> · <span data-lang="vi">50 video geometry</span><span data-lang="en">50 geometry videos</span></div>
       <div class="progress"><div id="mvBar"></div></div>
       <div class="home-actions">
         <a class="btn primary" href="index.html" id="goMv"><span data-lang="vi">Chấm geometry</span><span data-lang="en">Rate geometry</span></a>
@@ -129,8 +129,8 @@
   <div class="dialog-body">
     <ol class="howto-ol">
       <li>
-        <span data-lang="en"><strong>Start to label 50</strong> — first time only. This assigns 25 geometry videos and 25 hallucinate videos that still need a second rater. A hallucinate video holds many 1-second segments, so it takes far longer than a geometry clip.</span>
-        <span data-lang="vi"><strong>Bắt đầu chấm 50</strong> — lần đầu. Lô gồm 25 video geometry và 25 video hallucinate chưa đủ 2 người chấm. Một video hallucinate có nhiều đoạn 1 giây nên mất nhiều thời gian hơn video geometry.</span>
+        <span data-lang="en"><strong>Start labeling</strong> — first time only. Your fixed assignment contains 50 geometry videos and 48 or 49 hallucinate videos. Every video has exactly two assigned raters.</span>
+        <span data-lang="vi"><strong>Bắt đầu chấm</strong> — lần đầu. Phần được phân sẵn gồm 50 video geometry và 48 hoặc 49 video hallucinate. Mỗi video có đúng hai người được phân chấm.</span>
       </li>
       <li>
         <span data-lang="en"><strong>Rate geometry</strong> — open the first card. Watch both static cameras. Click <em>Bad / Medium / Good</em> (or keys 1–3). Click a numbered step to jump back and change a score.</span>
@@ -141,8 +141,8 @@
         <span data-lang="vi"><strong>Về Home</strong>, rồi <strong>Chấm hallucinate</strong>. Clip dừng mỗi 1 giây — chấm đoạn đó về tính vật lý rồi video chạy tiếp.</span>
       </li>
       <li>
-        <span data-lang="en"><strong>Submit this batch</strong> when you are done (or earlier — partial is OK). Then you can get another 50.</span>
-        <span data-lang="vi"><strong>Nộp lô này</strong> khi xong (hoặc sớm hơn — chưa hết vẫn nộp được). Sau đó nhận thêm 50 video.</span>
+        <span data-lang="en"><strong>Submit this batch</strong> when you are done (or earlier — partial is OK). Your assignment stays fixed.</span>
+        <span data-lang="vi"><strong>Nộp lô này</strong> khi xong (hoặc sớm hơn — chưa hết vẫn nộp được). Phần được phân vẫn giữ nguyên.</span>
       </li>
     </ol>
     <div class="dialog-actions">
@@ -221,11 +221,11 @@ if (VGP.requireGate()) {
     $('phaseGrid').hidden = !open;
     $('btnAssign').hidden = !!batch;
     $('btnSubmit').hidden = !open;
-    $('btnNew').hidden = !(batch && batch.submittedAt);
+    $('btnNew').hidden = !(checker && batch && batch.submittedAt);
     if (!batch){
       setStatus(
-        checker ? 'Chưa có lô. Bắt đầu check conflict.' : 'Chưa có lô. Bắt đầu chấm 50.',
-        checker ? 'No batch yet. Start to check conflicts.' : 'No batch yet. Start to label 50.'
+        checker ? 'Chưa có lô. Bắt đầu check conflict.' : 'Chưa tải phần được phân. Bắt đầu chấm.',
+        checker ? 'No batch yet. Start to check conflicts.' : 'Assignment not loaded. Start labeling.'
       );
       return;
     }
@@ -257,8 +257,8 @@ if (VGP.requireGate()) {
   }
   async function assign(){
     setStatus(
-      checker ? 'Đang lấy video conflict…' : 'Đang phân phối — mỗi video tối đa 2 người…',
-      checker ? 'Loading conflict videos…' : 'Assigning — each video to at most 2 raters…',
+      checker ? 'Đang lấy video conflict…' : 'Đang tải 98–99 video đã phân sẵn…',
+      checker ? 'Loading conflict videos…' : 'Loading 98–99 preassigned videos…',
       'syncing'
     );
     batch = await VGP.createBatch(mvAll, svAll);
@@ -309,8 +309,8 @@ if (VGP.requireGate()) {
     batch = VGP.getValidBatch(mvAll, svAll);
     if (batch) await VGP.sbUpsertBatch(batch);
     if (wasStale) {
-      setStatus('Lô đã đổi thành 25 video geometry + 25 video hallucinate. Điểm bạn đã chấm vẫn được giữ. Bắt đầu lô mới.',
-        'A batch is now 25 geometry videos + 25 hallucinate videos. Scores you already submitted are kept. Start a new batch.');
+      setStatus('Phần chấm đã đổi thành 50 geometry + 48–49 hallucinate cố định. Điểm cũ vẫn được giữ. Bắt đầu để tải phần được phân.',
+        'Assignment changed to fixed 50 geometry + 48–49 hallucinate videos. Existing scores are kept. Start to load it.');
     }
     if (!batch || batch.submittedAt) $('btnAssign').hidden = false;
     renderBatch();

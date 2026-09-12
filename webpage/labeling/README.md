@@ -5,14 +5,15 @@ Supabase Free, as long as this stays a non-commercial research deployment
 (see cost notes below).
 
 ```
-gate.html     rater passcode + name  |  admin passcode (analytics only)
-home.html     hub: batch = 25 geometry videos + 25 hallucinate videos, lifetime stats
-index.html    Geometry — 25 clips / batch, raw + flow, Bad/Medium/Good
+gate.html     fixed account login  |  admin passcode (analytics only)
+home.html     hub: fixed assignment = 50 geometry + 48–49 hallucinate videos
+index.html    Geometry — 50 clips / assignment, raw + flow, Bad/Medium/Good
 segment.html  Hallucinate — the clip pauses at every 16-frame segment for one score
 analytics.html admin-only charts (coverage, confusion, raters). Not linked from rater UI.
 admin.html    redirect → analytics.html
 app.css       shared UI
-vgp.js        least-labeled batch assignment + Supabase REST
+vgp.js        fixed two-rater assignment + conflict logic + Supabase REST
+ACCOUNTS.md   rater names, account IDs, assignment contract
 catalog.json  Mode A public catalog (HF URLs)
 examples.json 9 references: 3 ratings × 3 robot embodiments
 catalog.segment.json  Mode B blind public catalog (291 videos, explicit frame ranges)
@@ -62,10 +63,10 @@ counts. Example clips remain reference-only and never enter rating queue.
    run a long study: a free GitHub Actions cron hitting the REST URL weekly.
 
 No Supabase Auth is used (its free-tier email OTP is capped at 2 emails/hour,
-which stalls if several raters sign up at once). Instead raters type a shared
-passcode (see below) + their own display name; RLS on the `labels` table is
-open read/write. This is **not** a real security boundary — do not put
-anything sensitive in this table, and rotate the passcode if it leaks.
+which stalls if several raters sign up at once). Instead raters use a fixed
+client-side account allowlist and assigned passcode; RLS on the `labels` table
+is open read/write. This is **not** a real security boundary — do not put
+anything sensitive in this table.
 
 ## 2. Vercel (free static hosting)
 
@@ -74,12 +75,12 @@ Already done for you: a Vercel project `vgp-labeling` is linked to this repo's
 push. `config.js` is committed directly (see design note below) so there is
 no build step and nothing to configure in the Vercel dashboard.
 
-To change the passcode or point at a different Supabase project: edit
-`webpage/labeling/config.js` and push to `main` — Vercel redeploys
-automatically.
+To change the account allowlist/passcode, edit `webpage/labeling/vgp.js`. To
+point at a different Supabase project or change admin/checker passcodes, edit
+`webpage/labeling/config.js`. Push to `main`; Vercel redeploys automatically.
 
-Share `https://<project>.vercel.app/` (or `/gate.html`) + the **rater**
-passcode. Do **not** give raters `/analytics.html` — that URL uses a
+Share `https://<project>.vercel.app/` (or `/gate.html`) + each assigned account.
+Do **not** give raters `/analytics.html` — that URL uses a
 separate `ADMIN_PASSCODE` in `config.js`. Rater passcodes cannot open it.
 
 Cost note: Vercel Hobby is free but restricted to **non-commercial personal
@@ -99,21 +100,20 @@ cd webpage/labeling && python3 -m http.server 8899
 
 ## Rater assignment
 
-Each batch is **25 geometry videos + 25 hallucinate videos**. Geometry is one
-score per clip; a hallucinate clip is scored segment by segment, and clip length
-varies a lot (6-144 segments, bimanual averages 46), so 25 clips work out to
-roughly **690 segment scores** — the two halves are equal in clips, not in
-effort. The batch is stored in `localStorage` so refresh does not re-roll, and
-mirrored to Supabase `rating_batches` with exact Geometry/Hallucinate order for
-audit. Older open batches are backfilled when each rater next opens the site.
+Each regular account has one fixed assignment: **50 geometry videos + 48 or 49
+hallucinate videos**. With twelve accounts, all 300 Geometry and all 291
+Hallucinate videos receive exactly two distinct raters. Geometry is one score
+per clip; a Hallucinate clip is scored segment by segment. The batch is stored
+in `localStorage` and mirrored to Supabase `rating_batches` with exact
+Geometry/Hallucinate order for audit. Version changes invalidate old local
+batches while preserving submitted labels.
 **Submit works before the batch is finished.**
 
-Assignment reads current Supabase labels and picks items this rater has not
-finished, **least-labeled first**, random among ties, round-robin across
-embodiments. Hallucinate coverage is indexed by video: one rater counts only
-after scoring every rateable segment. Each assigned rater receives the whole
-video, so two per-rater overall scores can be compared directly. Same display
-name restores lifetime counts.
+Assignment is deterministic from account ID and sorted catalog item ID.
+Hallucinate coverage is indexed by video: one rater counts only after scoring
+every rateable segment. Each assigned rater receives the whole video, so two
+per-rater overall scores can be compared directly. Legacy free-form labels stay
+in raw storage but do not participate in current campaign consensus/conflicts.
 
 Conflict checkers (`quang_check`, `thanh_check`) get only the clips holding a
 whole-video overall disagreement. A checker sees both original raters' overall
@@ -168,7 +168,7 @@ from resolved human scores.
 
 ## Design tradeoffs (why it's free)
 
-- No Supabase Auth -> shared passcode instead (avoids the 2 email/hour cap).
+- No Supabase Auth -> client-side account allowlist instead (avoids the 2 email/hour cap).
 - No video hosting on Vercel -> videos on the HuggingFace dataset CDN.
 - No server -> plain `fetch()` to Supabase's REST API (PostgREST) from the
   browser using the publishable key; RLS policies are the only guard, and

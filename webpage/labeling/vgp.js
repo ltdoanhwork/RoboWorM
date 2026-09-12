@@ -7,12 +7,28 @@ const VGP = (() => {
   const PASS_KEY = "vgp_pass_ok";
   const ADMIN_KEY = "vgp_admin_ok";
   const BATCH_PREFIX = "vgp_batch::";
-  const BATCH_VERSION = 9; // hallucinate coverage/conflicts are indexed by whole video
-  const GEO_N = 25;
-  const HALLU_N = 25; // whole clips; each one is then scored segment by segment
+  const BATCH_VERSION = 10; // fixed 12-rater assignment; conflicts remain indexed by whole video
+  const GEO_N = 50;
+  const HALLU_N = 49; // maximum; 291 clips give six raters 49 and six raters 48
   const HALF = GEO_N; // back-compat alias
   const TARGET_COVER = 2;
   const REVIEWERS = ["quang_check", "thanh_check"];
+  const RATER_ACCOUNTS = Object.freeze({
+    nhi_pham: "Nhi Phạm",
+    hoang_tran: "Hoàng Trần",
+    minh_loi: "Minh Lợi",
+    luu_minh_tung: "Lưu Minh Tùng",
+    tho_le: "Thọ Lê",
+    minh_duc: "Minh Đức",
+    bao_ngoc: "Bảo Ngọc",
+    gia_binh: "Gia Bình",
+    duc_duy: "Đức Duy",
+    kien_bui: "Kiên Bùi",
+    doanh_1: "Doanh 1",
+    doanh_2: "Doanh 2",
+  });
+  const RATER_PASSCODE = "1";
+  const RATER_IDS = Object.freeze(Object.keys(RATER_ACCOUNTS));
   const ADMIN_PAGES = /(^|\/)(analytics|admin)\.html?$/i;
   const CHECK = { geo: "geometry", hallu: "hallucinate" };
   const SCORE_LABEL = { 1: "Bad", 2: "Medium", 3: "Good" };
@@ -69,7 +85,7 @@ const VGP = (() => {
     return (localStorage.getItem(NAME_KEY) || "").trim();
   }
   function setRater(name) {
-    localStorage.setItem(NAME_KEY, name.trim());
+    localStorage.setItem(NAME_KEY, normalizeName(name));
   }
   function passOk() {
     return sessionStorage.getItem(PASS_KEY) === "1";
@@ -92,7 +108,7 @@ const VGP = (() => {
   }
 
   function requireGate() {
-    if (!passOk() || !getRater()) {
+    if (!passOk() || !isKnownRater(getRater())) {
       const next = encodeURIComponent(location.pathname + location.search);
       location.replace(`gate.html?next=${next}`);
       return false;
@@ -178,13 +194,67 @@ const VGP = (() => {
     return REVIEWERS.includes(normalizeName(name));
   }
 
+  function isRegularRater(name) {
+    return Object.hasOwn(RATER_ACCOUNTS, normalizeName(name));
+  }
+
+  function isKnownRater(name) {
+    return isReviewer(name) || isRegularRater(name);
+  }
+
   function reviewerPassOk(pass) {
     return String(pass || "") === String((typeof CONFIG !== "undefined" && CONFIG.REVIEWER_PASSCODE) || "1");
   }
 
   function raterPassOk(name, pass) {
     if (isReviewer(name)) return reviewerPassOk(pass);
-    return String(pass || "") === String((typeof CONFIG !== "undefined" && CONFIG.ACCESS_PASSCODE) || "");
+    return isRegularRater(name) && String(pass || "") === RATER_PASSCODE;
+  }
+
+  /** Eleven perfect-match rounds for twelve raters; no pair contains same rater twice. */
+  function roundRobinPairings() {
+    const ring = [...RATER_IDS];
+    const rounds = [];
+    for (let round = 0; round < ring.length - 1; round++) {
+      const pairs = [];
+      for (let i = 0; i < ring.length / 2; i++) {
+        pairs.push([ring[i], ring[ring.length - 1 - i]]);
+      }
+      rounds.push(pairs);
+      ring.splice(1, 0, ring.pop());
+    }
+    return rounds;
+  }
+
+  const FIXED_PAIRINGS = roundRobinPairings();
+
+  /**
+   * Assign each catalog item to exactly two raters using six pairs per round.
+   * Geometry: 300 items -> 50/rater. Hallucinate: 291 -> 48 or 49/rater.
+   * Hallucinate starts at a different pairing round to vary co-raters.
+   */
+  function fixedAssignedItems(items, raterName, kind) {
+    const rater = normalizeName(raterName);
+    if (!isRegularRater(rater)) return [];
+    const ordered = [...(items || [])].sort((a, b) => String(a.id).localeCompare(String(b.id)));
+    const catalogSize = kind === CHECK.hallu ? 291 : 300;
+    if (ordered.length !== catalogSize) {
+      throw new Error(`Fixed assignment requires ${catalogSize} ${kind} items; got ${ordered.length}.`);
+    }
+    const roundOffset = kind === CHECK.hallu ? 5 : 0;
+    const picked = ordered.filter((_, itemIndex) => {
+      const round = Math.floor(itemIndex / 6);
+      const pairIndex = itemIndex % 6;
+      const pairs = FIXED_PAIRINGS[(round + roundOffset) % FIXED_PAIRINGS.length];
+      return pairs[pairIndex].includes(rater);
+    });
+    const validCount = kind === CHECK.hallu
+      ? picked.length === HALLU_N || picked.length === HALLU_N - 1
+      : picked.length === GEO_N;
+    if (!validCount) {
+      throw new Error(`Invalid fixed assignment for ${rater}: got ${picked.length} ${kind} items.`);
+    }
+    return picked;
   }
 
   function raterStats(labels, mvItems, svItems, svSegs) {
@@ -237,7 +307,9 @@ const VGP = (() => {
   }
 
   function regularOf(unit) {
-    return [...unit.raters.values()].filter((row) => !isReviewer(row.rater_name));
+    // Legacy/free-form raters stay in raw data, but current campaign consensus
+    // and conflicts use only the twelve preassigned accounts.
+    return [...unit.raters.values()].filter((row) => isRegularRater(row.rater_name));
   }
   function checkersOf(unit) {
     return [...unit.raters.values()].filter((row) => isReviewer(row.rater_name));
@@ -429,7 +501,7 @@ const VGP = (() => {
       if (!wanted.has(row.item_id)) continue;
       const reviewer = isReviewer(row.rater_name);
       if (reviewers === true && !reviewer) continue;
-      if (reviewers === false && reviewer) continue;
+      if (reviewers === false && !isRegularRater(row.rater_name)) continue;
       const name = normalizeName(row.rater_name);
       if (!grouped.has(name)) grouped.set(name, new Map());
       grouped.get(name).set(row.item_id, Number(row.score));
@@ -649,8 +721,8 @@ const VGP = (() => {
       svSegs = {};
       svPick.forEach((it) => { svSegs[it.id] = sv.segments[it.id] || []; });
     } else {
-      mvPick = pickLeastLabeled(mvItems, coverageCounts(allRows, mvItems), mvDone, GEO_N);
-      svPick = pickLeastLabeled(svItems, coverageCounts(allRows, svItems), svDone, HALLU_N);
+      mvPick = fixedAssignedItems(mvItems, getRater(), CHECK.geo);
+      svPick = fixedAssignedItems(svItems, getRater(), CHECK.hallu);
       // Hallucinate assignment is atomic by video. Every regular rater scores
       // every rateable segment so their per-video overall scores are comparable.
       svSegs = {};
@@ -663,7 +735,9 @@ const VGP = (() => {
       return { id: null, version: BATCH_VERSION, reviewer: true, mvIds: [], svIds: [], empty: true };
     }
     const batch = {
-      id: `${Date.now().toString(36)}-${fnv1a(getRater() + Math.random())}`,
+      id: reviewer
+        ? `${Date.now().toString(36)}-${fnv1a(getRater() + Math.random())}`
+        : `assigned-v${BATCH_VERSION}-${normalizeName(getRater())}`,
       version: BATCH_VERSION,
       createdAt: new Date().toISOString(),
       submittedAt: null,
@@ -683,10 +757,11 @@ const VGP = (() => {
     return (ids || []).map((id) => map.get(id)).filter(Boolean);
   }
 
-  /** Open batch whose ids no longer exist in current catalogs. */
+  /** Batch from another campaign version, or open batch with missing catalog ids. */
   function isStaleOpenBatch(batch, mvItems, svItems) {
-    if (!batch || batch.submittedAt) return false;
+    if (!batch) return false;
     if (batch.version != null && batch.version !== BATCH_VERSION) return true;
+    if (batch.submittedAt) return false;
     const mvIds = batch.mvIds || [];
     const svIds = batch.svIds || [];
     if (!mvIds.length && !svIds.length) return true;
@@ -1055,10 +1130,10 @@ const VGP = (() => {
     CHECK, SCORE_LABEL, BAND_TO_SCORE, normalizeEmbodiment, embLabel, scoreLabel, checkLabel, machineScore,
     getRater, setRater, passOk, setPassOk, adminOk, setAdminOk,
     clearSession, isAdminPath, requireGate, requireAdmin,
-    defaultLang, applyLang, isReviewer, raterPassOk, conflictCheckProgress,
+    defaultLang, applyLang, isReviewer, isRegularRater, isKnownRater, raterPassOk, conflictCheckProgress,
     segmentId, parentVideoId, scoreableSegmentIndices, itemLabelIds, segmentCount,
     videoComplete, videoTouched, raterStats,
-    coverageCounts, segmentCoverage, pickLeastLabeled, conflictIds, conflictUnitIds,
+    coverageCounts, segmentCoverage, pickLeastLabeled, fixedAssignedItems, conflictIds, conflictUnitIds,
     conflictSegmentsByItem, conflictRows, resolveHuman, resolveSegments,
     videoRaterScores, resolveHalluVideo,
     scoreToFlagValue, flagValueToScore,

@@ -2,11 +2,6 @@
 // deploying. config.js is NOT committed — Vercel needs it uploaded as a
 // project file or injected at build time (see webpage/labeling/README.md).
 const CONFIG = {
-  // Shared passcode raters must type once per browser session. This is NOT
-  // real security (it ships in the JS bundle) — it only avoids Supabase's
-  // free-tier email-OTP rate limit (2 emails/hour) by skipping email auth
-  // entirely. Anyone who has the passcode can write labels under any name.
-  ACCESS_PASSCODE: "change-me",
   // Separate gate for /analytics.html. Rater passcode cannot open admin.
   ADMIN_PASSCODE: "change-me-admin",
   // Passcode for reserved conflict checkers (quang_check / thanh_check).

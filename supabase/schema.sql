@@ -2,10 +2,9 @@
 --
 -- Design choice: NO Supabase Auth (its built-in email provider is capped at
 -- ~2 emails/hour on the free plan, which stalls if several raters sign up at
--- once). Instead: a shared "access passcode" gate lives client-side
--- (webpage/labeling/config.js) and raters just type a display name. RLS is
--- fully open (any anon-key holder can read/write `labels`) — acceptable for a
--- small trusted internal study, NOT a real security boundary. Do not put
+-- once). Instead: a fixed account allowlist and passcode gate live client-side.
+-- RLS is fully open (any anon-key holder can read/write `labels`) — acceptable
+-- for a small trusted internal study, NOT a real security boundary. Do not put
 -- anything sensitive in this table.
 --
 -- Run this once in the Supabase SQL editor (Project -> SQL Editor -> New query).

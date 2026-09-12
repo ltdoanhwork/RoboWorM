@@ -229,7 +229,7 @@ if (VGP.requireGate()) {
       console.error(error); setStatus('Lưu tạm local · sẽ thử lại.', 'Saved locally · will retry.', 'err');
     }
     if (idx < all.length - 1){ idx += 1; render(); }
-    else { setStatus('Đã xong 25 geometry clips. Về Home để làm hallucinate.', 'Geometry half complete. Return Home for hallucinate.'); render(); }
+    else { setStatus('Đã xong 50 geometry clips. Về Home để làm hallucinate.', 'Geometry assignment complete. Return Home for hallucinate.'); render(); }
   }
 
   async function undo(){
