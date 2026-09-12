@@ -2,7 +2,9 @@
 """Build webpage/labeling/metrics.multiview.json from data_for_web.csv.
 
 Catalog ids (00000–00299) follow assets/all_videos.md order, which matches
-the CSV row order one-to-one.
+the CSV row order one-to-one. That correspondence is checked against the
+rendered clips before anything is written: it silently broke once, and a
+score then describes a different video than the rater is watching.
 """
 from __future__ import annotations
 
@@ -14,10 +16,27 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 CSV_PATH = REPO / "sampling_dataset" / "data_for_web" / "data_for_web.csv"
 OUT_PATH = REPO / "webpage" / "labeling" / "metrics.multiview.json"
+CLIPS = REPO / "sampling_dataset" / "data_for_web" / "assessment" / "multiview_static2" / "clips"
+
+
+def check_clip_alignment(rows: list[dict]) -> None:
+    if not CLIPS.is_dir():
+        raise SystemExit(f"{CLIPS} not found — render the batch before building metrics")
+    for i, row in enumerate(rows):
+        meta_path = CLIPS / f"{i:05d}" / "meta.json"
+        if not meta_path.is_file():
+            raise SystemExit(f"clip {i:05d} is missing {meta_path}")
+        meta = json.loads(meta_path.read_text())
+        if meta.get("source_path") != row["video_path"]:
+            raise SystemExit(
+                f"clip {i:05d} was rendered from {meta.get('source_path')!r} but CSV row {i} "
+                f"scores {row['video_path']!r} — rebuild the batch"
+            )
 
 
 def main() -> None:
     rows = list(csv.DictReader(CSV_PATH.open()))
+    check_clip_alignment(rows)
     items = []
     for i, row in enumerate(rows):
         score = int(float(row["score"]))
