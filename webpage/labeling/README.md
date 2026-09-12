@@ -109,6 +109,11 @@ Geometry/Hallucinate order for audit. Version changes invalidate old local
 batches while preserving submitted labels.
 **Submit works before the batch is finished.**
 
+Admin reconstructs all twelve deterministic assignments from the catalogs, so
+batch indices remain available even before a rater starts or when the optional
+`rating_batches` migration has not been applied. If that table exists, stored
+submission timestamps override the reconstructed audit rows.
+
 Assignment is deterministic from account ID and sorted catalog item ID.
 Hallucinate coverage is indexed by video: one rater counts only after scoring
 every rateable segment. Each assigned rater receives the whole video, so two

@@ -824,11 +824,33 @@ const VGP = (() => {
   }
 
   async function sbLoadAllBatches() {
+    const fixedRows = async () => {
+      const [mvRes, svRes] = await Promise.all([fetch("catalog.json"), fetch("catalog.segment.json")]);
+      if (!mvRes.ok || !svRes.ok) throw new Error("Could not load catalogs for assignment audit.");
+      const [mvCatalog, svCatalog] = await Promise.all([mvRes.json(), svRes.json()]);
+      return RATER_IDS.map((rater) => ({
+        id: `assigned-v${BATCH_VERSION}-${rater}`,
+        rater_name: rater,
+        version: BATCH_VERSION,
+        reviewer: false,
+        mv_ids: fixedAssignedItems(mvCatalog.items || [], rater, CHECK.geo).map((it) => it.id),
+        sv_ids: fixedAssignedItems(svCatalog.items || [], rater, CHECK.hallu).map((it) => it.id),
+        sv_segments: {},
+        created_at: "2026-09-12T00:00:00.000Z",
+        submitted_at: null,
+        assignment_source: "fixed-v10",
+      }));
+    };
     const url = `${CONFIG.SUPABASE_URL}/rest/v1/rating_batches?select=*&order=created_at.desc`;
     const res = await fetch(url, { headers: sbHeaders() });
-    if (res.ok) return res.json();
+    if (res.ok) {
+      const stored = await res.json();
+      const merged = new Map((await fixedRows()).map((row) => [row.id, row]));
+      stored.forEach((row) => merged.set(row.id, row));
+      return [...merged.values()];
+    }
     const body = await res.text();
-    if (missingBatchTable(res.status, body)) return [];
+    if (missingBatchTable(res.status, body)) return fixedRows();
     throw new Error(`Supabase batch load failed: ${res.status} ${body}`);
   }
 
@@ -844,8 +866,15 @@ const VGP = (() => {
 
   async function sbDeleteLabel(raterName, itemId) {
     const url = `${CONFIG.SUPABASE_URL}/rest/v1/labels?rater_name=eq.${encodeURIComponent(raterName)}&item_id=eq.${encodeURIComponent(itemId)}`;
-    const res = await fetch(url, { method: "DELETE", headers: sbHeaders() });
+    const res = await fetch(url, {
+      method: "DELETE",
+      headers: { ...sbHeaders(), Prefer: "return=representation" },
+    });
     if (!res.ok) throw new Error(`Supabase delete failed: ${res.status} ${await res.text()}`);
+    const deleted = await res.json();
+    if (!Array.isArray(deleted) || deleted.length !== 1) {
+      throw new Error("Supabase delete changed no rows.");
+    }
   }
 
   // --- local autosave mirror + undo stack ---------------------------------
@@ -936,6 +965,10 @@ const VGP = (() => {
   }
 
   function pushUndo(entry) {
+    // Production intentionally grants no anonymous DELETE policy. A first
+    // score can still be changed by revisiting the item; only score changes
+    // enter undo history, so undo always restores through a safe upsert.
+    if (entry.prevScore == null) return;
     undoStack.push(entry);
     if (undoStack.length > UNDO_MAX) undoStack.shift();
   }

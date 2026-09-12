@@ -361,8 +361,8 @@ if (VGP.requireGate()) {
       VGP.flushPending(rater).catch(() => {});
       const firstOpen = all.findIndex(it => labels[it.id] == null);
       idx = firstOpen >= 0 ? firstOpen : 0;
-      setStatus('Sẵn sàng · bấm số trên thanh để nhảy clip. 1–3 chấm, Ctrl+Z hoàn tác.',
-        'Ready · click a numbered step to jump. 1–3 rates, Ctrl+Z undoes.');
+      setStatus('Sẵn sàng · bấm số trên thanh để nhảy clip. 1–3 chấm, Ctrl+Z phục hồi điểm vừa đổi.',
+        'Ready · click a numbered step to jump. 1–3 rates, Ctrl+Z restores a changed score.');
     } catch (error) {
       console.error(error); setStatus('Không kết nối được Supabase.', 'Could not reach Supabase.', 'err');
     }

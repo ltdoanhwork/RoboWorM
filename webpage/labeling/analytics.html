@@ -557,8 +557,13 @@ if (VGP.requireAdmin()) {
       if (r.updated_at > e.last) e.last = r.updated_at;
       if (/_s\d{3}$/.test(r.item_id)) e.seg += 1; else e.geo += 1;
     }
+    for (const batch of batches) {
+      if (!batch.reviewer && !raters.has(batch.rater_name)) {
+        raters.set(batch.rater_name, { n: 0, sum: 0, last: null, geo: 0, seg: 0 });
+      }
+    }
     const perRater = [...raters.entries()].map(([rater, v]) => ({
-      rater, n: v.n, geo: v.geo, seg: v.seg, mean: (v.sum / v.n).toFixed(2), last: v.last,
+      rater, n: v.n, geo: v.geo, seg: v.seg, mean: v.n ? (v.sum / v.n).toFixed(2) : '—', last: v.last,
     })).sort((a, b) => b.n - a.n);
 
     document.getElementById('stats').innerHTML = `
@@ -572,7 +577,7 @@ if (VGP.requireAdmin()) {
       <div><b>${geo1 + hallu1}</b><span>videos waiting 2nd complete rater</span></div>
       <div><b>${conflicts}</b><span>score conflicts</span></div>
       <div><b>${open}</b><span>conflicts still open</span></div>
-      <div><b>${perRater.filter(r => !VGP.isReviewer(r.rater)).length}</b><span>regular raters</span></div>`;
+      <div><b>${perRater.filter(r => VGP.isRegularRater(r.rater)).length}</b><span>campaign raters</span></div>`;
 
     document.getElementById('poolHallu').textContent =
       `${halluN} videos / ${halluSegN.toLocaleString()} segments`;
@@ -622,7 +627,7 @@ if (VGP.requireAdmin()) {
     ].join('');
 
     document.querySelector('#table tbody').innerHTML = perRater.map(r =>
-      `<tr><td><button class="rater-link" type="button" data-rater="${encodeURIComponent(r.rater)}">${r.rater}</button>${VGP.isReviewer(r.rater) ? ' <span class="mono">checker</span>' : ''}</td><td>${r.n}</td><td>${r.geo}</td><td>${r.seg}</td><td>${r.mean}</td><td class="mono">${new Date(r.last).toLocaleString()}</td></tr>`
+      `<tr><td><button class="rater-link" type="button" data-rater="${encodeURIComponent(r.rater)}">${r.rater}</button>${VGP.isReviewer(r.rater) ? ' <span class="mono">checker</span>' : ''}</td><td>${r.n}</td><td>${r.geo}</td><td>${r.seg}</td><td>${r.mean}</td><td class="mono">${r.last ? new Date(r.last).toLocaleString() : '—'}</td></tr>`
     ).join('') || '<tr><td colspan="6">No labels yet.</td></tr>';
     document.querySelectorAll('.rater-link').forEach(button => {
       button.onclick = () => openRaterDetail(decodeURIComponent(button.dataset.rater || ''));
@@ -655,7 +660,7 @@ if (VGP.requireAdmin()) {
       fetch('metrics.segment.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
       fetch('metrics.multiview.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
     ]);
-    rows = all;
+    rows = all.filter(row => !String(row.rater_name || '').startsWith('__smoke_'));
     batches = batchRows;
     geoItems = mv.items || [];
     halluItems = sv.items || [];
