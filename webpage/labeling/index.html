@@ -99,7 +99,7 @@
         <button class="example-tab" data-rating="good">Good</button>
       </div>
       <div class="example-list" id="exampleList"><p class="example-empty">Loading examples…</p></div>
-      <div class="example-stage crop-top" id="exampleStage">
+      <div class="example-stage" id="exampleStage">
         <video id="exampleRaw" controls playsinline muted preload="auto"></video>
         <div class="example-stage-cap" id="exampleCaption">Pick an embodiment to play a cached example.</div>
       </div>
@@ -174,8 +174,10 @@ if (VGP.requireGate()) {
     v.play().catch(() => {});
   }
   function cropClass(item){
+    if (item && item.mode === 'full_static2') return '';
     if (item && item.crop === 'left-two-of-four') return 'crop-left2-of4';
-    return item && item.crop === 'left-two' ? 'crop-left2' : 'crop-top';
+    if (item && item.crop === 'left-two') return 'crop-left2';
+    return '';
   }
   function renderSteps(){
     VGP.renderStepStrip($('stepStrip'), all, idx, it => labels[it.id] != null);
@@ -277,7 +279,8 @@ if (VGP.requireGate()) {
   }
   function showExampleItem(item, extra){
     const url = item.video_raw || item.video || '';
-    $('exampleStage').className = 'example-stage ' + cropClass(item);
+    const crop = cropClass(item);
+    $('exampleStage').className = ['example-stage', crop].filter(Boolean).join(' ');
     if (exampleRaw.src !== url) exampleRaw.src = url;
     $('exampleCaption').textContent = `${item.rating} · ${embLabel(item.embodiment)}${extra || ''} · two static views`;
     playOne(exampleRaw);
