@@ -45,20 +45,21 @@ Source: `metrics/dynamics/`. Env: `models/dreamgen/.venv`, cwd `metrics/WorldSco
 | PhyWorld | WorldScore | Raw return | Meaning | Our edit | Better |
 |---|---|---|---|---|---|
 | **KineticBudget** (`kinetic_budget`) | `motion_magnitude` | 1 float | mean over pairs of median \|flow\| (px/frame), **scene-wide** | Report **raw**; do **not** score higher=better. | report only |
-| **ActorMotion** (`actor_motion`) | none — ours, adapted from RBench MAS | 1 float | mean over frames of median \|flow\| **inside the arm∪object mask only** — subject kinetic budget, no bg subtraction | New. Report **raw** (`actor_motion_raw`); optional soft-clip 0–100 diagnostic map (`actor_motion_score`, tanh scale=2.0). | report only (raw); diagnostic map, not "higher always better" unbounded |
+| **ActorMotion** (`actor_motion`) | none — ours, adapted from RBench MAS | 1 float | mean over pairs of median \|flow_fg − median(flow_bg)\| **inside arm∪object mask only** — subject kinetic budget after ego-motion removal | New. Report **raw** (`actor_motion_raw`); retain `actor_motion_uncorrected_raw` plus background ego vector for audit. Optional soft-clip 0–100 map (`actor_motion_score`, tanh scale=2.0). | report only (raw); diagnostic map, not "higher always better" unbounded |
+| **ActorMotionActiveRate** (`actor_motion_active_rate`) | none — ours | 1 float in [0,1] | fraction of frame-pairs whose ego-compensated subject median flow is ≥0.25 px/frame | No-reference temporal coverage. Read with ActorMotion(raw): high mean + low active rate signals a burst/spike, not sustained useful motion. Matched grid required; report raw, do not fold into PhyDyn. | report only |
 | **ActorDynamics** (`actor_dynamics`) | `motion_accuracy` | 1 float | WorldScore: max(obj)−max(bg) | Foreground = **arm ∪ object**; use **median(fg)−median(bg)**. Soft-clip to 0–100. | ↑ |
 | **MotionContinuity** (`motion_continuity`) | `motion_smoothness` | mse, ssim, lpips | VFIMamba odd-from-even | Primary = **SSIM**×100; MSE/LPIPS diagnostic. Never without KineticBudget. | ↑ |
 
 **PhyDyn** = mean(ActorDynamics_mapped, MotionContinuity_mapped). KineticBudget and
-ActorMotion sit beside the mean, not inside it — Continuity rewards stillness (high
+ActorMotion and ActorMotionActiveRate sit beside the mean, not inside it — Continuity rewards stillness (high
 SSIM on a frozen clip), ActorMotion penalizes it; averaging them blindly cancels the
 signal. Use ActorMotion≈0 + Continuity≈99 as a **smooth-but-inactive** flag (see
 `tables/wave0.md`, episode 000255).
 
 ActorMotion vs. RBench's Motion-Aware Score (MAS): same question — "does the robot
-actually move, not just the camera/background" — but flow-on-mask instead of
+actually move, not just the camera/background" — but ego-compensated flow-on-mask instead of
 GDINO+SAM2+CoTracker as a second pipeline. We already run GDINO+SAM2 for ActorDynamics'
-arm∪object mask, so ActorMotion reuses that mask's `fg_flow_med` per frame at zero
+arm∪object mask, so ActorMotion reuses that mask's `fg_flow_ego_med` per frame at zero
 extra inference cost — it's a field on the existing `motion_accuracy_gdino` probe
 output, not a new probe. No VLM in the score path (bg-sub or the existing GDINO+SAM2
 mask both work; CoTracker not required).
@@ -73,7 +74,15 @@ Files:
 | `flow_backend.py` | SEA-RAFT loader for paired metrics |
 | `physics_metrics.py` | flow vs ref (GT or dense) |
 
-Protocol: flow is **px/frame** — only compare on matched (H, W, fps, T).
+Protocol: flow is **px/frame** — only compare on matched (H, W, fps, T). Per pair,
+subtract `median(flow_bg)` as a robust global camera-motion estimate before subject
+reduction. Static external cameras are target protocol; report wrist cameras separately
+because depth parallax defeats global translation compensation. If actor decoding uses
+stride > 1, divide flow by stride before scoring so values remain px/source-frame.
+
+ActorMotionActiveRate uses a fixed 0.25 px/frame threshold on this matched grid. It is
+a no-reference coverage diagnostic, not a correctness or task-success score; calibrate
+the threshold again if resolution or sampling rate changes.
 
 ---
 

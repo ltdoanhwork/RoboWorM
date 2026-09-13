@@ -172,6 +172,16 @@ def _manifest_metadata() -> dict[str, dict]:
     }
 
 
+def static_pair_source(source_path: str, embodiment: str, model: str, video_root: Path) -> str:
+    """Ctrl-World bimanual/humanoid 3-view renders hold one static camera plus two
+    wrists. The 4-view grid of the same episode holds both static cameras, so the
+    rater can be shown two static views."""
+    if model != "ctrlworld" or embodiment not in ("bimanual", "humanoid"):
+        return source_path
+    grid = source_path.replace("/ctrlworld/", "/ctrlworld_4view_grid/")
+    return grid if (video_root / PurePosixPath(grid)).is_file() else source_path
+
+
 def source_record(source_path: str, video_root: Path, metadata: dict[str, dict]) -> dict:
     """Resolve path plus blind catalog metadata for one curated source."""
     parts = PurePosixPath(source_path).parts
@@ -192,9 +202,11 @@ def source_record(source_path: str, video_root: Path, metadata: dict[str, dict])
         task = _task_from_path(parts, mv_idx, model)
 
     task = item.get("task") or task
+    render_path = static_pair_source(source_path, embodiment, model, video_root)
     return {
-        "src": str(video_root / PurePosixPath(source_path)),
+        "src": str(video_root / PurePosixPath(render_path)),
         "source_path": source_path,
+        "render_path": render_path,
         "seed_key": source_key(source_path),
         "embodiment": item.get("embodiment") or embodiment,
         "model": item.get("model") or model,
@@ -343,6 +355,7 @@ def process_one(job: dict) -> dict | None:
                 "episode": src["episode"],
                 "pool": src["pool"],
                 "source_path": src["source_path"],
+                "render_path": src["render_path"],
                 "seed_key": src["seed_key"],
             },
             indent=2,
@@ -391,6 +404,7 @@ def main() -> int:
     ap.add_argument("--limit", type=int, default=0, help="process only the first N (smoke test)")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--hf-repo", default=HF_REPO)
+    ap.add_argument("--hf-prefix", default=HF_PREFIX)
     ap.add_argument("--video-root", type=Path, default=SAMPLING)
     ap.add_argument("--videos", type=Path, default=ALL_VIDEOS)
     ap.add_argument("--examples", type=Path, default=EXAMPLES)
@@ -442,7 +456,7 @@ def main() -> int:
     clips_dir = DEST / "clips"
     clips_dir.mkdir(parents=True, exist_ok=True)
 
-    base_url = f"https://huggingface.co/datasets/{args.hf_repo}/resolve/main/{HF_PREFIX}/clips"
+    base_url = f"https://huggingface.co/datasets/{args.hf_repo}/resolve/main/{args.hf_prefix}/clips"
     todo = sources[: args.limit] if args.limit else sources
     jobs = []
     catalog_items = []
@@ -459,7 +473,12 @@ def main() -> int:
         ):
             row = json.loads(meta_path.read_text())
             if row.get("source_path") == src["source_path"] and row.get("video_overlay"):
-                catalog_items.append({k: v for k, v in row.items() if k not in {"episode", "pool", "source_path", "seed_key"}})
+                # URLs follow the current --hf-repo/--hf-prefix, not whatever the
+                # reused meta.json was written with.
+                row["video_raw"] = f"{base_url}/{pid}/raw.mp4"
+                row["video_overlay"] = f"{base_url}/{pid}/{overlay_name}"
+                meta_path.write_text(json.dumps(row, indent=2) + "\n")
+                catalog_items.append({k: v for k, v in row.items() if k not in {"episode", "pool", "source_path", "render_path", "seed_key"}})
                 print(f"  {pid} reuse existing")
                 continue
         jobs.append(
@@ -505,7 +524,7 @@ def main() -> int:
     if not args.limit:
         example_base_url = (
             f"https://huggingface.co/datasets/{args.hf_repo}/resolve/main/"
-            f"{HF_PREFIX}/examples"
+            f"{args.hf_prefix}/examples"
         )
         for example in examples:
             reused = catalog_by_id.get(source_to_id.get(example["source_path"], ""))
@@ -538,7 +557,7 @@ def main() -> int:
         "n": len(catalog_items),
         "n_videos": len(catalog_items),
         "hf_repo": args.hf_repo,
-        "hf_prefix": HF_PREFIX,
+        "hf_prefix": args.hf_prefix,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "note": "Curated full-length multiview videos. Two static cameras; raw + diagnostic overlay.",
         "items": catalog_items,

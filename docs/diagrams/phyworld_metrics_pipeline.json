@@ -1,0 +1,64 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "PhyWorld Metric Pipeline",
+    "quality_profile": "showcase",
+    "viewBox": [1200, 1200],
+    "views": [
+      { "id": "qual", "label": "PhyQual-NR", "focus": ["episodes", "grid", "qual", "dashboard"], "note": "No-reference image quality, task alignment, and entity presence." },
+      { "id": "dyn", "label": "PhyDyn-NR", "focus": ["episodes", "grid", "dyn", "dashboard", "gates"], "note": "Flow, masks, ActorMotion, ActiveRate, and continuity; catches smooth-but-inactive clips." },
+      { "id": "fid", "label": "PhyFid-DR", "focus": ["episodes", "dense", "fid"], "note": "Method rollout compared with dense counterpart of the same episode." },
+      { "id": "body", "label": "PhyBody-NR", "focus": ["body", "gates"], "note": "External body-keypoint outputs: rigidity and jerk violations." },
+      { "id": "view", "label": "PhyView-NR", "focus": ["view", "gates"], "note": "External cross-view tracks: geometry, pose stability, and disjoint frames." }
+    ]
+  },
+  "lanes": [
+    { "id": "core", "label": "Episode and reference-free pipeline" },
+    { "id": "paired", "label": "Dense-paired comparison" },
+    { "id": "external", "label": "External detector outputs" },
+    { "id": "report", "label": "Report and gates" }
+  ],
+  "phases": [
+    { "id": "input", "label": "Inputs", "fromCol": 0, "toCol": 1 },
+    { "id": "measure", "label": "Metric families", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "reporting", "label": "Interpret", "fromCol": 4, "toCol": 4, "variant": "dashed" }
+  ],
+  "groups": [
+    { "id": "noref", "label": "No-reference", "lane": "core", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "optional", "label": "Available when inputs exist", "lane": "paired", "fromCol": 1, "toCol": 3, "variant": "dashed" }
+  ],
+  "mainPath": ["episodes", "grid", "dyn", "dashboard", "gates"],
+  "semanticChecks": {
+    "allowedRoots": ["episodes", "dense", "body", "view"],
+    "allowedTerminals": ["qual", "fid", "body", "view", "gates"],
+    "requiredPaths": [
+      { "from": "episodes", "to": "qual" }, { "from": "episodes", "to": "dyn" },
+      { "from": "dense", "to": "fid" }, { "from": "dyn", "to": "dashboard" }
+    ]
+  },
+  "nodes": [
+    { "id": "episodes", "lane": "core", "col": 0, "type": "external", "label": "sampling_dataset episodes", "width": 176 },
+    { "id": "grid", "lane": "core", "col": 1, "type": "backend", "label": "Matched-grid protocol", "sublabel": "same H, W, fps, T", "width": 168 },
+    { "id": "qual", "lane": "core", "col": 2, "type": "backend", "label": "PhyQual-NR", "sublabel": "integrity · task · entities", "width": 168 },
+    { "id": "dyn", "lane": "core", "col": 3, "type": "backend", "label": "PhyDyn-NR", "sublabel": "kinetic · actor · active rate · continuity", "tag": "ActorMotion: ego-compensated fg flow", "width": 210 },
+    { "id": "dense", "lane": "paired", "col": 1, "type": "database", "label": "Dense counterpart", "sublabel": "same episode", "width": 168 },
+    { "id": "fid", "lane": "paired", "col": 2, "type": "backend", "label": "PhyFid-DR", "sublabel": "EPE · kinetic drift · continuity gap", "tag": "method vs dense", "width": 210 },
+    { "id": "body", "lane": "external", "col": 2, "type": "external", "label": "PhyBody-NR", "sublabel": "external keypoints: rigidity · jerk", "width": 190 },
+    { "id": "view", "lane": "external", "col": 3, "type": "external", "label": "PhyView-NR", "sublabel": "geometry · pose · disjoint", "width": 210 },
+    { "id": "dashboard", "lane": "report", "col": 4, "type": "frontend", "label": "Metric dashboard", "sublabel": "family breakdown, not one physics mean", "width": 210 },
+    { "id": "gates", "lane": "report", "col": 4, "type": "security", "label": "Failure gates", "sublabel": "entity · inactive · violation", "width": 210, "yOffset": 70 }
+  ],
+  "edges": [
+    { "id": "episodes-grid", "from": "episodes", "to": "grid", "role": "main" },
+    { "id": "grid-qual", "from": "grid", "to": "qual", "label": "no reference", "role": "branch" },
+    { "id": "grid-dyn", "from": "grid", "to": "dyn", "label": "flow + masks", "role": "main", "variant": "emphasis" },
+    { "id": "dense-fid", "from": "dense", "to": "fid", "label": "dense reference", "role": "branch", "variant": "dashed" },
+    { "id": "dyn-dashboard", "from": "dyn", "to": "dashboard", "label": "raw + mapped", "role": "main", "variant": "emphasis" },
+    { "id": "dashboard-gates", "from": "dashboard", "to": "gates", "label": "read together", "role": "branch", "variant": "security" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Read signals together", "items": ["Continuity high + ActorMotion near zero: smooth-but-inactive", "KineticBudget and ActorMotion stay raw beside composites"] },
+    { "dot": "amber", "title": "Scope", "items": ["PhyFid needs dense; PhyView needs multiview", "Sim2real interaction intentionally excluded"] }
+  ]
+}

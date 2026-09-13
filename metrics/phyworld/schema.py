@@ -20,6 +20,7 @@ PHY_QUAL = "phy_qual"
 KINETIC_BUDGET = "kinetic_budget"
 ACTOR_DYNAMICS = "actor_dynamics"
 ACTOR_MOTION = "actor_motion"  # subject-only kinetic budget (RBench MAS, adapted)
+ACTOR_MOTION_ACTIVE_RATE = "actor_motion_active_rate"
 MOTION_CONTINUITY = "motion_continuity"
 PHY_DYN = "phy_dyn"
 
@@ -39,6 +40,7 @@ WORLDSCORE_LINEAGE = {
     KINETIC_BUDGET: "motion_magnitude",
     ACTOR_DYNAMICS: "motion_accuracy",
     ACTOR_MOTION: "RBench Motion-Aware Score (MAS), adapted — flow-on-mask not CoTracker",
+    ACTOR_MOTION_ACTIVE_RATE: "PhyWorld no-ref actor-motion temporal coverage",
     MOTION_CONTINUITY: "motion_smoothness",
     MOTION_FIDELITY: "flow_epe vs dense (ours)",
 }
@@ -47,7 +49,7 @@ WORLDSCORE_LINEAGE = {
 # Continuity rewards stillness, ActorMotion penalizes it; folding both into PhyDyn's
 # mean would cancel the signal. Same reasoning keeps ActorMotionDrift out of PhyFid's mean.
 PAPER_QUAL = [SCENE_INTEGRITY, TASK_LOCK, ENTITY_PRESENCE, PHY_QUAL]
-PAPER_DYN = [KINETIC_BUDGET, ACTOR_MOTION, ACTOR_DYNAMICS, MOTION_CONTINUITY, PHY_DYN]
+PAPER_DYN = [KINETIC_BUDGET, ACTOR_MOTION, ACTOR_MOTION_ACTIVE_RATE, ACTOR_DYNAMICS, MOTION_CONTINUITY, PHY_DYN]
 PAPER_FID = [MOTION_FIDELITY, KINETIC_DRIFT, ACTOR_MOTION_DRIFT, CONTINUITY_GAP, LOOK_DRIFT, PHY_FID]
 
 # GroundingDINO phrases for EntityPresence / ActorDynamics

@@ -166,11 +166,16 @@ def score_dyn_actor(video_path, embodiment, instruction, grounder, img_pred, vid
     return {
         "actor_dynamics_raw": raw,
         "actor_dynamics": actor_dynamics_score(raw) if raw == raw else float("nan"),
-        # ActorMotion: subject-only flow, no bg subtraction — catches smooth-but-inactive
+        # ActorMotion: ego-compensated subject-only flow — catches smooth-but-inactive
         # (Continuity saturates near 99 regardless; this doesn't). Report raw beside
         # PhyDyn, never folded into its mean.
         "actor_motion_raw": am_raw,
         "actor_motion": actor_motion_score(am_raw) if am_raw == am_raw else float("nan"),
+        "actor_motion_active_rate": r.get("actor_motion_active_rate"),
+        "actor_motion_active_threshold_px": r.get("actor_motion_active_threshold_px"),
+        "actor_motion_uncorrected_raw": r.get("mean_fg_flow_med_uncorrected"),
+        "actor_camera_ego_dx": r.get("mean_bg_ego_dx"),
+        "actor_camera_ego_dy": r.get("mean_bg_ego_dy"),
         "actor_fg_cov_pct": r.get("mean_fg_cov_pct"),
         "actor_n_object_dets": r.get("n_object_dets"),
         "actor_n_arm_dets": r.get("n_arm_dets"),
@@ -354,6 +359,7 @@ def main():
                     )
                 print(f"  KineticBudget={payload.get('kinetic_budget', float('nan')):.3f} "
                       f"ActorMotion={payload.get('actor_motion_raw', float('nan')):.3f} "
+                      f"Active={payload.get('actor_motion_active_rate', float('nan')):.2f} "
                       f"Actor={payload.get('actor_dynamics', float('nan')):.1f} "
                       f"Cont={payload.get('motion_continuity', float('nan')):.1f} "
                       f"PhyDyn={payload.get('phy_dyn', float('nan')):.1f}", flush=True)
@@ -433,7 +439,8 @@ def main():
             k: _mean(method, k)
             for k in (
                 "phy_qual", "scene_integrity", "task_lock", "entity_presence",
-                "kinetic_budget", "actor_motion_raw", "actor_motion",
+                "kinetic_budget", "actor_motion_raw", "actor_motion", "actor_motion_active_rate",
+                "actor_motion_uncorrected_raw", "actor_camera_ego_dx", "actor_camera_ego_dy",
                 "actor_dynamics", "motion_continuity", "phy_dyn",
                 "motion_fidelity", "kinetic_drift", "actor_motion_drift",
                 "continuity_gap", "look_drift", "phy_fid",

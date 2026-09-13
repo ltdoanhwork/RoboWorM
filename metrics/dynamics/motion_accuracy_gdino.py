@@ -204,6 +204,21 @@ def mask_resize(m, hw):
     return r.astype(bool)
 
 
+def ego_compensated_magnitude(flow, foreground):
+    """Subject-flow magnitudes after robust global camera-motion removal.
+
+    Background median flow estimates a global camera translation. It is near zero
+    for fixed cameras and prevents a pan from being counted as robot motion. This
+    intentionally does not model parallax; report wrist views separately.
+    """
+    background = ~foreground
+    if not foreground.any() or not background.any():
+        return None, None
+    ego = np.median(flow[background], axis=0)
+    residual = flow[foreground] - ego
+    return np.sqrt((residual ** 2).sum(axis=-1)), ego
+
+
 def overlay(frame_path, masks_by_color, out_path):
     base = cv2.imread(frame_path)
     for m, color in masks_by_color:
@@ -216,7 +231,8 @@ def overlay(frame_path, masks_by_color, out_path):
 
 # --------------------------------------------------------------------------- #
 def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
-          object_prompt, embodiment_prompt, device, max_frames=None, stride=1):
+          object_prompt, embodiment_prompt, device, max_frames=None, stride=1,
+          actor_motion_active_threshold=0.25):
     work = os.path.join(out_dir, f"{tag}_frames")
     n = decode_video_to_frames(video, work, max_frames=max_frames, stride=stride)
     frame0 = os.path.join(work, "00000.jpg")
@@ -262,7 +278,10 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
     frames = sorted(os.path.join(work, f) for f in os.listdir(work) if f.endswith(".jpg"))
     per_frame = []
     for i, (f1, f2) in enumerate(zip(frames[:-1], frames[1:])):
-        fl = flow.compute(f1, f2)
+        # `stride` decodes every Nth source frame. Convert displacement over that
+        # interval back to px/source-frame so ActorMotion stays comparable to the
+        # stride-1 KineticBudget and its documented units.
+        fl = flow.compute(f1, f2) / float(max(1, stride))
         mag = np.sqrt(fl[..., 0] ** 2 + fl[..., 1] ** 2)
         mh = mag.shape
         obj_m = union([masks_by_id[j][i] for j in obj_ids]) if obj_ids else np.zeros((H, W), bool)
@@ -272,6 +291,9 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
         fg = obj_m | arm_m
         bg = ~fg
         if fg.sum() == 0 or bg.sum() == 0:
+            continue
+        fg_ego_mag, ego = ego_compensated_magnitude(fl, fg)
+        if fg_ego_mag is None:
             continue
         e = {
             "pair": i,
@@ -284,8 +306,11 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
             "arm_flow_med": float(np.median(mag[arm_m])) if arm_m.any() else 0.0,
             "fg_flow_max": float(mag[fg].max()),
             "fg_flow_med": float(np.median(mag[fg])),
+            "fg_flow_ego_med": float(np.median(fg_ego_mag)),
             "bg_flow_max": float(mag[bg].max()),
             "bg_flow_med": float(np.median(mag[bg])),
+            "bg_ego_dx": float(ego[0]),
+            "bg_ego_dy": float(ego[1]),
         }
         per_frame.append(e)
         if i % max(1, len(frames) // 6) == 0:
@@ -309,10 +334,18 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
         "mean_obj_flow_med": mean("obj_flow_med"),
         "mean_arm_flow_med": mean("arm_flow_med"),
         "mean_bg_flow_med": mean("bg_flow_med"),
-        # ActorMotion (PhyWorld): subject-only kinetic budget, arm∪object mask, no bg
-        # subtraction. Adapted from RBench's Motion-Aware Score (MAS) — same "does the
-        # subject actually move" question, flow-on-mask instead of CoTracker.
-        "mean_fg_flow_med": mean("fg_flow_med"),
+        # ActorMotion (PhyWorld): subject-only kinetic budget, arm∪object mask.
+        # Remove robust background flow vector first; keep uncorrected value for audit.
+        "mean_fg_flow_med": mean("fg_flow_ego_med"),
+        "mean_fg_flow_med_uncorrected": mean("fg_flow_med"),
+        # Fraction of subject frame-pairs with non-trivial residual movement.
+        # Paired with ActorMotion(raw): detects one-frame spikes that inflate a mean.
+        "actor_motion_active_rate": float(np.mean([
+            p["fg_flow_ego_med"] >= actor_motion_active_threshold for p in per_frame
+        ])) if per_frame else float("nan"),
+        "actor_motion_active_threshold_px": float(actor_motion_active_threshold),
+        "mean_bg_ego_dx": mean("bg_ego_dx"),
+        "mean_bg_ego_dy": mean("bg_ego_dy"),
         "mean_fg_cov_pct": mean("fg_cov_pct"),
         "per_frame": per_frame,
     }
@@ -321,7 +354,9 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
     print(f"[{tag}] ws_fg_vs_bg={result['ws_fg_vs_bg']:.3f} ws_obj_vs_bg={result['ws_obj_vs_bg']:.3f} "
           f"med_fg_vs_bg={result['med_fg_vs_bg']:.4f} | obj_med={result['mean_obj_flow_med']:.3f} "
           f"arm_med={result['mean_arm_flow_med']:.3f} bg_med={result['mean_bg_flow_med']:.3f} "
-          f"actor_motion={result['mean_fg_flow_med']:.4f}")
+          f"actor_motion={result['mean_fg_flow_med']:.4f} "
+          f"active={result['actor_motion_active_rate']:.3f} "
+          f"(uncorrected={result['mean_fg_flow_med_uncorrected']:.4f})")
     shutil.rmtree(work, ignore_errors=True)
     return result
 
