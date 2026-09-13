@@ -82,12 +82,18 @@
   </section>
 
   <section class="chart-card">
-    <h2>Confusion · Hallucinate video (band → human)</h2>
+    <h2>Overlap · Hallucinate (machine segments ↔ human)</h2>
     <p class="status" style="margin-bottom:.6rem">
-      Machine band: high → Bad, medium → Medium, low → Good. Human video score = mean of its segment flags
-      (good 0, medium 1, bad 2) rounded back, counted only once every segment of the video is resolved.
+      Compare aligned segments inside each video, then average video percentages so long videos do not carry more weight.
+      Good = clean, Bad = violated, Medium receives half credit against either binary machine state.
     </p>
     <div class="cm-grid" id="cmHalluVideo"></div>
+    <div class="admin-detail-scroll" style="margin-top:.8rem">
+      <table class="data" id="halluOverlapTable">
+        <thead><tr><th>Video</th><th>Embodiment</th><th>Segments</th><th>Human profiles</th><th>Overlap</th><th>Deviation</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </section>
 
   <section class="chart-card">
@@ -114,9 +120,19 @@
   <div class="dialog-body">
     <p class="status" id="raterDetailSummary"></p>
     <div class="cm-grid rater-cm-grid" id="raterDetailMatrices"></div>
+    <section id="metricPreviewSection" class="chart-card" style="margin:1rem 0" hidden>
+      <h3>Metric-aligned Geometry preview</h3>
+      <p class="status" id="metricPreviewSummary"></p>
+      <div class="admin-detail-scroll">
+        <table class="data" id="metricPreviewTable">
+          <thead><tr><th>Video</th><th>Batch index</th><th>Embodiment</th><th>Combined score</th><th>Preview label</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
     <div class="admin-detail-scroll">
       <table class="data" id="raterDetailTable">
-        <thead><tr><th>Video</th><th>Batch index</th><th>Check</th><th>Embodiment</th><th>Overall</th><th>Labels</th><th>Updated</th></tr></thead>
+        <thead><tr><th>Video</th><th>Batch index</th><th>Check</th><th>Embodiment</th><th>Result / overlap</th><th>Labels</th><th>Updated</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -217,6 +233,144 @@ if (VGP.requireAdmin()) {
 
   const VIOL_LABELS = { yes: 'M violated', no: 'M clean' };
 
+  function segmentSimilarity(metric, humanScore){
+    const score = Number(humanScore);
+    if (!metric || ![1, 2, 3].includes(score)) return null;
+    const machineSeverity = metric.violated ? 1 : 0;
+    const humanSeverity = (3 - score) / 2;
+    return 1 - Math.abs(machineSeverity - humanSeverity);
+  }
+
+  function summarizeOverlap(records){
+    const valid = (records || []).filter(record => Number.isFinite(record.overlap));
+    const mean = valid.length ? valid.reduce((sum, record) => sum + record.overlap, 0) / valid.length : null;
+    return {
+      videos: valid.length,
+      segments: valid.reduce((sum, record) => sum + (record.nSegments || 0), 0),
+      profiles: valid.reduce((sum, record) => sum + (record.nProfiles || 0), 0),
+      overlap: mean,
+      deviation: mean == null ? null : 1 - mean,
+    };
+  }
+
+  function renderOverlap(title, records){
+    const stat = summarizeOverlap(records);
+    const pct = value => value == null ? '—' : (100 * value).toFixed(1) + '%';
+    return '<div class="cm-card"><h3>' + title + '</h3>' +
+      '<table class="cm"><tbody>' +
+        '<tr><th>Video overlap</th><td class="diag">' + pct(stat.overlap) + '</td></tr>' +
+        '<tr><th>Mean deviation</th><td>' + pct(stat.deviation) + '</td></tr>' +
+        '<tr><th>Videos</th><td>' + stat.videos + '</td></tr>' +
+        '<tr><th>Compared segments</th><td>' + stat.segments + '</td></tr>' +
+      '</tbody></table>' +
+      '<p class="status">' + stat.profiles + ' complete human profile(s); each video has equal weight.</p></div>';
+  }
+
+  function hallucinateOverlap(items, segMetrics, resolved){
+    const metricById = new Map(segMetrics.map(metric => [metric.id, metric]));
+    const overall = [];
+    const byEmb = Object.fromEntries(EMBS.map(emb => [emb, []]));
+    for (const item of items) {
+      const human = resolved[item.id];
+      if (!human || human.human_score == null) continue;
+      const checked = human.consensus === 'checker' || human.consensus === 'checkers';
+      const profiles = checked ? human.checker_segment_scores : human.rater_segment_scores;
+      const ids = VGP.itemLabelIds(item);
+      const perProfile = Object.values(profiles || {}).map(scores => {
+        const similarities = ids.map(id => segmentSimilarity(metricById.get(id), scores[id]));
+        if (!similarities.length || similarities.some(value => value == null)) return null;
+        return similarities.reduce((sum, value) => sum + value, 0) / similarities.length;
+      }).filter(value => value != null);
+      if (!perProfile.length) continue;
+      const record = {
+        videoId: item.id,
+        emb: VGP.normalizeEmbodiment(item.embodiment),
+        overlap: perProfile.reduce((sum, value) => sum + value, 0) / perProfile.length,
+        nSegments: ids.length,
+        nProfiles: perProfile.length,
+      };
+      overall.push(record);
+      const emb = record.emb;
+      if (!byEmb[emb]) byEmb[emb] = [];
+      byEmb[emb].push(record);
+    }
+    return { overall, byEmb };
+  }
+
+  function pearson(xs, ys){
+    if (xs.length !== ys.length || xs.length < 2) return null;
+    const mx = xs.reduce((sum, value) => sum + value, 0) / xs.length;
+    const my = ys.reduce((sum, value) => sum + value, 0) / ys.length;
+    let cov = 0, vx = 0, vy = 0;
+    for (let i = 0; i < xs.length; i++) {
+      const dx = xs[i] - mx;
+      const dy = ys[i] - my;
+      cov += dx * dy;
+      vx += dx * dx;
+      vy += dy * dy;
+    }
+    return vx && vy ? cov / Math.sqrt(vx * vy) : null;
+  }
+
+  function rankValues(values){
+    const order = values.map((value, index) => ({ value, index })).sort((a, b) => a.value - b.value);
+    const ranks = Array(values.length);
+    for (let i = 0; i < order.length;) {
+      let j = i + 1;
+      while (j < order.length && order[j].value === order[i].value) j += 1;
+      const rank = (i + j - 1) / 2 + 1;
+      for (let k = i; k < j; k++) ranks[order[k].index] = rank;
+      i = j;
+    }
+    return ranks;
+  }
+
+  function metricPreviewItems(raterName, ownRows){
+    if (raterName === 'doanh_1' || raterName === 'doanh_2') {
+      return VGP.fixedAssignedItems(geoItems, raterName, 'geometry');
+    }
+    if (raterName !== 'doanh') return [];
+    const ids = new Set((ownRows || []).filter(row => !/_s\d{3}$/.test(row.item_id)).map(row => row.item_id));
+    return geoItems.filter(item => ids.has(item.id));
+  }
+
+  function renderMetricPreview(raterName, ownRows, positions){
+    const section = document.getElementById('metricPreviewSection');
+    const body = document.querySelector('#metricPreviewTable tbody');
+    const metricById = new Map(geoMetrics.map(metric => [metric.id, metric]));
+    const selected = metricPreviewItems(raterName, ownRows).map(item => ({
+      item,
+      combined: Number(metricById.get(item.id)?.combined_score),
+    })).filter(record => Number.isFinite(record.combined)).sort((a, b) => a.combined - b.combined);
+    if (!selected.length) {
+      section.hidden = true;
+      body.replaceChildren();
+      return;
+    }
+    selected.forEach((record, index) => {
+      record.previewScore = 1 + Math.min(2, Math.floor(index * 3 / selected.length));
+      record.rankIndex = index + 1;
+    });
+    const combined = selected.map(record => record.combined);
+    const labels = selected.map(record => record.previewScore);
+    const pearsonR = pearson(combined, labels);
+    const spearmanRho = pearson(rankValues(combined), rankValues(labels));
+    const fmt = value => value == null ? '—' : value.toFixed(3);
+    document.getElementById('metricPreviewSummary').textContent =
+      'PREVIEW ONLY — not saved as human labels, excluded from consensus/conflict. ' +
+      selected.length + ' assigned Geometry videos · Pearson r ' + fmt(pearsonR) +
+      ' · Spearman ρ ' + fmt(spearmanRho) + '. Labels are balanced rank terciles of combined_score.';
+    body.innerHTML = selected.map(record => {
+      const item = record.item;
+      const fallbackPosition = 'rank #' + record.rankIndex;
+      return '<tr><td class="mono">' + item.id + '</td><td class="mono">' +
+        (positions.get(item.id) || fallbackPosition) + '</td><td>' + VGP.embLabel(item.embodiment) +
+        '</td><td class="mono">' + record.combined.toFixed(6) + '</td><td>' +
+        VGP.scoreLabel(record.previewScore) + ' (' + record.previewScore + ')</td></tr>';
+    }).join('');
+    section.hidden = false;
+  }
+
   // --- dataset / rater tables ---------------------------------------------
   function videoRecords(items){
     const out = new Map();
@@ -314,15 +468,14 @@ if (VGP.requireAdmin()) {
       const isHallu = !!item?.segments;
       const ordered = labels.slice().sort((a, b) => a.item_id.localeCompare(b.item_id));
       let overall = null;
+      let complete = false;
       if (isHallu) {
         const ids = VGP.itemLabelIds(item);
         const scoreById = new Map(ordered.map(row => [row.item_id, Number(row.score)]));
-        if (ids.every(id => scoreById.has(id))) {
-          const meanFlag = ids.reduce((sum, id) => sum + VGP.scoreToFlagValue(scoreById.get(id)), 0) / ids.length;
-          overall = VGP.flagValueToScore(meanFlag);
-        }
+        complete = ids.length > 0 && ids.every(id => scoreById.has(id));
       } else if (ordered.length) {
         overall = Number(ordered[0].score);
+        complete = true;
       }
       return {
         videoId,
@@ -330,15 +483,16 @@ if (VGP.requireAdmin()) {
         isHallu,
         labels: ordered,
         overall,
+        complete,
+        overlap: null,
         updated: ordered.reduce((latest, row) => row.updated_at > latest ? row.updated_at : latest, ''),
       };
     }).sort((a, b) => String(b.updated).localeCompare(String(a.updated)));
 
     const geoMetricById = new Map(geoMetrics.map(metric => [metric.id, metric]));
-    const halluVideoMetricById = new Map(halluVideoMetrics.map(metric => [metric.id, metric]));
     const halluSegmentMetricById = new Map(halluSegMetrics.map(metric => [metric.id, metric]));
     const geoMatrix = emptyMatrix();
-    const halluVideoMatrix = emptyMatrix();
+    const halluOverlapRecords = [];
     const halluSegmentMatrix = { yes: {1:0,2:0,3:0}, no: {1:0,2:0,3:0} };
     records.forEach(record => {
       if (!record.isHallu) {
@@ -346,8 +500,13 @@ if (VGP.requireAdmin()) {
         if (machine && record.overall) geoMatrix[machine][record.overall] += 1;
         return;
       }
-      const machine = VGP.machineScore(halluVideoMetricById.get(record.videoId) || record.item);
-      if (machine && record.overall) halluVideoMatrix[machine][record.overall] += 1;
+      const ids = VGP.itemLabelIds(record.item);
+      const scoreById = new Map(record.labels.map(label => [label.item_id, Number(label.score)]));
+      const similarities = ids.map(id => segmentSimilarity(halluSegmentMetricById.get(id), scoreById.get(id)));
+      if (record.complete && similarities.length && similarities.every(value => value != null)) {
+        record.overlap = similarities.reduce((sum, value) => sum + value, 0) / similarities.length;
+        halluOverlapRecords.push({ overlap: record.overlap, nSegments: ids.length, nProfiles: 1 });
+      }
       record.labels.forEach(label => {
         const metric = halluSegmentMetricById.get(label.item_id);
         const score = Number(label.score);
@@ -358,12 +517,13 @@ if (VGP.requireAdmin()) {
 
     document.getElementById('raterDetailTitle').textContent = name;
     document.getElementById('raterDetailSummary').textContent =
-      `${own.length} labels · ${records.length} videos · ${records.filter(r => r.isHallu && r.overall != null).length} complete hallucinate ratings · ${ownBatches.length} audited batches`;
+      `${own.length} labels · ${records.length} videos · ${records.filter(r => r.isHallu && r.complete).length} complete hallucinate ratings · ${ownBatches.length} audited batches`;
     document.getElementById('raterDetailMatrices').innerHTML = [
       renderMatrix('Geometry · machine → rater', geoMatrix, null, 'R'),
-      renderMatrix('Hallucinate video · band → rater overall', halluVideoMatrix, null, 'R'),
+      renderOverlap('Hallucinate · machine ↔ rater', halluOverlapRecords),
       renderMatrix('Hallucinate segment · violated → rater', halluSegmentMatrix, VIOL_LABELS, 'R'),
     ].join('');
+    renderMetricPreview(normalized, own, positions);
     const body = document.querySelector('#raterDetailTable tbody');
     body.replaceChildren();
     records.forEach(record => {
@@ -380,7 +540,9 @@ if (VGP.requireAdmin()) {
       const checkCell = document.createElement('td'); checkCell.textContent = record.isHallu ? 'Hallucinate' : 'Geometry';
       const embCell = document.createElement('td'); embCell.textContent = VGP.embLabel(record.item?.embodiment);
       const overallCell = document.createElement('td');
-      overallCell.textContent = record.overall == null ? 'Incomplete' : `${VGP.scoreLabel(record.overall)} (${record.overall})`;
+      overallCell.textContent = record.isHallu
+        ? (record.overlap == null ? 'Incomplete' : (100 * record.overlap).toFixed(1) + '% overlap')
+        : (record.overall == null ? 'Incomplete' : VGP.scoreLabel(record.overall) + ' (' + record.overall + ')');
       const labelsCell = document.createElement('td'); labelsCell.className = 'mono rater-label-seq';
       labelsCell.textContent = record.labels.map(row => {
         const match = row.item_id.match(/_s(\d{3})$/);
@@ -475,6 +637,8 @@ if (VGP.requireAdmin()) {
         n_segments: v.n_segments, score_mean: v.score_mean, score_p90: v.score_p90, score_max: v.score_max,
         frac_violating: v.frac_violating, real_multiple: v.real_multiple,
         flag: v.flag, mean_flag: v.mean_flag, n_resolved: v.n_resolved,
+        human_machine_overlap: v.human_machine_overlap,
+        human_machine_deviation: v.human_machine_deviation,
       };
     }
     for (const s of hallu.segments) {
@@ -610,16 +774,24 @@ if (VGP.requireAdmin()) {
     bars(document.getElementById('conflictOpen'), openRows, 4);
 
     const geoCm = confusionFor(geoItems, geoMetrics, geoResolved);
-    const halluCm = confusionFor(halluItems, halluVideoMetrics, halluResolved);
+    const halluOverlap = hallucinateOverlap(halluItems, halluSegMetrics, halluResolved);
     const segCm = violatedConfusion(halluSegMetrics, halluSegResolved);
     document.getElementById('cmGeo').innerHTML = [
       renderMatrix('Overall', geoCm.overall),
       ...EMBS.map(emb => renderMatrix(VGP.embLabel(emb), geoCm.byEmb[emb] || emptyMatrix())),
     ].join('');
     document.getElementById('cmHalluVideo').innerHTML = [
-      renderMatrix('Overall', halluCm.overall),
-      ...EMBS.map(emb => renderMatrix(VGP.embLabel(emb), halluCm.byEmb[emb] || emptyMatrix())),
+      renderOverlap('Overall', halluOverlap.overall),
+      ...EMBS.map(emb => renderOverlap(VGP.embLabel(emb), halluOverlap.byEmb[emb] || [])),
     ].join('');
+    document.querySelector('#halluOverlapTable tbody').innerHTML = halluOverlap.overall
+      .slice()
+      .sort((a, b) => a.overlap - b.overlap || a.videoId.localeCompare(b.videoId))
+      .map(record => '<tr><td class="mono">' + record.videoId + '</td><td>' + VGP.embLabel(record.emb) +
+        '</td><td>' + record.nSegments + '</td><td>' + record.nProfiles +
+        '</td><td class="diag">' + (100 * record.overlap).toFixed(1) +
+        '%</td><td>' + (100 * (1 - record.overlap)).toFixed(1) + '%</td></tr>')
+      .join('') || '<tr><td colspan="6">No resolved hallucinate videos yet.</td></tr>';
     const blankViol = { yes: {1:0,2:0,3:0}, no: {1:0,2:0,3:0} };
     document.getElementById('cmHalluSeg').innerHTML = [
       renderMatrix('Overall', segCm.overall, VIOL_LABELS),
@@ -634,6 +806,12 @@ if (VGP.requireAdmin()) {
     });
 
     const hallu = joinHallucinate(halluResolved, halluSegResolved);
+    const overlapByVideo = new Map(halluOverlap.overall.map(record => [record.videoId, record]));
+    hallu.videos.forEach(video => {
+      const overlap = overlapByVideo.get(video.id)?.overlap;
+      video.human_machine_overlap = overlap == null ? null : overlap;
+      video.human_machine_deviation = overlap == null ? null : 1 - overlap;
+    });
     keyExport = buildKeyExport(hallu);
     exportBundle = {
       exported_at: new Date().toISOString(),
