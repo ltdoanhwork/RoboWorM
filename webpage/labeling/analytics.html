@@ -120,11 +120,11 @@
   <div class="dialog-body">
     <p class="status" id="raterDetailSummary"></p>
     <div class="cm-grid rater-cm-grid" id="raterDetailMatrices"></div>
-    <section id="metricPreviewSection" class="chart-card" style="margin:1rem 0" hidden>
+    <section id="geometryCorrelationSection" class="chart-card" style="margin:1rem 0" hidden>
       <h3>Geometry · combined_score correlation</h3>
-      <p class="status" id="metricPreviewSummary"></p>
+      <p class="status" id="geometryCorrelationSummary"></p>
       <div class="admin-detail-scroll">
-        <table class="data" id="metricPreviewTable">
+        <table class="data" id="geometryCorrelationTable">
           <thead><tr><th>Video</th><th>Batch index</th><th>Embodiment</th><th>Combined score</th><th>Rater label</th></tr></thead>
           <tbody></tbody>
         </table>
@@ -325,9 +325,9 @@ if (VGP.requireAdmin()) {
     return ranks;
   }
 
-  function renderMetricPreview(raterName, ownRows, positions){
-    const section = document.getElementById('metricPreviewSection');
-    const body = document.querySelector('#metricPreviewTable tbody');
+  function renderGeometryCorrelation(ownRows, positions){
+    const section = document.getElementById('geometryCorrelationSection');
+    const body = document.querySelector('#geometryCorrelationTable tbody');
     const itemById = new Map(geoItems.map(item => [item.id, item]));
     const metricById = new Map(geoMetrics.map(metric => [metric.id, metric]));
     const selected = (ownRows || []).filter(row => !/_s\d{3}$/.test(row.item_id)).map(row => ({
@@ -346,7 +346,7 @@ if (VGP.requireAdmin()) {
     const pearsonR = pearson(combined, labels);
     const spearmanRho = pearson(rankValues(combined), rankValues(labels));
     const fmt = value => value == null ? '—' : value.toFixed(3);
-    document.getElementById('metricPreviewSummary').textContent =
+    document.getElementById('geometryCorrelationSummary').textContent =
       selected.length + ' saved Supabase labels · Pearson r ' + fmt(pearsonR) +
       ' · Spearman ρ ' + fmt(spearmanRho) + '.';
     body.innerHTML = selected.map((record, index) => {
@@ -512,7 +512,7 @@ if (VGP.requireAdmin()) {
       renderOverlap('Hallucinate · machine ↔ rater', halluOverlapRecords),
       renderMatrix('Hallucinate segment · violated → rater', halluSegmentMatrix, VIOL_LABELS, 'R'),
     ].join('');
-    renderMetricPreview(normalized, own, positions);
+    renderGeometryCorrelation(own, positions);
     const body = document.querySelector('#raterDetailTable tbody');
     body.replaceChildren();
     records.forEach(record => {
