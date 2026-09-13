@@ -121,11 +121,11 @@
     <p class="status" id="raterDetailSummary"></p>
     <div class="cm-grid rater-cm-grid" id="raterDetailMatrices"></div>
     <section id="metricPreviewSection" class="chart-card" style="margin:1rem 0" hidden>
-      <h3>Metric-aligned Geometry preview</h3>
+      <h3>Geometry · combined_score correlation</h3>
       <p class="status" id="metricPreviewSummary"></p>
       <div class="admin-detail-scroll">
         <table class="data" id="metricPreviewTable">
-          <thead><tr><th>Video</th><th>Batch index</th><th>Embodiment</th><th>Combined score</th><th>Preview label</th></tr></thead>
+          <thead><tr><th>Video</th><th>Batch index</th><th>Embodiment</th><th>Combined score</th><th>Rater label</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -325,48 +325,37 @@ if (VGP.requireAdmin()) {
     return ranks;
   }
 
-  function metricPreviewItems(raterName, ownRows){
-    if (raterName === 'doanh_1' || raterName === 'doanh_2') {
-      return VGP.fixedAssignedItems(geoItems, raterName, 'geometry');
-    }
-    if (raterName !== 'doanh') return [];
-    const ids = new Set((ownRows || []).filter(row => !/_s\d{3}$/.test(row.item_id)).map(row => row.item_id));
-    return geoItems.filter(item => ids.has(item.id));
-  }
-
   function renderMetricPreview(raterName, ownRows, positions){
     const section = document.getElementById('metricPreviewSection');
     const body = document.querySelector('#metricPreviewTable tbody');
+    const itemById = new Map(geoItems.map(item => [item.id, item]));
     const metricById = new Map(geoMetrics.map(metric => [metric.id, metric]));
-    const selected = metricPreviewItems(raterName, ownRows).map(item => ({
-      item,
-      combined: Number(metricById.get(item.id)?.combined_score),
-    })).filter(record => Number.isFinite(record.combined)).sort((a, b) => a.combined - b.combined);
+    const selected = (ownRows || []).filter(row => !/_s\d{3}$/.test(row.item_id)).map(row => ({
+      item: itemById.get(row.item_id),
+      combined: Number(metricById.get(row.item_id)?.combined_score),
+      score: Number(row.score),
+    })).filter(record => record.item && Number.isFinite(record.combined) && [1, 2, 3].includes(record.score))
+      .sort((a, b) => a.combined - b.combined || a.item.id.localeCompare(b.item.id));
     if (!selected.length) {
       section.hidden = true;
       body.replaceChildren();
       return;
     }
-    selected.forEach((record, index) => {
-      record.previewScore = 1 + Math.min(2, Math.floor(index * 3 / selected.length));
-      record.rankIndex = index + 1;
-    });
     const combined = selected.map(record => record.combined);
-    const labels = selected.map(record => record.previewScore);
+    const labels = selected.map(record => record.score);
     const pearsonR = pearson(combined, labels);
     const spearmanRho = pearson(rankValues(combined), rankValues(labels));
     const fmt = value => value == null ? '—' : value.toFixed(3);
     document.getElementById('metricPreviewSummary').textContent =
-      'PREVIEW ONLY — not saved as human labels, excluded from consensus/conflict. ' +
-      selected.length + ' assigned Geometry videos · Pearson r ' + fmt(pearsonR) +
-      ' · Spearman ρ ' + fmt(spearmanRho) + '. Labels are balanced rank terciles of combined_score.';
-    body.innerHTML = selected.map(record => {
+      selected.length + ' saved Supabase labels · Pearson r ' + fmt(pearsonR) +
+      ' · Spearman ρ ' + fmt(spearmanRho) + '.';
+    body.innerHTML = selected.map((record, index) => {
       const item = record.item;
-      const fallbackPosition = 'rank #' + record.rankIndex;
+      const fallbackPosition = 'rank #' + (index + 1);
       return '<tr><td class="mono">' + item.id + '</td><td class="mono">' +
         (positions.get(item.id) || fallbackPosition) + '</td><td>' + VGP.embLabel(item.embodiment) +
         '</td><td class="mono">' + record.combined.toFixed(6) + '</td><td>' +
-        VGP.scoreLabel(record.previewScore) + ' (' + record.previewScore + ')</td></tr>';
+        VGP.scoreLabel(record.score) + ' (' + record.score + ')</td></tr>';
     }).join('');
     section.hidden = false;
   }
