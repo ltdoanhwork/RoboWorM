@@ -26,7 +26,7 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument(
         "--frame_batch_size",
         type=int,
-        default=1,
+        default=8,
         help="VGGT batch size B: number of timesteps per forward (views stay in S).",
     )
 
@@ -157,7 +157,7 @@ def _run_batch(args: argparse.Namespace, views: list[str]) -> None:
                     frame_batch_size=args.frame_batch_size,
                 )
                 time_end = time.time()
-                print(f"[run_video_metrics] {name} took {time_end - time_start} seconds", file=sys.stderr)
+                print(f"[run_video_metrics] {name} took {time_end - time_start:0.2f} seconds for {result.get('num_frames', '?')} frames", file=sys.stderr)
                 print("----Geometric Consistency: ", float(result["geometric_consistency"]))
                 print("----Pose Stability: ", float(result["pose_stability"]))
                 
