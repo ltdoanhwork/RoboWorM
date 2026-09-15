@@ -152,17 +152,22 @@ def seed_masks(image_predictor, frame0, boxes):
 
 
 @torch.inference_mode()
-def propagate_multi(video_predictor, frames_dir, seed_masks_by_id, score_thresh=0.0):
-    """Propagate several seeded object ids; return {obj_id: [mask per frame]}."""
+def propagate_multi(video_predictor, frames_dir, seed_masks_by_id, score_thresh=0.0, frame_idx=0):
+    """Propagate several seeded object ids; return {obj_id: [mask per frame]}.
+
+    A seed after frame 0 is propagated forward and then backward so every frame has masks.
+    """
     state = video_predictor.init_state(video_path=frames_dir, async_loading_frames=False)
     for oid, m in seed_masks_by_id.items():
-        video_predictor.add_new_mask(inference_state=state, frame_idx=0, obj_id=oid, mask=m)
+        video_predictor.add_new_mask(inference_state=state, frame_idx=frame_idx, obj_id=oid, mask=m)
     per_frame = {}
-    for fidx, oids, logits in video_predictor.propagate_in_video(state):
-        per_frame[fidx] = {
-            oid: (logits[i] > score_thresh).cpu().numpy().squeeze()
-            for i, oid in enumerate(oids)
-        }
+    for reverse in ((False, True) if frame_idx > 0 else (False,)):
+        for fidx, oids, logits in video_predictor.propagate_in_video(
+                state, start_frame_idx=frame_idx, reverse=reverse):
+            per_frame[fidx] = {
+                oid: (logits[i] > score_thresh).cpu().numpy().squeeze()
+                for i, oid in enumerate(oids)
+            }
     n = len(per_frame)
     out = {oid: [] for oid in seed_masks_by_id}
     for fidx in sorted(per_frame):
@@ -235,13 +240,21 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
           actor_motion_active_threshold=0.25, compute_flicker=False):
     work = os.path.join(out_dir, f"{tag}_frames")
     n = decode_video_to_frames(video, work, max_frames=max_frames, stride=stride)
-    frame0 = os.path.join(work, "00000.jpg")
     print(f"[{tag}] decoded {n} frames")
 
-    obj_dets, _ = grounder.detect(frame0, object_prompt)
-    arm_dets, (H, W) = grounder.detect(frame0, embodiment_prompt)
+    # Arm confidence sits near the 0.30 box threshold, so a frame-0-only seed flips on
+    # codec noise. Seed from the frame (of four) with the most confident arm detection.
+    seed_idx, arm_dets, best = 0, [], -1.0
+    for fi in sorted({0, n // 4, n // 2, 3 * n // 4}):
+        dets, _ = grounder.detect(os.path.join(work, f"{fi:05d}.jpg"), embodiment_prompt)
+        conf = max((d["conf"] for d in dets), default=-1.0)
+        if conf > best:
+            seed_idx, arm_dets, best = fi, dets, conf
+    frame0 = os.path.join(work, f"{seed_idx:05d}.jpg")
+    obj_dets, (H, W) = grounder.detect(frame0, object_prompt)
     obj_dets = nms(obj_dets)
     arm_dets = nms(arm_dets)
+    print(f"[{tag}] seed frame {seed_idx}")
     print(f"[{tag}] object dets: " + ", ".join(f"{d['phrase']}({d['conf']:.2f})" for d in obj_dets))
     print(f"[{tag}] arm dets:    " + ", ".join(f"{d['phrase']}({d['conf']:.2f})" for d in arm_dets))
 
@@ -262,9 +275,9 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
 
     if not seeds:
         shutil.rmtree(work, ignore_errors=True)
-        return {"n_object_dets": 0, "n_arm_dets": 0, "num_pairs": 0,
+        return {"n_object_dets": 0, "n_arm_dets": 0, "num_pairs": 0, "seed_frame": seed_idx,
                 "actor_flicker_raw": None, "per_frame": []}
-    masks_by_id, nprop = propagate_multi(vid_pred, work, seeds)
+    masks_by_id, nprop = propagate_multi(vid_pred, work, seeds, frame_idx=seed_idx)
 
     obj_ids = [i for i in ids if id_role[i] == "object"]
     arm_ids = [i for i in ids if id_role[i] == "arm"]
@@ -310,6 +323,11 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
             "arm_flow_med": float(np.median(mag[arm_m])) if arm_m.any() else 0.0,
             "fg_flow_max": float(mag[fg].max()),
             "fg_flow_med": float(np.median(mag[fg])),
+            "fg_flow_p95": float(np.percentile(mag[fg], 95)),
+            # Wrist cameras ride the end effector: whole-frame flow is arm motion.
+            "frame_flow_med": float(np.median(mag)),
+            # Ego estimate is background median; unreliable when masks cover the frame.
+            "bg_cov_pct": float(bg.mean() * 100),
             "fg_flow_ego_med": float(np.median(fg_ego_mag)),
             # High-percentile localized motion complements the median: small gripper
             # motions should not disappear merely because the arm mask is large.
@@ -341,7 +359,7 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
     result = {
         "tag": tag, "video": video, "num_frames": n, "num_pairs": len(per_frame),
         "object_prompt": object_prompt, "embodiment_prompt": embodiment_prompt,
-        "n_object_dets": len(obj_ids), "n_arm_dets": len(arm_ids),
+        "n_object_dets": len(obj_ids), "n_arm_dets": len(arm_ids), "seed_frame": seed_idx,
         # WorldScore form with fg = arm+object
         "ws_fg_vs_bg": float(np.mean([p["fg_flow_max"] - p["bg_flow_max"] for p in per_frame])),
         # original object-only WorldScore form
@@ -365,11 +383,6 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
         "actor_motion_active_threshold_px": float(actor_motion_active_threshold),
         "mean_bg_ego_dx": mean("bg_ego_dx"),
         "mean_bg_ego_dy": mean("bg_ego_dy"),
-        # Camera motion is a distinct signal. Do not subtract it silently then
-        # discard it: for nominally static external views it is itself a failure.
-        "camera_drift_raw": float(np.mean([
-            np.hypot(p["bg_ego_dx"], p["bg_ego_dy"]) for p in per_frame
-        ])) if per_frame else float("nan"),
         "mean_fg_cov_pct": mean("fg_cov_pct"),
         "per_frame": per_frame,
         "actor_flicker_raw": float(np.mean([p["actor_flicker_raw"] for p in per_frame

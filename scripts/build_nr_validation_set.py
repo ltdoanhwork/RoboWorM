@@ -19,7 +19,6 @@ TARGETS = {
     "actor_motion_raw": "robot_activity_0_2",
     "active_motion_continuity": "active_motion_smoothness_0_2",
     "actor_flicker_raw": "subject_shimmer_0_2",
-    "camera_drift_raw": "external_camera_drift_0_2",
 }
 
 
@@ -58,8 +57,8 @@ def main():
         candidates = [r for r in rows if finite(r.get(metric))]
         if metric in {"actor_motion_raw", "active_motion_continuity", "actor_flicker_raw"}:
             candidates = [r for r in candidates if r.get("actor_validity") == "robot_detected"]
-        if metric == "camera_drift_raw":
-            candidates = [r for r in candidates if "wrist" not in r.get("view", "").lower()]
+        # GT rows are the plausibility anchor, not generated clips to rate.
+        candidates = [r for r in candidates if r.get("method") != "gt"]
         if metric in {"entity_presence", "task_lock"}:
             candidates = [r for r in candidates if r.get("text_condition_applicable", True)]
         if not candidates:

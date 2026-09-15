@@ -37,12 +37,12 @@ or RoboPhys-3D.
 | Key | Status | Source metric | Local function / planned backend | Mechanism | Direction |
 |---|---|---|---|---|---|
 | `motion_continuity` | Current | WorldScore `motion_smoothness` | `metrics.dynamics.motion_mag_smooth_probe.motion_smoothness()` → `motion_continuity_score()` | VFIMamba reconstructs odd frame from adjacent even frames; SSIM against true odd frame, temporal mean | higher; read beside motion amount |
-| `active_motion_continuity` | Proposed P0 | RoboPhys-3D motion-quality protocol | VFIMamba SSIM + subject ego-compensated flow | Same reconstruction score weighted by subject motion magnitude; frozen clips cannot win because interpolation is trivial | higher |
+| `active_motion_continuity` | v3 | RoboPhys-3D motion-quality protocol | VFIMamba MSE vs frame-copy MSE + subject flow | clip(1 − MSE_VFI / MSE_copy) weighted by subject motion; copy error normalizes motion amount (v2 SSIM form correlated −0.68 with motion) | higher |
 | `actor_flicker_raw` | Proposed P0 | RoboPhys-3D Temporal Flickering | Flow-warped frame residual inside subject mask | High-frequency temporal residual after compensating subject motion; catches texture/part flashing despite smooth optical flow | lower |
 
 ## 4. Camera stability
 
 | Key | Status | Source metric | Local function / planned backend | Mechanism | Direction |
 |---|---|---|---|---|---|
-| `camera_drift_raw` | Proposed P0 | RoboPhys-3D Camera Control | Reuse background SEA-RAFT flow; optional DROID-SLAM audit | Temporal mean norm of background median-flow vector. Run only on static external cameras; wrist camera reported separately | lower |
+| `camera_drift_raw` | Dropped (v3) | RoboPhys-3D Camera Control | Background SEA-RAFT median flow | v2 audit: high values came from subject masks covering ~98% of frame, not camera motion | — |
 

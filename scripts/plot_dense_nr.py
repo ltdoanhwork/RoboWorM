@@ -13,12 +13,10 @@ V1 = (['scene_integrity', 'entity_presence', 'task_lock', 'actor_motion_raw',
       ['Visual integrity', 'Entity presence', 'Task alignment',
        'Actor motion (px/source frame)', 'Motion continuity', 'Actor flicker (0–1)'])
 V2 = (['visual_integrity', 'text_condition_alignment', 'actor_motion_raw',
-       'actor_motion_active_rate', 'active_motion_continuity',
-       'actor_flicker_raw', 'camera_drift_raw'],
+       'actor_motion_active_rate', 'active_motion_continuity', 'actor_flicker_raw'],
       ['Visual integrity (IQA p10 ×100)', 'Text alignment (CLIPScore)',
        'Actor activity (px/source frame)', 'Active rate',
-       'Active-motion continuity (SSIM ×100)', 'Actor flicker (RGB residual)',
-       'Static-camera drift (px/source frame)'])
+       'Active-motion continuity (VFI gain ×100)', 'Actor flicker (RGB residual)'])
 
 
 def main():
@@ -30,7 +28,10 @@ def main():
     import matplotlib.pyplot as plt
     import numpy as np
     rows = [json.loads(p.read_text()) for p in sorted((args.run/'results').glob('*.json'))]
-    KEYS, LABELS = V2 if any(r.get('protocol_version') == 'dense-nr-v2-closed-world' for r in rows) else V1
+    # Select the column set by SCHEMA, not by an exact protocol string: a version bump
+    # (v2 -> v3 -> v3.1) must not silently fall back to the v1 keys, which would plot
+    # `entity_presence` (always None since v3) and `motion_continuity` (removed in v2).
+    KEYS, LABELS = V2 if any('visual_integrity' in r for r in rows) else V1
     out = args.run/'figures'; out.mkdir(exist_ok=True)
     fields = ['id','model','embodiment','split','view','actor_validity','source_fps','effective_fps', *KEYS]
     with (out/'metrics.csv').open('w') as f:
