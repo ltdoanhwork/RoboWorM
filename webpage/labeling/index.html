@@ -56,6 +56,11 @@
         <p class="status" id="status">Loading…</p>
       </div>
       <div class="step-strip" id="stepStrip"></div>
+      <section class="review-context" id="reviewContext" hidden>
+        <h3><span data-lang="vi">Nhãn của rater trước</span><span data-lang="en">Previous rater labels</span></h3>
+        <p><span data-lang="vi">Checker xem các nhãn này để đối chiếu, sau đó tự quyết định lại clip.</span><span data-lang="en">Use these labels as evidence, then make your own decision for this clip.</span></p>
+        <div class="review-score-table" id="reviewScores"></div>
+      </section>
 
       <section class="assessment">
         <div class="video-wrap video-wrap-lg">
@@ -138,7 +143,7 @@
 if (VGP.requireGate()) {
   const $ = id => document.getElementById(id);
   const rater = VGP.getRater();
-  let all = [], idx = 0, labels = {}, examples = [], exampleRating = 'bad', exampleCursor = 0, exampleGroup = [], mvAll = [], svAll = [];
+  let all = [], idx = 0, labels = {}, examples = [], exampleRating = 'bad', exampleCursor = 0, exampleGroup = [], mvAll = [], svAll = [], allRows = [];
   const raw = $('vidRaw');
   const exampleRaw = $('exampleRaw');
 
@@ -165,6 +170,34 @@ if (VGP.requireGate()) {
   }
   function nDone(){ return all.filter(it => labels[it.id] != null).length; }
   function refreshLife(){ $('nLife').textContent = VGP.raterStats(labels, mvAll, svAll).totalVideos; }
+  function renderReviewContext(it){
+    const host = $('reviewContext');
+    if (!batch?.reviewer) { host.hidden = true; return; }
+    host.hidden = false;
+    const table = $('reviewScores');
+    table.replaceChildren();
+    const rows = allRows.filter(row => row.item_id === it.id && VGP.isRegularRater(row.rater_name));
+    if (!rows.length) {
+      table.textContent = lang() === 'vi' ? 'Chưa có nhãn rater trước.' : 'No previous rater labels.';
+      return;
+    }
+    const grid = document.createElement('table');
+    grid.className = 'data review-labels';
+    const head = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    ['Rater', 'Label'].forEach(value => {
+      const th = document.createElement('th'); th.textContent = value; headRow.append(th);
+    });
+    head.append(headRow); grid.append(head);
+    const body = document.createElement('tbody');
+    rows.sort((a, b) => String(a.rater_name).localeCompare(String(b.rater_name))).forEach(row => {
+      const tr = document.createElement('tr');
+      const name = document.createElement('td'); name.textContent = row.rater_name; tr.append(name);
+      const score = document.createElement('td'); score.textContent = VGP.scoreLabel(Number(row.score)) + ' (' + row.score + ')'; tr.append(score);
+      body.append(tr);
+    });
+    grid.append(body); table.append(grid);
+  }
   function submitBatch(){
     VGP.submitBatch();
     location.href = 'home.html';
@@ -194,6 +227,7 @@ if (VGP.requireGate()) {
     $('nTotal').textContent = all.length;
     $('nLabeled').textContent = nDone();
     refreshLife();
+    renderReviewContext(it);
     raw.src = it.video_raw || '';
     document.querySelectorAll('.score').forEach(button => button.classList.toggle('active', labels[it.id] === Number(button.dataset.s)));
     renderSteps();
@@ -360,7 +394,12 @@ if (VGP.requireGate()) {
     });
     loadRubric();
     try {
-      labels = VGP.mergeLabels(await VGP.sbLoadLabels(rater), rater);
+      const loaded = await Promise.all([
+        VGP.sbLoadLabels(rater),
+        batch.reviewer ? VGP.sbLoadAllLabels() : Promise.resolve([]),
+      ]);
+      labels = VGP.mergeLabels(loaded[0], rater);
+      allRows = loaded[1];
       VGP.flushPending(rater).catch(() => {});
       const firstOpen = all.findIndex(it => labels[it.id] == null);
       idx = firstOpen >= 0 ? firstOpen : 0;
