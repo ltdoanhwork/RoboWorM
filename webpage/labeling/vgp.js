@@ -701,6 +701,32 @@ const VGP = (() => {
     return batch;
   }
 
+  /**
+   * Re-open a submitted batch. Regular assignments are fixed and deterministic,
+   * so a rater who submitted early (or whose browser only saw a truncated label
+   * set) must be able to walk straight back into the leftover clips instead of
+   * landing on a page with every button hidden.
+   */
+  async function reopenBatch() {
+    const batch = getBatch();
+    if (!batch) return null;
+    batch.submittedAt = null;
+    saveBatch(batch);
+    await sbUpsertBatch(batch);
+    return batch;
+  }
+
+  /** Unscored work left in a batch: geometry clips + incomplete hallu videos. */
+  function batchRemaining(batch, mvItems, svItems, labels) {
+    if (!batch) return { mv: 0, sv: 0, total: 0 };
+    const svSegs = batch.svSegs || null;
+    const mv = itemsFromIds(mvItems, batch.mvIds).filter((it) => labels[it.id] == null).length;
+    const sv = itemsFromIds(svItems, batch.svIds).filter(
+      (it) => !videoComplete(it, labels, svSegs ? svSegs[it.id] : null)
+    ).length;
+    return { mv, sv, total: mv + sv };
+  }
+
   function clearBatch() {
     localStorage.removeItem(batchStorageKey());
   }
@@ -1013,33 +1039,51 @@ const VGP = (() => {
     return entry;
   }
 
+  /**
+   * PostgREST caps every response at its `max-rows` setting (1000 here), so any
+   * unpaged select silently truncates. A rater with 50 geometry + ~1400
+   * hallucinate segments lost ~470 labels this way and the UI reported work as
+   * unsaved. Always page through with Range until the server stops sending.
+   */
+  async function sbSelectAll(query, label) {
+    const page = 1000;
+    const rows = [];
+    let from = 0;
+    while (true) {
+      const res = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/${query}`, {
+        headers: { ...sbHeaders(), Range: `${from}-${from + page - 1}` },
+      });
+      if (!res.ok) throw new Error(`Supabase ${label} failed: ${res.status} ${await res.text()}`);
+      const chunk = await res.json();
+      if (!Array.isArray(chunk)) throw new Error(`Supabase ${label} returned no rows array.`);
+      rows.push(...chunk);
+      // Trust what the server granted, not our requested page size: a smaller
+      // max-rows would otherwise stop the loop after one short chunk.
+      if (!chunk.length) break;
+      const range = res.headers.get("content-range") || "";
+      const total = Number((range.split("/")[1] || "").trim());
+      if (Number.isFinite(total) && total > 0 && rows.length >= total) break;
+      from += chunk.length;
+      if (from > 200000) break;
+    }
+    return rows;
+  }
+
   async function sbLoadLabels(raterName) {
-    const url = `${CONFIG.SUPABASE_URL}/rest/v1/labels?rater_name=eq.${encodeURIComponent(raterName)}&select=item_id,score`;
-    const res = await fetch(url, { headers: sbHeaders() });
-    if (!res.ok) throw new Error(`Supabase load failed: ${res.status} ${await res.text()}`);
-    const rows = await res.json();
+    const rows = await sbSelectAll(
+      `labels?rater_name=eq.${encodeURIComponent(raterName)}&select=item_id,score&order=item_id.asc`,
+      "load"
+    );
     const map = {};
     for (const r of rows) map[r.item_id] = r.score;
     return map;
   }
 
   async function sbLoadAllLabels() {
-    const page = 1000;
-    const rows = [];
-    let from = 0;
-    while (true) {
-      const url = `${CONFIG.SUPABASE_URL}/rest/v1/labels?select=rater_name,item_id,score,updated_at&order=updated_at.desc`;
-      const res = await fetch(url, {
-        headers: { ...sbHeaders(), Range: `${from}-${from + page - 1}`, Prefer: "count=exact" },
-      });
-      if (!res.ok) throw new Error(`Supabase load-all failed: ${res.status} ${await res.text()}`);
-      const chunk = await res.json();
-      rows.push(...chunk);
-      if (chunk.length < page) break;
-      from += page;
-      if (from > 20000) break;
-    }
-    return rows;
+    return sbSelectAll(
+      "labels?select=rater_name,item_id,score,updated_at&order=item_id.asc,rater_name.asc",
+      "load-all"
+    );
   }
 
   function renderStepStrip(host, items, current, isDone) {
@@ -1187,7 +1231,7 @@ const VGP = (() => {
     conflictSegmentsByItem, conflictRows, resolveHuman, resolveSegments,
     videoRaterScores, resolveHalluVideo,
     scoreToFlagValue, flagValueToScore,
-    getBatch, getValidBatch, isStaleOpenBatch, saveBatch, submitBatch, clearBatch, createBatch, getOrCreateBatch,
+    getBatch, getValidBatch, isStaleOpenBatch, saveBatch, submitBatch, reopenBatch, batchRemaining, clearBatch, createBatch, getOrCreateBatch,
     itemsFromIds, renderStepStrip, preloadVideos, anyDialogOpen, bindExampleRemind,
     videoKey, itemSplit, raterBucket, renderMarkdown,
     sbUpsertLabel, sbDeleteLabel, sbLoadLabels, sbLoadAllLabels, sbUpsertBatch, sbLoadAllBatches,

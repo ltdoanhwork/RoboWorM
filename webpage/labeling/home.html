@@ -85,6 +85,7 @@
     <p class="status" id="status" style="margin-top:.85rem">Loading…</p>
     <div class="home-actions">
       <button class="btn primary" id="btnAssign" hidden><span data-lang="vi">Bắt đầu chấm</span><span data-lang="en">Start labeling</span></button>
+      <button class="btn primary" id="btnResume" hidden><span data-lang="vi">Chấm tiếp phần còn lại</span><span data-lang="en">Continue remaining clips</span></button>
       <button class="btn warn" id="btnSubmit" hidden><span data-lang="vi">Nộp lô này</span><span data-lang="en">Submit this batch</span></button>
       <button class="btn" id="btnNew" hidden><span data-lang="vi">Check conflict tiếp</span><span data-lang="en">Check more conflicts</span></button>
     </div>
@@ -218,9 +219,15 @@ if (VGP.requireGate()) {
   }
   function renderBatch(){
     const open = batch && !batch.submittedAt;
-    $('phaseGrid').hidden = !open;
+    const left = VGP.batchRemaining(batch, mvAll, svAll, labels);
+    // A submitted batch with work left is not a dead end: keep the phase cards
+    // visible and offer an explicit resume, otherwise the rater is stranded on
+    // a page with every button hidden.
+    const resumable = !!batch && !!batch.submittedAt && !checker && left.total > 0;
+    $('phaseGrid').hidden = !open && !resumable;
     $('btnAssign').hidden = !!batch;
     $('btnSubmit').hidden = !open;
+    $('btnResume').hidden = !resumable;
     $('btnNew').hidden = !(checker && batch && batch.submittedAt);
     if (!batch){
       setStatus(
@@ -248,8 +255,16 @@ if (VGP.requireGate()) {
       ? (lang() === 'vi' ? ' Chỉ gồm video conflict.' : ' Conflict videos only.')
       : '';
     if (batch.submittedAt){
-      setStatus(`Đã nộp lô này. Tổng ${VGP.raterStats(labels, mvAll, svAll).totalVideos} video.` + extra,
-        `Batch submitted. ${VGP.raterStats(labels, mvAll, svAll).totalVideos} videos labeled in total.` + extra);
+      const total = VGP.raterStats(labels, mvAll, svAll).totalVideos;
+      if (resumable) {
+        setStatus(
+          `Đã nộp lô này (${total} video). Còn ${left.mv} geometry + ${left.sv} hallucinate chưa chấm — bấm "Chấm tiếp phần còn lại".` + extra,
+          `Batch submitted (${total} videos). ${left.mv} geometry + ${left.sv} hallucinate clips are still unscored — use "Continue remaining clips".` + extra
+        );
+      } else {
+        setStatus(`Đã nộp lô này. Tổng ${total} video.` + extra,
+          `Batch submitted. ${total} videos labeled in total.` + extra);
+      }
     } else {
       setStatus(`Lô này: ${batch.mvIds.length} video geometry + ${svItems.length} video hallucinate (${segIds.length} đoạn).` + extra,
         `This batch: ${batch.mvIds.length} geometry videos + ${svItems.length} hallucinate videos (${segIds.length} segments).` + extra);
@@ -278,10 +293,32 @@ if (VGP.requireGate()) {
     $('continueDialog').close();
     renderBatch();
   }
+  async function resume(){
+    batch = await VGP.reopenBatch();
+    renderBatch();
+    return batch;
+  }
+  /** A submitted batch bounces index/segment back home, so reopen then go. */
+  function resumeThen(href){
+    return event => {
+      if (!batch || !batch.submittedAt) return;
+      event.preventDefault();
+      resume().then(() => { location.href = href; })
+        .catch(err => { console.error(err); setStatus('Không mở lại được lô.', 'Could not reopen the batch.', 'err'); });
+    };
+  }
 
   $('btnAssign').onclick = () => assign().catch(err => { console.error(err); setStatus('Không tạo được lô.', 'Could not create a batch.', 'err'); });
   $('btnNew').onclick = () => { VGP.clearBatch(); batch = null; assign().catch(err => { console.error(err); setStatus('Không tạo được lô.', 'Could not create a batch.', 'err'); }); };
   $('btnSubmit').onclick = () => submit().catch(err => { console.error(err); setStatus('Không lưu được trạng thái lô.', 'Could not save batch status.', 'err'); });
+  $('btnResume').onclick = () => {
+    const left = VGP.batchRemaining(batch, mvAll, svAll, labels);
+    const href = left.mv > 0 ? 'index.html' : 'segment.html';
+    resume().then(() => { location.href = href; })
+      .catch(err => { console.error(err); setStatus('Không mở lại được lô.', 'Could not reopen the batch.', 'err'); });
+  };
+  $('goMv').addEventListener('click', resumeThen('index.html'));
+  $('goSv').addEventListener('click', resumeThen('segment.html'));
   $('dlgSubmit').onclick = () => submit().catch(err => { console.error(err); setStatus('Không lưu được trạng thái lô.', 'Could not save batch status.', 'err'); });
   $('closeContinue').onclick = () => $('continueDialog').close();
   function openHowTo(){ $('howtoDialog').showModal(); }
@@ -301,20 +338,21 @@ if (VGP.requireGate()) {
     ]);
     mvAll = mvCat.items || [];
     svAll = svCat.items || [];
-    labels = await VGP.sbLoadLabels(rater);
+    // Push any label that failed to reach Supabase earlier BEFORE reading back,
+    // and merge the local mirror so a queued score still counts as done.
+    await VGP.flushPending(rater).catch(() => {});
+    labels = VGP.mergeLabels(await VGP.sbLoadLabels(rater), rater);
+    const stuck = VGP.readPending(rater).length;
     renderStats();
     const prev = VGP.getBatch();
     const wasStale = prev && VGP.isStaleOpenBatch(prev, mvAll, svAll);
     batch = VGP.getValidBatch(mvAll, svAll);
     if (batch && !checker && batch.submittedAt) {
-      const mvItems = VGP.itemsFromIds(mvAll, batch.mvIds);
-      const svItems = VGP.itemsFromIds(svAll, batch.svIds);
-      const svSegs = batch.svSegs || null;
-      const incomplete = mvItems.some(item => labels[item.id] == null) ||
-        svItems.some(item => !VGP.videoComplete(item, labels, svSegs ? svSegs[item.id] : null));
-      if (incomplete) {
-        VGP.clearBatch();
-        batch = null;
+      // Reopen rather than clear+recreate: the assignment is deterministic, so
+      // rebuilding produced the same ids while throwing away the audit row's
+      // identity. Reopening keeps one stable batch per rater.
+      if (VGP.batchRemaining(batch, mvAll, svAll, labels).total > 0) {
+        batch = await VGP.reopenBatch();
       }
     }
     if (!batch && !checker) batch = await VGP.getOrCreateBatch(mvAll, svAll);
@@ -325,6 +363,10 @@ if (VGP.requireGate()) {
     }
     if (!batch || batch.submittedAt) $('btnAssign').hidden = false;
     renderBatch();
+    if (stuck) {
+      setStatus(`${stuck} điểm chưa lên server — sẽ tự thử lại. Giữ tab này mở và kiểm tra mạng.`,
+        `${stuck} score(s) have not reached the server yet — they will retry. Keep this tab open and check your connection.`, 'err');
+    }
   })().catch(err => { console.error(err); setStatus('Không tải được catalog / Supabase.', 'Failed to load catalog or Supabase.', 'err'); });
 }
 </script>
