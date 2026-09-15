@@ -59,6 +59,7 @@
       <section class="review-context" id="reviewContext" hidden>
         <h3><span data-lang="vi">Nhãn của rater trước</span><span data-lang="en">Previous rater labels</span></h3>
         <p><span data-lang="vi">Checker xem các nhãn này để đối chiếu, sau đó tự quyết định lại clip.</span><span data-lang="en">Use these labels as evidence, then make your own decision for this clip.</span></p>
+        <p class="review-note" id="reviewNote"></p>
         <div class="review-score-table" id="reviewScores"></div>
       </section>
 
@@ -143,7 +144,7 @@
 if (VGP.requireGate()) {
   const $ = id => document.getElementById(id);
   const rater = VGP.getRater();
-  let all = [], idx = 0, labels = {}, examples = [], exampleRating = 'bad', exampleCursor = 0, exampleGroup = [], mvAll = [], svAll = [], allRows = [];
+  let all = [], idx = 0, labels = {}, examples = [], exampleRating = 'bad', exampleCursor = 0, exampleGroup = [], mvAll = [], svAll = [], allRows = [], batch = null;
   const raw = $('vidRaw');
   const exampleRaw = $('exampleRaw');
 
@@ -159,6 +160,7 @@ if (VGP.requireGate()) {
     const lang = VGP.applyLang(next);
     $('langToggle').textContent = lang === 'vi' ? 'EN' : 'VI';
     loadRubric();
+    if (all.length) renderReviewContext(all[idx]);
   }
   setLang(VGP.defaultLang());
   $('langToggle').onclick = () => setLang(lang() === 'vi' ? 'en' : 'vi');
@@ -176,8 +178,11 @@ if (VGP.requireGate()) {
     host.hidden = false;
     const table = $('reviewScores');
     table.replaceChildren();
-    const rows = allRows.filter(row => row.item_id === it.id && VGP.isRegularRater(row.rater_name));
+    const rows = allRows.filter(row => row.item_id === it.id && VGP.isRegularRater(row.rater_name))
+      .sort((a, b) => String(a.rater_name).localeCompare(String(b.rater_name)));
+    const note = $('reviewNote');
     if (!rows.length) {
+      note.textContent = '';
       table.textContent = lang() === 'vi' ? 'Chưa có nhãn rater trước.' : 'No previous rater labels.';
       return;
     }
@@ -185,18 +190,43 @@ if (VGP.requireGate()) {
     grid.className = 'data review-labels';
     const head = document.createElement('thead');
     const headRow = document.createElement('tr');
-    ['Rater', 'Label'].forEach(value => {
+    const heads = lang() === 'vi' ? ['Rater', 'Nhãn', 'Thời điểm'] : ['Rater', 'Label', 'Scored at'];
+    heads.forEach(value => {
       const th = document.createElement('th'); th.textContent = value; headRow.append(th);
     });
     head.append(headRow); grid.append(head);
     const body = document.createElement('tbody');
-    rows.sort((a, b) => String(a.rater_name).localeCompare(String(b.rater_name))).forEach(row => {
+    rows.forEach(row => {
       const tr = document.createElement('tr');
       const name = document.createElement('td'); name.textContent = row.rater_name; tr.append(name);
-      const score = document.createElement('td'); score.textContent = VGP.scoreLabel(Number(row.score)) + ' (' + row.score + ')'; tr.append(score);
+      const score = document.createElement('td');
+      score.className = 'review-overall';
+      score.textContent = VGP.scoreLabel(Number(row.score)) + ' (' + row.score + ')';
+      tr.append(score);
+      const when = document.createElement('td');
+      when.className = 'mono';
+      when.textContent = row.updated_at ? new Date(row.updated_at).toLocaleString() : '—';
+      tr.append(when);
       body.append(tr);
     });
     grid.append(body); table.append(grid);
+    const distinct = [...new Set(rows.map(row => Number(row.score)))].sort();
+    const mine = labels[it.id];
+    const spread = distinct.length >= 2
+      ? distinct.map(score => VGP.scoreLabel(score)).join(' vs ')
+      : null;
+    note.textContent = spread
+      ? (lang() === 'vi'
+        ? `Hai rater lệch nhau: ${spread}. Bạn quyết định lần cuối.`
+        : `The raters disagree: ${spread}. Your score decides.`)
+      : (lang() === 'vi'
+        ? `${rows.length} rater đã chấm, chưa thấy lệch ở đây.`
+        : `${rows.length} rater label(s), no disagreement recorded here.`);
+    if (mine != null) {
+      note.textContent += lang() === 'vi'
+        ? ` Bạn đã chọn ${VGP.scoreLabel(mine)}.`
+        : ` You picked ${VGP.scoreLabel(mine)}.`;
+    }
   }
   function submitBatch(){
     VGP.submitBatch();
@@ -370,7 +400,7 @@ if (VGP.requireGate()) {
     if (catalogResult.status !== 'fulfilled') throw catalogResult.reason;
     mvAll = catalogResult.value.items || [];
     svAll = svResult.status === 'fulfilled' ? (svResult.value.items || []) : [];
-    const batch = VGP.getValidBatch(mvAll, svAll);
+    batch = VGP.getValidBatch(mvAll, svAll);
     if (!batch || batch.submittedAt) {
       location.replace('home.html');
       return;

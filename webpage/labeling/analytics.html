@@ -82,6 +82,21 @@
   </section>
 
   <section class="chart-card">
+    <h2>Geometry · combined_score vs human score</h2>
+    <p class="status" style="margin-bottom:.6rem">
+      Live box plot of the machine <span class="mono">combined_score</span> against the resolved human score.
+      Default keeps only <strong>non-conflict</strong> videos (both regular raters gave the same score), so a
+      disagreement never enters the distribution. Dots are the individual videos.
+    </p>
+    <div class="viz-row" style="margin-bottom:.7rem">
+      <button class="top-btn accent" id="btnBoxScope" type="button">Non-conflict only</button>
+      <span class="status mono" id="boxUpdated"></span>
+    </div>
+    <div class="admin-stat" id="boxStats" style="margin-bottom:.8rem"></div>
+    <div class="box-panels" id="boxPanels"></div>
+  </section>
+
+  <section class="chart-card">
     <h2>Overlap · Hallucinate (machine segments ↔ human)</h2>
     <p class="status" style="margin-bottom:.6rem">
       Compare aligned segments inside each video, then average video percentages so long videos do not carry more weight.
@@ -145,6 +160,7 @@ if (VGP.requireAdmin()) {
   let rows = [], batches = [], geoItems = [], halluItems = [], geoMetrics = [], halluSegMetrics = [], halluVideoMetrics = [];
   let exportBundle = { geometry: { items: [] }, hallucinate: { videos: [], segments: [] } };
   let keyExport = {};
+  let boxIncludeChecker = false;
   const LABELS = ['Bad', 'Medium', 'Good'];
   const EMBS = ['bimanual', 'humanoid', 'single_arm'];
 
@@ -323,6 +339,151 @@ if (VGP.requireAdmin()) {
       i = j;
     }
     return ranks;
+  }
+
+  function spearman(xs, ys){
+    return pearson(rankValues(xs), rankValues(ys));
+  }
+
+  // --- geometry box plot (live, non-conflict labels) -----------------------
+  const BOX_COLORS = { 1: '#c2413b', 2: '#c2870d', 3: '#16835b' };
+
+  /** One record per geometry video that has a resolved human score. */
+  function geoBoxRecords(resolved, includeChecker){
+    const metricById = new Map(geoMetrics.map(metric => [metric.id, metric]));
+    const out = [];
+    for (const item of geoItems) {
+      const human = resolved[item.id];
+      if (!human || human.human_score == null) continue;
+      // non-conflict = the two regular raters agreed; checker-adjudicated
+      // videos are conflicts and stay out unless explicitly included.
+      if (!includeChecker && human.consensus !== 'raters') continue;
+      const combined = Number(metricById.get(item.id)?.combined_score);
+      if (!Number.isFinite(combined)) continue;
+      out.push({
+        id: item.id,
+        emb: VGP.normalizeEmbodiment(item.embodiment),
+        score: Number(human.human_score),
+        combined,
+        consensus: human.consensus,
+      });
+    }
+    return out;
+  }
+
+  function quantile(sorted, q){
+    if (!sorted.length) return null;
+    const pos = (sorted.length - 1) * q;
+    const lo = Math.floor(pos);
+    const hi = Math.ceil(pos);
+    return sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo);
+  }
+
+  function boxStats(values){
+    const sorted = values.slice().sort((a, b) => a - b);
+    if (!sorted.length) return null;
+    const q1 = quantile(sorted, 0.25);
+    const med = quantile(sorted, 0.5);
+    const q3 = quantile(sorted, 0.75);
+    const iqr = q3 - q1;
+    const inliers = sorted.filter(v => v >= q1 - 1.5 * iqr && v <= q3 + 1.5 * iqr);
+    return {
+      n: sorted.length,
+      q1, med, q3,
+      lo: inliers.length ? inliers[0] : sorted[0],
+      hi: inliers.length ? inliers[inliers.length - 1] : sorted[sorted.length - 1],
+      outliers: sorted.filter(v => v < q1 - 1.5 * iqr || v > q3 + 1.5 * iqr),
+    };
+  }
+
+  /** Stable per-video jitter so dots do not jump between refreshes. */
+  function jitterOf(id){
+    return VGP.mulberry32(VGP.fnv1a(String(id)))() - 0.5;
+  }
+
+  function boxPanel(emb, records, domain){
+    const W = 320, H = 300, padL = 48, padR = 12, padT = 14, padB = 46;
+    const plotW = W - padL - padR;
+    const plotH = H - padT - padB;
+    const [lo, hi] = domain;
+    const y = value => padT + plotH * (1 - (value - lo) / (hi - lo || 1));
+    const slot = plotW / 3;
+    const boxW = Math.min(52, slot * 0.52);
+    const parts = [];
+
+    for (let i = 0; i <= 4; i++) {
+      const value = lo + (hi - lo) * (i / 4);
+      const yy = y(value);
+      parts.push(`<line class="box-grid" x1="${padL}" x2="${W - padR}" y1="${yy.toFixed(1)}" y2="${yy.toFixed(1)}"/>`);
+      parts.push(`<text class="box-tick" x="${padL - 6}" y="${(yy + 3.5).toFixed(1)}" text-anchor="end">${value.toFixed(2)}</text>`);
+    }
+
+    [1, 2, 3].forEach((score, index) => {
+      const cx = padL + slot * (index + 0.5);
+      const group = records.filter(record => record.score === score);
+      const color = BOX_COLORS[score];
+      parts.push(`<text class="box-xlabel" x="${cx.toFixed(1)}" y="${H - padB + 18}" text-anchor="middle">${score} · ${VGP.scoreLabel(score)}</text>`);
+      parts.push(`<text class="box-xsub" x="${cx.toFixed(1)}" y="${H - padB + 32}" text-anchor="middle">n=${group.length}</text>`);
+      if (!group.length) return;
+      const stat = boxStats(group.map(record => record.combined));
+      const top = y(stat.q3), bottom = y(stat.q1);
+      parts.push(`<line class="box-whisker" x1="${cx}" x2="${cx}" y1="${y(stat.hi).toFixed(1)}" y2="${top.toFixed(1)}" stroke="${color}"/>`);
+      parts.push(`<line class="box-whisker" x1="${cx}" x2="${cx}" y1="${bottom.toFixed(1)}" y2="${y(stat.lo).toFixed(1)}" stroke="${color}"/>`);
+      [stat.hi, stat.lo].forEach(value => {
+        parts.push(`<line class="box-whisker" x1="${(cx - boxW / 4).toFixed(1)}" x2="${(cx + boxW / 4).toFixed(1)}" y1="${y(value).toFixed(1)}" y2="${y(value).toFixed(1)}" stroke="${color}"/>`);
+      });
+      parts.push(`<rect class="box-body" x="${(cx - boxW / 2).toFixed(1)}" y="${Math.min(top, bottom).toFixed(1)}" width="${boxW.toFixed(1)}" height="${Math.max(1, Math.abs(bottom - top)).toFixed(1)}" fill="${color}" stroke="${color}"/>`);
+      parts.push(`<line class="box-median" x1="${(cx - boxW / 2).toFixed(1)}" x2="${(cx + boxW / 2).toFixed(1)}" y1="${y(stat.med).toFixed(1)}" y2="${y(stat.med).toFixed(1)}" stroke="${color}"/>`);
+      group.forEach(record => {
+        const dx = jitterOf(record.id) * boxW * 1.25;
+        parts.push(`<circle class="box-dot" cx="${(cx + dx).toFixed(1)}" cy="${y(record.combined).toFixed(1)}" r="2.6" fill="${color}"><title>${record.id} · ${VGP.scoreLabel(record.score)} · ${record.combined.toFixed(4)}</title></circle>`);
+      });
+    });
+
+    const values = records.map(record => record.combined);
+    const scores = records.map(record => record.score);
+    const fmt = value => value == null ? '—' : value.toFixed(3);
+    const rho = records.length >= 3 ? spearman(values, scores) : null;
+    const r = records.length >= 3 ? pearson(values, scores) : null;
+    return `<div class="box-panel">
+      <h3>${VGP.embLabel(emb)}</h3>
+      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="combined_score by human score for ${emb}">
+        <text class="box-ylabel" x="12" y="${padT + plotH / 2}" transform="rotate(-90 12 ${padT + plotH / 2})" text-anchor="middle">combined_score</text>
+        ${parts.join('')}
+      </svg>
+      <p class="status">n=${records.length} · Spearman ρ ${fmt(rho)} · Pearson r ${fmt(r)}</p>
+    </div>`;
+  }
+
+  function renderGeoBoxplot(resolved){
+    const nonConflict = geoBoxRecords(resolved, false);
+    const withChecker = geoBoxRecords(resolved, true);
+    const records = boxIncludeChecker ? withChecker : nonConflict;
+    const host = document.getElementById('boxPanels');
+    const adjudicated = withChecker.length - nonConflict.length;
+    const openConflicts = Math.max(0, VGP.conflictUnitIds(rows, geoItems).length - adjudicated);
+    const values = records.map(record => record.combined);
+    const domain = values.length ? [Math.min(...values), Math.max(...values)] : [0, 1];
+    const pad = (domain[1] - domain[0]) * 0.06 || 0.01;
+    const padded = [domain[0] - pad, domain[1] + pad];
+    const fmt = value => value == null ? '—' : value.toFixed(3);
+    const rhoAll = records.length >= 3 ? spearman(values, records.map(record => record.score)) : null;
+    document.getElementById('boxStats').innerHTML = `
+      <div><b>${records.length}</b><span>videos plotted</span></div>
+      <div><b>${fmt(rhoAll)}</b><span>Spearman ρ · all embodiments</span></div>
+      <div><b>${adjudicated}</b><span>checker-resolved conflicts ${boxIncludeChecker ? 'included' : 'excluded'}</span></div>
+      <div><b>${openConflicts}</b><span>conflicts awaiting a checker · never plotted</span></div>`;
+    document.getElementById('btnBoxScope').textContent =
+      boxIncludeChecker ? 'Non-conflict + checker-resolved' : 'Non-conflict only';
+    if (!records.length) {
+      host.innerHTML = '<p class="status">No resolved geometry labels yet.</p>';
+      return;
+    }
+    host.innerHTML = EMBS
+      .map(emb => [emb, records.filter(record => record.emb === emb)])
+      .filter(([, group]) => group.length)
+      .map(([emb, group]) => boxPanel(emb, group, padded))
+      .join('');
   }
 
   function renderGeometryCorrelation(ownRows, positions){
@@ -763,6 +924,8 @@ if (VGP.requireAdmin()) {
     bars(document.getElementById('conflictOpen'), openRows, 4);
 
     const geoCm = confusionFor(geoItems, geoMetrics, geoResolved);
+    renderGeoBoxplot(geoResolved);
+    document.getElementById('boxUpdated').textContent = 'updated ' + new Date().toLocaleTimeString();
     const halluOverlap = hallucinateOverlap(halluItems, halluSegMetrics, halluResolved);
     const segCm = violatedConfusion(halluSegMetrics, halluSegResolved);
     document.getElementById('cmGeo').innerHTML = [
@@ -817,8 +980,8 @@ if (VGP.requireAdmin()) {
     };
   }
 
-  async function refresh(){
-    document.getElementById('stats').textContent = 'Loading…';
+  async function refresh(quiet){
+    if (!quiet) document.getElementById('stats').textContent = 'Loading…';
     const [all, batchRows, mv, sv, metrics, mvMetrics] = await Promise.all([
       VGP.sbLoadAllLabels(),
       VGP.sbLoadAllBatches(),
@@ -840,7 +1003,10 @@ if (VGP.requireAdmin()) {
   }
 
   document.getElementById('btnRefresh').onclick = refresh;
-  document.getElementById('raterDetailClose').onclick = () => document.getElementById('raterDialog').close();
+  document.getElementById('btnBoxScope').onclick = () => {
+    boxIncludeChecker = !boxIncludeChecker;
+    renderGeoBoxplot(VGP.resolveHuman(rows, geoItems));
+  };  document.getElementById('raterDetailClose').onclick = () => document.getElementById('raterDialog').close();
   document.getElementById('raterDialog').onclick = event => {
     if (event.target === document.getElementById('raterDialog')) document.getElementById('raterDialog').close();
   };
@@ -854,6 +1020,13 @@ if (VGP.requireAdmin()) {
   document.getElementById('btnKey').onclick = () =>
     download('hallucinate_key_labeled.json', JSON.stringify(keyExport, null, 2), 'application/json');
   refresh().catch(err => { document.getElementById('stats').textContent = 'Failed to load.'; console.error(err); });
+  // Live view: re-pull labels every 30s so the box plot tracks raters in real
+  // time. Skipped while the tab is hidden or a rater dialog is open.
+  setInterval(() => {
+    if (document.hidden) return;
+    if (document.getElementById('raterDialog').open) return;
+    refresh(true).catch(err => console.error(err));
+  }, 30000);
 }
 </script>
 </body>

@@ -223,6 +223,20 @@ dialog::backdrop{background:rgba(13,18,31,.62);backdrop-filter:blur(3px)}
 .review-labels th:first-child,.review-labels td:first-child{text-align:left;position:sticky;left:0;background:#fffbeb}
 .review-labels .review-overall{font-weight:800;color:var(--accent)}
 .review-labels .current-seg-label{background:#fef3c7;font-weight:800}
+.review-context .review-note{font-size:.8rem;font-weight:700;color:var(--medium);margin-bottom:.5rem}
+.box-panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:1rem}
+.box-panel{border:1px solid var(--border);border-radius:12px;padding:.7rem;background:var(--card)}
+.box-panel h3{font-size:.88rem;margin-bottom:.15rem;text-align:center}
+.box-panel svg{display:block;width:100%;height:auto}
+.box-panel .status{margin-top:.3rem;text-align:center;font-size:.76rem}
+.box-grid{stroke:var(--border);stroke-width:1}
+.box-tick,.box-xlabel,.box-xsub,.box-ylabel{fill:var(--muted);font-size:10px;font-family:Inter,sans-serif}
+.box-xlabel{fill:var(--text);font-weight:700;font-size:11px}
+.box-body{fill-opacity:.18;stroke-width:1.5}
+.box-median{stroke-width:2.2}
+.box-whisker{stroke-width:1.4}
+.box-dot{fill-opacity:.75}
+.viz-row{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
 .rater-link{border:0;background:none;padding:0;color:var(--accent);font:inherit;font-weight:800;text-decoration:underline;cursor:pointer}
 .admin-detail-scroll{max-height:70vh;overflow:auto;margin-top:.6rem}
 .admin-detail-scroll .data{min-width:900px}
