@@ -18,7 +18,7 @@ const VGP = (() => {
     hoang_tran: "Hoàng Trần",
     minh_loi: "Minh Lợi",
     luu_minh_tung: "Lưu Minh Tùng",
-    tho_le: "Thọ Lê",
+    christopher_wewer: "Christopher Wewer",
     minh_duc: "Minh Đức",
     bao_ngoc: "Bảo Ngọc",
     gia_binh: "Gia Bình",

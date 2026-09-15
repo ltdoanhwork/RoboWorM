@@ -6,7 +6,7 @@
 | Hoàng Trần | VinUni | `hoang_tran` |
 | Minh Lợi | VinUni | `minh_loi` |
 | Lưu Minh Tùng | KAIST | `luu_minh_tung` |
-| Thọ Lê | Monash | `tho_le` |
+| Christopher Wewer | MPI-INF | `christopher_wewer` |
 | Minh Đức | VinUni | `minh_duc` |
 | Bảo Ngọc | VinUni | `bao_ngoc` |
 | Gia Bình | VinUni | `gia_binh` |
