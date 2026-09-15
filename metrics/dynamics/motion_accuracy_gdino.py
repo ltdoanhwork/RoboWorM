@@ -232,7 +232,7 @@ def overlay(frame_path, masks_by_color, out_path):
 # --------------------------------------------------------------------------- #
 def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
           object_prompt, embodiment_prompt, device, max_frames=None, stride=1,
-          actor_motion_active_threshold=0.25):
+          actor_motion_active_threshold=0.25, compute_flicker=False):
     work = os.path.join(out_dir, f"{tag}_frames")
     n = decode_video_to_frames(video, work, max_frames=max_frames, stride=stride)
     frame0 = os.path.join(work, "00000.jpg")
@@ -260,6 +260,10 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
     ids = list(id_role.keys())
     seeds = {i: m for i, m in zip(ids, seed_list)}
 
+    if not seeds:
+        shutil.rmtree(work, ignore_errors=True)
+        return {"n_object_dets": 0, "n_arm_dets": 0, "num_pairs": 0,
+                "actor_flicker_raw": None, "per_frame": []}
     masks_by_id, nprop = propagate_multi(vid_pred, work, seeds)
 
     obj_ids = [i for i in ids if id_role[i] == "object"]
@@ -307,11 +311,25 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
             "fg_flow_max": float(mag[fg].max()),
             "fg_flow_med": float(np.median(mag[fg])),
             "fg_flow_ego_med": float(np.median(fg_ego_mag)),
+            # High-percentile localized motion complements the median: small gripper
+            # motions should not disappear merely because the arm mask is large.
+            "fg_flow_ego_p95": float(np.percentile(fg_ego_mag, 95)),
             "bg_flow_max": float(mag[bg].max()),
             "bg_flow_med": float(np.median(mag[bg])),
             "bg_ego_dx": float(ego[0]),
             "bg_ego_dy": float(ego[1]),
         }
+        if compute_flicker:
+            from metrics.dynamics.actor_flicker import aligned_residual
+            next_fg = union([masks_by_id[j][i + 1] for j in ids])
+            if next_fg.shape != mh:
+                next_fg = mask_resize(next_fg, mh)
+            forward = fl * max(1, stride)
+            backward = flow.compute(f2, f1)
+            value, count = aligned_residual(cv2.imread(f1), cv2.imread(f2),
+                                            forward, backward, fg, next_fg)
+            e["actor_flicker_raw"] = value
+            e["flicker_valid_pixels"] = count
         per_frame.append(e)
         if i % max(1, len(frames) // 6) == 0:
             overlay(f1, [(obj_m, (0, 200, 0)), (arm_m, (255, 0, 0))],
@@ -337,6 +355,7 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
         # ActorMotion (PhyWorld): subject-only kinetic budget, arm∪object mask.
         # Remove robust background flow vector first; keep uncorrected value for audit.
         "mean_fg_flow_med": mean("fg_flow_ego_med"),
+        "mean_fg_flow_p95": mean("fg_flow_ego_p95"),
         "mean_fg_flow_med_uncorrected": mean("fg_flow_med"),
         # Fraction of subject frame-pairs with non-trivial residual movement.
         # Paired with ActorMotion(raw): detects one-frame spikes that inflate a mean.
@@ -346,8 +365,16 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
         "actor_motion_active_threshold_px": float(actor_motion_active_threshold),
         "mean_bg_ego_dx": mean("bg_ego_dx"),
         "mean_bg_ego_dy": mean("bg_ego_dy"),
+        # Camera motion is a distinct signal. Do not subtract it silently then
+        # discard it: for nominally static external views it is itself a failure.
+        "camera_drift_raw": float(np.mean([
+            np.hypot(p["bg_ego_dx"], p["bg_ego_dy"]) for p in per_frame
+        ])) if per_frame else float("nan"),
         "mean_fg_cov_pct": mean("fg_cov_pct"),
         "per_frame": per_frame,
+        "actor_flicker_raw": float(np.mean([p["actor_flicker_raw"] for p in per_frame
+            if p.get("actor_flicker_raw") is not None])) if any(
+            p.get("actor_flicker_raw") is not None for p in per_frame) else None,
     }
     with open(os.path.join(out_dir, f"{tag}_motion_accuracy_gdino.json"), "w") as f:
         json.dump(result, f, indent=2)

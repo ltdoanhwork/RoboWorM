@@ -59,7 +59,9 @@ subject.
   within ActorMotion remains necessary; background-flow translation compensation
   has limitations for wrist cameras, rotation, and parallax, so analyze these views
   separately.
-- ActorFlicker is an adaptation requiring implementation and validation. This
+- ActorFlicker now has an experimental implementation in the
+  [dense NR runner](dense_nr_full_run.md), using forward/backward-flow-filtered
+  photometric residuals. It still requires semantic and human validation. This
   report specifies the selected metrics; it does not claim that results for all
   six are already available. Validate on frozen clips, clean motion, deliberately
   introduced flicker, and occlusion before using it for ranking. None of these

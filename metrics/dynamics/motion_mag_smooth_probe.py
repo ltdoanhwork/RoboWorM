@@ -153,6 +153,10 @@ def motion_smoothness(frames, model, InputPadder, device, TTA=True, stride=1, ma
     return {
         "ssim": float(np.mean(ssim_l)) if ssim_l else float("nan"),
         "mse": float(np.mean(mse_l)) if mse_l else float("nan"),
+        # Preserve per-triple values. Caller can weight by localized actor motion;
+        # unweighted mean is intentionally kept for backwards compatibility.
+        "ssim_per_triple": ssim_l,
+        "mse_per_triple": mse_l,
         "n": len(ssim_l), "tta": TTA, "stride": stride,
     }
 

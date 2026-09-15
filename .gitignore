@@ -238,3 +238,4 @@ metrics/sim2real_out/*
 !webpage/labeling/
 !webpage/labeling/**
 compare/*
+results/*

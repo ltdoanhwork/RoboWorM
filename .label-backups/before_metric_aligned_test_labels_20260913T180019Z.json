@@ -1,0 +1,4780 @@
+{
+  "created_at": "20260913T180019Z",
+  "raters": {
+    "doanh": [
+      {
+        "rater_name": "doanh",
+        "item_id": "00018",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00029",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00041",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00046",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00051",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00079",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00081",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00089",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00098",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00117",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00120",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00126",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00129",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00131",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00179",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00183",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00189",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00224",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00230",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00240",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00257",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00268",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00286",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00287",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "00297",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s000",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s001",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s002",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s003",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s004",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s005",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s006",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s007",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s008",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s009",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s010",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s011",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s012",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s013",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s014",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s015",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s016",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s017",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s018",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s019",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s020",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s021",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s022",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s023",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s024",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s025",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s026",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s027",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s028",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s029",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s030",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s031",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s032",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s033",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s034",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s035",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s036",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s037",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s038",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s039",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s040",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s041",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s042",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s043",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s044",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s045",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s046",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s047",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s048",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s049",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s050",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s051",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s052",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s053",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s054",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s055",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s056",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s057",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s058",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s059",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s060",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s061",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s062",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv007_s063",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s000",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s001",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s002",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s003",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s004",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s005",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s006",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s007",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s008",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s009",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s010",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s011",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s012",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s013",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s014",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s015",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s016",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s017",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s018",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s019",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s020",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s021",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s022",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s023",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s024",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s025",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s026",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s027",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv008_s028",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s000",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s001",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s002",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s003",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s004",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s005",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s006",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s007",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s008",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s009",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s010",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s011",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s012",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s013",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s014",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s015",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s016",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s017",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s018",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s019",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s020",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s021",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s022",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s023",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s024",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s025",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s026",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s027",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s028",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s029",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s030",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s031",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s032",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s033",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s034",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s035",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s036",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s037",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s038",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s039",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s040",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s041",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s042",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s043",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s044",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s045",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s046",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s047",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s048",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s049",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s050",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s051",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s052",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s053",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s054",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s055",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s056",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s057",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s058",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s059",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s060",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s061",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s062",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv011_s063",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s000",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s001",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s002",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s003",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s004",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s005",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s006",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s007",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s008",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s009",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s010",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s011",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s012",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s013",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s014",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s015",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s016",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s017",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s018",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s019",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s020",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s021",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s022",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s023",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s024",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s025",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s026",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s027",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s028",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s029",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s030",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s031",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s032",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s033",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s034",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s035",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s036",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s037",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s038",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s039",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s040",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s041",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s042",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s043",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s044",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s045",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s046",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s047",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s048",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s049",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s050",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s051",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s052",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s053",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s054",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s055",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s056",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s057",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s058",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s059",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s060",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s061",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s062",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv024_s063",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv039_s000",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv039_s001",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv039_s002",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv039_s003",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv039_s004",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv039_s005",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv039_s006",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv039_s007",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv039_s008",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv039_s009",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv039_s010",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv039_s011",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv039_s012",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv039_s013",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv039_s014",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv039_s015",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv039_s016",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv039_s017",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s000",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s001",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s002",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s003",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s004",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s005",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s006",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s007",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s008",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s009",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s010",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s011",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s012",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s013",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s014",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s015",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s016",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s017",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s018",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s019",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s020",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s021",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s022",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s023",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s024",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s025",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s026",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s027",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s028",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s029",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s030",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s031",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s032",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s033",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s034",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s035",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s036",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s037",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s038",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s039",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s040",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s041",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s042",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s043",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s044",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s045",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s046",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s047",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s048",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s049",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s050",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s051",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s052",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s053",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s054",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s055",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s056",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s057",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s058",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s059",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s060",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s061",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s062",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv066_s063",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s000",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s001",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s002",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s003",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s004",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s005",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s006",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s007",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s008",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s009",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s010",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s011",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s012",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s013",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s014",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s015",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s016",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s017",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s018",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s019",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s020",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s021",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s022",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s023",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s024",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s025",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s026",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s027",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s028",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s029",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s030",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s031",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s032",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s033",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s034",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s035",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s036",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s037",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s038",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s039",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s040",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s041",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s042",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s043",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s044",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s045",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s046",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s047",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s048",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s049",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s050",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s051",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s052",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s053",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s054",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s055",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s056",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s057",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s058",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s059",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s060",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s061",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s062",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv083_s063",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s000",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s001",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s002",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s003",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s004",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s005",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s006",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s007",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s008",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s009",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s010",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s011",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s012",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s013",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s014",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s015",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s016",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s017",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s018",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s019",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s020",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s021",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s022",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s023",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s024",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s025",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s026",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s027",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s028",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s029",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s030",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s031",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s032",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s033",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s034",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s035",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s036",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s037",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s038",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s039",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s040",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s041",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s042",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s043",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s044",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s045",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s046",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s047",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s048",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s049",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s050",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s051",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s052",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s053",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s054",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s055",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s056",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s057",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s058",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s059",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s060",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s061",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s062",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv084_s063",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s000",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s001",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s002",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s003",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s004",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s005",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s006",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s007",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s008",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s009",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s010",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s011",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s012",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s013",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s014",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s015",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s016",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s017",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s018",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s019",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s020",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s021",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s022",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s023",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s024",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s025",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s026",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s027",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s028",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s029",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s030",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s031",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s032",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s033",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s034",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s035",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s036",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s037",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s038",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s039",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s040",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s041",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s042",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s043",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s044",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s045",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s046",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s047",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s048",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s049",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s050",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s051",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s052",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s053",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s054",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s055",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s056",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s057",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s058",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s059",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s060",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s061",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s062",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv092_s063",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv102_s000",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv102_s001",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv102_s002",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv102_s003",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv102_s004",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv102_s005",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv102_s006",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv102_s007",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv102_s008",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv102_s009",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv102_s010",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv102_s011",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv102_s012",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv102_s013",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv102_s014",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv102_s015",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv102_s016",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv102_s017",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv111_s000",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv111_s001",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv111_s002",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv111_s003",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv111_s004",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv111_s005",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv111_s006",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv111_s007",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv111_s008",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv111_s009",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv111_s010",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv111_s011",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv129_s000",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv129_s001",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv129_s002",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv129_s003",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv129_s004",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv129_s005",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv129_s006",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv129_s007",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv129_s008",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv129_s009",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv129_s010",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv129_s011",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv149_s000",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv149_s001",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv149_s002",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv149_s003",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv149_s004",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv149_s005",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv149_s006",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv149_s007",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv149_s008",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv149_s009",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv149_s010",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv149_s011",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv150_s000",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv150_s001",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv150_s002",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv150_s003",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv150_s004",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv150_s005",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv151_s000",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv151_s001",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv151_s002",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv151_s003",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv151_s004",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv151_s005",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv152_s000",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv152_s001",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv152_s002",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv152_s003",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv152_s004",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv152_s005",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv152_s006",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv152_s007",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv152_s008",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv152_s009",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv152_s010",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv152_s011",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv166_s000",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv166_s001",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv166_s002",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv166_s003",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv166_s004",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv166_s005",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv166_s006",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv166_s007",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv166_s008",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv166_s009",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv166_s010",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv166_s011",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv212_s000",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv212_s001",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv212_s002",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv212_s003",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv212_s004",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv212_s005",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv212_s006",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv212_s007",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv212_s008",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv212_s009",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv212_s010",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv212_s011",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv213_s000",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv213_s001",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv213_s002",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv213_s003",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv213_s004",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv213_s005",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv213_s006",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv213_s007",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv213_s008",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv213_s009",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv213_s010",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv213_s011",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv215_s000",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv215_s001",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv215_s002",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv215_s003",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv215_s004",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv215_s005",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv215_s006",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv215_s007",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv215_s008",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv215_s009",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv215_s010",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv215_s011",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv215_s012",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv215_s013",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv215_s014",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv215_s015",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv215_s016",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv215_s017",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv237_s000",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv237_s001",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv237_s002",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv237_s003",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv237_s004",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv237_s005",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv237_s006",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv237_s007",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv237_s008",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv237_s009",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv237_s010",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv237_s011",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s000",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s001",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s002",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s003",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s004",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s005",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s006",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s007",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s008",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s009",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s010",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s011",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s012",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s013",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s014",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s015",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s016",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s017",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s018",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s019",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s020",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s021",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s022",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s023",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s024",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s025",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s026",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s027",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s028",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s029",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s030",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s031",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s032",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s033",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s034",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s035",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s036",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s037",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s038",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s039",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv259_s040",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s000",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s001",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s002",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s003",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s004",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s005",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s006",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s007",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s008",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s009",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s010",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s011",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s012",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s013",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s014",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s015",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s016",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s017",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s018",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s019",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s020",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s021",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s022",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s023",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s024",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s025",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s026",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s027",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s028",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s029",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s030",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s031",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s032",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s033",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s034",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s035",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s036",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s037",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s038",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s039",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv260_s040",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s000",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s001",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s002",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s003",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s004",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s005",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s006",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s007",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s008",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s009",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s010",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s011",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s012",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s013",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s014",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s015",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s016",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s017",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s018",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s019",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s020",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s021",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv269_s022",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s000",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s001",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s002",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s003",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s004",
+        "score": 1,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s005",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s006",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s007",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s008",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s009",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s010",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s011",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s012",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s013",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s014",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s015",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s016",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s017",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s018",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s019",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s020",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s021",
+        "score": 3,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      },
+      {
+        "rater_name": "doanh",
+        "item_id": "hv287_s022",
+        "score": 2,
+        "updated_at": "2026-09-11T11:27:29.174054+00:00"
+      }
+    ],
+    "doanh_1": [
+      {
+        "rater_name": "doanh_1",
+        "item_id": "00001",
+        "score": 3,
+        "updated_at": "2026-09-12T04:11:26.328017+00:00"
+      },
+      {
+        "rater_name": "doanh_1",
+        "item_id": "00006",
+        "score": 1,
+        "updated_at": "2026-09-12T04:11:41.922524+00:00"
+      },
+      {
+        "rater_name": "doanh_1",
+        "item_id": "00013",
+        "score": 1,
+        "updated_at": "2026-09-12T04:11:51.957349+00:00"
+      }
+    ],
+    "doanh_2": []
+  }
+}

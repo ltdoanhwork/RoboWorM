@@ -114,10 +114,15 @@ def score_qual(frames, instruction, embodiment, iqa, det, stride) -> dict:
         shutil.rmtree(tmp, ignore_errors=True)
 
     si = scene_integrity_score(float(np.mean(iqa_l)))
+    # Mean hides a short black/blurred collapse. p10 asks whether nearly all
+    # generated frames remain visually usable; it has no task-semantic claim.
+    vi_floor = scene_integrity_score(float(np.percentile(iqa_l, 10)))
     tl = task_lock_score(float(np.mean(cs_l)))
     ep = entity_presence_score(float(np.mean(od_l)))
     return {
         "scene_integrity": si,
+        "visual_integrity": vi_floor,
+        "visual_integrity_mean": si,
         "task_lock": tl,
         "entity_presence": ep,
         "look_score": float(np.mean(aes_l)),
@@ -126,6 +131,7 @@ def score_qual(frames, instruction, embodiment, iqa, det, stride) -> dict:
         "qual_stride": stride,
         "entity_phrases": phrases,
         "clip_iqa+_raw": float(np.mean(iqa_l)),
+        "clip_iqa+_p10_raw": float(np.percentile(iqa_l, 10)),
         "clip_score_raw": float(np.mean(cs_l)),
         "detection_rate_raw": float(np.mean(od_l)),
     }

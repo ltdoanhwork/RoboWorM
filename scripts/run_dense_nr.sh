@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+REPO="$(cd "$(dirname "$0")/.." && pwd)"
+TP="$REPO/metrics/WorldScore/worldscore/benchmark/metrics/third_party"
+export PYTHONPATH="$REPO:$REPO/scripts:$TP:$TP/SEA-RAFT/core:$TP/SEA-RAFT:$TP/VFIMamba:$TP/groundingdino:$TP/sam2:${PYTHONPATH:-}"
+export OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 TOKENIZERS_PARALLELISM=false
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0}"
+cd "$REPO/metrics/WorldScore"
+exec "$REPO/models/dreamgen/.venv/bin/python" -u "$REPO/scripts/run_dense_nr.py" "$@"
