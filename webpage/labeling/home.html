@@ -306,7 +306,19 @@ if (VGP.requireGate()) {
     const prev = VGP.getBatch();
     const wasStale = prev && VGP.isStaleOpenBatch(prev, mvAll, svAll);
     batch = VGP.getValidBatch(mvAll, svAll);
-    if (batch) await VGP.sbUpsertBatch(batch);
+    if (batch && !checker && batch.submittedAt) {
+      const mvItems = VGP.itemsFromIds(mvAll, batch.mvIds);
+      const svItems = VGP.itemsFromIds(svAll, batch.svIds);
+      const svSegs = batch.svSegs || null;
+      const incomplete = mvItems.some(item => labels[item.id] == null) ||
+        svItems.some(item => !VGP.videoComplete(item, labels, svSegs ? svSegs[item.id] : null));
+      if (incomplete) {
+        VGP.clearBatch();
+        batch = null;
+      }
+    }
+    if (!batch && !checker) batch = await VGP.getOrCreateBatch(mvAll, svAll);
+    else if (batch) await VGP.sbUpsertBatch(batch);
     if (wasStale) {
       setStatus('Phần chấm đã đổi thành 50 geometry + 48–49 hallucinate cố định. Điểm cũ vẫn được giữ. Bắt đầu để tải phần được phân.',
         'Assignment changed to fixed 50 geometry + 48–49 hallucinate videos. Existing scores are kept. Start to load it.');

@@ -85,7 +85,7 @@ const VGP = (() => {
     return (localStorage.getItem(NAME_KEY) || "").trim();
   }
   function setRater(name) {
-    localStorage.setItem(NAME_KEY, normalizeName(name));
+    localStorage.setItem(NAME_KEY, canonicalRaterName(name));
   }
   function passOk() {
     return sessionStorage.getItem(PASS_KEY) === "1";
@@ -190,12 +190,29 @@ const VGP = (() => {
     return String(name || "").trim().toLowerCase();
   }
 
+  function accountToken(name) {
+    return normalizeName(name)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+  }
+
+  /** Accept account id, accented display name, or unaccented display name. */
+  function canonicalRaterName(name) {
+    const normalized = normalizeName(name);
+    if (REVIEWERS.includes(normalized) || Object.hasOwn(RATER_ACCOUNTS, normalized)) return normalized;
+    const token = accountToken(normalized);
+    return RATER_IDS.find((id) => accountToken(id) === token || accountToken(RATER_ACCOUNTS[id]) === token) || normalized;
+  }
+
   function isReviewer(name) {
     return REVIEWERS.includes(normalizeName(name));
   }
 
   function isRegularRater(name) {
-    return Object.hasOwn(RATER_ACCOUNTS, normalizeName(name));
+    return Object.hasOwn(RATER_ACCOUNTS, canonicalRaterName(name));
   }
 
   function isKnownRater(name) {
@@ -234,7 +251,7 @@ const VGP = (() => {
    * Hallucinate starts at a different pairing round to vary co-raters.
    */
   function fixedAssignedItems(items, raterName, kind) {
-    const rater = normalizeName(raterName);
+    const rater = canonicalRaterName(raterName);
     if (!isRegularRater(rater)) return [];
     const ordered = [...(items || [])].sort((a, b) => String(a.id).localeCompare(String(b.id)));
     const catalogSize = kind === CHECK.hallu ? 291 : 300;
@@ -1163,7 +1180,7 @@ const VGP = (() => {
     CHECK, SCORE_LABEL, BAND_TO_SCORE, normalizeEmbodiment, embLabel, scoreLabel, checkLabel, machineScore,
     getRater, setRater, passOk, setPassOk, adminOk, setAdminOk,
     clearSession, isAdminPath, requireGate, requireAdmin,
-    defaultLang, applyLang, isReviewer, isRegularRater, isKnownRater, raterPassOk, conflictCheckProgress,
+    defaultLang, applyLang, canonicalRaterName, isReviewer, isRegularRater, isKnownRater, raterPassOk, conflictCheckProgress,
     segmentId, parentVideoId, scoreableSegmentIndices, itemLabelIds, segmentCount,
     videoComplete, videoTouched, raterStats,
     coverageCounts, segmentCoverage, pickLeastLabeled, fixedAssignedItems, conflictIds, conflictUnitIds,

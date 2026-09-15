@@ -28,7 +28,21 @@ button:hover{opacity:.92}
     <form id="gateForm">
       <div id="nameWrap">
         <label for="name">Account name</label>
-        <input id="name" autocomplete="username" placeholder="e.g. nhi_pham" maxlength="60">
+        <input id="name" list="raterAccounts" autocomplete="username" placeholder="e.g. nhi_pham or Nhi Phạm" maxlength="60">
+        <datalist id="raterAccounts">
+          <option value="nhi_pham">Nhi Phạm</option>
+          <option value="hoang_tran">Hoàng Trần</option>
+          <option value="minh_loi">Minh Lợi</option>
+          <option value="luu_minh_tung">Lưu Minh Tùng</option>
+          <option value="tho_le">Thọ Lê</option>
+          <option value="minh_duc">Minh Đức</option>
+          <option value="bao_ngoc">Bảo Ngọc</option>
+          <option value="gia_binh">Gia Bình</option>
+          <option value="duc_duy">Đức Duy</option>
+          <option value="kien_bui">Kiên Bùi</option>
+          <option value="doanh_1">Doanh 1</option>
+          <option value="doanh_2">Doanh 2</option>
+        </datalist>
       </div>
       <label for="pass" id="passLabel">Access passcode</label>
       <input id="pass" type="password" autocomplete="off" required>
