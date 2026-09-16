@@ -693,10 +693,14 @@ const VGP = (() => {
         ? REVIEWERS.filter((name) => videoRaterScores(rows, item, true)[name])
         : REVIEWERS.filter((name) => units.get(uid)?.raters.has(name));
       checkers.forEach((name) => { per[name] += 1; });
-      // Geometry conflicts the arbiter settled are done, not awaiting a checker.
-      if (!item?.segments && resolveUnit(units.get(uid) || { raters: new Map() }).consensus === "arbiter") {
-        arbiter += 1;
-      } else if (checkers.length === 0) open += 1;
+      // Geometry only: the arbiter pass covers the geometry catalog, so those
+      // conflicts are done rather than awaiting a checker. Hallucinate has no
+      // arbiter — require a resolved item that is genuinely unsegmented, so a
+      // segment id can never fall into this branch.
+      const arbitrated = item != null && !item.segments
+        && resolveUnit(units.get(uid) || { raters: new Map() }).consensus === "arbiter";
+      if (arbitrated) arbiter += 1;
+      else if (checkers.length === 0) open += 1;
       else if (checkers.length === 1) one += 1;
       else both += 1;
     }
