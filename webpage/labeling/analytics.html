@@ -355,8 +355,8 @@ if (VGP.requireAdmin()) {
     for (const item of geoItems) {
       const human = resolved[item.id];
       if (!human || human.human_score == null) continue;
-      // non-conflict = the two regular raters agreed; checker-adjudicated
-      // videos are conflicts and stay out unless explicitly included.
+      // non-conflict = the two regular raters agreed. Conflict resolutions
+      // (arbiter score, or a checker pass) stay out unless explicitly included.
       if (!includeChecker && human.consensus !== 'raters') continue;
       const combined = Number(metricById.get(item.id)?.combined_score);
       if (!Number.isFinite(combined)) continue;
@@ -471,10 +471,10 @@ if (VGP.requireAdmin()) {
     document.getElementById('boxStats').innerHTML = `
       <div><b>${records.length}</b><span>videos plotted</span></div>
       <div><b>${fmt(rhoAll)}</b><span>Spearman ρ · all embodiments</span></div>
-      <div><b>${adjudicated}</b><span>checker-resolved conflicts ${boxIncludeChecker ? 'included' : 'excluded'}</span></div>
-      <div><b>${openConflicts}</b><span>conflicts awaiting a checker · never plotted</span></div>`;
+      <div><b>${adjudicated}</b><span>resolved conflicts ${boxIncludeChecker ? 'included' : 'excluded'}</span></div>
+      <div><b>${openConflicts}</b><span>conflicts still unresolved · never plotted</span></div>`;
     document.getElementById('btnBoxScope').textContent =
-      boxIncludeChecker ? 'Non-conflict + checker-resolved' : 'Non-conflict only';
+      boxIncludeChecker ? 'Non-conflict + resolved conflicts' : 'Non-conflict only';
     if (!records.length) {
       host.innerHTML = '<p class="status">No resolved geometry labels yet.</p>';
       return;
@@ -816,7 +816,7 @@ if (VGP.requireAdmin()) {
       'geometric_consistency', 'pose_stability', 'num_disjoint_frames', 'disjoint_frame_ratio', 'combined_score',
       'score_mean', 'score_p90', 'score_max', 'frac_violating', 'real_multiple',
       'human_score', 'human_rating', 'flag', 'mean_flag', 'n_resolved', 'n_raters', 'conflict', 'consensus',
-      'rater_scores', 'checker_scores',
+      'rater_scores', 'checker_scores', 'arbiter_score',
     ];
     const esc = v => {
       if (v == null) return '';

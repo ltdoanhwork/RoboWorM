@@ -13,6 +13,13 @@ const VGP = (() => {
   const HALF = GEO_N; // back-compat alias
   const TARGET_COVER = 2;
   const REVIEWERS = ["quang_check", "thanh_check"];
+  // thanh_check scored all 300 geometry clips offline — that pass is the "score"
+  // column of sampling_dataset/data_for_web/data_for_web.csv, imported into the
+  // labels table by scripts/import_geo_arbiter_labels.py. Because it covers the
+  // whole catalog (not just the conflicts one checker happened to reach), it is
+  // the arbiter for geometry: when the two assigned raters disagree, this score
+  // settles the item outright. See resolveUnit.
+  const GEO_ARBITER = "thanh_check";
   const RATER_ACCOUNTS = Object.freeze({
     nhi_pham: "Nhi Phạm",
     hoang_tran: "Hoàng Trần",
@@ -415,7 +422,10 @@ const VGP = (() => {
     return picked;
   }
 
-  /** Resolve one scoring unit: 2 agreeing raters, else a checker decides. */
+  /**
+   * Resolve one scoring unit: 2 agreeing raters, else the geometry arbiter's
+   * full-catalog score, else a checker decides.
+   */
   function resolveUnit(unit) {
     const regular = regularOf(unit);
     const checkers = checkersOf(unit);
@@ -425,11 +435,17 @@ const VGP = (() => {
     checkers.forEach((row) => { checkerScores[row.rater_name] = row.score; });
     const uniq = new Set(regular.map((row) => row.score));
     const conflict = regular.length >= 2 && uniq.size >= 2;
+    const arbiterRow = checkers.find((row) => normalizeName(row.rater_name) === GEO_ARBITER);
     let humanScore = null;
     let consensus = null;
     if (regular.length >= 2 && uniq.size === 1) {
       humanScore = regular[0].score;
       consensus = "raters";
+    } else if (conflict && arbiterRow != null) {
+      // The arbiter pass covers every catalog item, so a geometry conflict is
+      // settled the moment it exists — no checker has to be scheduled for it.
+      humanScore = arbiterRow.score;
+      consensus = "arbiter";
     } else if (conflict) {
       const cuniq = new Set(checkers.map((row) => row.score));
       if (checkers.length >= 2 && cuniq.size === 1) {
@@ -447,6 +463,7 @@ const VGP = (() => {
       n_checkers: checkers.length,
       rater_scores: raterScores,
       checker_scores: checkerScores,
+      arbiter_score: arbiterRow != null ? arbiterRow.score : null,
       conflict,
       consensus,
     };
@@ -650,7 +667,15 @@ const VGP = (() => {
 
   function pickConflictItems(items, rows, doneIds, n) {
     const bySeg = conflictSegmentsByItem(rows, items);
-    const fresh = (items || []).filter((it) => bySeg[it.id] && !doneIds.has(it.id));
+    const units = labelsByUnit(rows, items);
+    // A geometry conflict the arbiter already decided is not checker work: the
+    // arbiter's score wins in resolveUnit, so queueing it would waste a pass.
+    // Hallucinate is untouched — it has no arbiter and still needs checkers.
+    const settledByArbiter = (it) =>
+      !it.segments && resolveUnit(units.get(it.id) || { raters: new Map() }).consensus === "arbiter";
+    const fresh = (items || []).filter(
+      (it) => bySeg[it.id] && !doneIds.has(it.id) && !settledByArbiter(it)
+    );
     fresh.sort(() => Math.random() - 0.5);
     const picked = n != null ? fresh.slice(0, n) : fresh;
     return { items: picked, segments: bySeg };
@@ -660,7 +685,7 @@ const VGP = (() => {
     const units = labelsByUnit(rows, items);
     const per = {};
     for (const name of REVIEWERS) per[name] = 0;
-    let total = 0, open = 0, one = 0, both = 0;
+    let total = 0, open = 0, one = 0, both = 0, arbiter = 0;
     for (const uid of conflictUnitIds(rows, items)) {
       total += 1;
       const item = (items || []).find((it) => it.id === parentVideoId(uid));
@@ -668,11 +693,14 @@ const VGP = (() => {
         ? REVIEWERS.filter((name) => videoRaterScores(rows, item, true)[name])
         : REVIEWERS.filter((name) => units.get(uid)?.raters.has(name));
       checkers.forEach((name) => { per[name] += 1; });
-      if (checkers.length === 0) open += 1;
+      // Geometry conflicts the arbiter settled are done, not awaiting a checker.
+      if (!item?.segments && resolveUnit(units.get(uid) || { raters: new Map() }).consensus === "arbiter") {
+        arbiter += 1;
+      } else if (checkers.length === 0) open += 1;
       else if (checkers.length === 1) one += 1;
       else both += 1;
     }
-    return { total, open, one, both, per };
+    return { total, open, one, both, arbiter, per };
   }
 
   function batchStorageKey() {

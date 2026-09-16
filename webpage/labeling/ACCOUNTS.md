@@ -24,3 +24,29 @@ Geometry catalog order is the 300-row order from
 `sampling_dataset/data_for_web/data_for_web.csv`. Hallucinate assignment is
 atomic by video: each assigned rater scores every rateable segment, while
 conflict detection compares the two resulting overall video scores.
+
+## Conflict resolution
+
+| Check | Two raters agree | Two raters disagree |
+|---|---|---|
+| Geometry | that score wins (`consensus: raters`) | the arbiter score wins (`consensus: arbiter`) |
+| Hallucinate | that score wins (`consensus: raters`) | a checker decides (`consensus: checker`/`checkers`) |
+
+The **geometry arbiter** is `thanh_check`, who scored all 300 geometry clips
+offline — that pass is the `score` column of `data_for_web.csv`. Because it
+covers the whole catalog rather than only the conflicts a checker happened to
+reach, it settles every geometry conflict on its own, so geometry conflicts are
+never queued as checker work. Load it with:
+
+```bash
+python3 scripts/import_geo_arbiter_labels.py --dry-run   # verify mapping
+python3 scripts/import_geo_arbiter_labels.py             # upsert 300 rows
+```
+
+Row *i* of the CSV is catalog id `{i:05d}`. The importer re-verifies that against
+`metrics.multiview.json` (whose builder checks each rendered clip's `meta.json`
+against the CSV `video_path`) and aborts on any mismatch, since a wrong mapping
+would attach a score to a different video.
+
+Hallucinate has no arbiter, so `quang_check` / `thanh_check` still adjudicate
+those conflicts in the UI.
