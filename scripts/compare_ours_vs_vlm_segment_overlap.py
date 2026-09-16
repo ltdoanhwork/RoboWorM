@@ -1,0 +1,395 @@
+#!/usr/bin/env python3
+"""Ours (kinescore band) vs VLM judges — overlap with HUMAN segment labels.
+
+The bucket's own `overlap/summary.csv` measures each VLM against the
+*kinescore band*, i.e. against OUR method — so by construction ours would
+score 100% there and the table says nothing about who is closer to humans.
+This script instead uses the live human segment labels from the labeling
+site as the reference and reports, on the SAME segments:
+
+    overlap %  = exact 3-way agreement with the human level
+    kappa      = chance-corrected agreement (exact-match is inflated by the
+                 majority class; kappa is not)
+    Spearman   = ordinal correlation (low < medium < high)
+
+Scale mapping: humans score 1 Bad / 2 Medium / 3 Good on *quality*, the
+bucket levels are *hallucination amount*, so Good <-> low and Bad <-> high.
+
+Data:
+  ours + VLM : sampling_dataset/data_for_web/hallucinate_bench/300vid/vlm/
+               results/<model>/<embodiment>.csv  (label = kinescore band,
+               run1..run3 + final = median of runs)
+  human      : Supabase `labels`, item_id = <videoId>_s<index>
+  mapping    : .main-edit/webpage/labeling/catalog.segment.json (the DEPLOYED
+               291-video catalog; the copy in this branch's working tree is an
+               older 300-prune pool with 8370 segments and will not join)
+
+Usage:
+    python3 scripts/compare_ours_vs_vlm_segment_overlap.py
+    python3 scripts/compare_ours_vs_vlm_segment_overlap.py --offline
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
+import matplotlib
+
+matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from scipy import stats
+from sklearn.metrics import cohen_kappa_score, confusion_matrix
+
+REPO = Path(__file__).resolve().parents[1]
+VLM_DIR = REPO / "sampling_dataset/data_for_web/hallucinate_bench/300vid/vlm/results"
+CATALOG = REPO / ".main-edit/webpage/labeling/catalog.segment.json"
+OUT_DIR = REPO / "results/ours_vs_vlm_segment"
+
+REVIEWERS = {"quang_check", "thanh_check"}
+EMBODIMENTS = ["bimanual", "humanoid", "single_arm"]
+LEVELS = ["low", "medium", "high"]
+LEVEL_NUM = {"low": 0, "medium": 1, "high": 2}
+# humans rate quality (3=Good); the bucket rates hallucination amount
+HUMAN_TO_LEVEL = {3: "low", 2: "medium", 1: "high"}
+
+
+def load_labels(offline: bool) -> list[dict]:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "geo_corr", REPO / "scripts/analyze_geometry_label_correlation.py"
+    )
+    geo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(geo)
+    return geo.load_labels(offline)
+
+
+def segment_map() -> pd.DataFrame:
+    """catalog segment -> bucket segment_id."""
+    cat = json.loads(CATALOG.read_text())
+    recs = []
+    for item in cat["items"]:
+        for seg in item["segments"]:
+            if not seg.get("rateable", True):
+                continue
+            recs.append(
+                {
+                    "item_id": f"{item['id']}_s{seg['index']:03d}",
+                    "segment_id": f"{item['video_path']}#{seg['index']}",
+                    "embodiment": item["embodiment"],
+                    "split": item["split"],
+                    "video_id": item["id"],
+                }
+            )
+    return pd.DataFrame(recs)
+
+
+def resolved_human_segments(rows: list[dict]) -> pd.DataFrame:
+    """Per segment: 2 agreeing raters, else a checker's re-score."""
+    df = pd.DataFrame(rows)
+    df = df[df["item_id"].str.contains(r"_s\d+$", regex=True)].copy()
+    recs = []
+    for item_id, grp in df.groupby("item_id"):
+        reg = [int(s) for s in grp.loc[~grp["rater_name"].isin(REVIEWERS), "score"]]
+        chk = [int(s) for s in grp.loc[grp["rater_name"].isin(REVIEWERS), "score"]]
+        if len(reg) >= 2 and len(set(reg)) == 1:
+            human, how = reg[0], "raters"
+        elif len(reg) >= 2 and len(set(chk)) == 1:
+            human, how = chk[0], "checker"
+        else:
+            continue
+        recs.append({"item_id": item_id, "human": human, "how": how, "n_raters": len(reg)})
+    return pd.DataFrame(recs)
+
+
+def load_vlm_segments() -> pd.DataFrame:
+    """Long: segment_id, model, ours_label, run1..3, final."""
+    frames = []
+    for model_dir in sorted(p for p in VLM_DIR.iterdir() if p.is_dir()):
+        for emb in EMBODIMENTS:
+            f = model_dir / f"{emb}.csv"
+            if not f.exists():
+                continue
+            raw = pd.read_csv(f)
+            runs = [c for c in ("run1", "run2", "run3") if c in raw.columns]
+            # qwen3.6-plus-half has a single run and therefore no `final`
+            if "final" not in raw.columns:
+                raw["final"] = raw[runs[0]]
+            keep = ["segment_id", "label", "label_ratio", "final"] + runs
+            sub = raw[keep].copy()
+            sub["model"] = model_dir.name
+            sub["embodiment"] = emb
+            frames.append(sub)
+    out = pd.concat(frames, ignore_index=True)
+    return out.rename(columns={"label": "ours_label"})
+
+
+def agreement(pred: pd.Series, human: pd.Series) -> dict:
+    m = pred.notna() & human.notna()
+    p, h = pred[m].astype(str), human[m].astype(str)
+    if len(p) == 0:
+        return {}
+    overlap = float((p == h).mean())
+    kappa = float(cohen_kappa_score(h, p, labels=LEVELS))
+    pn = p.map(LEVEL_NUM).astype(float)
+    hn = h.map(LEVEL_NUM).astype(float)
+    rho = float(stats.spearmanr(pn, hn).statistic) if pn.nunique() > 1 else float("nan")
+    return {
+        "N": int(len(p)),
+        "overlap": round(overlap, 4),
+        "kappa": round(kappa, 4),
+        "spearman": round(rho, 4) if rho == rho else float("nan"),
+    }
+
+
+def bootstrap_delta(df: pd.DataFrame, col_a: str, col_b: str,
+                    n_boot: int, seed: int) -> dict:
+    """Paired bootstrap over videos (segments inside a video are correlated)."""
+    sub = df[[col_a, col_b, "human_level", "video_id"]].dropna()
+    vids = sub["video_id"].unique()
+    rng = np.random.default_rng(seed)
+    by_vid = {v: g for v, g in sub.groupby("video_id")}
+    d_ov, d_ka = [], []
+    for _ in range(n_boot):
+        pick = rng.choice(vids, size=len(vids), replace=True)
+        s = pd.concat([by_vid[v] for v in pick], ignore_index=True)
+        a = agreement(s[col_a], s["human_level"])
+        b = agreement(s[col_b], s["human_level"])
+        if not a or not b:
+            continue
+        d_ov.append(a["overlap"] - b["overlap"])
+        d_ka.append(a["kappa"] - b["kappa"])
+    d_ov, d_ka = np.array(d_ov), np.array(d_ka)
+    return {
+        "d_overlap": round(float(d_ov.mean()), 4),
+        "d_overlap_lo": round(float(np.percentile(d_ov, 2.5)), 4),
+        "d_overlap_hi": round(float(np.percentile(d_ov, 97.5)), 4),
+        "d_kappa": round(float(d_ka.mean()), 4),
+        "d_kappa_lo": round(float(np.percentile(d_ka, 2.5)), 4),
+        "d_kappa_hi": round(float(np.percentile(d_ka, 97.5)), 4),
+        "n_boot": int(len(d_ov)),
+    }
+
+
+def plot_bars(tbl: pd.DataFrame, out_png: Path, majority: float, n: int) -> None:
+    sns.set_theme(style="whitegrid", font_scale=0.95)
+    fig, axes = plt.subplots(1, 2, figsize=(13, 4.6))
+    for ax, metric, ref, reflabel in (
+        (axes[0], "overlap", majority, f"majority-class baseline ({majority:.3f})"),
+        (axes[1], "kappa", 0.0, "0 = chance"),
+    ):
+        d = tbl.sort_values(metric, ascending=False)
+        colors = ["#2d6cdf" if p.startswith("ours") else "#b0b6c0" for p in d["predictor"]]
+        ax.barh(d["label"], d[metric], color=colors)
+        ax.axvline(ref, color="#d9534f" if metric == "overlap" else "#888", lw=1.2, ls="--")
+        ax.invert_yaxis()
+        ax.set_xlabel(f"{metric}   ({reflabel})")
+        for y, v in enumerate(d[metric]):
+            ax.text(v, y, f" {v:.3f}", va="center", fontsize=8)
+    fig.suptitle(
+        f"Segment-level agreement with HUMAN labels — ours (blue) vs VLM judges (N={n} segments)",
+        fontsize=12,
+    )
+    fig.tight_layout()
+    out_png.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_png, dpi=170, bbox_inches="tight")
+    plt.close(fig)
+    print(f"[plot] {out_png}")
+
+
+def plot_confusions(df: pd.DataFrame, preds: list[tuple[str, str]], out_png: Path) -> None:
+    sns.set_theme(style="white", font_scale=0.85)
+    fig, axes = plt.subplots(1, len(preds), figsize=(3.1 * len(preds), 3.4))
+    for ax, (label, col) in zip(axes, preds):
+        m = df[col].notna() & df["human_level"].notna()
+        cm = confusion_matrix(df.loc[m, "human_level"], df.loc[m, col], labels=LEVELS)
+        cmn = cm / np.maximum(cm.sum(axis=1, keepdims=True), 1)
+        sns.heatmap(cmn, annot=cm, fmt="d", cmap="Blues", vmin=0, vmax=1, cbar=False,
+                    xticklabels=LEVELS, yticklabels=LEVELS, ax=ax)
+        ax.set_title(label, fontsize=9)
+        ax.set_xlabel("predicted")
+        ax.set_ylabel("human" if ax is axes[0] else "")
+    fig.suptitle("Row-normalised confusion vs human level (counts annotated)", fontsize=11)
+    fig.tight_layout()
+    fig.savefig(out_png, dpi=170, bbox_inches="tight")
+    plt.close(fig)
+    print(f"[plot] {out_png}")
+
+
+def calibrate_cuts(df: pd.DataFrame, n_splits: int = 5, seed: int = 0) -> tuple[pd.Series, tuple]:
+    """Re-fit the two kinescore cut points against human labels.
+
+    The shipped cuts (1.0 / 1.5) come from the real-segment p95 definition, not
+    from human agreement, and they make `medium` far too wide (we emit 29%
+    medium where humans use 12%). Cuts are fitted with GroupKFold over VIDEOS
+    and every segment is scored by a fold that never saw its video, so the
+    reported number is out-of-fold and not the optimum-on-itself.
+    """
+    from sklearn.model_selection import GroupKFold
+
+    r = df["label_ratio"].to_numpy()
+    y = df["human_level"].to_numpy()
+    grp = df["video_id"].to_numpy()
+
+    def cut(ratio, t1, t2):
+        return np.where(ratio < t1, "low", np.where(ratio < t2, "medium", "high"))
+
+    grid = [
+        (a, b)
+        for a in np.arange(0.4, 1.45, 0.05)
+        for b in np.arange(a + 0.05, 2.6, 0.05)
+    ]
+    oof = np.empty(len(df), dtype=object)
+    for tr, te in GroupKFold(n_splits=n_splits).split(r, y, grp):
+        best = max(grid, key=lambda t: (cut(r[tr], *t) == y[tr]).mean())
+        oof[te] = cut(r[te], *best)
+    full_best = max(grid, key=lambda t: (cut(r, *t) == y).mean())
+    return pd.Series(oof, index=df.index), tuple(round(float(x), 2) for x in full_best)
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--offline", action="store_true")
+    ap.add_argument("--n-boot", type=int, default=1000)
+    ap.add_argument("--seed", type=int, default=0)
+    args = ap.parse_args()
+
+    smap = segment_map()
+    human = resolved_human_segments(load_labels(args.offline))
+    vlm = load_vlm_segments()
+
+    print(f"[data] catalog rateable segments: {len(smap)}")
+    print(f"[data] resolved human segments  : {len(human)} "
+          f"{human['how'].value_counts().to_dict()}")
+    print(f"[data] VLM models found         : {sorted(vlm['model'].unique())}")
+
+    # wide: one row per segment, columns = ours + each model's final/run1
+    base = smap.merge(human, on="item_id", how="inner")
+    ours = vlm.drop_duplicates("segment_id")[["segment_id", "ours_label", "label_ratio"]]
+    wide = base.merge(ours, on="segment_id", how="inner")
+    wide["human_level"] = wide["human"].map(HUMAN_TO_LEVEL)
+
+    models = sorted(vlm["model"].unique())
+    for m in models:
+        sub = vlm[vlm["model"] == m][["segment_id", "final", "run1"]]
+        sub = sub.rename(columns={"final": f"vlm_{m}", "run1": f"vlm_{m}_r1"})
+        wide = wide.merge(sub, on="segment_id", how="left")
+
+    n = len(wide)
+    if n == 0:
+        raise SystemExit("no segments joined — check catalog/bucket path mapping")
+    print(f"[data] joined segments (human ∩ bucket): {n}")
+    print(f"[data] human level mix: {wide['human_level'].value_counts().to_dict()}\n")
+
+    majority = float(wide["human_level"].value_counts(normalize=True).max())
+
+    wide["ours_cal"], full_cuts = calibrate_cuts(wide, seed=args.seed)
+    print(f"[calib] kinescore cuts refit vs human: shipped (1.00/1.50) -> "
+          f"{full_cuts[0]:.2f}/{full_cuts[1]:.2f} (best on full data; the table "
+          f"below reports the out-of-fold version)\n")
+
+    rows = [{"predictor": "ours", "label": "ours (kinescore band, shipped cuts)",
+             **agreement(wide["ours_label"], wide["human_level"])},
+            {"predictor": "ours_cal", "label": "ours (kinescore, calibrated cuts, out-of-fold)",
+             **agreement(wide["ours_cal"], wide["human_level"])}]
+    for m in models:
+        rows.append({"predictor": m, "label": f"{m} (median of runs)",
+                     **agreement(wide[f"vlm_{m}"], wide["human_level"])})
+        rows.append({"predictor": f"{m}_r1", "label": f"{m} (run1)",
+                     **agreement(wide[f"vlm_{m}_r1"], wide["human_level"])})
+    tbl = pd.DataFrame([r for r in rows if "overlap" in r])
+
+    print("=" * 92)
+    print(f"AGREEMENT WITH HUMAN SEGMENT LABELS (N={n}); "
+          f"majority-class baseline = {majority:.4f}")
+    print("=" * 92)
+    print(tbl.sort_values("overlap", ascending=False).to_string(index=False))
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    tbl.to_csv(OUT_DIR / "overlap_vs_human.csv", index=False)
+
+    # per embodiment
+    print("\n" + "=" * 92)
+    print("PER EMBODIMENT (overlap % vs human)")
+    print("=" * 92)
+    per = []
+    for emb, g in wide.groupby("embodiment"):
+        r = {"embodiment": emb, "N": len(g)}
+        a = agreement(g["ours_label"], g["human_level"])
+        r["ours"] = a.get("overlap")
+        for m in models:
+            r[m] = agreement(g[f"vlm_{m}"], g["human_level"]).get("overlap")
+        per.append(r)
+    per_df = pd.DataFrame(per)
+    print(per_df.to_string(index=False))
+    per_df.to_csv(OUT_DIR / "overlap_by_embodiment.csv", index=False)
+
+    main_tbl = tbl[~tbl["predictor"].str.endswith("_r1")]
+    plot_bars(main_tbl, OUT_DIR / "overlap_ours_vs_vlm.png", majority, n)
+    preds = [("ours (shipped cuts)", "ours_label"),
+             ("ours (calibrated)", "ours_cal")] + [(m, f"vlm_{m}") for m in models]
+    plot_confusions(wide, preds, OUT_DIR / "confusion_vs_human.png")
+
+    print("\n" + "=" * 92)
+    print("HEAD-TO-HEAD — paired bootstrap over VIDEOS (ours CALIBRATED minus VLM)")
+    print("=" * 92)
+    deltas = []
+    for m in models:
+        d = bootstrap_delta(wide, "ours_cal", f"vlm_{m}", args.n_boot, args.seed)
+        verdict = ("OURS higher" if d["d_overlap_lo"] > 0 else
+                   "VLM higher" if d["d_overlap_hi"] < 0 else "tie (CI spans 0)")
+        deltas.append({"vlm": m, **d, "verdict_overlap": verdict})
+    dd = pd.DataFrame(deltas)
+    print(dd[["vlm", "d_overlap", "d_overlap_lo", "d_overlap_hi", "verdict_overlap",
+              "d_kappa", "d_kappa_lo", "d_kappa_hi"]].to_string(index=False))
+    dd.to_csv(OUT_DIR / "head_to_head.csv", index=False)
+
+    print("\n" + "=" * 92)
+    print("BINARY VIEW — drop the medium class (it is only 12% of human labels, "
+          "and the VLMs mostly refuse to emit it)")
+    print("=" * 92)
+    bin_rows = []
+    keep = wide["human_level"] != "medium"
+    for label, col in [("ours (shipped)", "ours_label"), ("ours (calibrated)", "ours_cal")] + \
+                      [(m, f"vlm_{m}") for m in models]:
+        pred = wide.loc[keep, col]
+        truth = wide.loc[keep, "human_level"]
+        ok = pred.notna() & (pred != "medium")
+        bin_rows.append({"predictor": label,
+                         "N_scored": int(ok.sum()),
+                         "N_total": int(keep.sum()),
+                         "abstained_medium": int((pred == "medium").sum()),
+                         "overlap": round(float((pred[ok] == truth[ok]).mean()), 4)})
+    bin_df = pd.DataFrame(bin_rows).sort_values("overlap", ascending=False)
+    print(bin_df.to_string(index=False))
+    bin_df.to_csv(OUT_DIR / "overlap_binary.csv", index=False)
+
+    o = tbl[tbl["predictor"] == "ours"].iloc[0]
+    best = (
+        main_tbl[~main_tbl["predictor"].isin(["ours", "ours_cal"])]
+        .sort_values("overlap", ascending=False)
+        .iloc[0]
+    )
+    oc = tbl[tbl["predictor"] == "ours_cal"].iloc[0]
+    print(f"\n[verdict] ours shipped   : overlap={o['overlap']:.4f} kappa={o['kappa']:+.4f} "
+          f"spearman={o['spearman']:+.4f}")
+    print(f"[verdict] ours calibrated: overlap={oc['overlap']:.4f} kappa={oc['kappa']:+.4f} "
+          f"spearman={oc['spearman']:+.4f}")
+    print(f"[verdict] best VLM : {best['label']}: overlap={best['overlap']:.4f} kappa={best['kappa']:+.4f}")
+    print(f"[verdict] ours(shipped)    - bestVLM: dOverlap={o['overlap']-best['overlap']:+.4f} "
+          f"dKappa={o['kappa']-best['kappa']:+.4f}")
+    print(f"[verdict] ours(calibrated) - bestVLM: dOverlap={oc['overlap']-best['overlap']:+.4f} "
+          f"dKappa={oc['kappa']-best['kappa']:+.4f}")
+    print(f"\n[note] the bucket's own overlap/summary.csv scores VLMs against the "
+          f"kinescore band = OUR method, so ours is 100% there by construction; "
+          f"this table uses HUMAN labels as the reference instead.")
+    print(f"[out] {OUT_DIR}")
+
+
+if __name__ == "__main__":
+    main()
