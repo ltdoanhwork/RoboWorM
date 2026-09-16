@@ -1220,7 +1220,7 @@ const VGP = (() => {
   }
 
   return {
-    HALF, GEO_N, HALLU_N, TARGET_COVER, REVIEWERS, BATCH_VERSION,
+    HALF, GEO_N, HALLU_N, TARGET_COVER, REVIEWERS, BATCH_VERSION, RATER_IDS, RATER_ACCOUNTS,
     CHECK, SCORE_LABEL, BAND_TO_SCORE, normalizeEmbodiment, embLabel, scoreLabel, checkLabel, machineScore,
     getRater, setRater, passOk, setPassOk, adminOk, setAdminOk,
     clearSession, isAdminPath, requireGate, requireAdmin,
