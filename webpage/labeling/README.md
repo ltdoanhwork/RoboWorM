@@ -4,6 +4,12 @@ Static site + Supabase Postgres for storing scores. $0 on Vercel Hobby +
 Supabase Free, as long as this stays a non-commercial research deployment
 (see cost notes below).
 
+> For the full picture — architecture diagram, access model, deterministic
+> assignment math, conflict resolution, operational runbook and how to
+> replicate the stack for another study — see
+> [`docs/labeling-site-architecture.md`](../../docs/labeling-site-architecture.md).
+> This file stays the terse deploy reference.
+
 ```
 gate.html     fixed account login  |  admin passcode (analytics only)
 home.html     hub: fixed assignment = 50 geometry + 48–49 hallucinate videos
