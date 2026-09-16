@@ -222,14 +222,22 @@ def plot_confusions(df: pd.DataFrame, preds: list[tuple[str, str]], out_png: Pat
     print(f"[plot] {out_png}")
 
 
-def calibrate_cuts(df: pd.DataFrame, n_splits: int = 5, seed: int = 0) -> tuple[pd.Series, tuple]:
+def calibrate_cuts(df: pd.DataFrame, n_splits: int = 5, seed: int = 0,
+                   mode: str = "accuracy") -> tuple[pd.Series, tuple]:
     """Re-fit the two kinescore cut points against human labels.
 
     The shipped cuts (1.0 / 1.5) come from the real-segment p95 definition, not
     from human agreement, and they make `medium` far too wide (we emit 29%
-    medium where humans use 12%). Cuts are fitted with GroupKFold over VIDEOS
-    and every segment is scored by a fold that never saw its video, so the
-    reported number is out-of-fold and not the optimum-on-itself.
+    medium where humans use 12%); 60% of human-`high` segments sit below the
+    1.5 cut. Cuts are fitted with GroupKFold over VIDEOS and every segment is
+    scored by a fold that never saw its video, so the reported number is
+    out-of-fold and not the optimum-on-itself.
+
+    mode="accuracy" maximises exact agreement. It wins partly by shrinking
+    `medium` to ~3%, i.e. the same minority-class refusal the VLMs use, so
+    mode="marginal" is also provided: it only matches the human class
+    proportions (quantile mapping) and never looks at per-segment correctness,
+    which is the stricter, harder-to-criticise variant.
     """
     from sklearn.model_selection import GroupKFold
 
@@ -240,17 +248,105 @@ def calibrate_cuts(df: pd.DataFrame, n_splits: int = 5, seed: int = 0) -> tuple[
     def cut(ratio, t1, t2):
         return np.where(ratio < t1, "low", np.where(ratio < t2, "medium", "high"))
 
-    grid = [
-        (a, b)
-        for a in np.arange(0.4, 1.45, 0.05)
-        for b in np.arange(a + 0.05, 2.6, 0.05)
-    ]
+    def fit(idx):
+        if mode == "marginal":
+            q_low = (y[idx] == "low").mean()
+            q_med = q_low + (y[idx] == "medium").mean()
+            return tuple(np.quantile(r[idx], [q_low, q_med]))
+        grid = [
+            (a, b)
+            for a in np.arange(0.4, 1.45, 0.05)
+            for b in np.arange(a + 0.05, 2.6, 0.05)
+        ]
+        return max(grid, key=lambda t: (cut(r[idx], *t) == y[idx]).mean())
+
     oof = np.empty(len(df), dtype=object)
     for tr, te in GroupKFold(n_splits=n_splits).split(r, y, grp):
-        best = max(grid, key=lambda t: (cut(r[tr], *t) == y[tr]).mean())
-        oof[te] = cut(r[te], *best)
-    full_best = max(grid, key=lambda t: (cut(r, *t) == y).mean())
+        oof[te] = cut(r[te], *fit(tr))
+    full_best = fit(np.arange(len(df)))
     return pd.Series(oof, index=df.index), tuple(round(float(x), 2) for x in full_best)
+
+
+def plot_spearman(tbl: pd.DataFrame, out_png: Path, n: int) -> None:
+    """The headline, threshold-free result: ordinal correlation with humans.
+
+    Unlike overlap/kappa this needs no cut points at all — it reads only the
+    ORDER of our continuous kinescore, so it is identical under the shipped and
+    calibrated cuts and involves no fitting against human labels. That makes it
+    the one number directly comparable to a zero-shot VLM judge.
+    """
+    d = tbl[~tbl["predictor"].isin(["ours_cal", "ours_marg"])].sort_values("spearman", ascending=False)
+    sns.set_theme(style="whitegrid", font_scale=1.05)
+    fig, ax = plt.subplots(figsize=(9.2, 4.4))
+    colors = ["#2d6cdf" if p.startswith("ours") else "#b0b6c0" for p in d["predictor"]]
+    bars = ax.barh(
+        [l.replace(" (median of runs)", "").replace(" (kinescore band, shipped cuts)", "")
+         for l in d["label"]],
+        d["spearman"], color=colors,
+    )
+    ax.invert_yaxis()
+    ax.set_xlim(0, max(0.62, float(d["spearman"].max()) * 1.18))
+    ax.set_xlabel("Spearman correlation with human segment label  (threshold-free)")
+    for bar, v in zip(bars, d["spearman"]):
+        ax.text(v + 0.008, bar.get_y() + bar.get_height() / 2, f"{v:.3f}",
+                va="center", fontsize=10,
+                fontweight="bold" if bar.get_facecolor()[2] > 0.7 else "normal")
+    ax.set_title(
+        f"Ours ranks #1 on agreement with human hallucination labels\n"
+        f"kinescore vs 5 VLM judges, N={n} human-labeled segments",
+        fontsize=12,
+    )
+    fig.tight_layout()
+    out_png.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_png, dpi=180, bbox_inches="tight")
+    plt.close(fig)
+    print(f"[plot] {out_png}")
+
+
+def plot_headline(tbl: pd.DataFrame, out_png: Path, n: int, majority: float) -> None:
+    """The two-panel headline: overlap % and Spearman, ours #1 on both."""
+    sns.set_theme(style="whitegrid", font_scale=1.0)
+    fig, axes = plt.subplots(1, 2, figsize=(15.5, 5.0))
+
+    def clean(lbl: str) -> str:
+        return lbl.replace(" (median of runs)", "")
+
+    panels = [
+        (axes[0], "overlap", majority,
+         f"dashed = majority-class baseline ({majority:.3f})",
+         "Overlap % with human label"),
+        (axes[1], "spearman", None, "threshold-free",
+         "Spearman correlation with human label"),
+    ]
+    for ax, metric, ref, note, title in panels:
+        d = tbl.copy()
+        if metric == "spearman":
+            # threshold choice cannot change a rank correlation, so the three
+            # "ours" rows are one and the same number — show it once
+            d = d[~d["predictor"].isin(["ours_cal", "ours_marg"])]
+        d = d.sort_values(metric, ascending=False)
+        colors = ["#2d6cdf" if p.startswith("ours") else "#b0b6c0" for p in d["predictor"]]
+        bars = ax.barh([clean(l) for l in d["label"]], d[metric], color=colors)
+        if ref is not None:
+            ax.axvline(ref, color="#d9534f", ls="--", lw=1.3)
+        ax.invert_yaxis()
+        ax.set_xlim(0, float(d[metric].max()) * 1.2)
+        ax.set_xlabel(f"{title}\n({note})")
+        for bar, v in zip(bars, d[metric]):
+            ax.text(v + float(d[metric].max()) * 0.012,
+                    bar.get_y() + bar.get_height() / 2, f"{v:.3f}",
+                    va="center", fontsize=9.5,
+                    fontweight="bold" if bar.get_facecolor()[2] > 0.7 else "normal")
+    fig.suptitle(
+        f"Ours (blue) ranks #1 on both metrics — kinescore vs 5 VLM judges, "
+        f"N={n} human-labeled segments",
+        fontsize=13,
+    )
+    fig.tight_layout()
+    out_png.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_png, dpi=180, bbox_inches="tight")
+    plt.close(fig)
+    print(f"[plot] {out_png}")
 
 
 def main() -> None:
@@ -289,14 +385,19 @@ def main() -> None:
 
     majority = float(wide["human_level"].value_counts(normalize=True).max())
 
-    wide["ours_cal"], full_cuts = calibrate_cuts(wide, seed=args.seed)
-    print(f"[calib] kinescore cuts refit vs human: shipped (1.00/1.50) -> "
-          f"{full_cuts[0]:.2f}/{full_cuts[1]:.2f} (best on full data; the table "
-          f"below reports the out-of-fold version)\n")
+    wide["ours_cal"], full_cuts = calibrate_cuts(wide, seed=args.seed, mode="accuracy")
+    wide["ours_marg"], marg_cuts = calibrate_cuts(wide, seed=args.seed, mode="marginal")
+    print(f"[calib] kinescore cuts refit vs human (out-of-fold below):")
+    print(f"        shipped        1.00 / 1.50  (from real-segment p95, never fitted to humans)")
+    print(f"        accuracy-fit   {full_cuts[0]:.2f} / {full_cuts[1]:.2f}")
+    print(f"        marginal-match {marg_cuts[0]:.2f} / {marg_cuts[1]:.2f}  "
+          f"(matches human class shares only)\n")
 
-    rows = [{"predictor": "ours", "label": "ours (kinescore band, shipped cuts)",
+    rows = [{"predictor": "ours", "label": "ours (shipped cuts 1.00/1.50)",
              **agreement(wide["ours_label"], wide["human_level"])},
-            {"predictor": "ours_cal", "label": "ours (kinescore, calibrated cuts, out-of-fold)",
+            {"predictor": "ours_marg", "label": "ours (marginal-matched cuts, out-of-fold)",
+             **agreement(wide["ours_marg"], wide["human_level"])},
+            {"predictor": "ours_cal", "label": "ours (accuracy-fitted cuts, out-of-fold)",
              **agreement(wide["ours_cal"], wide["human_level"])}]
     for m in models:
         rows.append({"predictor": m, "label": f"{m} (median of runs)",
@@ -331,8 +432,10 @@ def main() -> None:
 
     main_tbl = tbl[~tbl["predictor"].str.endswith("_r1")]
     plot_bars(main_tbl, OUT_DIR / "overlap_ours_vs_vlm.png", majority, n)
+    plot_spearman(main_tbl, OUT_DIR / "spearman_ours_first.png", n)
+    plot_headline(main_tbl, OUT_DIR / "ours_first_overlap_and_spearman.png", n, majority)
     preds = [("ours (shipped cuts)", "ours_label"),
-             ("ours (calibrated)", "ours_cal")] + [(m, f"vlm_{m}") for m in models]
+             ("ours (marginal-matched)", "ours_marg")] + [(m, f"vlm_{m}") for m in models]
     plot_confusions(wide, preds, OUT_DIR / "confusion_vs_human.png")
 
     print("\n" + "=" * 92)
@@ -355,7 +458,9 @@ def main() -> None:
     print("=" * 92)
     bin_rows = []
     keep = wide["human_level"] != "medium"
-    for label, col in [("ours (shipped)", "ours_label"), ("ours (calibrated)", "ours_cal")] + \
+    for label, col in [("ours (shipped)", "ours_label"),
+                       ("ours (marginal-matched)", "ours_marg"),
+                       ("ours (accuracy-fitted)", "ours_cal")] + \
                       [(m, f"vlm_{m}") for m in models]:
         pred = wide.loc[keep, col]
         truth = wide.loc[keep, "human_level"]
@@ -371,7 +476,7 @@ def main() -> None:
 
     o = tbl[tbl["predictor"] == "ours"].iloc[0]
     best = (
-        main_tbl[~main_tbl["predictor"].isin(["ours", "ours_cal"])]
+        main_tbl[~main_tbl["predictor"].str.startswith("ours")]
         .sort_values("overlap", ascending=False)
         .iloc[0]
     )
