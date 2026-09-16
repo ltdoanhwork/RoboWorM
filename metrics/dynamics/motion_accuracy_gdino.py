@@ -338,16 +338,21 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
             "bg_ego_dy": float(ego[1]),
         }
         if compute_flicker:
-            from metrics.dynamics.actor_flicker import aligned_residual
+            from metrics.dynamics.actor_flicker import residual_variants
             next_fg = union([masks_by_id[j][i + 1] for j in ids])
             if next_fg.shape != mh:
                 next_fg = mask_resize(next_fg, mh)
             forward = fl * max(1, stride)
             backward = flow.compute(f2, f1)
-            value, count = aligned_residual(cv2.imread(f1), cv2.imread(f2),
-                                            forward, backward, fg, next_fg)
-            e["actor_flicker_raw"] = value
+            # All E3 candidate normalizations in one pass: the optical flow and SAM2
+            # masks are what cost GPU time, the variants are numpy on arrays that
+            # already exist. Storing them all makes the choice of statistic a
+            # post-hoc, zero-GPU decision (same principle as the E4 gate).
+            variants, count = residual_variants(cv2.imread(f1), cv2.imread(f2),
+                                                forward, backward, fg, next_fg)
+            e["actor_flicker_raw"] = variants["raw"]
             e["flicker_valid_pixels"] = count
+            e["flicker_variants"] = variants
         per_frame.append(e)
         if i % max(1, len(frames) // 6) == 0:
             overlay(f1, [(obj_m, (0, 200, 0)), (arm_m, (255, 0, 0))],
@@ -355,6 +360,19 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
 
     def mean(key):
         return float(np.mean([p[key] for p in per_frame])) if per_frame else float("nan")
+
+    variant_keys = (per_frame[0].get("flicker_variants") or {}) if per_frame else {}
+    flicker_variants = None
+    if variant_keys:
+        flicker_variants = {}
+        for k in variant_keys:
+            # Clip-level mean over the pairs where the candidate is defined.
+            # `unexplained` is already a ratio of sums within a pair, so averaging
+            # pair values here is a mean of per-pair pooled statistics, not of
+            # per-pixel ratios.
+            vals = [p["flicker_variants"][k] for p in per_frame
+                    if (p.get("flicker_variants") or {}).get(k) is not None]
+            flicker_variants[k] = float(np.mean(vals)) if vals else None
 
     result = {
         "tag": tag, "video": video, "num_frames": n, "num_pairs": len(per_frame),
@@ -388,6 +406,8 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
         "actor_flicker_raw": float(np.mean([p["actor_flicker_raw"] for p in per_frame
             if p.get("actor_flicker_raw") is not None])) if any(
             p.get("actor_flicker_raw") is not None for p in per_frame) else None,
+        # Clip-level mean of every E3 candidate over the pairs where it is defined.
+        "actor_flicker_variants": flicker_variants,
     }
     with open(os.path.join(out_dir, f"{tag}_motion_accuracy_gdino.json"), "w") as f:
         json.dump(result, f, indent=2)
