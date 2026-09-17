@@ -7,7 +7,7 @@ const VGP = (() => {
   const PASS_KEY = "vgp_pass_ok";
   const ADMIN_KEY = "vgp_admin_ok";
   const BATCH_PREFIX = "vgp_batch::";
-  const BATCH_VERSION = 10; // fixed 12-rater assignment; conflicts remain indexed by whole video
+  const BATCH_VERSION = 11; // fixed 12-rater assignment; hallucinate conflict review is per-segment
   const GEO_N = 50;
   const HALLU_N = 49; // maximum; 291 clips give six raters 49 and six raters 48
   const HALF = GEO_N; // back-compat alias
@@ -484,7 +484,7 @@ const VGP = (() => {
       }
       const video = resolveHalluVideo(rows, it);
       const regular = videoRaterScores(rows, it, false);
-      const checkers = videoRaterScores(rows, it, true);
+      const checkers = halluCheckerProfiles(rows, it, regular);
       const adjudicated = video.conflict && video.human_score != null && Object.keys(checkers).length;
       const chosen = adjudicated ? checkers : regular;
       for (const uid of itemLabelIds(it)) {
@@ -554,11 +554,80 @@ const VGP = (() => {
     return out;
   }
 
+  /**
+   * Segment ids the regular raters already agree on -> the agreed score.
+   * These need no checker pass: two independent raters said the same thing.
+   */
+  function halluAgreedSegments(item, regular) {
+    const profiles = Object.values(regular || {});
+    const out = {};
+    if (profiles.length < TARGET_COVER) return out;
+    for (const id of itemLabelIds(item)) {
+      const vals = new Set(profiles.map((p) => p.segment_scores[id]));
+      if (vals.size === 1) out[id] = profiles[0].segment_scores[id];
+    }
+    return out;
+  }
+
+  /**
+   * Segment indices a checker must actually review: only the ones where the two
+   * regular raters disagree. Scoring the agreed segments again is wasted work —
+   * `resolveHalluVideo` fills them from the raters' consensus.
+   */
+  function halluConflictIndices(rows, item) {
+    const all = scoreableSegmentIndices(item) || [];
+    const regular = videoRaterScores(rows, item, false);
+    if (Object.keys(regular).length < TARGET_COVER) return all;
+    const agreed = halluAgreedSegments(item, regular);
+    const kept = all.filter((i) => agreed[segmentId(item.id, i)] == null);
+    return kept.length ? kept : all;
+  }
+
+  /**
+   * Checker profiles for a segmented item, tolerating PARTIAL coverage: a
+   * checker only has to score the disagreeing segments. The remaining segments
+   * are filled from the raters' consensus, so the resulting vector is still a
+   * complete video and its overall score stays comparable to a rater's.
+   *
+   * A checker's own score always wins where present, which keeps the checkers
+   * who reviewed whole videos (before the queue became per-segment) resolving
+   * to exactly the same result as before.
+   */
+  function halluCheckerProfiles(rows, item, regular) {
+    const ids = itemLabelIds(item);
+    const wanted = new Set(ids);
+    const agreed = halluAgreedSegments(item, regular);
+    const needed = ids.filter((id) => agreed[id] == null);
+    const raw = new Map();
+    for (const row of rows || []) {
+      if (!wanted.has(row.item_id) || !isReviewer(row.rater_name)) continue;
+      const name = normalizeName(row.rater_name);
+      if (!raw.has(name)) raw.set(name, new Map());
+      raw.get(name).set(row.item_id, Number(row.score));
+    }
+    const out = {};
+    for (const [name, scores] of raw) {
+      // Reviewing every disagreeing segment is what completes the pass.
+      if (!needed.every((id) => scores.has(id))) continue;
+      const merged = ids.map((id) => (scores.has(id) ? scores.get(id) : agreed[id]));
+      if (merged.some((v) => v == null)) continue;
+      const meanFlag = merged.reduce((sum, s) => sum + scoreToFlagValue(s), 0) / merged.length;
+      out[name] = {
+        overall_score: flagValueToScore(meanFlag),
+        mean_flag: Number(meanFlag.toFixed(4)),
+        segment_scores: Object.fromEntries(ids.map((id, i) => [id, merged[i]])),
+        n_reviewed: needed.filter((id) => scores.has(id)).length,
+        n_needed: needed.length,
+      };
+    }
+    return out;
+  }
+
   /** Whole-video hallucinate consensus/conflict. */
   function resolveHalluVideo(rows, item) {
     const regular = videoRaterScores(rows, item, false);
-    const checkers = videoRaterScores(rows, item, true);
     const regularEntries = Object.entries(regular);
+    const checkers = halluCheckerProfiles(rows, item, regular);
     const checkerEntries = Object.entries(checkers);
     const regularScores = new Set(regularEntries.map(([, p]) => p.overall_score));
     const conflict = regularEntries.length >= TARGET_COVER && regularScores.size >= 2;
@@ -630,13 +699,17 @@ const VGP = (() => {
     return [...new Set(conflictUnitIds(rows, items).map((uid) => parentVideoId(uid)))];
   }
 
-  /** Hallucinate conflicts always assign every rateable segment in the video. */
+  /**
+   * Segments a checker is assigned per conflicting item. Hallucinate hands out
+   * ONLY the segments where the two regular raters disagree (the agreed ones are
+   * resolved without a checker); geometry has no segments.
+   */
   function conflictSegmentsByItem(rows, items) {
     const out = {};
     const conflicts = new Set(conflictIds(rows, items));
     for (const it of items || []) {
       if (!conflicts.has(it.id)) continue;
-      out[it.id] = it.segments ? scoreableSegmentIndices(it) : [];
+      out[it.id] = it.segments ? halluConflictIndices(rows, it) : [];
     }
     return out;
   }
@@ -649,7 +722,7 @@ const VGP = (() => {
         const video = resolveHalluVideo(rows, it);
         if (!video.conflict) continue;
         const regular = videoRaterScores(rows, it, false);
-        const checkers = videoRaterScores(rows, it, true);
+        const checkers = halluCheckerProfiles(rows, it, regular);
         const labels = [
           ...Object.entries(regular).map(([name, p]) => ({ rater_name: name, score: p.overall_score, segment_scores: p.segment_scores })),
           ...Object.entries(checkers).map(([name, p]) => ({ rater_name: name, score: p.overall_score, segment_scores: p.segment_scores })),
@@ -690,7 +763,10 @@ const VGP = (() => {
       total += 1;
       const item = (items || []).find((it) => it.id === parentVideoId(uid));
       const checkers = item && item.segments
-        ? REVIEWERS.filter((name) => videoRaterScores(rows, item, true)[name])
+        ? REVIEWERS.filter(
+            (name) =>
+              halluCheckerProfiles(rows, item, videoRaterScores(rows, item, false))[name]
+          )
         : REVIEWERS.filter((name) => units.get(uid)?.raters.has(name));
       checkers.forEach((name) => { per[name] += 1; });
       // Geometry only: the arbiter pass covers the geometry catalog, so those
@@ -1261,7 +1337,7 @@ const VGP = (() => {
     videoComplete, videoTouched, raterStats,
     coverageCounts, segmentCoverage, pickLeastLabeled, fixedAssignedItems, conflictIds, conflictUnitIds,
     conflictSegmentsByItem, conflictRows, resolveHuman, resolveSegments,
-    videoRaterScores, resolveHalluVideo,
+    videoRaterScores, resolveHalluVideo, halluCheckerProfiles, halluConflictIndices,
     scoreToFlagValue, flagValueToScore,
     getBatch, getValidBatch, isStaleOpenBatch, saveBatch, submitBatch, reopenBatch, batchRemaining, clearBatch, createBatch, getOrCreateBatch,
     itemsFromIds, renderStepStrip, preloadVideos, anyDialogOpen, bindExampleRemind,
