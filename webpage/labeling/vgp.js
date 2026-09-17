@@ -7,7 +7,7 @@ const VGP = (() => {
   const PASS_KEY = "vgp_pass_ok";
   const ADMIN_KEY = "vgp_admin_ok";
   const BATCH_PREFIX = "vgp_batch::";
-  const BATCH_VERSION = 11; // fixed 12-rater assignment; hallucinate conflict review is per-segment
+  const BATCH_VERSION = 12; // fixed 12-rater assignment; hallucinate conflict is per-segment
   const GEO_N = 50;
   const HALLU_N = 49; // maximum; 291 clips give six raters 49 and six raters 48
   const HALF = GEO_N; // back-compat alias
@@ -580,7 +580,10 @@ const VGP = (() => {
     if (Object.keys(regular).length < TARGET_COVER) return all;
     const agreed = halluAgreedSegments(item, regular);
     const kept = all.filter((i) => agreed[segmentId(item.id, i)] == null);
-    return kept.length ? kept : all;
+    // Empty means the two raters agree on every segment — such a video is not a
+    // conflict, so it is never handed to a checker. Do NOT fall back to `all`
+    // here: that would silently hand out a whole video that needs no review.
+    return kept;
   }
 
   /**
@@ -629,11 +632,17 @@ const VGP = (() => {
     const regularEntries = Object.entries(regular);
     const checkers = halluCheckerProfiles(rows, item, regular);
     const checkerEntries = Object.entries(checkers);
-    const regularScores = new Set(regularEntries.map(([, p]) => p.overall_score));
-    const conflict = regularEntries.length >= TARGET_COVER && regularScores.size >= 2;
+    const covered = regularEntries.length >= TARGET_COVER;
+    // Conflict is decided PER SEGMENT: the two raters conflict when they differ
+    // on ANY segment. Comparing their rounded per-video means instead would hide
+    // a video whose segment scores differ but whose 64-segment averages happen
+    // to round to the same 1-3 score — those segments would then never reach a
+    // checker and would stay unresolved forever.
+    const agreed = halluAgreedSegments(item, regular);
+    const conflict = covered && itemLabelIds(item).some((id) => agreed[id] == null);
     let humanScore = null;
     let consensus = null;
-    if (regularEntries.length >= TARGET_COVER && regularScores.size === 1) {
+    if (covered && !conflict) {
       humanScore = regularEntries[0][1].overall_score;
       consensus = "raters";
     } else if (conflict && checkerEntries.length) {
