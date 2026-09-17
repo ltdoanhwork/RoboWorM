@@ -7,7 +7,7 @@ const VGP = (() => {
   const PASS_KEY = "vgp_pass_ok";
   const ADMIN_KEY = "vgp_admin_ok";
   const BATCH_PREFIX = "vgp_batch::";
-  const BATCH_VERSION = 12; // fixed 12-rater assignment; hallucinate conflict is per-segment
+  const BATCH_VERSION = 13; // per-segment hallucinate conflict; checker queue split 2 ways
   const GEO_N = 50;
   const HALLU_N = 49; // maximum; 291 clips give six raters 49 and six raters 48
   const HALF = GEO_N; // back-compat alias
@@ -747,7 +747,25 @@ const VGP = (() => {
     return out;
   }
 
-  function pickConflictItems(items, rows, doneIds, n) {
+  /**
+   * Which checker owns a conflicting hallucinate video. The two checkers must
+   * never be handed the SAME video: resolveHalluVideo only accepts a checker
+   * verdict when there is a single checker or the checkers agree, so a second
+   * checker who disagrees would turn an already-resolved video back into an
+   * unresolved one. A stable hash of the video id splits the queue with no
+   * shared state and no coordination.
+   */
+  function checkerFor(itemId) {
+    return REVIEWERS[fnv1a(String(itemId)) % REVIEWERS.length];
+  }
+
+  /** True when some checker has already reviewed every disagreeing segment. */
+  function halluSettled(rows, item) {
+    const regular = videoRaterScores(rows, item, false);
+    return Object.keys(halluCheckerProfiles(rows, item, regular)).length > 0;
+  }
+
+  function pickConflictItems(items, rows, doneIds, n, checker) {
     const bySeg = conflictSegmentsByItem(rows, items);
     const units = labelsByUnit(rows, items);
     // A geometry conflict the arbiter already decided is not checker work: the
@@ -755,8 +773,15 @@ const VGP = (() => {
     // Hallucinate is untouched — it has no arbiter and still needs checkers.
     const settledByArbiter = (it) =>
       !it.segments && resolveUnit(units.get(it.id) || { raters: new Map() }).consensus === "arbiter";
+    const mine = (it) => {
+      if (!it.segments || !checker) return true;
+      // Skip what another checker already finished, then keep only this
+      // checker's half of the remaining queue.
+      if (halluSettled(rows, it)) return false;
+      return checkerFor(it.id) === normalizeName(checker);
+    };
     const fresh = (items || []).filter(
-      (it) => bySeg[it.id] && !doneIds.has(it.id) && !settledByArbiter(it)
+      (it) => bySeg[it.id] && !doneIds.has(it.id) && !settledByArbiter(it) && mine(it)
     );
     fresh.sort(() => Math.random() - 0.5);
     const picked = n != null ? fresh.slice(0, n) : fresh;
@@ -875,8 +900,8 @@ const VGP = (() => {
     let svPick;
     let svSegs;
     if (reviewer) {
-      mvPick = pickConflictItems(mvItems, allRows, mvDone).items;
-      const sv = pickConflictItems(svItems, allRows, svDone);
+      mvPick = pickConflictItems(mvItems, allRows, mvDone, null, getRater()).items;
+      const sv = pickConflictItems(svItems, allRows, svDone, null, getRater());
       svPick = sv.items;
       svSegs = {};
       svPick.forEach((it) => { svSegs[it.id] = sv.segments[it.id] || []; });
@@ -1346,6 +1371,7 @@ const VGP = (() => {
     videoComplete, videoTouched, raterStats,
     coverageCounts, segmentCoverage, pickLeastLabeled, fixedAssignedItems, conflictIds, conflictUnitIds,
     conflictSegmentsByItem, conflictRows, resolveHuman, resolveSegments,
+    pickConflictItems, checkerFor, halluSettled,
     videoRaterScores, resolveHalluVideo, halluCheckerProfiles, halluConflictIndices,
     scoreToFlagValue, flagValueToScore,
     getBatch, getValidBatch, isStaleOpenBatch, saveBatch, submitBatch, reopenBatch, batchRemaining, clearBatch, createBatch, getOrCreateBatch,
