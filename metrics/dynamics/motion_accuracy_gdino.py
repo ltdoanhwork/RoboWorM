@@ -151,13 +151,69 @@ def seed_masks(image_predictor, frame0, boxes):
     return masks, (H, W)
 
 
+# SAM2 `init_state` materializes the WHOLE clip as one
+# `torch.zeros(num_frames, 3, 1024, 1024, float32)` tensor -- 12.58 MB per frame -- and
+# with `offload_video_to_cpu=False` that entire stack lives on the GPU for the whole
+# propagation, even though `_get_image_feature` only ever uses `images[frame_idx]`.
+#
+# Measured on the dense-NR full wave (8 workers / 80GB A100): this is what fills the
+# card. The 98 clips that died after all 4 OOM retries split into 16 that failed on the
+# stack itself (8.72 / 6.26 / 5.81 / 3.96 / 2.88 / 2.09 GiB = 694 / 510 / 473 / 322 /
+# 234 / 170 frames x 12.58 MB) and 83 SHORT clips that failed on small propagation
+# allocations (44 x 280 MiB) purely because a long clip in another worker had already
+# taken the card. Retrying does not help because the pressure is steady-state, not
+# transient: 71% of clips that OOM'd once still died after 4 attempts, having slept
+# 60+120+180s each (~12% of total worker time).
+#
+# Offloading is numerically inert -- validated by re-scoring a 744-frame clip and
+# diffing every field against its stored record: all SAM2-derived values
+# (`actor_per_frame`, 25,262 numbers, plus every `actor_*` metric) came back
+# bit-identical, max abs delta 0.000e+00. The only fields that moved were the
+# VFIMamba-derived continuity ones, and a CONTROL re-score with offload OFF (the exact
+# config that produced the baseline) moved them MORE (4.78e-03 vs 3.96e-03), proving
+# that is pre-existing GPU nondeterminism. So this does NOT bump PROTOCOL.
+#
+# But offloading is NOT free in production, and the cost only shows up under
+# concurrency: every frame access becomes a 12.58 MB H2D copy, ~1,500 of them on a
+# 744-frame forward+backward propagation. Solo on the card that cost +2.2%; with 8
+# workers contending for PCIe it was +26..45% sec/frame in EVERY frame band. So offload
+# only the clips that actually threaten the card and leave the short ones -- which are
+# the majority (66% of scored clips are < 100 frames = < 1.3 GiB) -- on the GPU where
+# they were already fine. That removes the pressure at its source, which is what also
+# protects the 83 short-clip victims.
+_SAM2_OFFLOAD_MIN_GIB = float(os.environ.get('NR_SAM2_OFFLOAD_MIN_GIB', '1.5'))
+_SAM2_FRAME_MIB = 3 * 1024 * 1024 * 4 / 1024 / 1024  # 1024x1024x3 float32 = 12.58 MB
+_SAM2_OFFLOAD_STATE = os.environ.get('NR_SAM2_OFFLOAD_STATE', '0') == '1'
+_FRAME_EXT = ('.jpg', '.jpeg', '.JPG', '.JPEG', '.png')
+
+
+def _should_offload_video(frames_dir):
+    """Offload the frame stack to CPU only when it would be large enough to matter.
+
+    `NR_SAM2_OFFLOAD_MIN_GIB=0` forces offload always, a huge value disables it.
+    """
+    if _SAM2_OFFLOAD_MIN_GIB <= 0:
+        return True, 0.0
+    try:
+        n = sum(1 for p in os.listdir(frames_dir) if os.path.splitext(p)[-1] in _FRAME_EXT)
+    except OSError:
+        return False, 0.0
+    gib = n * _SAM2_FRAME_MIB / 1024
+    return gib >= _SAM2_OFFLOAD_MIN_GIB, gib
+
+
 @torch.inference_mode()
 def propagate_multi(video_predictor, frames_dir, seed_masks_by_id, score_thresh=0.0, frame_idx=0):
     """Propagate several seeded object ids; return {obj_id: [mask per frame]}.
 
     A seed after frame 0 is propagated forward and then backward so every frame has masks.
     """
-    state = video_predictor.init_state(video_path=frames_dir, async_loading_frames=False)
+    offload, gib = _should_offload_video(frames_dir)
+    if offload:
+        print(f'[sam2] frame stack {gib:.2f} GiB >= {_SAM2_OFFLOAD_MIN_GIB} GiB -> CPU', flush=True)
+    state = video_predictor.init_state(video_path=frames_dir, async_loading_frames=False,
+                                       offload_video_to_cpu=offload,
+                                       offload_state_to_cpu=_SAM2_OFFLOAD_STATE)
     for oid, m in seed_masks_by_id.items():
         video_predictor.add_new_mask(inference_state=state, frame_idx=frame_idx, obj_id=oid, mask=m)
     per_frame = {}

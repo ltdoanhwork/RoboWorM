@@ -583,7 +583,14 @@ def worker(args):
                 return v
             return clean(result)
 
-    for row in rows[args.shard::args.workers]:
+    # Global stride partition. `--machines M --machine k` makes machine k own shard
+    # indices [k*W, (k+1)*W) of a global M*W stride, so M machines partition the manifest
+    # EXACTLY once with no overlap and no coordination. This supersedes --reverse for
+    # anything past 2 machines: --reverse relies on two queues meeting in the middle and
+    # re-doing whatever they overlap on, which is fine for 2 but has no 3-way analogue.
+    stride = args.workers * args.machines
+    offset = args.machine * args.workers + args.shard
+    for row in rows[offset::stride]:
         dest = args.out/'results'/f'{row["id"]}.json'
         if dest.exists():
             continue
@@ -622,6 +629,16 @@ def main():
                     help='build a small GT/pred validation manifest instead of the full inventory')
     ap.add_argument('--smoke-per-group', type=int, default=2)
     ap.add_argument('--seed', type=int, default=20260915)
+    ap.add_argument('--machines', type=int, default=1,
+                    help='TOTAL number of machines/GPUs sharing this run dir. With '
+                         '--machine k, machine k processes rows[k*W + s :: W*machines] '
+                         'for each of its W workers, so M machines partition the '
+                         'manifest exactly once -- no overlap, no coordination, and '
+                         'every machine still walks in id order so each one stays '
+                         'representative if stopped early. Use this instead of '
+                         '--reverse for 3+ machines (--reverse only has a 2-way form).')
+    ap.add_argument('--machine', type=int, default=0,
+                    help='0-based index of THIS machine, must be < --machines.')
     ap.add_argument('--reverse', action='store_true',
                     help='walk the id-sorted manifest backwards. Lets a SECOND machine '
                          'join an in-flight run without restarting the first: the two '
@@ -642,6 +659,13 @@ def main():
                          'manifest.json (inventory is filesystem-dependent) into a '
                          'shared run directory.')
     args = ap.parse_args(); args.out = args.out.resolve(); args.out.mkdir(parents=True, exist_ok=True)
+    if not 0 <= args.machine < args.machines:
+        raise SystemExit(f'--machine {args.machine} must be in [0, {args.machines})')
+    if args.machines > 1 and args.reverse:
+        # Both mechanisms partition the same manifest; combining them would make machine
+        # k walk a stride it does not own from the other end and duplicate work.
+        raise SystemExit('--reverse is the 2-machine mechanism; with --machines use '
+                         '--machine k on every machine and drop --reverse')
     if args.shard >= 0:
         worker(args); return
     if args.reuse_manifest and not (args.out/'manifest.json').exists():
@@ -654,22 +678,24 @@ def main():
             print(f'SMOKE {len(rows)} view-clips', flush=True)
     if args.inventory_only: return
     processes = []
-    tag = 'rev' if args.reverse else 'fwd'
+    tag = f'rev' if args.reverse else (f'm{args.machine}' if args.machines > 1 else 'fwd')
     for i in range(args.workers):
-        # Log name carries direction so a second machine sharing the run dir cannot
-        # append into the first machine's logs.
+        # Log name carries machine/direction so machines sharing the run dir cannot
+        # append into each other's logs.
         log = (args.out/f'worker_{tag}_{i}.log').open('a')
         cmd = [sys.executable, '-u', __file__, '--out', str(args.out),
-               '--workers', str(args.workers), '--shard', str(i)]
+               '--workers', str(args.workers), '--shard', str(i),
+               '--machines', str(args.machines), '--machine', str(args.machine)]
         if args.reverse:
             cmd.append('--reverse')
         p = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT)
         processes.append(p); log.close()
     codes = [p.wait() for p in processes]
-    if args.reverse:
-        # Only the forward (owning) queue runs the plotting hook, so the two machines
+    if args.reverse or args.machine > 0:
+        # Only the owning queue (forward / machine 0) runs the plotting hook, so machines
         # cannot race on figures/ and coverage.json.
-        dump(args.out/'queue_finished_rev.json', {'worker_exit_codes':codes, 'time':time.time()})
+        dump(args.out/f'queue_finished_{tag}.json',
+             {'worker_exit_codes': codes, 'time': time.time()})
         if any(codes): raise SystemExit(1)
         return
     subprocess.run([sys.executable, str(ROOT/'scripts/plot_dense_nr.py'), '--run', str(args.out)], check=True)

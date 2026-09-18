@@ -240,3 +240,5 @@ metrics/sim2real_out/*
 compare/*
 results/*
 assets/*
+archive/*
+checkpoint_ablation/*

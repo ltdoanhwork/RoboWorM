@@ -1410,3 +1410,203 @@ Read the *whole* table before trusting the flag. Both bugs were invisible at 1�
 (the pilot) and obvious at 9, because a `RESOLVED p=0.62` row sitting next to a
 `RESOLVED p=4e-05` row is self-evidently wrong. Scale the comparison up before scaling
 the claim up.
+
+## Stratified full-`sampling_dataset` wave (DONE) — and the render-mismatch bug it exposed
+
+The user asked to "run full `sampling_dataset`". Full inventory over all 10 method trees is
+**87,327 view-clips**. Measured throughput is **3.0 clips/min** (10 workers, A100-80GB,
+GPU-bound: 100% util, 80/82 GB; 5→10 workers only bought 2.1→3.0, so more workers do
+nothing) ⇒ **~474 h ≈ 20 GPU-days**, and it buys almost nothing statistically: the pooled
+accel claims already resolve at n=30 (p to 1e-06) and a bootstrap CI narrows as 1/√n, so
+full-n is 250× compute for 0.06× CI width and **no new claim**.
+
+What was actually missing was the **per-cell** tables (1 of 124 rows resolved). Those are
+cheap: capping each cell brings 153/154 accel cells to n≥8. So we ran a stratified wave
+(`scripts/_stratify_full_nr.py`, accel-target 12 / dense-target 40) = **1,609 clips, 0
+errors**, pooled dir now **3,571 records**, all `dense-nr-v3.2-closed-world`.
+
+Result: **per-cell went from 1/124 resolved to 208 resolved over 136 rows, 134 at n≥8** —
+the per-cell breakdown is now a real table. Pooled n rose to 93–228/method (p to 1e-29).
+
+`_stratify_full_nr.py` is dependency-aware, which is the only non-obvious part: an accel
+clip is worthless without its dense partner and a dense clip is worthless without its GT
+anchor, so it prefers rows whose partner is already scored and pulls the partner in when it
+must. Measured effect: 1,566 accel clips needed only **698 distinct dense partners (2.24×
+reuse), 662 already scored** ⇒ only +11 paid partners. 100% of selected accel clips ended
+up pairable.
+
+### OOM is a real ceiling at 10 workers (fixed)
+
+10 workers × ~8 GB = the whole 80 GB card, and **20 of the first 154 clips died with OOM
+after all 4 retries (13% loss)**, concentrated in multiview 4-view-grid clips whose SAM2
+propagation peaks far above the median. The 16-clip probe never showed it. Fixes:
+`PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` in `run_dense_nr.sh` plus **7 workers**
+(VRAM 57/80 GB). A later 42-clip OOM batch was fully recovered at **3 workers → 0 errors**,
+confirming these were contention, not bad clips. Final: **1,609/1,609, 0 errors.**
+
+### THE BUG: the dense tree is not always the same render as the accel tree
+
+`fastercache` came out **AMC +1.23 RESOLVED = better than dense**, a ceiling violation.
+Chasing it found something much worse than one method:
+
+1. Not blur/smoothing — per-model character showed dreamgen fastercache at sharpness
+   **1.002×**, temporal 0.993×, dup 0.000 vs dense (i.e. indistinguishable).
+2. Not motion smoothing — inside the top-decile motion region, fastercache had the
+   *smallest* jerk reduction (0.936×) while dicache/worldcache/radial cut it more
+   (0.855–0.876×) yet scored AMC *negative*. Mechanism ruled out.
+3. The tell: on `dreamgen/single_arm`, AMC was positive for **all nine methods**
+   (+3.2 to +17.1; radial, a near-no-op, showed AMC 72.4 vs dense 43.6).
+
+Cause: at the *same relative path*,
+`sampling_dataset/dense/single_arm/output/multiview/dreamgen/` holds **277 frames @ 16 fps**
+while every accel tree holds **93 frames @ 10 fps**. The dense tree there was generated
+with a different rollout config. `pair_key` cannot catch this — the clips genuinely are the
+same episode+view, they were just **rendered differently** — and AMC/motion columns are
+per-source-frame quantities, so a 3× length + fps difference moves them regardless of
+method.
+
+Spread: **226/1836 accel pairs (12.4%)**, of which `dreamgen/single_arm` is **216/216 =
+100%**, plus 3 dreamdojo/single_arm, 6 dreamgen/humanoid, 1 dreamgen/bimanual.
+
+Fix = `comparable_pair()` in `table_dense_nr.py`: require identical `source_fps` and
+`effective_fps` and length within 10%. **All three fields were already stored, so the gate
+is post-hoc and needed zero rescoring** — the same design that made the earlier gate
+changes free. Applied to T2 (pred vs GT) as well as T3/T3b, and the rejected counts are
+printed per method.
+
+Effect: **fastercache AMC +1.23 RESOLVED → +0.37 ns**, and T3b now has **26 resolved
+deltas, every single one negative — zero ceiling violations.** The 13 remaining positive
+cells live only in T3 (the per-cell breakdown, not a claim table), 10 of them humanoid at
+n=8–12, i.e. the already-documented `NOT_CROSS_EMBODIMENT` AMC anomaly plus small-n noise.
+
+### Headline after the gate (pooled, delta = accel − its own dense clip)
+
+| method | VI | AMC | TextAlign | ActorActivity |
+|---|---|---|---|---|
+| itm | **−6.31** R | **−7.05** R | −1.25 R | −0.42 R |
+| sito | **−5.36** R | **−5.06** R | −0.97 R | −0.39 R |
+| svg2 | −1.68 R | −2.66 R | −0.17 R | +0.01 ns |
+| dicache | −1.22 R | −0.99 R | −0.16 R | −0.04 R |
+| worldcache | −0.89 R | −1.07 R | −0.14 R | −0.00 ns |
+| pisa | −0.63 R | −0.31 ns | −0.24 R | −0.03 ns |
+| svg1 | −0.48 R | −0.76 ns | −0.21 R | −0.05 R |
+| fastercache | −0.28 ns | +0.37 ns | −0.08 ns | −0.04 R |
+| radial | −0.07 ns | −0.47 ns | −0.04 ns | +0.01 ns |
+
+Ordering is unchanged from the n=30 wave — which is the point: the extra 1,609 clips
+tightened CIs and **exposed a data bug**, but did not move any conclusion.
+
+### Lessons
+
+1. **"Run everything" is usually the wrong instrument.** Compute the CI-vs-n curve first:
+   here 1.8% of the full budget bought the entire missing table, and the other 98% bought
+   0.06× CI width.
+2. **A paired key proves identity, not comparability.** Same episode + same view can still
+   be a different *render*. Any paired benchmark across separately-generated trees needs an
+   explicit same-measurement gate (fps + length at minimum), not just a join key.
+3. **A ceiling violation is a bug report.** Three mechanism hypotheses were killed by
+   measurement before the real cause showed up; the giveaway was that the anomaly held for
+   *all nine methods* in one cell, which no method-specific story can explain.
+4. **Store provenance fields even when unused** (`source_fps`, `effective_fps`,
+   `sampled_source_frames`). They turned a 20-GPU-day re-scoring problem into a
+   post-hoc filter.
+
+## Main-results matrix (2026-09-17) + the AMC over-smoothing gate
+
+`scripts/table_main_results.py` builds the paper's main grid: **rows = (model,
+embodiment, view_type), columns = the 9 acceleration methods**, one table per metric.
+It imports every gate, delta and `resolved` decision from `table_dense_nr.py` rather
+than reimplementing them, so it cannot disagree with T3b about the same pairs.
+
+Aggregating over **mount** (not over model or embodiment) is what makes the cells
+readable: 88 non-empty cells, **77 at n>=8** (88%). Mount is not the axis a reader
+cares about, and mount-level cells were too thin to scan as a matrix. The cost is
+reported, not hidden: cells with >=34% head-mount clips carry the `CONFOUNDED_MOUNTS`
+marker for AMC/VI.
+
+### What the matrix immediately exposed: 4 cells where accel BEAT dense
+
+The pooled T3b table has one row per method, so a per-cell ceiling violation averages
+away. At (model x embodiment x view) granularity, 4 cells had an accel method beating
+its own dense counterpart with the CI excluding 0 and p down to 2e-05:
+
+| cell | delta | p |
+|---|---|---|
+| fastercache dreamgen/humanoid/MV | AMC **+7.02** | 4e-05 |
+| pisa ctrlworld_4view/humanoid/MV | AMC **+4.35** | 2e-05 |
+| svg1 ctrlworld_4view/humanoid/MV | AMC **+2.57** | 6e-04 |
+| radial dreamdojo/single_arm/SV | VI **+0.18** | 0.023 |
+
+`comparable_pair()` had already cleared all of them — identical `source_fps`,
+`effective_fps`, frame count, analysis geometry **and** mount — so this is NOT the
+render-mismatch bug found earlier. Measuring the pixels of those exact pairs found the
+real mechanism, and it is **second-order temporal jerk** (how far the middle frame sits
+from the linear interpolation of its neighbours), which is precisely AMC's VFI-gain
+denominator:
+
+| cell (n=10 pairs) | dAMC | sharpness | temporal | **JERK** |
+|---|---|---|---|---|
+| fastercache dreamgen/humanoid/MV | +7.02 | x0.918 | x0.897 | **x0.859** |
+| pisa ctrlworld_4view/humanoid/MV | +3.80 | x0.941 | x0.913 | **x0.896** |
+| svg1 ctrlworld_4view/humanoid/MV | +2.79 | x0.970 | x0.918 | **x0.905** |
+| *control:* itm dreamgen/humanoid/MV | −4.72 | x0.759 | x1.376 | **x1.275** |
+| *control:* sito dreamgen/bimanual/MV | −9.77 | x0.746 | x1.001 | **x0.965** |
+
+Every positive-AMC cell has **JERK < 1** (output more predictable than dense); every
+negative one sits at **x0.96–x1.28**. So a positive AMC delta measures over-smoothing,
+not quality.
+
+**This is a larger effect than the existing `ACCEL_CAVEATS` blur bias** (+7.02 vs the
++0.50 measured at realistic blur in E7), because it is driven by *temporal* smoothing
+which E7's synthetic spatial blur never reproduced. The caveat's "a positive AMC delta
+<= ~+0.5 must not be read as better" bound was therefore too small to catch this.
+
+### Enforcement
+
+New `NO_IMPROVEMENT_VS_DENSE` set in `table_dense_nr.py` (holds `active_motion_continuity`):
+
+- `resolved_flag()` refuses to claim a positive delta on such a column vs dense.
+- `artifact_positive()` reports it instead, so the cell is **flagged, never silently
+  dropped**: `!` in the console, `\textit{...}$^{\S}$` + a footnote in LaTeX, and an
+  `artifact_positive` column in the CSV.
+
+Result: 3 AMC cells moved from RESOLVED to artifact-flagged; **T3b changed 0 fields**
+(the pooled numbers were already all negative), so this adds enforcement at per-cell
+granularity without disturbing the published headline.
+
+The remaining `radial dreamdojo/single_arm/SV` VI **+0.18** is left as a resolved
+positive on purpose. It is statistically real (p=0.023, CI [+0.04, +0.68]) but
+**1.8% of the Visual Integrity IQR and ~15x smaller than the median resolved negative
+effect** (2.73). Rather than invent a threshold to suppress it, it is reported: at this
+magnitude "radial is indistinguishable from dense on VI" is the honest reading, which
+matches its pooled row (−0.07 ns).
+
+### Speedup was deliberately NOT merged into the main table
+
+`metrics/reports/speedup_summary_full.csv` has the right granularity
+(model/embodiment/view) but only **29/108 cells carry a speedup number**, and
+`timing_source` shows they are transcribed from the tuning-notes rules, not measured
+per-episode like the NR deltas (71–228 pairs each). Joining them would put a
+hand-copied single number next to a bootstrapped distribution in the same table. The
+pooled join (9 methods) is sound and worth reporting on its own:
+
+- **No speed/quality trade-off**: Spearman(speedup, dVI) = **+0.32** — the *faster*
+  methods lose *less* quality. DiCache (1.50x) and WorldCache (1.47x) are both fastest
+  and among the cleanest; ITM/SiTo cost ~7x more quality for 1.13–1.15x. SVG2 is worst
+  on both axes (0.97x = slower than dense, and −1.68/−2.66).
+- **NR agrees with PSNR**: Spearman(PSNR-retention, dVI) = **+0.55**, vs dAMC = **+0.60**
+  — a second independent check after the pixel-sharpness rho +0.67.
+- Caveat: `FasterCache PSNR-retention = 1.004` (better than dense) is the same *class*
+  of signal as the render-mismatch bug; the PSNR pipeline has no `comparable_pair`
+  equivalent, so it may still be affected.
+
+### Usage
+
+```bash
+models/dreamgen/.venv/bin/python scripts/table_main_results.py \
+  --run metrics/WorldScore/results/dense_nr_v3_pooled
+```
+
+Writes `tables/main_<metric>.{csv,tex}` for all 5 columns. Legend: `[x]`/bold =
+resolved, `x*`/dagger = n<8 (shown, not claimable), `x!`/§ = artifact-positive,
+`--` = method not run on that configuration, `#`/ddagger = head-mount confound.

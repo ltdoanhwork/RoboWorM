@@ -69,6 +69,11 @@ MIN_PAIRS_FOR_CLAIM = 8
 # p values with that in mind.
 ALPHA = 0.05
 
+# Two clips of a paired delta must be the same measurement. Relative length tolerance
+# between an accel clip and its dense counterpart; source_fps and effective_fps must match
+# exactly. See comparable_pair().
+MAX_LENGTH_MISMATCH = 0.10
+
 # Mounts where a column is known to be confounded, so a resolved row still needs a
 # printed caveat. E1 second pass: on head, rho vs actor_motion_raw is -0.541 for AMC
 # and -0.553 for VisualIntegrity (both fail the |rho|<0.35 bar, and only on head --
@@ -114,6 +119,41 @@ ACCEL_CAVEATS = {
         'svg2 0.932x sharpness vs dense) a small POSITIVE AMC delta (<= ~+0.5) must not '
         'be read as "better than dense" - report it next to the sharpness ratio from '
         'scripts/_exp_accel_character.py.',
+}
+
+# Columns where a POSITIVE accel-vs-dense delta cannot be an improvement, because the
+# artifact that produces it is the very thing the metric mis-rewards. Enforced in
+# resolved_flag(): a positive delta here never becomes a claim, it becomes an artifact
+# flag (see artifact_positive()).
+#
+# Measured 2026-09-17. The main-results matrix produced 4 cells where an accel method
+# beat its own dense counterpart on AMC with the CI excluding 0 and p down to 2e-05.
+# comparable_pair() had already cleared them (identical source_fps, effective_fps,
+# frame count, analysis geometry and mount), so this is not the render-mismatch bug.
+# Measuring the pixels of those exact pairs shows what it is -- second-order temporal
+# JERK, i.e. how far the middle frame sits from the linear interpolation of its
+# neighbours, which is precisely AMC's VFI-gain denominator:
+#
+#   cell (n=10 pairs each)                dAMC    sharpness  temporal   JERK
+#   fastercache dreamgen/humanoid/MV     +7.02      x0.918    x0.897   x0.859
+#   pisa   ctrlworld_4view/humanoid/MV   +3.80      x0.941    x0.913   x0.896
+#   svg1   ctrlworld_4view/humanoid/MV   +2.79      x0.970    x0.918   x0.905
+#   -- controls, resolved NEGATIVE AMC --
+#   itm    dreamgen/humanoid/MV          -4.72      x0.759    x1.376   x1.275
+#   sito   dreamgen/bimanual/MV          -9.77      x0.746    x1.001   x0.965
+#
+# Every positive-AMC cell has JERK < 1 (output MORE predictable than dense) and every
+# negative one has JERK >= 0.96. So a positive AMC delta measures over-smoothing, not
+# quality. Note this is a LARGER effect (+7.02) than the ACCEL_CAVEATS blur bias
+# (+0.50 at realistic sharpness) because it is driven by temporal smoothing, which the
+# E7 synthetic blur did not reproduce -- the caveat's "<= ~+0.5" bound is too small.
+NO_IMPROVEMENT_VS_DENSE = {
+    'active_motion_continuity':
+        'A positive AMC delta vs dense is an over-smoothing artifact, not an '
+        'improvement: AMC scores how predictable the middle frame of each triple is, '
+        'so temporally smoother output scores higher. Measured on the 3 resolved '
+        'positive cells: temporal jerk x0.86-x0.91 vs dense, while every resolved '
+        'NEGATIVE cell sits at x0.96-x1.28.',
 }
 
 # Columns kept but restricted to the paired (pred vs own GT) table, because their
@@ -343,6 +383,39 @@ def stratum_table(rows):
     return out
 
 
+def comparable_pair(a, b):
+    """Reject a pair whose two clips are not the same measurement.
+
+    A paired delta is only meaningful when the two clips differ ONLY by the method. This
+    is not hypothetical: `sampling_dataset/dense/single_arm/output/multiview/dreamgen/`
+    was generated with a different rollout config than the accel trees at the SAME
+    relative path -- 277 frames @ 16 fps vs 93 frames @ 10 fps -- so 216/216
+    dreamgen/single_arm accel pairs were silently comparing a 3x-longer 16fps dense clip
+    against a 10fps accel clip. That produced a fake +10 AMC "improvement" for ALL NINE
+    methods in that cell (radial, a near-no-op, showed AMC 72.4 vs dense 43.6), and it
+    was the real cause of the fastercache AMC ceiling violation.
+
+    AMC and the motion columns are per-source-frame quantities, so a different source fps
+    or a 3x different clip length changes them regardless of method. `pair_key` cannot
+    catch this: the two clips genuinely are the same episode+view, they were just
+    RENDERED differently.
+
+    Both fields are already stored by every record, so this gate is post-hoc and needs no
+    rescoring. 226 of 1836 accel pairs (12.4%) are rejected, concentrated entirely in
+    dreamgen/single_arm (100%) plus a handful in dreamdojo/single_arm and
+    dreamgen/{humanoid,bimanual}.
+    """
+    if a.get('source_fps') != b.get('source_fps'):
+        return False
+    if a.get('effective_fps') != b.get('effective_fps'):
+        return False
+    na = len(a.get('sampled_source_frames') or [])
+    nb = len(b.get('sampled_source_frames') or [])
+    if not na or not nb:
+        return False
+    return abs(na - nb) / max(na, nb) <= MAX_LENGTH_MISMATCH
+
+
 def resolved_flag(d, lo, hi, p, col, vs_dense):
     """Single definition of "this delta supports a claim", used by T2/T3/T3b.
 
@@ -359,6 +432,9 @@ def resolved_flag(d, lo, hi, p, col, vs_dense):
        sample while the signed-rank sum is not significant. Claiming that is not
        defensible, so a large p vetoes. p is None below n=10 (normal approximation
        invalid); there the CI alone decides, as before.
+    4. For a directional column in NO_IMPROVEMENT_VS_DENSE, a POSITIVE accel-vs-dense
+       delta is not a claim -- the artifact that produces it is what the metric
+       mis-rewards. Use artifact_positive() to surface those cells instead.
     """
     if not d or lo is None:
         return False
@@ -369,6 +445,24 @@ def resolved_flag(d, lo, hi, p, col, vs_dense):
     if p is not None and p >= ALPHA:
         return False
     if col in CEILING_FAILED and not (vs_dense and col in CEILING_FAILURE_CANCELS_VS_DENSE):
+        return False
+    if vs_dense and col in NO_IMPROVEMENT_VS_DENSE and lo > 0:
+        return False
+    return True
+
+
+def artifact_positive(d, lo, hi, p, col, vs_dense):
+    """True when a cell is a statistically solid POSITIVE delta on a column where that
+    direction cannot be an improvement (NO_IMPROVEMENT_VS_DENSE). resolved_flag()
+    refuses to claim these; this reports them as what they are -- an over-smoothing
+    flag on that (method, config) -- so they are never silently dropped."""
+    if not (vs_dense and col in NO_IMPROVEMENT_VS_DENSE):
+        return False
+    if not d or lo is None or lo <= 0:
+        return False
+    if len(d) < MIN_PAIRS_FOR_CLAIM:
+        return False
+    if p is not None and p >= ALPHA:
         return False
     return True
 
@@ -391,18 +485,22 @@ def accel_deltas(rows, cell_of=None):
             accel[(r['pair_key'], r['model'])].append(r)
     groups = collections.defaultdict(lambda: collections.defaultdict(list))
     unpaired = collections.Counter()
+    incomparable = collections.Counter()
     for key, variants in accel.items():
         base = dense.get(key)
         for r in variants:
             if base is None:
                 unpaired[r['method']] += 1
                 continue
+            if not comparable_pair(r, base):
+                incomparable[r['method']] += 1
+                continue
             cell = cell_of(r)
             for col, _, _, _ in COLUMNS:
                 a, b = gated(base, col), gated(r, col)
                 if a is not None and b is not None:
                     groups[cell][col].append(b - a)
-    return groups, unpaired
+    return groups, unpaired, incomparable
 
 
 def accel_pooled_table(rows):
@@ -424,7 +522,7 @@ def accel_pooled_table(rows):
     Still report the per-cell T3 alongside: pooling hides a method that helps one
     (model, mount) and hurts another.
     """
-    groups, unpaired = accel_deltas(rows, cell_of=lambda r: r['method'])
+    groups, unpaired, incomparable = accel_deltas(rows, cell_of=lambda r: r['method'])
     counts = collections.defaultdict(collections.Counter)
     for r in rows:
         m = r.get('method')
@@ -444,7 +542,7 @@ def accel_pooled_table(rows):
             rec[f'{col}_resolved'] = resolved_flag(
                 d, lo, hi, rec[f'{col}_p'], col, vs_dense=True)
         out.append(rec)
-    return out, unpaired
+    return out, unpaired, incomparable
 
 
 def accel_table(rows):
@@ -464,7 +562,7 @@ def accel_table(rows):
     n=1..7 cells that can never be RESOLVED -- use `accel_pooled_table` for the
     headline number and keep this table as the per-cell breakdown.
     """
-    groups, unpaired = accel_deltas(rows)
+    groups, unpaired, incomparable = accel_deltas(rows)
     out = []
     for cell, per_key in sorted(groups.items()):
         rec = {'accel_method': cell[0], 'model': cell[1],
@@ -489,7 +587,7 @@ def accel_table(rows):
             if warn:
                 rec[f'{col}_confound_warning'] = warn
         out.append(rec)
-    return out, unpaired
+    return out, unpaired, incomparable
 
 
 def paired_table(rows):
@@ -511,6 +609,10 @@ def paired_table(rows):
             anchor = (entries.get(('gt', f'gt_{model}'))
                       or (entries.get(('gt', 'gt')) if model.startswith('ctrlworld') else None))
             if anchor is None:
+                continue
+            # Same requirement as the accel comparison: a pred-vs-GT delta is only
+            # meaningful when both clips are the same measurement.
+            if not comparable_pair(pred, anchor):
                 continue
             cell = (model, pred['embodiment'], pred['camera_mount'])
             for key, _, _, _ in COLUMNS:
@@ -638,8 +740,8 @@ def main():
 
     t1 = stratum_table(rows)
     t2 = paired_table(rows)
-    t3, t3_unpaired = accel_table(rows)
-    t3b, _ = accel_pooled_table(rows)
+    t3, t3_unpaired, t3_incomp = accel_table(rows)
+    t3b, _, _ = accel_pooled_table(rows)
     write_csv(out / 'table1_descriptive.csv', t1)
     write_csv(out / 'table2_paired_gt_delta.csv', t2)
     if t3:
@@ -678,6 +780,15 @@ def main():
         'min_pairs_for_claim': MIN_PAIRS_FOR_CLAIM,
         'confounded_mounts': CONFOUNDED_MOUNTS,
         'not_cross_embodiment': NOT_CROSS_EMBODIMENT,
+        'pair_comparability_gate': {
+            'max_length_mismatch': MAX_LENGTH_MISMATCH,
+            'requires': ['source_fps', 'effective_fps', 'sampled_source_frames'],
+            'note': 'A paired delta is dropped unless both clips share source_fps and '
+                    'effective_fps and their sampled length differs by <=10%. Found '
+                    '226/1836 accel pairs violating this, 216 of them the whole '
+                    'dreamgen/single_arm cell, where the dense tree was rendered at '
+                    '277 frames @ 16fps against accel at 93 frames @ 10fps. That was '
+                    'producing a fake +10 AMC gain for all 9 methods in that cell.'},
         'accel_pooling_policy': (
             'Headline accel numbers (table3b) pool paired accel-minus-dense deltas '
             'over (model x embodiment x mount). Justified because each delta is '
@@ -736,6 +847,13 @@ def main():
         if t3_unpaired:
             print('  (unpaired accel clips, no dense record at the same pair_key: '
                   + ', '.join(f'{k}={v}' for k, v in sorted(t3_unpaired.items())) + ')')
+        if t3_incomp:
+            print('  !! REJECTED as not-the-same-measurement (source_fps / effective_fps '
+                  'differ, or length differs by >10%): '
+                  + ', '.join(f'{k}={v}' for k, v in sorted(t3_incomp.items())))
+            print('  !! The dense tree at that relative path was rendered with a '
+                  'different rollout config than the accel tree, so comparing them '
+                  'would measure the render, not the method. See comparable_pair().')
         for key, label, higher, digits in COLUMNS:
             cells = [r for r in t3b if r[f'{key}_n_pairs']]
             if not cells:
@@ -759,6 +877,13 @@ def main():
         if t3_unpaired:
             print('  (unpaired accel clips, no dense record at the same pair_key: '
                   + ', '.join(f'{k}={v}' for k, v in sorted(t3_unpaired.items())) + ')')
+        if t3_incomp:
+            print('  !! REJECTED as not-the-same-measurement (source_fps / effective_fps '
+                  'differ, or length differs by >10%): '
+                  + ', '.join(f'{k}={v}' for k, v in sorted(t3_incomp.items())))
+            print('  !! The dense tree at that relative path was rendered with a '
+                  'different rollout config than the accel tree, so comparing them '
+                  'would measure the render, not the method. See comparable_pair().')
         for key, label, higher, digits in COLUMNS:
             cells = [r for r in t3 if r[f'{key}_n_pairs']]
             if not cells:

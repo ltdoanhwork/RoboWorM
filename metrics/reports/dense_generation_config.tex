@@ -1,0 +1,62 @@
+\begin{table}[t]\centering\small
+\caption{Generation configuration of the \textsc{Ctrl-World} cells of the dense benchmark. Video properties are measured with \texttt{ffprobe} over every prediction clip on disk; frames per clip are median [min--max] because clip length is matched to the ground-truth episode.}
+\label{tab:dense-config-ctrlworld}
+\begin{tabular}{lccccc}\toprule
+ & \textbf{DROID-MV} & \textbf{ALOHA-MV} & \textbf{ALOHA-MV-grid} & \textbf{RoboCOIN-MV} & \textbf{RoboCOIN-MV-grid} \\
+ & single\_arm/multiview & bimanual/multiview & bimanual/multiview & humanoid/multiview & humanoid/multiview \\\midrule
+Source data & DROID (cadene/droid\_1.0.1) & AIST Bimanual (ALOHA) & AIST Bimanual (ALOHA) & RoboCOIN (AIRBOT MMK2) & RoboCOIN (AIRBOT MMK2) \\
+Generator & Ctrl-World (SVD img2vid U-Net, action-cond.) & Ctrl-World (SVD img2vid U-Net, action-cond.) & Ctrl-World (4-view 2x2 latent canvas) & Ctrl-World (SVD img2vid U-Net, action-cond.) & Ctrl-World (4-view 2x2 latent canvas) \\
+Checkpoint & Ctrl-World/checkpoint-10000.pt (released DROID pretrain) & bimanual\_multiview\_5fps/checkpoint-280000.pt & bimanual\_multiview\_4view\_grid/checkpoint-110000.pt & humanoid\_multiview/checkpoint-200000.pt & humanoid\_multiview\_4view\_grid/checkpoint-140000.pt \\
+Views / clip & 3 (3x1 latent strip) & 3 (3x1 latent strip) & 4 (2x2 latent grid) & 3 (3x1 latent strip) & 4 (2x2 latent grid) \\
+Resolution (per view) & 320x192 & 320x192 & 320x192 & 320x192 & 320x192 \\
+Resolution (canvas) & 960x192 & 960x192 & 1280x192 & 960x192 & 1280x192 \\
+FPS & 5 & 5 & 5 & 5 & 5 \\
+Frames per clip & 81 [22-434] & 165 [41-497] & 165 [41-497] & 45 [13-157] & 45 [13-157] \\
+Duration per clip & 16.20 s [4.40-86.80] & 33.00 s [8.20-99.40] & 33.00 s [8.20-99.40] & 9.00 s [2.60-31.40] & 9.00 s [2.60-31.40] \\
+Guidance scale & 1.0 & 1.0 & 1.0 & 1.0 & 1.0 \\
+Sampling steps & 50 & 50 & 50 & 50 & 50 \\
+Seed & unseeded & unseeded & unseeded & unseeded & unseeded \\
+Clips on disk & 257 & 300 & 300 & 248 & 248 \\
+\bottomrule\end{tabular}\end{table}
+
+\begin{table}[t]\centering\small
+\caption{Generation configuration of the \textsc{DreamGen} cells of the dense benchmark. Video properties are measured with \texttt{ffprobe} over every prediction clip on disk; frames per clip are median [min--max] because clip length is matched to the ground-truth episode.}
+\label{tab:dense-config-dreamgen}
+\begin{tabular}{lcccccc}\toprule
+ & \textbf{DROID-MV} & \textbf{ALOHA-MV} & \textbf{RoboCOIN-MV} & \textbf{RoboChallenge-SV} & \textbf{ALOHA-SV} & \textbf{GR1-SV} \\
+ & single\_arm/multiview & bimanual/multiview & humanoid/multiview & single\_arm/singleview & bimanual/singleview & humanoid/singleview \\\midrule
+Source data & DROID (cadene/droid\_1.0.1) & AIST Bimanual (ALOHA) & RoboCOIN (AIRBOT MMK2) & RoboChallenge (Traly/RoboChallenge-lerobot) & AIST Bimanual (ALOHA), cam\_high & GR00T Teleop GR1 (nvidia/PhysicalAI-...-GR1) \\
+Generator & Cosmos-Predict2 14B (GR00T-Dreams-DROID) & Cosmos-Predict2 2B (post-trained) & Cosmos-Predict2 2B (post-trained) & Cosmos-Predict2 2B (post-trained, static 16fps) & Cosmos-Predict2 2B (post-trained, 16fps) & Cosmos-Predict2 2B (post-trained, static 16fps) \\
+Checkpoint & GR00T-dreams-DROID 14B (video2world\_gr00t, --gr00t\_variant droid) & bimanual\_multiview\_seg16/iter\_000120000 & humanoid\_multiview\_seg16/iter\_000100000 & single\_arm\_static\_singleview\_16fps\_v2/iter\_000090000 & bimanual\_singleview\_16fps/iter\_000110000 & humanoid\_singleview\_16fps/iter\_000090000 \\
+Views / clip & 3 (2x2 grid (3 active + blank)) & 4 (2x2 grid) & 4 (2x2 grid) & 1 (single view) & 1 (single view) & 1 (single view) \\
+Resolution (per view) & 384x216 & 384x216 & 384x216 & 640x480 & 768x432 & 768x432 \\
+Resolution (canvas) & 768x432 & 768x432 & 768x432 & 640x480 & 768x432 & 768x432 \\
+FPS & 10 & 16 & 16 & 16 & 16 & 16 \\
+Frames per clip & 93 [93-93] & 535 [135-1602] & 154 [50-505] & 369 [185-645] & 1013 [185-1657] & 277 [185-277] \\
+Duration per clip & 9.30 s [9.30-9.30] & 33.44 s [8.44-100.12] & 9.62 s [3.12-31.56] & 23.06 s [11.56-40.31] & 63.31 s [11.56-103.56] & 17.31 s [11.56-17.31] \\
+Guidance scale & 7 & 7 & 7 & 7 & 7 & 7 \\
+Sampling steps & 35 & 35 & 35 & 35 & 35 & 35 \\
+Seed & 0 & 0 + segment index & 0 + segment index & 0 & 0 & 0 \\
+Clips on disk & 92 & 300 & 248 & 240 & 300 & 260 \\
+\bottomrule\end{tabular}\end{table}
+
+\begin{table}[t]\centering\small
+\caption{Generation configuration of the \textsc{DreamDojo} cells of the dense benchmark. Video properties are measured with \texttt{ffprobe} over every prediction clip on disk; frames per clip are median [min--max] because clip length is matched to the ground-truth episode.}
+\label{tab:dense-config-dreamdojo}
+\begin{tabular}{lccc}\toprule
+ & \textbf{RoboChallenge-SV} & \textbf{ALOHA-SV} & \textbf{GR1-SV} \\
+ & single\_arm/singleview & bimanual/singleview & humanoid/singleview \\\midrule
+Source data & RoboChallenge (Traly/RoboChallenge-lerobot) & AIST Bimanual (ALOHA), cam\_high & GR00T Teleop GR1 (nvidia/PhysicalAI-...-GR1) \\
+Generator & DreamDojo 2B action-cond. DiT (autoregressive) & DreamDojo 2B action-cond. DiT (autoregressive) & DreamDojo 2B action-cond. DiT (autoregressive) \\
+Checkpoint & dreamdojo\_2b\_480\_640\_single\_arm\_sv/iter\_000030000 & dreamdojo\_2b\_480\_640\_aloha\_resume70k\_bimanual\_sv/iter\_000100000 & dreamdojo/2B\_GR1\_post-train/iter\_000050000 \\
+Views / clip & 1 (single view) & 1 (single view) & 1 (single view) \\
+Resolution (per view) & 640x480 & 640x480 & 640x480 \\
+Resolution (canvas) & 640x480 & 640x480 & 640x480 \\
+FPS & 15 & 10 & 10 \\
+Frames per clip & 187 [133-577] & 493 [121-1489] & 98 [49-1420] \\
+Duration per clip & 12.47 s [8.87-38.47] & 49.30 s [12.10-148.90] & 9.80 s [4.90-142.00] \\
+Guidance scale & 1.5 & 1.5 & 1.5 \\
+Sampling steps & 35 & 35 & 35 \\
+Seed & per-chunk index & per-chunk index & per-chunk index \\
+Clips on disk & 240 & 300 & 216 \\
+\bottomrule\end{tabular}\end{table}
