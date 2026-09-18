@@ -243,18 +243,22 @@ def calibrate_cuts(df: pd.DataFrame, n_splits: int = 5, seed: int = 0,
                    mode: str = "accuracy") -> tuple[pd.Series, tuple]:
     """Re-fit the two kinescore cut points against human labels.
 
-    The shipped cuts (1.0 / 1.5) come from the real-segment p95 definition, not
-    from human agreement, and they make `medium` far too wide (we emit 29%
-    medium where humans use 12%); 60% of human-`high` segments sit below the
-    1.5 cut. Cuts are fitted with GroupKFold over VIDEOS and every segment is
-    scored by a fold that never saw its video, so the reported number is
-    out-of-fold and not the optimum-on-itself.
+    The cuts used in the pipeline (1.0 / 1.5) come from the real-segment p95
+    definition, not from human agreement, and they make `medium` too wide: we
+    emit 28.1% medium where humans use 18.6%, and 56.7% of human-`high`
+    segments (1372/2418) sit below the 1.5 cut and so get called medium/low.
+    Cuts are fitted with GroupKFold over VIDEOS and every segment is scored by
+    a fold that never saw its video, so the reported number is out-of-fold and
+    not the optimum-on-itself (fitting on everything reads ~0.01 higher).
 
-    mode="accuracy" maximises exact agreement. It wins partly by shrinking
-    `medium` to ~3%, i.e. the same minority-class refusal the VLMs use, so
-    mode="marginal" is also provided: it only matches the human class
-    proportions (quantile mapping) and never looks at per-segment correctness,
-    which is the stricter, harder-to-criticise variant.
+    mode="accuracy" maximises exact agreement (1.20/1.25 -> 0.599 out-of-fold).
+    It wins by shrinking `medium` to 3.0%, i.e. the same minority-class refusal
+    we criticise the VLMs for, so it is the weaker number to stand behind.
+    mode="marginal" only matches the human class proportions (quantile mapping,
+    1.02/1.32 -> 0.579, medium 18.9% vs human 18.6%) and never looks at
+    per-segment correctness -- the stricter, harder-to-criticise variant.
+
+    Numbers above are on the complete 8093-segment label set.
     """
     from sklearn.model_selection import GroupKFold
 
@@ -288,8 +292,8 @@ def plot_spearman(tbl: pd.DataFrame, out_png: Path, n: int) -> None:
     """The threshold-free result: ordinal correlation with humans.
 
     Unlike overlap/kappa this needs no cut points at all — it reads only the
-    ORDER of our continuous kinescore, so it is identical under the shipped and
-    calibrated cuts and involves no fitting against human labels. That makes it
+    ORDER of our continuous kinescore, so it is identical under the pipeline and
+    the human-fitted cuts and involves no fitting against human labels. That makes it
     the one number directly comparable to a zero-shot VLM judge.
     """
     d = tbl[~tbl["predictor"].isin(["ours_cal", "ours_marg"])].sort_values("spearman", ascending=False)
@@ -297,7 +301,7 @@ def plot_spearman(tbl: pd.DataFrame, out_png: Path, n: int) -> None:
     fig, ax = plt.subplots(figsize=(9.2, 4.4))
     colors = ["#2d6cdf" if p.startswith("ours") else "#b0b6c0" for p in d["predictor"]]
     bars = ax.barh(
-        [l.replace(" (median of runs)", "").replace(" (kinescore band, shipped cuts)", "")
+        [l.replace(" (median of runs)", "").replace(" (kinescore band, pipeline cuts)", "")
          for l in d["label"]],
         d["spearman"], color=colors,
     )
@@ -414,12 +418,12 @@ def main() -> None:
     wide["ours_cal"], full_cuts = calibrate_cuts(wide, seed=args.seed, mode="accuracy")
     wide["ours_marg"], marg_cuts = calibrate_cuts(wide, seed=args.seed, mode="marginal")
     print(f"[calib] kinescore cuts refit vs human (out-of-fold below):")
-    print(f"        shipped        1.00 / 1.50  (from real-segment p95, never fitted to humans)")
+    print(f"        pipeline cuts  1.00 / 1.50  (real-segment p95; never fitted to humans)")
     print(f"        accuracy-fit   {full_cuts[0]:.2f} / {full_cuts[1]:.2f}")
     print(f"        marginal-match {marg_cuts[0]:.2f} / {marg_cuts[1]:.2f}  "
           f"(matches human class shares only)\n")
 
-    rows = [{"predictor": "ours", "label": "ours (shipped cuts 1.00/1.50)",
+    rows = [{"predictor": "ours", "label": "ours (pipeline cuts 1.00/1.50, not fitted to humans)",
              **agreement(wide["ours_label"], wide["human_level"])},
             {"predictor": "ours_marg", "label": "ours (marginal-matched cuts, out-of-fold)",
              **agreement(wide["ours_marg"], wide["human_level"])},
@@ -460,7 +464,7 @@ def main() -> None:
     plot_bars(main_tbl, OUT_DIR / "overlap_ours_vs_vlm.png", majority, n)
     plot_spearman(main_tbl, OUT_DIR / "spearman_vs_human.png", n)
     plot_headline(main_tbl, OUT_DIR / "overlap_and_spearman_vs_human.png", n, majority)
-    preds = [("ours (shipped cuts)", "ours_label"),
+    preds = [("ours (pipeline cuts)", "ours_label"),
              ("ours (marginal-matched)", "ours_marg")] + [(m, f"vlm_{m}") for m in models]
     plot_confusions(wide, preds, OUT_DIR / "confusion_vs_human.png")
 
@@ -484,7 +488,7 @@ def main() -> None:
     print("=" * 92)
     bin_rows = []
     keep = wide["human_level"] != "medium"
-    for label, col in [("ours (shipped)", "ours_label"),
+    for label, col in [("ours (pipeline cuts)", "ours_label"),
                        ("ours (marginal-matched)", "ours_marg"),
                        ("ours (accuracy-fitted)", "ours_cal")] + \
                       [(m, f"vlm_{m}") for m in models]:
@@ -507,12 +511,12 @@ def main() -> None:
         .iloc[0]
     )
     oc = tbl[tbl["predictor"] == "ours_cal"].iloc[0]
-    print(f"\n[verdict] ours shipped   : overlap={o['overlap']:.4f} kappa={o['kappa']:+.4f} "
+    print(f"\n[verdict] ours pipeline  : overlap={o['overlap']:.4f} kappa={o['kappa']:+.4f} "
           f"spearman={o['spearman']:+.4f}")
     print(f"[verdict] ours calibrated: overlap={oc['overlap']:.4f} kappa={oc['kappa']:+.4f} "
           f"spearman={oc['spearman']:+.4f}")
     print(f"[verdict] best VLM : {best['label']}: overlap={best['overlap']:.4f} kappa={best['kappa']:+.4f}")
-    print(f"[verdict] ours(shipped)    - bestVLM: dOverlap={o['overlap']-best['overlap']:+.4f} "
+    print(f"[verdict] ours(pipeline)   - bestVLM: dOverlap={o['overlap']-best['overlap']:+.4f} "
           f"dKappa={o['kappa']-best['kappa']:+.4f}")
     print(f"[verdict] ours(calibrated) - bestVLM: dOverlap={oc['overlap']-best['overlap']:+.4f} "
           f"dKappa={oc['kappa']-best['kappa']:+.4f}")
