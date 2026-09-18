@@ -485,8 +485,6 @@ const VGP = (() => {
       const video = resolveHalluVideo(rows, it);
       const regular = videoRaterScores(rows, it, false);
       const checkers = halluCheckerProfiles(rows, it, regular);
-      const adjudicated = video.conflict && video.human_score != null && Object.keys(checkers).length;
-      const chosen = adjudicated ? checkers : regular;
       for (const uid of itemLabelIds(it)) {
         const raterScores = Object.fromEntries(
           Object.entries(regular).map(([name, p]) => [name, p.segment_scores[uid]])
@@ -494,9 +492,26 @@ const VGP = (() => {
         const checkerScores = Object.fromEntries(
           Object.entries(checkers).map(([name, p]) => [name, p.segment_scores[uid]])
         );
-        const scores = Object.values(chosen).map((p) => p.segment_scores[uid]);
-        const uniq = new Set(scores);
-        const humanScore = scores.length && uniq.size === 1 ? scores[0] : null;
+        // Provenance is decided PER SEGMENT, matching how conflicts are defined
+        // and distributed: if the two raters agree, that IS the answer and no
+        // checker is involved; only a segment they split on is settled by a
+        // checker. Choosing per video instead would tag thousands of
+        // rater-agreed segments as "checker".
+        const raterVals = Object.values(raterScores).filter((v) => v != null);
+        const ratersAgree =
+          raterVals.length >= TARGET_COVER && new Set(raterVals).size === 1;
+        let humanScore = null;
+        let consensus = null;
+        if (ratersAgree) {
+          humanScore = raterVals[0];
+          consensus = "raters";
+        } else if (raterVals.length >= TARGET_COVER) {
+          const checkerVals = Object.values(checkerScores).filter((v) => v != null);
+          if (checkerVals.length && new Set(checkerVals).size === 1) {
+            humanScore = checkerVals[0];
+            consensus = Object.keys(checkerScores).length > 1 ? "checkers" : "checker";
+          }
+        }
         out[uid] = {
           human_score: humanScore,
           human_rating: humanScore != null ? (SCORE_LABEL[humanScore] || "").toLowerCase() : null,
@@ -506,7 +521,7 @@ const VGP = (() => {
           checker_scores: checkerScores,
           conflict: false,
           video_conflict: video.conflict,
-          consensus: humanScore != null ? (adjudicated ? video.consensus : "raters") : null,
+          consensus,
         };
       }
     }
@@ -612,7 +627,11 @@ const VGP = (() => {
     for (const [name, scores] of raw) {
       // Reviewing every disagreeing segment is what completes the pass.
       if (!needed.every((id) => scores.has(id))) continue;
-      const merged = ids.map((id) => (scores.has(id) ? scores.get(id) : agreed[id]));
+      // A segment both raters already agreed on is NOT the checker's to decide,
+      // even if a checker scored it anyway (batches before v11 handed out whole
+      // videos). Rater consensus wins there; the checker only settles the
+      // segments they actually disagreed on.
+      const merged = ids.map((id) => (agreed[id] != null ? agreed[id] : scores.get(id)));
       if (merged.some((v) => v == null)) continue;
       const meanFlag = merged.reduce((sum, s) => sum + scoreToFlagValue(s), 0) / merged.length;
       out[name] = {
