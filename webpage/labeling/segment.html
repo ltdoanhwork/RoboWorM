@@ -166,7 +166,12 @@ if (VGP.requireGate()) {
 
   function renderReviewContext(it){
     const host = $('reviewContext');
-    if (!batch?.reviewer) { host.hidden = true; return; }
+    // The expert pass is deliberately blind: showing the earlier scores would
+    // reveal which segments our band got wrong (those are the ones in the
+    // disagree stratum), and the control group only works if the reviewer
+    // cannot tell the two strata apart. Checkers still see the context — their
+    // job IS to adjudicate a known disagreement.
+    if (!batch?.reviewer || batch?.expert) { host.hidden = true; return; }
     const profiles = VGP.videoRaterScores(allRows, it, false);
     const entries = Object.entries(profiles);
     host.hidden = false;
@@ -362,7 +367,9 @@ if (VGP.requireGate()) {
       if (i === seg) cls += awaiting ? ' wait' : ' current';
       if (!rateable) cls += ' muted';
       tick.className = cls;
-      tick.title = `#${i + 1}${rateable ? '' : (batch?.reviewer ? ' · raters agree' : ' · not rateable')}`;
+      const why = batch?.expert ? ' · not in this pass'
+        : (batch?.reviewer ? ' · raters agree' : ' · not rateable');
+      tick.title = `#${i + 1}${rateable ? '' : why}`;
       if (rateable) tick.onclick = () => gotoSegment(i);
       track.append(tick);
     });
@@ -375,9 +382,11 @@ if (VGP.requireGate()) {
     // For a checker the skipped segments are the ones both raters already agreed
     // on (nothing to adjudicate); for a regular rater they are non-rateable.
     const partial = excluded > 0
-      ? (batch?.reviewer
-          ? (lang() === 'vi' ? ` · ${excluded} đoạn đã khớp, bỏ qua` : ` · ${excluded} segments already agreed`)
-          : (lang() === 'vi' ? ` · ${excluded} đoạn không chấm` : ` · ${excluded} non-rateable segments`))
+      ? (batch?.expert
+          ? (lang() === 'vi' ? ` · ${excluded} đoạn không thuộc lượt này` : ` · ${excluded} segments outside this pass`)
+          : batch?.reviewer
+            ? (lang() === 'vi' ? ` · ${excluded} đoạn đã khớp, bỏ qua` : ` · ${excluded} segments already agreed`)
+            : (lang() === 'vi' ? ` · ${excluded} đoạn không chấm` : ` · ${excluded} non-rateable segments`))
       : '';
 
     const banner = $('waitBanner');
@@ -533,7 +542,7 @@ if (VGP.requireGate()) {
     VGP.preloadVideos(examples.map(it => it.video || it.video_raw));
     const loaded = await Promise.all([
       VGP.sbLoadLabels(rater),
-      batch.reviewer ? VGP.sbLoadAllLabels() : Promise.resolve([]),
+      (batch.reviewer && !batch.expert) ? VGP.sbLoadAllLabels() : Promise.resolve([]),
     ]);
     labels = VGP.mergeLabels(loaded[0], rater);
     allRows = loaded[1];

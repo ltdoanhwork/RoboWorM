@@ -7,12 +7,25 @@ const VGP = (() => {
   const PASS_KEY = "vgp_pass_ok";
   const ADMIN_KEY = "vgp_admin_ok";
   const BATCH_PREFIX = "vgp_batch::";
-  const BATCH_VERSION = 13; // per-segment hallucinate conflict; checker queue split 2 ways
+  const BATCH_VERSION = 14; // + doanh_check expert pass over a blind re-review queue
   const GEO_N = 50;
   const HALLU_N = 49; // maximum; 291 clips give six raters 49 and six raters 48
   const HALF = GEO_N; // back-compat alias
   const TARGET_COVER = 2;
   const REVIEWERS = ["quang_check", "thanh_check"];
+  // Expert pass over the hallucinate segments, run AFTER the two checkers. Its
+  // queue is a fixed file (expert_queue.hallucinate.json) rather than a slice of
+  // the conflict list, because it re-examines segments the checkers already
+  // settled. The expert's score is final: resolveSegments prefers it over both
+  // rater consensus and a checker verdict.
+  //
+  // The queue deliberately mixes segments our band got wrong with a control
+  // sample it got right, and the site is not told which is which -- re-rating
+  // only our mistakes could only ever raise our score, so a blind control is
+  // what makes any resulting change interpretable. Do NOT ship the stratum map
+  // (sampling_dataset/data_for_web/expert_review_strata.json) into this folder.
+  const EXPERT = "doanh_check";
+  const EXPERT_QUEUE_URL = "expert_queue.hallucinate.json";
   // thanh_check scored all 300 geometry clips offline — that pass is the "score"
   // column of sampling_dataset/data_for_web/data_for_web.csv, imported into the
   // labels table by scripts/import_geo_arbiter_labels.py. Because it covers the
@@ -141,6 +154,12 @@ const VGP = (() => {
     return m ? m[1] : itemId;
   }
 
+  /** Segment index encoded in a segment label id, or null for a video id. */
+  function segmentIndexOf(itemId) {
+    const m = String(itemId).match(/_s(\d{3})$/);
+    return m ? Number(m[1]) : null;
+  }
+
   /** Segment indices a rater must score. `only` restricts it (conflict review). */
   function scoreableSegmentIndices(item, only) {
     if (!item || !item.segments) return null;
@@ -209,6 +228,7 @@ const VGP = (() => {
   /** Accept account id, accented display name, or unaccented display name. */
   function canonicalRaterName(name) {
     const normalized = normalizeName(name);
+    if (normalized === EXPERT) return normalized;
     if (REVIEWERS.includes(normalized) || Object.hasOwn(RATER_ACCOUNTS, normalized)) return normalized;
     const token = accountToken(normalized);
     return RATER_IDS.find((id) => accountToken(id) === token || accountToken(RATER_ACCOUNTS[id]) === token) || normalized;
@@ -218,12 +238,17 @@ const VGP = (() => {
     return REVIEWERS.includes(normalizeName(name));
   }
 
+  /** The expert pass — outranks both regular raters and the two checkers. */
+  function isExpert(name) {
+    return normalizeName(name) === EXPERT;
+  }
+
   function isRegularRater(name) {
     return Object.hasOwn(RATER_ACCOUNTS, canonicalRaterName(name));
   }
 
   function isKnownRater(name) {
-    return isReviewer(name) || isRegularRater(name);
+    return isReviewer(name) || isExpert(name) || isRegularRater(name);
   }
 
   function reviewerPassOk(pass) {
@@ -231,7 +256,7 @@ const VGP = (() => {
   }
 
   function raterPassOk(name, pass) {
-    if (isReviewer(name)) return reviewerPassOk(pass);
+    if (isReviewer(name) || isExpert(name)) return reviewerPassOk(pass);
     return isRegularRater(name) && String(pass || "") === RATER_PASSCODE;
   }
 
@@ -485,6 +510,15 @@ const VGP = (() => {
       const video = resolveHalluVideo(rows, it);
       const regular = videoRaterScores(rows, it, false);
       const checkers = halluCheckerProfiles(rows, it, regular);
+      // Expert scores are read raw per segment: the expert deliberately covers
+      // only a chosen subset, so requiring full coverage (as videoRaterScores
+      // does) would discard the whole pass.
+      const expertScores = {};
+      for (const row of rows || []) {
+        if (!isExpert(row.rater_name)) continue;
+        if (parentVideoId(row.item_id) !== it.id) continue;
+        expertScores[row.item_id] = Number(row.score);
+      }
       for (const uid of itemLabelIds(it)) {
         const raterScores = Object.fromEntries(
           Object.entries(regular).map(([name, p]) => [name, p.segment_scores[uid]])
@@ -502,7 +536,12 @@ const VGP = (() => {
           raterVals.length >= TARGET_COVER && new Set(raterVals).size === 1;
         let humanScore = null;
         let consensus = null;
-        if (ratersAgree) {
+        if (expertScores[uid] != null) {
+          // The expert pass runs last and outranks everyone, including a
+          // checker verdict and a unanimous rater pair.
+          humanScore = expertScores[uid];
+          consensus = "expert";
+        } else if (ratersAgree) {
           humanScore = raterVals[0];
           consensus = "raters";
         } else if (raterVals.length >= TARGET_COVER) {
@@ -519,6 +558,7 @@ const VGP = (() => {
           n_checkers: Object.keys(checkers).length,
           rater_scores: raterScores,
           checker_scores: checkerScores,
+          expert_score: expertScores[uid] ?? null,
           conflict: false,
           video_conflict: video.conflict,
           consensus,
@@ -902,12 +942,56 @@ const VGP = (() => {
     return createBatch(mvItems, svItems);
   }
 
+  /** Fixed expert queue: segment ids chosen offline, blind to their stratum. */
+  let expertQueueCache = null;
+  async function loadExpertQueue() {
+    if (expertQueueCache) return expertQueueCache;
+    try {
+      const res = await fetch(EXPERT_QUEUE_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      expertQueueCache = Array.isArray(data.segments) ? data.segments : [];
+    } catch (err) {
+      console.error("expert queue unavailable", err);
+      expertQueueCache = [];
+    }
+    return expertQueueCache;
+  }
+
+  /**
+   * The expert's work, grouped back into the per-video shape the segment UI
+   * expects: { items, segments } where segments[videoId] lists only the segment
+   * indices in the queue. Segments already scored by the expert drop out, so the
+   * pass is resumable.
+   */
+  function expertAssignment(items, queueIds, mine) {
+    const want = new Map();
+    for (const uid of queueIds) {
+      if (mine && mine[uid] != null) continue;
+      const vid = parentVideoId(uid);
+      const idx = segmentIndexOf(uid);
+      if (idx == null) continue;
+      if (!want.has(vid)) want.set(vid, []);
+      want.get(vid).push(idx);
+    }
+    const picked = [];
+    const segments = {};
+    for (const it of items || []) {
+      const idxs = want.get(it.id);
+      if (!idxs || !idxs.length) continue;
+      picked.push(it);
+      segments[it.id] = idxs.slice().sort((a, b) => a - b);
+    }
+    return { items: picked, segments };
+  }
+
   async function createBatch(mvItems, svItems) {
     const [mine, allRows] = await Promise.all([
       sbLoadLabels(getRater()),
       sbLoadAllLabels(),
     ]);
     const reviewer = isReviewer(getRater());
+    const expert = isExpert(getRater());
     const svConflicts = reviewer ? conflictSegmentsByItem(allRows, svItems) : null;
     const mvDone = new Set((mvItems || []).filter((it) => mine[it.id] != null).map((it) => it.id));
     const svDone = new Set(
@@ -918,7 +1002,14 @@ const VGP = (() => {
     let mvPick;
     let svPick;
     let svSegs;
-    if (reviewer) {
+    if (expert) {
+      // Hallucinate only, and only the segments in the fixed queue file.
+      const queue = await loadExpertQueue();
+      const asg = expertAssignment(svItems, queue, mine);
+      mvPick = [];
+      svPick = asg.items;
+      svSegs = asg.segments;
+    } else if (reviewer) {
       mvPick = pickConflictItems(mvItems, allRows, mvDone, null, getRater()).items;
       const sv = pickConflictItems(svItems, allRows, svDone, null, getRater());
       svPick = sv.items;
@@ -934,18 +1025,19 @@ const VGP = (() => {
         svSegs[it.id] = scoreableSegmentIndices(it) || [];
       });
     }
-    if (reviewer && !mvPick.length && !svPick.length) {
+    if ((reviewer || expert) && !mvPick.length && !svPick.length) {
       clearBatch();
       return { id: null, version: BATCH_VERSION, reviewer: true, mvIds: [], svIds: [], empty: true };
     }
     const batch = {
-      id: reviewer
+      id: (reviewer || expert)
         ? `${Date.now().toString(36)}-${fnv1a(getRater() + Math.random())}`
         : `assigned-v${BATCH_VERSION}-${normalizeName(getRater())}`,
       version: BATCH_VERSION,
       createdAt: new Date().toISOString(),
       submittedAt: null,
       reviewer: reviewer || undefined,
+      expert: expert || undefined,
       mvIds: mvPick.map((it) => it.id),
       svIds: svPick.map((it) => it.id),
       svSegs: svSegs,
@@ -1381,16 +1473,16 @@ const VGP = (() => {
   }
 
   return {
-    HALF, GEO_N, HALLU_N, TARGET_COVER, REVIEWERS, BATCH_VERSION, RATER_IDS, RATER_ACCOUNTS,
+    HALF, GEO_N, HALLU_N, TARGET_COVER, REVIEWERS, EXPERT, BATCH_VERSION, RATER_IDS, RATER_ACCOUNTS,
     CHECK, SCORE_LABEL, BAND_TO_SCORE, normalizeEmbodiment, embLabel, scoreLabel, checkLabel, machineScore,
     getRater, setRater, passOk, setPassOk, adminOk, setAdminOk,
     clearSession, isAdminPath, requireGate, requireAdmin,
-    defaultLang, applyLang, canonicalRaterName, isReviewer, isRegularRater, isKnownRater, raterPassOk, conflictCheckProgress,
+    defaultLang, applyLang, canonicalRaterName, isReviewer, isExpert, isRegularRater, isKnownRater, raterPassOk, conflictCheckProgress,
     segmentId, parentVideoId, scoreableSegmentIndices, itemLabelIds, segmentCount,
     videoComplete, videoTouched, raterStats,
     coverageCounts, segmentCoverage, pickLeastLabeled, fixedAssignedItems, conflictIds, conflictUnitIds,
     conflictSegmentsByItem, conflictRows, resolveHuman, resolveSegments,
-    pickConflictItems, checkerFor, halluSettled,
+    pickConflictItems, checkerFor, halluSettled, segmentIndexOf, loadExpertQueue, expertAssignment,
     videoRaterScores, resolveHalluVideo, halluCheckerProfiles, halluConflictIndices,
     scoreToFlagValue, flagValueToScore,
     getBatch, getValidBatch, isStaleOpenBatch, saveBatch, submitBatch, reopenBatch, batchRemaining, clearBatch, createBatch, getOrCreateBatch,

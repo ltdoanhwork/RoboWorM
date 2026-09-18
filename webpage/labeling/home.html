@@ -189,7 +189,12 @@ if (VGP.requireGate()) {
     if (tutorial.paused) tutorial.play().catch(() => {}); else tutorial.pause();
   });
   const checker = VGP.isReviewer(rater);
-  if (checker) {
+  const expert = VGP.isExpert(rater);
+  if (expert) {
+    $('homeEyebrow').innerHTML = '<span data-lang="vi">Tài khoản chuyên gia — chấm lại</span><span data-lang="en">Expert re-review account</span>';
+    $('btnAssign').innerHTML = '<span data-lang="vi">Bắt đầu chấm lại</span><span data-lang="en">Start the expert pass</span>';
+    $('btnNew').innerHTML = '<span data-lang="vi">Chấm lại tiếp</span><span data-lang="en">Continue the expert pass</span>';
+  } else if (checker) {
     $('homeEyebrow').innerHTML = '<span data-lang="vi">Tài khoản check conflict</span><span data-lang="en">Conflict checker account</span>';
     $('btnAssign').innerHTML = '<span data-lang="vi">Bắt đầu check conflict</span><span data-lang="en">Start to check conflicts</span>';
     $('btnNew').innerHTML = '<span data-lang="vi">Check conflict tiếp</span><span data-lang="en">Start to check more</span>';

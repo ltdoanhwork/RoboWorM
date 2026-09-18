@@ -81,7 +81,7 @@ document.getElementById('gateForm').addEventListener('submit', (e) => {
   const name = nameEl.value.trim();
   if (!name){ err.textContent = 'Please enter an account name.'; return; }
   if (!VGP.raterPassOk(name, passEl.value)){
-    err.textContent = VGP.isReviewer(name) ? 'Wrong checker passcode.' : 'Unknown account or wrong password.';
+    err.textContent = (VGP.isReviewer(name) || VGP.isExpert(name)) ? 'Wrong passcode.' : 'Unknown account or wrong password.';
     return;
   }
   if (VGP.isAdminPath(rawNext)){ err.textContent = 'Rater access cannot open admin pages.'; return; }
