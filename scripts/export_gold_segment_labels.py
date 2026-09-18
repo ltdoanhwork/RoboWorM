@@ -58,6 +58,34 @@ def bucket_ids() -> dict[str, str]:
     }
 
 
+def compact(r: dict) -> dict:
+    """The JSON shape: each rater's opinion, then the single final label.
+
+    `label_final` is the score to use. It follows the precedence the labeling
+    pipeline applied: the expert if they rated this segment, else the checker who
+    adjudicated the raters' disagreement, else the score the two raters agreed on.
+    `label_final_source` says which of the three it came from.
+    """
+    return {
+        "segment_id": r["segment_id"],
+        "item_id": r["item_id"],
+        "video_id": r["video_id"],
+        "embodiment": r["embodiment"],
+        "segment_index": r["segment_index"],
+        "raters": {
+            r["rater1_name"]: r["rater1_score"],
+            r["rater2_name"]: r["rater2_score"],
+        },
+        "raters_agree": bool(r["raters_agree"]) if r["raters_agree"] is not None else None,
+        "checker": ({r["checker_name"]: r["checker_score"]} if r["checker_name"] else {}),
+        "expert": ({"doanh_check": r["expert_score"]} if r["expert_score"] is not None else {}),
+        "label_final": r["score"],
+        "label_final_name": r["label"],
+        "label_final_level": r["level"],
+        "label_final_source": r["source"],
+    }
+
+
 def main() -> None:
     exp = json.loads(EXPORT.read_text())
     keymap = bucket_ids()
@@ -117,30 +145,26 @@ def main() -> None:
 
     with (OUT / "gold_segments.jsonl").open("w") as f:
         for r in rows:
-            f.write(json.dumps({
-                "segment_id": r["segment_id"], "item_id": r["item_id"],
-                "score": r["score"], "level": r["level"], "source": r["source"],
-                "raters": {r["rater1_name"]: r["rater1_score"],
-                           r["rater2_name"]: r["rater2_score"]},
-                "checker": ({r["checker_name"]: r["checker_score"]}
-                            if r["checker_name"] else {}),
-                "expert_score": r["expert_score"],
-            }) + "\n")
+            f.write(json.dumps(compact(r)) + "\n")
 
     (OUT / "gold_segments.json").write_text(json.dumps({
         "check": "hallucinate",
         "n_segments": len(rows),
         "n_videos": len({r["video_id"] for r in rows}),
-        "precedence": ["expert", "checker", "raters"],
         "scale": {"score": SCORE_LABEL, "level_for_score": SCORE_LEVEL},
+        "label_final_rule": [
+            "expert (doanh_check) if the expert rated this segment",
+            "else the checker (quang_check / thanh_check) if one adjudicated",
+            "else the two raters' shared score (they agreed)",
+        ],
         "by_source": dict(by_source),
         "by_score": {str(k): v for k, v in sorted(by_score.items())},
-        "note": ("gold = expert (doanh_check) score where present, otherwise the "
-                 "checker/rater resolution. The expert rated with our metric's band "
-                 "and the prior human label on screen, so statistics computed only "
-                 "over source='expert' rows are not independent of our metric; keep "
-                 "the source column when reporting."),
-        "segments": rows,
+        "note": ("label_final follows the precedence above. The expert rated with "
+                 "our metric's band and the prior human label on screen, so "
+                 "statistics computed only over label_final_source='expert' rows "
+                 "are not independent of our metric; keep the source field when "
+                 "reporting."),
+        "segments": [compact(r) for r in rows],
     }, indent=2) + "\n")
 
     print(f"segments        : {len(rows)}  ({len({r['video_id'] for r in rows})} videos)")
