@@ -26,6 +26,13 @@ const VGP = (() => {
   // (sampling_dataset/data_for_web/expert_review_strata.json) into this folder.
   const EXPERT = "doanh_check";
   const EXPERT_QUEUE_URL = "expert_queue.hallucinate.json";
+  // Per-segment metric verdict + current human label, shown to the expert
+  // BEFORE they score (explicit product decision). Consequence to keep in mind
+  // when reading results: an overlap recomputed from the expert's labels is not
+  // an independent measurement of the metric, because the expert saw the
+  // metric's answer first. Cite those labels as a corrected reference for error
+  // analysis, not as a benchmark score.
+  const EXPERT_PANEL_URL = "expert_panel.hallucinate.json";
   // thanh_check scored all 300 geometry clips offline — that pass is the "score"
   // column of sampling_dataset/data_for_web/data_for_web.csv, imported into the
   // labels table by scripts/import_geo_arbiter_labels.py. Because it covers the
@@ -959,6 +966,26 @@ const VGP = (() => {
   }
 
   /**
+   * The metric verdict + current human label for each segment in the expert
+   * queue, keyed by segment label id. Missing file degrades to no panel rather
+   * than blocking the pass.
+   */
+  let expertPanelCache = null;
+  async function loadExpertPanel() {
+    if (expertPanelCache) return expertPanelCache;
+    try {
+      const res = await fetch(EXPERT_PANEL_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      expertPanelCache = data.segments || {};
+    } catch (err) {
+      console.error("expert panel unavailable", err);
+      expertPanelCache = {};
+    }
+    return expertPanelCache;
+  }
+
+  /**
    * The expert's work, grouped back into the per-video shape the segment UI
    * expects: { items, segments } where segments[videoId] lists only the segment
    * indices in the queue. Segments already scored by the expert drop out, so the
@@ -1482,7 +1509,7 @@ const VGP = (() => {
     videoComplete, videoTouched, raterStats,
     coverageCounts, segmentCoverage, pickLeastLabeled, fixedAssignedItems, conflictIds, conflictUnitIds,
     conflictSegmentsByItem, conflictRows, resolveHuman, resolveSegments,
-    pickConflictItems, checkerFor, halluSettled, segmentIndexOf, loadExpertQueue, expertAssignment,
+    pickConflictItems, checkerFor, halluSettled, segmentIndexOf, loadExpertQueue, loadExpertPanel, expertAssignment,
     videoRaterScores, resolveHalluVideo, halluCheckerProfiles, halluConflictIndices,
     scoreToFlagValue, flagValueToScore,
     getBatch, getValidBatch, isStaleOpenBatch, saveBatch, submitBatch, reopenBatch, batchRemaining, clearBatch, createBatch, getOrCreateBatch,

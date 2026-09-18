@@ -43,6 +43,10 @@
           <p><span data-lang="vi">Conflict tính theo overall toàn video. Checker vẫn chấm lại mọi segment.</span><span data-lang="en">Conflict uses whole-video overall. Checker re-scores every segment.</span></p>
           <div class="review-score-table" id="reviewScores"></div>
         </section>
+        <section class="expert-panel" id="expertPanel" hidden>
+          <h3><span data-lang="vi">Đoạn này: metric và nhãn người hiện tại</span><span data-lang="en">This segment: metric and current human label</span></h3>
+          <div class="expert-grid" id="expertGrid"></div>
+        </section>
         <div class="wait-banner" id="waitBanner" hidden></div>
         <div class="seg-track" id="segTrack"></div>
         <div class="score-area">
@@ -125,7 +129,7 @@ if (VGP.requireGate()) {
   const $ = id => document.getElementById(id);
   const rater = VGP.getRater();
   let items = [], mvAll = [], svAll = [], examples = [], labels = {}, idx = 0;
-  let batch = null, segAllow = null, allRows = [];
+  let batch = null, segAllow = null, allRows = [], expertPanel = null;
   let segs = [], seg = 0, awaiting = false;    // current video's rateable segments
   let exampleRating = 'good', exampleCursor = 0, exampleGroup = [];
   const player = $('player'), examplePlayer = $('examplePlayer');
@@ -164,13 +168,61 @@ if (VGP.requireGate()) {
   function nSegsTotal(){ return items.reduce((n, it) => n + segIndices(it).length, 0); }
   function refreshLife(){ $('nLife').textContent = VGP.raterStats(labels, mvAll, svAll, segAllow).totalVideos; }
 
+  /**
+   * Expert panel: what the metric said and what the current human label is, for
+   * THIS segment, shown before scoring (explicit product decision — the expert
+   * observes both and decides). Note for whoever reads the numbers later: an
+   * overlap recomputed from these labels is not an independent measurement of
+   * the metric, since the expert saw the metric first.
+   */
+  function renderExpertPanel(it, s){
+    const host = $('expertPanel');
+    if (!batch?.expert || !expertPanel) { host.hidden = true; return; }
+    const info = expertPanel[VGP.segmentId(it.id, s)];
+    if (!info) { host.hidden = true; return; }
+    host.hidden = false;
+    const grid = $('expertGrid');
+    grid.replaceChildren();
+    const vi = lang() === 'vi';
+    const cls = n => (n === 1 ? 'bad' : n === 2 ? 'medium' : n === 3 ? 'good' : '');
+    const name = n => (n == null ? '—' : `${n} · ${VGP.scoreLabel(n)}`);
+    const num = x => (x == null ? '—' : Number(x).toFixed(3));
+
+    const card = (k, v, sub, extra) => {
+      const el = document.createElement('div');
+      el.className = `expert-card ${extra || ''}`.trim();
+      const kk = document.createElement('div'); kk.className = 'k'; kk.textContent = k;
+      const vv = document.createElement('div'); vv.className = 'v'; vv.textContent = v;
+      el.append(kk, vv);
+      if (sub) { const ss = document.createElement('div'); ss.className = 's'; ss.textContent = sub; el.append(ss); }
+      grid.append(el);
+    };
+
+    const dets = (info.detectors || []).join(', ') || '—';
+    card(vi ? 'Metric chấm' : 'Metric says',
+         name(info.ours_score),
+         `${vi ? 'ratio' : 'ratio'} ${num(info.ratio)} · ${info.violated ? (vi ? 'vượt ngưỡng' : 'over threshold') : (vi ? 'trong ngưỡng' : 'within threshold')}`,
+         cls(info.ours_score));
+    card(vi ? 'Người chấm hiện tại' : 'Current human',
+         name(info.human_score),
+         `${vi ? 'chốt bởi' : 'settled by'} ${info.settled_by || '—'}`,
+         cls(info.human_score));
+    card(vi ? 'Khớp nhau?' : 'Agreement',
+         info.match == null ? '—' : (info.match ? (vi ? 'Khớp' : 'Match') : (vi ? 'Lệch' : 'Differ')),
+         info.match ? '' : `${name(info.ours_score)} ↔ ${name(info.human_score)}`,
+         info.match == null ? '' : (info.match ? 'match' : 'differ'));
+    card(vi ? 'Chi tiết detector' : 'Detector detail',
+         `${num(info.ratio_rigidity)} / ${num(info.ratio_jerk)}`,
+         `rigidity / jerk · ${vi ? 'dùng' : 'used'}: ${dets}`);
+    const rs = Object.entries(info.rater_scores || {}).map(([k, v]) => `${k} ${v}`).join(' · ') || '—';
+    const cs = Object.entries(info.checker_scores || {}).map(([k, v]) => `${k} ${v}`).join(' · ');
+    card(vi ? 'Hai lượt gốc' : 'Original raters', rs, cs ? `checker: ${cs}` : '');
+  }
+
   function renderReviewContext(it){
     const host = $('reviewContext');
-    // The expert pass is deliberately blind: showing the earlier scores would
-    // reveal which segments our band got wrong (those are the ones in the
-    // disagree stratum), and the control group only works if the reviewer
-    // cannot tell the two strata apart. Checkers still see the context — their
-    // job IS to adjudicate a known disagreement.
+    // The expert gets its own panel (renderExpertPanel) instead: that one is
+    // per segment and also carries the metric, which this table does not.
     if (!batch?.reviewer || batch?.expert) { host.hidden = true; return; }
     const profiles = VGP.videoRaterScores(allRows, it, false);
     const entries = Object.entries(profiles);
@@ -342,6 +394,7 @@ if (VGP.requireGate()) {
     const pos = Math.max(0, list.indexOf(seg));
     const scored = labels[segLabelId(it, seg)];
     renderReviewContext(it);
+    renderExpertPanel(it, seg);
     $('nTotal').textContent = items.length;
     $('nLabeled').textContent = nVideosDone();
     $('brandSub').textContent = `${nSegsDone()} / ${nSegsTotal()} segments`;
@@ -543,9 +596,11 @@ if (VGP.requireGate()) {
     const loaded = await Promise.all([
       VGP.sbLoadLabels(rater),
       (batch.reviewer && !batch.expert) ? VGP.sbLoadAllLabels() : Promise.resolve([]),
+      batch.expert ? VGP.loadExpertPanel() : Promise.resolve(null),
     ]);
     labels = VGP.mergeLabels(loaded[0], rater);
     allRows = loaded[1];
+    expertPanel = loaded[2];
     VGP.flushPending(rater).catch(() => {});
     idx = findResume();
     $('empty').hidden = true;

@@ -265,3 +265,18 @@ html[data-lang="vi"] body [data-lang="en"]{display:none}
   .dialog-body .pair{grid-template-columns:1fr}
   .bar-row{grid-template-columns:90px 1fr 36px}
 }
+
+/* Expert re-review (doanh_check): the metric's verdict and the current human
+   label are shown BEFORE scoring, by explicit request. */
+.expert-panel{margin:.75rem 0;padding:.8rem;border:1px solid #6366f1;border-radius:12px;background:#eef2ff}
+.expert-panel h3{font-size:.92rem;margin-bottom:.5rem}
+.expert-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.5rem}
+.expert-card{padding:.5rem .6rem;border:1px solid #c7d2fe;border-radius:9px;background:#fff}
+.expert-card .k{font-size:.7rem;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
+.expert-card .v{font-size:1.02rem;font-weight:700;line-height:1.25}
+.expert-card .s{font-size:.74rem;color:var(--muted);margin-top:.15rem}
+.expert-card.bad .v{color:var(--bad)}
+.expert-card.medium .v{color:var(--medium)}
+.expert-card.good .v{color:var(--good)}
+.expert-card.match{border-color:#86efac;background:#f0fdf4}
+.expert-card.differ{border-color:#fca5a5;background:#fef2f2}
