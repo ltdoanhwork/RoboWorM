@@ -18,8 +18,13 @@ Any overlap statistic computed against the `expert` rows therefore reflects that
 display, not independent human agreement — the `source` column is what lets a
 later reader separate the two.
 
+Each row also carries the individual scores behind the gold value: both raters
+(every segment has exactly two), the checker who adjudicated if there was one, and
+the expert's score if the expert reached that segment. `raters_agree` is 1 when the
+two raters matched, which is also the condition under which no checker was needed.
+
 Outputs (results/hallucinate_final/):
-  gold_segments.csv    segment_id, item_id, video_id, score, level, source
+  gold_segments.csv    gold score + level + source, plus rater1/rater2/checker/expert
   gold_segments.json   the same, plus counts by source and by class
   gold_segments.jsonl  one compact record per line, for streaming consumers
 
@@ -63,6 +68,12 @@ def main() -> None:
             score = s["human_score"]
             if score is None:
                 continue
+            # every segment carries exactly two raters and at most one checker
+            # (verified over all 8093); the expert is a separate pass on top
+            raters = [(k, x) for k, x in s["rater_scores"].items() if x is not None]
+            checkers = [(k, x) for k, x in s["checker_scores"].items() if x is not None]
+            r1, r2 = (raters + [(None, None), (None, None)])[:2]
+            ck = (checkers + [(None, None)])[0]
             rows.append({
                 "segment_id": keymap.get(s["item_id"]),
                 "item_id": s["item_id"],
@@ -76,6 +87,16 @@ def main() -> None:
                 "label": SCORE_LABEL[score],
                 "level": SCORE_LEVEL[score],
                 "source": s["consensus"],
+                "rater1_name": r1[0],
+                "rater1_score": r1[1],
+                "rater2_name": r2[0],
+                "rater2_score": r2[1],
+                "raters_agree": (
+                    None if r1[1] is None or r2[1] is None else int(r1[1] == r2[1])
+                ),
+                "checker_name": ck[0],
+                "checker_score": ck[1],
+                "expert_score": s.get("expert_score"),
             })
 
     rows.sort(key=lambda r: (r["video_id"], r["segment_index"]))
@@ -86,7 +107,9 @@ def main() -> None:
 
     cols = ["segment_id", "item_id", "video_id", "embodiment", "split",
             "segment_index", "start_frame", "end_frame", "score", "label",
-            "level", "source"]
+            "level", "source", "rater1_name", "rater1_score", "rater2_name",
+            "rater2_score", "raters_agree", "checker_name", "checker_score",
+            "expert_score"]
     with (OUT / "gold_segments.csv").open("w") as f:
         f.write(",".join(cols) + "\n")
         for r in rows:
@@ -94,9 +117,15 @@ def main() -> None:
 
     with (OUT / "gold_segments.jsonl").open("w") as f:
         for r in rows:
-            f.write(json.dumps({"segment_id": r["segment_id"], "item_id": r["item_id"],
-                                "score": r["score"], "level": r["level"],
-                                "source": r["source"]}) + "\n")
+            f.write(json.dumps({
+                "segment_id": r["segment_id"], "item_id": r["item_id"],
+                "score": r["score"], "level": r["level"], "source": r["source"],
+                "raters": {r["rater1_name"]: r["rater1_score"],
+                           r["rater2_name"]: r["rater2_score"]},
+                "checker": ({r["checker_name"]: r["checker_score"]}
+                            if r["checker_name"] else {}),
+                "expert_score": r["expert_score"],
+            }) + "\n")
 
     (OUT / "gold_segments.json").write_text(json.dumps({
         "check": "hallucinate",
@@ -123,6 +152,10 @@ def main() -> None:
     for k in (1, 2, 3):
         n = by_score.get(k, 0)
         print(f"  {k} {SCORE_LABEL[k]:6s} ({SCORE_LEVEL[k]:6s}) {n:5d}  {n / len(rows):6.1%}")
+    agree = [r for r in rows if r["raters_agree"] == 1]
+    print(f"\ntwo raters agreed: {len(agree)}/{len(rows)} = {len(agree) / len(rows):.1%}")
+    print(f"checker present  : {sum(1 for r in rows if r['checker_name'])}")
+    print(f"expert present   : {sum(1 for r in rows if r['expert_score'] is not None)}")
     print(f"\nwrote {(OUT / 'gold_segments.csv').relative_to(REPO)}")
     print(f"      {(OUT / 'gold_segments.json').relative_to(REPO)}")
     print(f"      {(OUT / 'gold_segments.jsonl').relative_to(REPO)}")
