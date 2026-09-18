@@ -49,6 +49,7 @@ from sklearn.metrics import cohen_kappa_score, confusion_matrix
 REPO = Path(__file__).resolve().parents[1]
 VLM_DIR = REPO / "sampling_dataset/data_for_web/hallucinate_bench/300vid/vlm/results"
 CATALOG = REPO / ".main-edit/webpage/labeling/catalog.segment.json"
+HALLU_EXPORT = REPO / "sampling_dataset/data_for_web/hallucinate_final_labels.json"
 OUT_DIR = REPO / "results/ours_vs_vlm_segment"
 
 REVIEWERS = {"quang_check", "thanh_check"}
@@ -91,20 +92,36 @@ def segment_map() -> pd.DataFrame:
 
 
 def resolved_human_segments(rows: list[dict]) -> pd.DataFrame:
-    """Per segment: 2 agreeing raters, else a checker's re-score."""
-    df = pd.DataFrame(rows)
-    df = df[df["item_id"].str.contains(r"_s\d+$", regex=True)].copy()
+    """Final per-segment human labels, read from the canonical export.
+
+    This used to re-derive resolution from raw label rows, which drifted from
+    the site's own rules (it accepted a checker score wherever one existed, so a
+    checker could override a segment both raters agreed on). The export produced
+    by scripts/export_hallucinate_final_labels.js calls the deployed resolver
+    (VGP.resolveSegments), so reading it keeps exactly one source of truth.
+
+    `rows` is unused now; kept so the caller/CLI stays unchanged.
+    """
+    if not HALLU_EXPORT.exists():
+        raise SystemExit(
+            f"missing {HALLU_EXPORT}\n"
+            "run: node scripts/export_hallucinate_final_labels.js"
+        )
+    payload = json.loads(HALLU_EXPORT.read_text())
     recs = []
-    for item_id, grp in df.groupby("item_id"):
-        reg = [int(s) for s in grp.loc[~grp["rater_name"].isin(REVIEWERS), "score"]]
-        chk = [int(s) for s in grp.loc[grp["rater_name"].isin(REVIEWERS), "score"]]
-        if len(reg) >= 2 and len(set(reg)) == 1:
-            human, how = reg[0], "raters"
-        elif len(reg) >= 2 and len(set(chk)) == 1:
-            human, how = chk[0], "checker"
-        else:
-            continue
-        recs.append({"item_id": item_id, "human": human, "how": how, "n_raters": len(reg)})
+    for video in payload["videos"]:
+        for seg in video["segments"]:
+            if seg["human_score"] is None:
+                continue
+            recs.append(
+                {
+                    "item_id": seg["item_id"],
+                    "human": int(seg["human_score"]),
+                    # "checker"/"checkers" both mean adjudicated
+                    "how": "raters" if seg["consensus"] == "raters" else "checker",
+                    "n_raters": len([v for v in seg["rater_scores"].values() if v is not None]),
+                }
+            )
     return pd.DataFrame(recs)
 
 
@@ -268,7 +285,7 @@ def calibrate_cuts(df: pd.DataFrame, n_splits: int = 5, seed: int = 0,
 
 
 def plot_spearman(tbl: pd.DataFrame, out_png: Path, n: int) -> None:
-    """The headline, threshold-free result: ordinal correlation with humans.
+    """The threshold-free result: ordinal correlation with humans.
 
     Unlike overlap/kappa this needs no cut points at all — it reads only the
     ORDER of our continuous kinescore, so it is identical under the shipped and
@@ -291,9 +308,12 @@ def plot_spearman(tbl: pd.DataFrame, out_png: Path, n: int) -> None:
         ax.text(v + 0.008, bar.get_y() + bar.get_height() / 2, f"{v:.3f}",
                 va="center", fontsize=10,
                 fontweight="bold" if bar.get_facecolor()[2] > 0.7 else "normal")
+    # Rank is read off the data, never asserted: on the complete label set the
+    # top slot is not necessarily ours.
+    rank = list(d["predictor"]).index("ours") + 1 if "ours" in set(d["predictor"]) else None
     ax.set_title(
-        f"Ours ranks #1 on agreement with human hallucination labels\n"
-        f"kinescore vs 5 VLM judges, N={n} human-labeled segments",
+        f"Ordinal agreement with human hallucination labels — ours ranks "
+        f"#{rank} of {len(d)}\nkinescore vs VLM judges, N={n} human-labeled segments",
         fontsize=12,
     )
     fig.tight_layout()
@@ -304,7 +324,7 @@ def plot_spearman(tbl: pd.DataFrame, out_png: Path, n: int) -> None:
 
 
 def plot_headline(tbl: pd.DataFrame, out_png: Path, n: int, majority: float) -> None:
-    """The two-panel headline: overlap % and Spearman, ours #1 on both."""
+    """The two-panel headline: overlap % and Spearman."""
     sns.set_theme(style="whitegrid", font_scale=1.0)
     fig, axes = plt.subplots(1, 2, figsize=(15.5, 5.0))
 
@@ -337,10 +357,16 @@ def plot_headline(tbl: pd.DataFrame, out_png: Path, n: int, majority: float) -> 
                     bar.get_y() + bar.get_height() / 2, f"{v:.3f}",
                     va="center", fontsize=9.5,
                     fontweight="bold" if bar.get_facecolor()[2] > 0.7 else "normal")
+    def rank_of(metric: str, pred: str = "ours") -> str:
+        d = tbl if metric != "spearman" else tbl[~tbl["predictor"].isin(["ours_cal", "ours_marg"])]
+        order = list(d.sort_values(metric, ascending=False)["predictor"])
+        return f"#{order.index(pred) + 1}/{len(order)}" if pred in order else "n/a"
+
     fig.suptitle(
-        f"Ours (blue) ranks #1 on both metrics — kinescore vs 5 VLM judges, "
-        f"N={n} human-labeled segments",
-        fontsize=13,
+        f"Segment-level agreement with human hallucination labels — ours (blue) is "
+        f"{rank_of('overlap')} on overlap, {rank_of('spearman')} on Spearman "
+        f"(N={n} human-labeled segments)",
+        fontsize=12,
     )
     fig.tight_layout()
     out_png.parent.mkdir(parents=True, exist_ok=True)
@@ -357,7 +383,7 @@ def main() -> None:
     args = ap.parse_args()
 
     smap = segment_map()
-    human = resolved_human_segments(load_labels(args.offline))
+    human = resolved_human_segments([])
     vlm = load_vlm_segments()
 
     print(f"[data] catalog rateable segments: {len(smap)}")
@@ -432,8 +458,8 @@ def main() -> None:
 
     main_tbl = tbl[~tbl["predictor"].str.endswith("_r1")]
     plot_bars(main_tbl, OUT_DIR / "overlap_ours_vs_vlm.png", majority, n)
-    plot_spearman(main_tbl, OUT_DIR / "spearman_ours_first.png", n)
-    plot_headline(main_tbl, OUT_DIR / "ours_first_overlap_and_spearman.png", n, majority)
+    plot_spearman(main_tbl, OUT_DIR / "spearman_vs_human.png", n)
+    plot_headline(main_tbl, OUT_DIR / "overlap_and_spearman_vs_human.png", n, majority)
     preds = [("ours (shipped cuts)", "ours_label"),
              ("ours (marginal-matched)", "ours_marg")] + [(m, f"vlm_{m}") for m in models]
     plot_confusions(wide, preds, OUT_DIR / "confusion_vs_human.png")
