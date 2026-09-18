@@ -108,8 +108,8 @@ const HUMAN_TO_LEVEL = { 3: 'low', 2: 'medium', 1: 'high' };
   const perVid = VGP.resolveHuman(rows, items);
 
   const videos = [];
-  const segTally = { raters: 0, checker: 0, checkers: 0, unresolved: 0 };
-  const vidTally = { raters: 0, checker: 0, checkers: 0, unresolved: 0 };
+  const segTally = { raters: 0, checker: 0, checkers: 0, expert: 0, unresolved: 0 };
+  const vidTally = { raters: 0, checker: 0, checkers: 0, expert: 0, unresolved: 0 };
   const segDist = {};
   const vidDist = {};
   let nSeg = 0;
@@ -138,7 +138,8 @@ const HUMAN_TO_LEVEL = { 3: 'low', 2: 'medium', 1: 'high' };
         human_score: s.human_score ?? null,           // 1 bad / 2 medium / 3 good
         human_rating: s.human_rating ?? null,
         human_level: s.human_score != null ? HUMAN_TO_LEVEL[s.human_score] : null,
-        consensus: s.consensus ?? null,               // raters | checker | checkers
+        consensus: s.consensus ?? null,               // raters | checker | checkers | expert
+        expert_score: s.expert_score ?? null,         // doanh_check; outranks the rest
         rater_scores: s.rater_scores ?? {},
         checker_scores: s.checker_scores ?? {},
       });
@@ -187,8 +188,8 @@ const HUMAN_TO_LEVEL = { 3: 'low', 2: 'medium', 1: 'high' };
       videos_unresolved: vidTally.unresolved,
       segments_resolved: nSeg - segTally.unresolved,
       segments_unresolved: segTally.unresolved,
-      video_consensus: { raters: vidTally.raters, checker: vidTally.checker, checkers: vidTally.checkers },
-      segment_consensus: { raters: segTally.raters, checker: segTally.checker, checkers: segTally.checkers },
+      video_consensus: { raters: vidTally.raters, checker: vidTally.checker, checkers: vidTally.checkers, expert: vidTally.expert },
+      segment_consensus: { raters: segTally.raters, checker: segTally.checker, checkers: segTally.checkers, expert: segTally.expert },
       video_score_distribution: vidDist,
       segment_score_distribution: segDist,
     },
@@ -201,7 +202,7 @@ const HUMAN_TO_LEVEL = { 3: 'low', 2: 'medium', 1: 'high' };
   console.log(`labels fetched        : ${rows.length}`);
   console.log(`videos                : ${videos.length}  (resolved ${videos.length - vidTally.unresolved})`);
   console.log(`segments              : ${nSeg}  (resolved ${nSeg - segTally.unresolved})`);
-  console.log(`segment consensus     : raters ${segTally.raters}, checker ${segTally.checker}, checkers ${segTally.checkers}`);
+  console.log(`segment consensus     : raters ${segTally.raters}, checker ${segTally.checker}, checkers ${segTally.checkers}, expert ${segTally.expert}`);
   console.log(`segment distribution  : ${JSON.stringify(segDist)}`);
   console.log(`video distribution    : ${JSON.stringify(vidDist)}`);
   console.log(`\nwrote ${OUT}`);
