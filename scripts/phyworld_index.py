@@ -20,6 +20,22 @@ from metrics.phyworld.schema import EMBODIMENTS, METHODS, MODELS, SPLITS, VIEWS
 PRED_CANDIDATES = ("pred_all_views.mp4", "full_pred.mp4")
 
 
+def sidecar_for(ep_dir_or_mp4: Path) -> Path:
+    """Per-episode `phyworld.json` path, for BOTH output conventions.
+
+    Per-episode folder -> `<ep_dir>/phyworld.json`.
+    Flat `episode_*.mp4` -> `<...>/episode_XXXX.phyworld.json` beside the mp4.
+
+    The flat case MUST NOT collapse to `<split_dir>/phyworld.json`: every
+    episode in the split would share one file, and the caller's
+    "skip if it already exists" check would then report the first episode's
+    scores for every other episode in the cell.
+    """
+    if ep_dir_or_mp4.is_file() and ep_dir_or_mp4.suffix == ".mp4":
+        return ep_dir_or_mp4.with_name(ep_dir_or_mp4.stem + ".phyworld.json")
+    return ep_dir_or_mp4 / "phyworld.json"
+
+
 def _instruction_from_dir(ep_dir: Path) -> str:
     mj = ep_dir / "metrics.json"
     if mj.exists():
@@ -96,6 +112,7 @@ def iter_cell(ds_root: Path, method: str, embodiment: str, view: str, model: str
                 "dense_path": str(p) if (p := _dense_counterpart(pred, method, ds_root)) else None,
                 "instruction": _instruction_from_dir(ep),
                 "episode_dir": str(ep),
+                "sidecar": str(sidecar_for(ep)),
                 "n_views": 3 if pred.name == "pred_all_views.mp4" else 1,
             }
         elif ep.is_file() and ep.suffix == ".mp4":
@@ -110,6 +127,7 @@ def iter_cell(ds_root: Path, method: str, embodiment: str, view: str, model: str
                 "dense_path": str(p) if (p := _dense_counterpart(ep, method, ds_root)) else None,
                 "instruction": _instruction_from_txt(ep.with_suffix(".txt")),
                 "episode_dir": str(ep.parent),
+                "sidecar": str(sidecar_for(ep)),
                 "n_views": 1,
             }
 
@@ -134,6 +152,7 @@ def iter_cell(ds_root: Path, method: str, embodiment: str, view: str, model: str
             "dense_path": str(p) if (p := _dense_counterpart(pred, method, ds_root)) else None,
             "instruction": _instruction_from_dir(ep),
             "episode_dir": str(ep),
+            "sidecar": str(sidecar_for(ep)),
             "n_views": 3 if pred.name == "pred_all_views.mp4" else 1,
             "task": ep.parent.name,
         }

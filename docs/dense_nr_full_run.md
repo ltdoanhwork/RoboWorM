@@ -284,7 +284,7 @@ GPU after 8 h of running. Sorting by sha256 `id` is a deterministic, stateless
 shuffle covering all 5 models and 3 mounts within 56 clips and all 28 groups within
 140. Confirmed live: DreamGen and DreamDojo both scored within the first 8 clips.
 
-### Paper tables: `scripts/table_dense_nr.py`
+### Paper tables: `assets/scripts/table_dense_nr.py`
 
 Emits two tables, deliberately separated by how much they can claim:
 
@@ -481,13 +481,17 @@ describes the video, so it cannot rank models — and it cannot even tell a *wro
 task from the right one. Both pre-registered drop conditions are met (gap < 1.0
 AND CI includes 0), so per the E2 protocol the column is **removed from the paper**.
 
-Enforced in `scripts/table_dense_nr.py`:
+Enforced in `assets/scripts/table_dense_nr.py`:
 - `DROPPED` dict → the column is out of `COLUMNS`, its stale
   `table2_text_condition_alignment.tex` is deleted on every run, and the reason is
   printed at the top of the report and stored in `provenance.json`.
-- `CEILING_FAILED` dict → `visual_integrity` is kept but forced to
-  `direction=None` (descriptive) and can **never** be marked `RESOLVED`, with the
-  caveat printed in the report and as a `%` comment in its `.tex`.
+- `CEILING_FAILED` dict → `visual_integrity` is kept but can **never** be marked
+  `RESOLVED` against GT, with the caveat printed in the report and as a `%` comment
+  in its `.tex`. (Update 2026-09-20: the column's `direction` was originally also
+  forced to `None`. It is now `True` — WorldScore's own CLIP-IQA+ polarity, higher =
+  better quality — because polarity and permission-to-rank are separate things. The
+  `RESOLVED` ban and the printed caveat are unchanged; only the `direction` line in
+  the `.tex` now reads `higher is better` instead of `descriptive`.)
 
 `run_dense_nr.py` still computes both metrics — the data is retained, only the
 paper claim is withdrawn.
@@ -692,7 +696,7 @@ ceiling test VisualIntegrity failed:
 | ALL | 83 | −0.301 [−0.444, −0.118] | GT better |
 
 **Code change.** `text_condition_alignment` removed from `DROPPED` (now empty) and
-restored to `COLUMNS` in `scripts/table_dense_nr.py`, registered in a new `PAIRED_ONLY`
+restored to `COLUMNS` in `assets/scripts/table_dense_nr.py`, registered in a new `PAIRED_ONLY`
 dict: emitted in T2, **excluded from T1**, because an absolute median pools different
 captions and would invite the between-model ranking the data cannot support.
 `table2_text_condition_alignment.tex` is emitted again; `provenance.json` records
@@ -1101,7 +1105,7 @@ does not appear when no accel data is present.**
 python scripts/_exp_e5_build_manifest.py
 bash scripts/run_dense_nr.sh --out metrics/WorldScore/results/accel_nr_v1 \
      --workers 5 --reuse-manifest
-python scripts/table_dense_nr.py --run metrics/WorldScore/results/accel_nr_v1 \
+python assets/scripts/table_dense_nr.py --run metrics/WorldScore/results/accel_nr_v1 \
      --also metrics/WorldScore/results/dense_nr_v3_div30
 ```
 
@@ -1513,7 +1517,7 @@ tightened CIs and **exposed a data bug**, but did not move any conclusion.
 
 ## Main-results matrix (2026-09-17) + the AMC over-smoothing gate
 
-`scripts/table_main_results.py` builds the paper's main grid: **rows = (model,
+`assets/scripts/table_main_results.py` builds the paper's main grid: **rows = (model,
 embodiment, view_type), columns = the 9 acceleration methods**, one table per metric.
 It imports every gate, delta and `resolved` decision from `table_dense_nr.py` rather
 than reimplementing them, so it cannot disagree with T3b about the same pairs.
@@ -1603,7 +1607,7 @@ pooled join (9 methods) is sound and worth reporting on its own:
 ### Usage
 
 ```bash
-models/dreamgen/.venv/bin/python scripts/table_main_results.py \
+models/dreamgen/.venv/bin/python assets/scripts/table_main_results.py \
   --run metrics/WorldScore/results/dense_nr_v3_pooled
 ```
 

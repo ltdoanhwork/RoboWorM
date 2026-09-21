@@ -27,15 +27,32 @@
 #     shared filesystem cannot interleave into one partial file.
 #
 # ENV OVERRIDES
-#   MACHINES  total machines sharing the run (default 3)
+#   MACHINES  total machines sharing the run (default 5)
 #   WORKERS   workers per GPU (default 8; measured knee -- see comment below)
 #   RUN       shared run dir (MUST be on the shared filesystem all machines mount)
 #   GPU       CUDA_VISIBLE_DEVICES for this machine (default 0)
+#   ONLY_IDS  JSON id list to restrict the wave to (see scripts/nr_table_coverage.py).
+#             EVERY machine must pass the same file, or the stride partition stops
+#             covering the subset exactly.
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 
-: "${MACHINE:?set MACHINE=0|1|2 (use the run_dense_nr_full_m<k>.sh wrappers)}"
-MACHINES="${MACHINES:-3}"
+: "${MACHINE:?set MACHINE=0..MACHINES-1 (use the run_dense_nr_full_m<k>.sh wrappers)}"
+MACHINES="${MACHINES:-5}"
+ONLY_IDS="${ONLY_IDS:-}"
+# REVERSE=1 turns this box into an EXTRA machine that walks the id-sorted manifest
+# BACKWARDS instead of taking a stride slot. That is the only way to add a machine to an
+# already-running wave without restarting the others: the stride slots are all taken
+# (3 machines x 8 workers = stride 24, offsets 0-23), so a 4th machine has no free offset.
+#
+# Why backwards is nearly free rather than 25% redundant: stride sharding makes each
+# machine process a PREFIX of its own subsequence, so the finished set is a prefix of the
+# whole manifest. Measured at 20% done -- deciles 0-10% are 100% complete, 10-20% are 73%,
+# and everything past 30% is only ~2% (those are the pre-seeded v3 records). A reverse
+# walker therefore starts in ~98% untouched territory and only begins duplicating work
+# when the two fronts meet, i.e. when the wave is nearly finished. Overlap is harmless
+# anyway: a worker skips any id whose result file already exists.
+REVERSE="${REVERSE:-0}"
 # 8 workers/GPU is the measured knee on an 80GB A100: throughput went 2.1 -> 3.0 clips/min
 # from 5 -> 10 workers (sub-linear, GPU-bound), while 10 workers OOM-killed 13% of clips
 # on 4-view-grid multiview, whose SAM2 propagation peaks far above the median. 8 + the
@@ -55,13 +72,78 @@ if [ ! -f "$RUN/manifest.json" ]; then
   exit 1
 fi
 
+if [ "$REVERSE" = "1" ]; then
+  # run_dense_nr.py rejects --reverse together with --machines>1: both mechanisms
+  # partition the same manifest, and combining them would make this box walk a stride it
+  # does not own from the other end. The reverse walker is its own single-machine queue.
+  MACHINES=1
+  MACHINE=0
+fi
+
 mkdir -p "$RUN/logs"
+
+# ---------------------------------------------------------------------------------------
+# WAVE MODE LOCK
+#
+# Every box in a wave must partition the SAME list of rows. The partition is positional
+# (`rows[MACHINE*W + shard :: W*MACHINES]`), so three things must be identical on every
+# box: MACHINES, WORKERS, and the row list itself (whole manifest vs an --only-ids
+# subset). Any disagreement silently stops the union from being a partition -- some rows
+# owned by nobody, others twice -- and because every write is idempotent NOTHING ERRORS.
+#
+# This is not hypothetical. As shipped, the two wrappers disagreed:
+#   run_dense_nr_grid.sh      defaults TARGET=300  -> --only-ids, ~51k of 86,767 rows
+#   run_dense_nr_multigpu.sh  hardcodes ONLY_IDS="" -> all 86,767 rows
+# so the documented 5-box plan (indices 0-3 via grid + 4-7 via multigpu) would have had
+# two halves walking different lists. Measured on the equivalent earlier bug: 30% of the
+# remaining clips were orphaned and 24% done twice.
+#
+# So the FIRST box to launch pins the mode; later boxes must match or they refuse.
+MODE_FILE="$RUN/wave_mode.json"
+MODE_LIST="full-manifest"
+[ -n "$ONLY_IDS" ] && MODE_LIST="ids:$(sha256sum "$ONLY_IDS" | cut -c1-16)"
+MODE_NOW="machines=$MACHINES workers=$WORKERS list=$MODE_LIST"
+if [ -f "$MODE_FILE" ]; then
+  MODE_WAS="$(cat "$MODE_FILE")"
+  if [ "$MODE_WAS" != "$MODE_NOW" ] && [ "${FORCE_MODE:-0}" != "1" ]; then
+    cat >&2 <<EOF
+ERROR: this box would join the wave with a DIFFERENT partition than the boxes already in it.
+
+  wave was pinned as : $MODE_WAS
+  this box wants     : $MODE_NOW
+
+The split is positional, so a mismatch in machines / workers / row-list means some rows
+are scored twice and others NEVER -- with no error, because every write is idempotent.
+
+Fix ONE of these:
+  * match the pinned mode (e.g. add FULL=1, or set TARGET / MACHINES / WORKERS to match);
+  * or stop EVERY box (pkill -f 'run_dense_nr.py' on each), delete $MODE_FILE,
+    and relaunch them all with the new mode.
+FORCE_MODE=1 overrides -- only if every other box is already down.
+EOF
+    exit 1
+  fi
+else
+  # Atomic: several boxes may launch at once.
+  printf '%s' "$MODE_NOW" > "$MODE_FILE.$$.tmp" && mv "$MODE_FILE.$$.tmp" "$MODE_FILE"
+  MODE_WAS="$(cat "$MODE_FILE")"
+  if [ "$MODE_WAS" != "$MODE_NOW" ]; then
+    echo "ERROR: another box pinned a different mode at the same instant:" >&2
+    echo "  pinned: $MODE_WAS" >&2
+    echo "  ours  : $MODE_NOW" >&2
+    exit 1
+  fi
+fi
+
 STAMP="$(date +%Y%m%d_%H%M%S)"
-LOG="$RUN/logs/machine${MACHINE}_${STAMP}.log"
-TODO=$(python3 - "$RUN" <<'PY'
+LOG="$RUN/logs/$([ "$REVERSE" = "1" ] && echo reverse || echo "machine${MACHINE}")_${STAMP}.log"
+TODO=$(python3 - "$RUN" "$ONLY_IDS" <<'PY'
 import json, sys, os
-run = sys.argv[1]
+run, only = sys.argv[1], sys.argv[2]
 rows = json.load(open(f'{run}/manifest.json'))
+if only:
+    keep = set(json.load(open(only)))
+    rows = [r for r in rows if r['id'] in keep]
 have = set(os.listdir(f'{run}/results')) if os.path.isdir(f'{run}/results') else set()
 print(sum(1 for r in rows if f'{r["id"]}.json' not in have))
 PY
@@ -69,11 +151,12 @@ PY
 
 cat <<EOF
 === dense-NR FULL wave ===
-  machine        : $MACHINE of $MACHINES
+  mode           : $([ "$REVERSE" = "1" ] && echo 'REVERSE walker (extra machine, walks the manifest backwards)' || echo "machine $MACHINE of $MACHINES (stride shard)")
   workers        : $WORKERS   (GPU $GPU)
   run dir        : $RUN
   manifest       : $(python3 -c "import json;print(len(json.load(open('$RUN/manifest.json'))))") clips
-  still to score : $TODO   (this machine owns ~1/$MACHINES of them)
+  subset         : ${ONLY_IDS:-none (whole manifest)}
+  still to score : $TODO
   log            : $LOG
 EOF
 
@@ -87,11 +170,14 @@ setsid env CUDA_VISIBLE_DEVICES="$GPU" \
     --workers "$WORKERS" \
     --machines "$MACHINES" \
     --machine "$MACHINE" \
+    ${ONLY_IDS:+--only-ids "$ONLY_IDS"} \
+    $([ "$REVERSE" = "1" ] && echo --reverse) \
   >"$LOG" 2>&1 &
 PGID=$!
 echo "  launched PGID $PGID"
 echo
+TAG=$([ "$REVERSE" = "1" ] && echo rev || echo "m${MACHINE}")
 echo "monitor : tail -f $LOG"
-echo "          ls $RUN/results | wc -l          # global progress, all machines"
-echo "          grep -c '^START' $RUN/worker_m${MACHINE}_*.log | paste -sd' '"
+echo "          bash scripts/dense_nr_status.sh"
+echo "          grep -c '^START' $RUN/worker_${TAG}_*.log | paste -sd' '"
 echo "stop    : kill -- -$PGID"

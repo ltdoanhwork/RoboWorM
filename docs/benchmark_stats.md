@@ -1,11 +1,11 @@
 # Benchmark statistics — measured, not estimated
 
-Every number here is produced by `scripts/make_benchmark_stats.py` reading
+Every number here is produced by `assets/scripts/make_benchmark_stats.py` reading
 `datasets/` directly (machine-readable copy: `assets/figures/benchmark_stats.json`).
 Regenerate with:
 
 ```bash
-python3 scripts/make_benchmark_stats.py --json assets/figures/benchmark_stats.json
+python3 assets/scripts/make_benchmark_stats.py --json assets/figures/benchmark_stats.json
 ```
 
 Counting rule: an episode is counted only if it **has a video on disk**. Each
@@ -13,7 +13,7 @@ LeRobot unit is a dir with `meta/episodes.jsonl`; `bimanual` and
 `humanoid/multiview` are partitioned into per-task units that **reuse episode
 indices**, so everything is keyed by `(unit, episode_index)`. Keying by index
 alone silently collapses them (this is why a naive count gives 524 prompts
-instead of 509).
+instead of 507).
 
 ## Headline numbers
 
@@ -24,9 +24,9 @@ instead of 509).
 | view tracks | **2** (singleview, multiview) |
 | cells (embodiment x track x split) | **12** |
 | task units (LeRobot dirs) | **120** |
-| **evaluation episodes** | **1,608** |
-| **video files** (episodes x synced views) | **3,811** |
-| **distinct language prompts** | **509** |
+| **evaluation episodes** | **1,605** |
+| **video files** (episodes x synced views) | **3,805** |
+| **distinct language prompts** | **507** |
 | **manipulation skills** (canonical primitives) | **14** |
 | scenes (GR1 humanoid, explicit `grid_*` labels) | **38** |
 
@@ -36,8 +36,8 @@ instead of 509).
 |---|---|---|---|---|---|---|---|---|
 | single_arm | singleview | makovian | 1 | 120 | 120 | 1 | 2 | 2 |
 | single_arm | singleview | non_makovian | 1 | 120 | 120 | 1 | 2 | 2 |
-| single_arm | multiview | makovian | 1 | 130 | 388 | **3** | 127 | 8 |
-| single_arm | multiview | non_makovian | 1 | 130 | 389 | **3** | 128 | 12 |
+| single_arm | multiview | makovian | 1 | 128 | 384 | **3** | 126 | 8 |
+| single_arm | multiview | non_makovian | 1 | 129 | 387 | **3** | 127 | 12 |
 | bimanual | singleview | makovian | 37 | 150 | 150 | 1 | 34 | 8 |
 | bimanual | singleview | non_makovian | 17 | 150 | 150 | 1 | 17 | 4 |
 | bimanual | multiview | makovian | 37 | 150 | 600 | **4** | 34 | 8 |
@@ -46,7 +46,7 @@ instead of 509).
 | humanoid | singleview | non_makovian | 1 | 130 | 130 | 1 | 73 | 3 |
 | humanoid | multiview | makovian | 2 | 98 | 392 | **4** | 2 | 1 |
 | humanoid | multiview | non_makovian | 4 | 150 | 642 | **4** | 6 | 1 |
-| **total** | | | **120** | **1,608** | **3,811** | | **509** | **14** |
+| **total** | | | **120** | **1,605** | **3,805** | | **507** | **14** |
 
 ## Skill taxonomy (by #distinct prompts)
 
@@ -54,16 +54,16 @@ Derived by splitting every measured prompt on clause boundaries (`,` / `and` /
 `then`) and mapping each clause's leading verb (+ particle, + `use X to VERB`
 pattern) onto a canonical primitive. The lexicon lives in `SKILL` / `PHRASE` in
 the script and is auditable: anything unmatched is reported as `unmapped`
-rather than silently bucketed (currently **0 / 509**).
+rather than silently bucketed (currently **0 / 507**).
 
-Two columns because 59 / 509 prompts (12%) ask for more than one primitive
+Two columns because 59 / 507 prompts (12%) ask for more than one primitive
 ("*remove the pen from the box **and** put it on the table*"): **primary** counts
-each prompt once by its first verb (sums to 509), **mentions** counts every
-primitive a prompt asks for (multi-label, sums to 571).
+each prompt once by its first verb (sums to 507), **mentions** counts every
+primitive a prompt asks for (multi-label, sums to 570).
 
 | skill | primary | mentions |
 |---|---|---|
-| pick & place | 306 | 341 |
+| pick & place | 304 | 339 |
 | push / slide | 56 | 69 |
 | remove / extract | 44 | 45 |
 | insert / assemble | 23 | 23 |
@@ -79,7 +79,7 @@ primitive a prompt asks for (multi-label, sums to 571).
 | draw / trace | 1 | 1 |
 | **distinct skills** | **14** | **14** |
 
-Audit trail (`scripts/make_benchmark_stats.py --json`): the JSON now ships
+Audit trail (`assets/scripts/make_benchmark_stats.py --json`): the JSON now ships
 `prompt_skills`, the per-prompt label list, so every count above is traceable to
 the exact strings that produced it. Three fixes came out of that audit:
 `transfer` was mis-mapped to `handover` (it is "*transfer beans from the bowl to
@@ -127,14 +127,14 @@ differing only in which camera set that task recorded — do not count them as t
 ## Figures
 
 - `assets/figures/fig_skills.png|pdf` — 7 skills x 5 frames, verbatim
-  instructions, spanning 4 source datasets (`scripts/make_skill_figure.py`).
+  instructions, spanning 4 source datasets (`assets/scripts/make_skill_figure.py`).
 - `assets/figures/fig_markov_vs_nonmarkov.png|pdf` — Markovian vs non-Markovian
-  contrast on one embodiment (`scripts/make_markov_figure.py`).
+  contrast on one embodiment (`assets/scripts/make_markov_figure.py`).
 
 ## Deltas vs. the planning spreadsheet
 
 The plan sheet says "100 videos x 12 cells = 1200"; the delivered benchmark is
-**1,608 episodes / 3,811 videos**. Three specific corrections:
+**1,605 episodes / 3,805 videos**. Three specific corrections:
 
 1. **single_arm singleview is RoboChallenge, not DROID.** The sheet lists
    `cadene/droid_1.0.1` and the note "take 1 view from 3 given views"; on disk
@@ -155,11 +155,11 @@ between the split's *parquet* rows (150) and episodes *with video* (103 / 85).
 
 ## Suggested paper phrasing
 
-> The benchmark comprises **1,608 evaluation episodes** (**3,811 videos**,
+> The benchmark comprises **1,605 evaluation episodes** (**3,805 videos**,
 > counting synchronized views) drawn from **5 source robot datasets** across
 > **3 embodiments** — single-arm, bimanual and humanoid — under both single-view
 > and multi-view (3-4 synchronized cameras) conditions, and split into Markovian
-> and non-Markovian regimes. Episodes carry **509 distinct language
+> and non-Markovian regimes. Episodes carry **507 distinct language
 > instructions** spanning **14 manipulation primitives** (pick & place,
 > push/slide, remove/extract, insert/assemble, open/close, fold/unfold,
 > press/actuate, wipe/clean, pour, stack, handover, ...), and **12% of the

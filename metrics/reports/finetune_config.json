@@ -1,0 +1,233 @@
+{
+  "generated_by": "assets/scripts/make_finetune_config_table.py",
+  "purpose": "Finetuning hyperparameters of the three base world models, extracted from the training configurations that produced the released checkpoints.",
+  "ctrlworld": {
+    "dataset_root": "datasets/humanoid/multiview/non_makovian",
+    "processed_root": "datasets/processed/ctrl_world_robo_multiview",
+    "manifest_path": "datasets/processed/ctrl_world_robo_multiview/manifest.json",
+    "include_pattern": "Airbot_MMK2*,AIRBOT_MMK2*",
+    "exclude_pattern": "",
+    "max_episodes_per_dataset": null,
+    "val_ratio": 0.1,
+    "action_key": "eef_sim_pose_action",
+    "state_key": "eef_sim_pose_state",
+    "action_dim": 12,
+    "n_views": 4,
+    "source_fps": 30,
+    "fps": 5,
+    "downsample_stride": 6,
+    "image_height": 192,
+    "image_width": 320,
+    "num_history": 6,
+    "num_frames": 5,
+    "start_frame_interval": 1,
+    "skip_existing": true,
+    "svd_model_path": "checkpoints/stabilityai/stable-video-diffusion-img2vid",
+    "clip_model_path": "checkpoints/openai/clip-vit-base-patch32",
+    "init_ckpt_path": null,
+    "ckpt_path": null,
+    "output_dir": "datasets/processed/ctrl_world_robo_multiview/checkpoints",
+    "train_batch_size": 1,
+    "learning_rate": 1e-05,
+    "gradient_accumulation_steps": 1,
+    "mixed_precision": "fp16",
+    "max_train_steps": 100000,
+    "checkpointing_steps": 5000,
+    "validation_steps": 1000,
+    "log_steps": 100,
+    "max_grad_norm": 1.0,
+    "num_workers": 4,
+    "shuffle": true,
+    "seed": 42,
+    "motion_bucket_id": 127,
+    "guidance_scale": 1.0,
+    "num_inference_steps": 30,
+    "decode_chunk_size": 8,
+    "text_cond": true,
+    "frame_level_cond": true,
+    "his_cond_zero": false,
+    "use_embodiment_embedding": true,
+    "num_embodiments": 16,
+    "dtype": "bfloat16"
+  },
+  "dreamgen": {
+    "lr_expr": "2 ** (-14.5)",
+    "lr_value": 4.315837287515549e-05,
+    "optimizer": "AdamW",
+    "betas": "[0.9, 0.99]",
+    "weight_decay": "0.1",
+    "eps": "1e-8",
+    "scheduler": "LambdaLinear",
+    "schedule": {
+      "f_max": "0.2",
+      "f_min": "0.1",
+      "warm_up_steps": "1000",
+      "cycle_lengths": "120000"
+    },
+    "trainer": {
+      "max_iter": "120000",
+      "distributed_parallelism": "fsdp"
+    },
+    "save_iter": "10000",
+    "context_parallel_size": "2",
+    "fsdp_shard_size": "-1",
+    "batch_size": "1",
+    "num_workers": "8",
+    "num_frames": "93",
+    "video_size": "432, 768",
+    "sampler_seed": "0",
+    "ema_enabled": "True",
+    "ema_rate": "0.10"
+  },
+  "dreamdojo": {
+    "optimizer_group": "fusedadamw",
+    "scheduler_group": "lambdalinear",
+    "ema_group": "power",
+    "tokenizer": "wan2pt2_tokenizer",
+    "model_group": "action_conditioned_video2world_fsdp_rectified_flow",
+    "optimizer": "FusedAdamW",
+    "lr": "1e-4",
+    "betas": "[0.9, 0.99]",
+    "weight_decay": "0.1",
+    "eps": "1e-8",
+    "max_iter": "400000",
+    "seed": "42",
+    "lam_ckpt": "LAM_400k.ckpt",
+    "omp_threads": "8"
+  },
+  "n_generation_cells": 14,
+  "checkpoints": [
+    {
+      "cell": "single_arm/multiview/ctrlworld",
+      "family": "Ctrl-World",
+      "ckpt": "Ctrl-World/checkpoint-10000.pt (released DROID pretrain)",
+      "seed": "unseeded"
+    },
+    {
+      "cell": "bimanual/multiview/ctrlworld",
+      "family": "Ctrl-World",
+      "ckpt": "bimanual_multiview_5fps/checkpoint-280000.pt",
+      "seed": "unseeded"
+    },
+    {
+      "cell": "bimanual/multiview/ctrlworld_4view_grid",
+      "family": "Ctrl-World",
+      "ckpt": "bimanual_multiview_4view_grid/checkpoint-110000.pt",
+      "seed": "unseeded"
+    },
+    {
+      "cell": "humanoid/multiview/ctrlworld",
+      "family": "Ctrl-World",
+      "ckpt": "humanoid_multiview/checkpoint-200000.pt",
+      "seed": "unseeded"
+    },
+    {
+      "cell": "humanoid/multiview/ctrlworld_4view_grid",
+      "family": "Ctrl-World",
+      "ckpt": "humanoid_multiview_4view_grid/checkpoint-140000.pt",
+      "seed": "unseeded"
+    },
+    {
+      "cell": "single_arm/multiview/dreamgen",
+      "family": "DreamGen",
+      "ckpt": "GR00T-dreams-DROID 14B (video2world_gr00t, --gr00t_variant droid)",
+      "seed": "0"
+    },
+    {
+      "cell": "bimanual/multiview/dreamgen",
+      "family": "DreamGen",
+      "ckpt": "bimanual_multiview_seg16/iter_000120000",
+      "seed": "0 + segment index"
+    },
+    {
+      "cell": "humanoid/multiview/dreamgen",
+      "family": "DreamGen",
+      "ckpt": "humanoid_multiview_seg16/iter_000100000",
+      "seed": "0 + segment index"
+    },
+    {
+      "cell": "single_arm/singleview/dreamgen",
+      "family": "DreamGen",
+      "ckpt": "single_arm_static_singleview_16fps_v2/iter_000090000",
+      "seed": "0"
+    },
+    {
+      "cell": "bimanual/singleview/dreamgen",
+      "family": "DreamGen",
+      "ckpt": "bimanual_singleview_16fps/iter_000110000",
+      "seed": "0"
+    },
+    {
+      "cell": "humanoid/singleview/dreamgen",
+      "family": "DreamGen",
+      "ckpt": "humanoid_singleview_16fps/iter_000090000",
+      "seed": "0"
+    },
+    {
+      "cell": "single_arm/singleview/dreamdojo",
+      "family": "DreamDojo",
+      "ckpt": "dreamdojo_2b_480_640_single_arm_sv/iter_000030000",
+      "seed": "per-chunk index"
+    },
+    {
+      "cell": "bimanual/singleview/dreamdojo",
+      "family": "DreamDojo",
+      "ckpt": "dreamdojo_2b_480_640_aloha_resume70k_bimanual_sv/iter_000100000",
+      "seed": "per-chunk index"
+    },
+    {
+      "cell": "humanoid/singleview/dreamdojo",
+      "family": "DreamDojo",
+      "ckpt": "dreamdojo/2B_GR1_post-train/iter_000050000",
+      "seed": "per-chunk index"
+    }
+  ],
+  "adaptation": "full finetune in all three families; no LoRA or other parameter-efficient adapter is used in the benchmark",
+  "gaps": [
+    {
+      "quantity": "Grad.\\ clip",
+      "note": "not set by the training configuration of at least one family"
+    },
+    {
+      "quantity": "Micro-batch / GPU",
+      "note": "not set by the training configuration of at least one family"
+    },
+    {
+      "quantity": "Grad.\\ accumulation",
+      "note": "not set by the training configuration of at least one family"
+    },
+    {
+      "quantity": "Context parallel",
+      "note": "not set by the training configuration of at least one family"
+    },
+    {
+      "quantity": "Training clip (frames)",
+      "note": "not set by the training configuration of at least one family"
+    },
+    {
+      "quantity": "Checkpoint every",
+      "note": "not set by the training configuration of at least one family"
+    },
+    {
+      "quantity": "Val.\\ split",
+      "note": "not set by the training configuration of at least one family"
+    },
+    {
+      "quantity": "DreamDojo per-experiment registration",
+      "note": "the dreamdojo_2b_480_640_* experiments resolve from the vendored Cosmos package at run time and are not present in this repository, so per-experiment iteration counts, batch geometry and dataset wiring for that family cannot be read from code here."
+    },
+    {
+      "quantity": "rollout seed",
+      "note": "seeding is not uniform across families: the Ctrl-World cells are unseeded (single-sample, carrying sampling noise), while DreamGen fixes seed 0 (offset by segment index on the multiview rollouts) and DreamDojo derives a per-chunk seed. Cross-family variance is therefore not directly comparable.",
+      "per_family_seed": {
+        "Ctrl-World": "unseeded",
+        "DreamGen": "0",
+        "DreamDojo": "per-chunk index"
+      }
+    },
+    {
+      "quantity": "wall-clock training cost",
+      "note": "training runs were not instrumented for wall time; only iteration counts and checkpoint cadence are recoverable from code."
+    }
+  ]
+}

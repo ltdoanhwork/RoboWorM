@@ -10,7 +10,7 @@
 # yields 277 frames, while every accel script mirrors the single-shot
 # `examples.video2world_gr00t` flow at --fps 10 (93 frames). That made all
 # 216 accel-vs-dense pairs in this cell incomparable (see
-# comparable_pair() in scripts/table_dense_nr.py). Archived copy:
+# comparable_pair() in assets/scripts/table_dense_nr.py). Archived copy:
 #   archive/dense_single_arm_mv_dreamgen_LVG16fps_pre20260917/
 #
 # The unified target is the ACCEL config (10 fps, 93 frames, single shot),

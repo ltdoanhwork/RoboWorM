@@ -1,0 +1,19 @@
+embodiment,view,model,supported,makovian,non_makovian,dense_rollouts,src_episodes,tasks_mk,tasks_nm,instr_mk,instr_nm,views_per_episode,camera_rigs,source_fps,source_resolution,corpus
+humanoid,MV,DreamGen,yes,98,150,248,248,2,4,2,6,4,2,30,640x480,RoboCOIN (AIRBOT MMK2)
+humanoid,MV,DreamDojo,no,0,0,0,248,2,4,2,6,4,2,30,640x480,RoboCOIN (AIRBOT MMK2)
+humanoid,MV,Ctrl-World,yes,98,150,248,248,2,4,2,6,4,2,30,640x480,RoboCOIN (AIRBOT MMK2)
+humanoid,SV,DreamGen,yes,130,130,260,260,1,1,118,87,1,1,20.0,1280x800,GR00T Teleop GR1
+humanoid,SV,DreamDojo,yes,118,98,216,260,1,1,118,87,1,1,20.0,1280x800,GR00T Teleop GR1
+humanoid,SV,Ctrl-World,no,0,0,0,260,1,1,118,87,1,1,20.0,1280x800,GR00T Teleop GR1
+bimanual,MV,DreamGen,yes,150,150,300,300,34,17,34,17,4,1,30.0,640x480,AIST Bimanual (ALOHA)
+bimanual,MV,DreamDojo,no,0,0,0,300,34,17,34,17,4,1,30.0,640x480,AIST Bimanual (ALOHA)
+bimanual,MV,Ctrl-World,yes,150,150,300,300,34,17,34,17,4,1,30.0,640x480,AIST Bimanual (ALOHA)
+bimanual,SV,DreamGen,yes,150,150,300,300,34,17,34,17,1,1,30.0,640x480,AIST Bimanual (ALOHA)
+bimanual,SV,DreamDojo,yes,150,150,300,300,34,17,34,17,1,1,30.0,640x480,AIST Bimanual (ALOHA)
+bimanual,SV,Ctrl-World,no,0,0,0,300,34,17,34,17,1,1,30.0,640x480,AIST Bimanual (ALOHA)
+single_arm,MV,DreamGen,yes,128,129,257,257,1,1,126,128,3,1,15,320x180,DROID
+single_arm,MV,DreamDojo,no,0,0,0,257,1,1,126,128,3,1,15,320x180,DROID
+single_arm,MV,Ctrl-World,yes,128,129,257,257,1,1,126,128,3,1,15,320x180,DROID
+single_arm,SV,DreamGen,yes,120,120,240,240,1,1,2,2,1,1,15.0,640x480,RoboChallenge
+single_arm,SV,DreamDojo,yes,120,120,240,240,1,1,2,2,1,1,15.0,640x480,RoboChallenge
+single_arm,SV,Ctrl-World,no,0,0,0,240,1,1,2,2,1,1,15.0,640x480,RoboChallenge

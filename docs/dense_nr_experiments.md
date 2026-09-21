@@ -67,7 +67,7 @@ important property — *is GT actually the ceiling?* — is currently untested.
 **Run** (after `results/dense_nr_v3_div30/queue_finished.json` appears):
 
 ```bash
-python3 scripts/table_dense_nr.py --run metrics/WorldScore/results/dense_nr_v3_div30
+python3 assets/scripts/table_dense_nr.py --run metrics/WorldScore/results/dense_nr_v3_div30
 ```
 
 **Pass criteria.**
@@ -115,7 +115,7 @@ report; do not publish it.
 > | ALL | 83 | −0.301 [−0.444, −0.118] | GT better |
 >
 > **Action taken.** `text_condition_alignment` is **removed from `DROPPED` and restored
-> to `COLUMNS`** in `scripts/table_dense_nr.py`, but registered in a new `PAIRED_ONLY`
+> to `COLUMNS`** in `assets/scripts/table_dense_nr.py`, but registered in a new `PAIRED_ONLY`
 > dict: it is emitted in T2 (paired) and **excluded from T1 (descriptive)**, because an
 > absolute median pools different captions and would invite exactly the between-model
 > ranking the data cannot support. `table2_text_condition_alignment.tex` is emitted again.
@@ -148,7 +148,7 @@ report; do not publish it.
 > 24.766, paired delta **+0.088 [−1.043, +0.930]**. Both pre-registered drop
 > conditions met (gap < 1.0 AND CI includes 0) → interpretation (b).
 > TextAlignment is **removed from the paper** (enforced by the `DROPPED` dict in
-> `scripts/table_dense_nr.py`). Raw data still computed and stored.
+> `assets/scripts/table_dense_nr.py`). Raw data still computed and stored.
 > **Do not re-run.**
 >
 > ⚠️ This conclusion was **overturned** by the matrix control above — the numbers here
@@ -621,7 +621,7 @@ head ActorActivity is gate-sensitive and that must be stated as a limitation.
 > python scripts/_exp_e5_build_manifest.py            # writes results/accel_nr_v1/manifest.json
 > bash scripts/run_dense_nr.sh --out metrics/WorldScore/results/accel_nr_v1 \
 >      --workers 5 --reuse-manifest
-> python scripts/table_dense_nr.py --run metrics/WorldScore/results/accel_nr_v1 \
+> python assets/scripts/table_dense_nr.py --run metrics/WorldScore/results/accel_nr_v1 \
 >      --also metrics/WorldScore/results/dense_nr_v3_div30
 > ```
 >

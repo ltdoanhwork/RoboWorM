@@ -4,6 +4,7 @@ Run through run_dense_nr.sh for vendored dependency paths.
 """
 import argparse
 import collections
+import errno
 import hashlib
 import json
 import os
@@ -81,8 +82,16 @@ def dump(path, data):
     # atomically renamed into place as a corrupt result. pid alone is not enough
     # across hosts.
     tmp = path.with_suffix(f'.{os.uname().nodename}.{os.getpid()}.tmp')
-    tmp.write_text(json.dumps(data, indent=2, allow_nan=False))
-    tmp.replace(path)
+    try:
+        tmp.write_text(json.dumps(data, indent=2, allow_nan=False))
+        tmp.replace(path)
+    except BaseException:
+        # A failed write leaves a 0-byte scratch file behind. Measured 2026-09-19: an
+        # EDQUOT squeeze on the shared fileset left 28 of them in results/, where they
+        # were counted as scored clips by `ls results | wc -l` and broke any reader that
+        # globs the directory. Remove the stub so results/ only ever holds complete files.
+        tmp.unlink(missing_ok=True)
+        raise
 
 
 TASK_CLAUSE = re.compile(r'(?:performing(?: the task)?:|shows that a robot)\s*(.+?)(?:\s+The video\b|$)', re.S)
@@ -458,6 +467,21 @@ def continuity(paths, smooth, motion, interval_ok, n_active):
     return value, denom, gains, copy_errs
 
 
+def record_error(args, row):
+    """Persist a failure without letting the failure handler itself kill the worker.
+
+    `dump()` can raise EDQUOT, which is precisely the condition that gets us here -- and
+    an exception thrown from inside the `except` block escapes the retry loop and takes
+    the whole worker process down (measured: a machine silently dropping from 8 workers to
+    3 keeps going at a third of the rate with nothing in the log to say so).
+    """
+    try:
+        dump(args.out/'errors'/f'{row["id"]}.json',
+             {**row, 'traceback': traceback.format_exc()})
+    except OSError:
+        print(f'ERRLOG-FAILED {row["id"]} (cannot write errors/, continuing)', flush=True)
+
+
 def worker(args):
     import numpy as np
     import torch
@@ -486,6 +510,20 @@ def worker(args):
     vp = build_sam2_video_predictor(sc, str(ck/'sam2.1_hiera_base_plus.pt'), device='cuda', apply_postprocessing=False)
     ground = Grounder(cfg, gd, 'cuda')
     rows = json.loads((args.out/'manifest.json').read_text())
+    if args.only_ids:
+        # Restrict to a precomputed id subset (scripts/nr_table_coverage.py writes one).
+        # The paper grid is a (embodiment, model, split) x method table, which needs only
+        # `--target` clips per cell -- measured 20,035 ids at 300/cell versus 55,383 for
+        # the whole manifest, i.e. the table is reachable ~2.7x sooner. Filtering here
+        # rather than writing a second manifest.json keeps ONE inventory for the run dir:
+        # every id, pair_key and shard offset stays identical, so a later full wave simply
+        # resumes and the already-scored subset counts towards it.
+        keep = set(json.loads(Path(args.only_ids).read_text()))
+        before = len(rows)
+        rows = [r for r in rows if r['id'] in keep]
+        if not rows:
+            raise SystemExit(f'--only-ids {args.only_ids} matched 0 of {before} manifest rows')
+        print(f'ONLY-IDS {len(rows)} of {before} manifest rows', flush=True)
     # Walk in sha256-id order, NOT manifest order. The manifest is grouped (all GT +
     # Ctrl-World bimanual first, DreamGen at 539, DreamDojo at 599), so in manifest
     # order an untested model family is only reached hours in and partial results are
@@ -594,6 +632,25 @@ def worker(args):
         dest = args.out/'results'/f'{row["id"]}.json'
         if dest.exists():
             continue
+        # Rows whose source video no longer exists are DEAD, not failures. 567 rows of
+        # this manifest point into four stale trees that were deleted on 2026-09-19
+        # before the HF upload (svg1/pisa/radial `.../dreamgen/*/iter_000090000`, whose
+        # canonical tag is `_static16fps`, and `fastercache/single_arm/.../dreamdojo/
+        # */iter_000100000`, which held bimanual renders misfiled under single_arm).
+        # The manifest was inventoried BEFORE that cleanup, so every one of those rows
+        # reaches `prepare()`, gets fps<=0 from cv2 and lands in errors/ as a
+        # "permanent failure" -- 445 fake entries that bury the handful of genuinely
+        # corrupt source videos and make `failed (perm)` useless as a signal.
+        #
+        # Skipping here rather than filtering manifest.json is deliberate: the shard is
+        # `rows[offset::stride]` by POSITION, so deleting rows renumbers every machine's
+        # slice. Machines load the manifest once at startup and a 9-day wave restarts
+        # constantly, so a shortened manifest would have boxes partitioning two
+        # different lists at the same time -- live rows owned by NOBODY. Same outcome,
+        # no resharding.
+        if not os.path.exists(row['path']):
+            print(f'SKIP-GONE {row["relative"]} {row["view"]}', flush=True)
+            continue
         started = time.time()
         print(f'START {row["relative"]} {row["view"]}', flush=True)
         for attempt in range(4):
@@ -603,17 +660,41 @@ def worker(args):
                 (args.out/'errors'/f'{row["id"]}.json').unlink(missing_ok=True)
                 print('DONE '+row['id']+' '+str({k:result.get(k) for k in KEYS}), flush=True)
                 break
-            except torch.OutOfMemoryError:
-                # Transient when several workers peak together; retry before recording.
+            except (torch.OutOfMemoryError, OSError) as exc:
+                # Two DIFFERENT transient faults, both of which must be retried rather
+                # than recorded, because a manifest row is owned by exactly ONE worker
+                # shard: whatever this worker gives up on is never revisited by the other
+                # forward machines, so "record and move on" loses the clip outright.
+                #
+                #   OOM            several workers peaking together.
+                #   EDQUOT/ENOSPC  the fileset is SHARED with other jobs, so the wall
+                #                  opens again as soon as they free space. Measured
+                #                  2026-09-19: a squeeze from 15:50 failed 6.0% of clips
+                #                  (30 of 504 in 76 min) while `df` still showed 383T
+                #                  free -- projected ~4.1k clips lost over the rest of
+                #                  the wave. Writes succeeded again minutes later, which
+                #                  is exactly the case retrying fixes.
+                quota = isinstance(exc, OSError) and exc.errno in (errno.EDQUOT, errno.ENOSPC)
+                if isinstance(exc, OSError) and not quota:
+                    # Any other OSError (bad path, unreadable video) is permanent; fall
+                    # through to the same handling as a non-transient exception.
+                    record_error(args, row)
+                    traceback.print_exc()
+                    break
                 torch.cuda.empty_cache()
                 if attempt == 3:
-                    dump(args.out/'errors'/f'{row["id"]}.json', {**row, 'traceback':traceback.format_exc()})
+                    record_error(args, row)
                     traceback.print_exc()
                 else:
-                    print(f'OOM retry {attempt+1} {row["id"]}', flush=True)
-                    time.sleep(60 * (attempt + 1))
+                    # Quota needs ANOTHER job to release space, which takes longer than a
+                    # GPU peak to clear, so it gets the slower backoff (5/10/15 min vs
+                    # 1/2/3 min).
+                    wait = (300 if quota else 60) * (attempt + 1)
+                    print(f'RETRY {"QUOTA" if quota else "OOM"} {attempt+1}/3 '
+                          f'in {wait}s {row["id"]}', flush=True)
+                    time.sleep(wait)
             except Exception:
-                dump(args.out/'errors'/f'{row["id"]}.json', {**row, 'traceback':traceback.format_exc()})
+                record_error(args, row)
                 traceback.print_exc()
                 torch.cuda.empty_cache()
                 break
@@ -658,6 +739,13 @@ def main():
                          'the second machine against silently writing a different '
                          'manifest.json (inventory is filesystem-dependent) into a '
                          'shared run directory.')
+    ap.add_argument('--only-ids', default=None,
+                    help='JSON list of manifest ids to restrict this run to. Use it to '
+                         'score only what the paper grid needs (build the list with '
+                         'scripts/nr_table_coverage.py --target N). Applied AFTER the '
+                         'manifest is loaded and BEFORE sharding, so every machine must '
+                         'pass the SAME file or the stride partition no longer covers '
+                         'the subset exactly.')
     args = ap.parse_args(); args.out = args.out.resolve(); args.out.mkdir(parents=True, exist_ok=True)
     if not 0 <= args.machine < args.machines:
         raise SystemExit(f'--machine {args.machine} must be in [0, {args.machines})')
@@ -686,6 +774,8 @@ def main():
         cmd = [sys.executable, '-u', __file__, '--out', str(args.out),
                '--workers', str(args.workers), '--shard', str(i),
                '--machines', str(args.machines), '--machine', str(args.machine)]
+        if args.only_ids:
+            cmd += ['--only-ids', str(args.only_ids)]
         if args.reverse:
             cmd.append('--reverse')
         p = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT)

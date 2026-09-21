@@ -1,0 +1,39 @@
+{
+  "generated_by": "assets/scripts/make_finetune_qualitative_figure.py",
+  "purpose": "Frame-level comparison of base vs finetuned checkpoints on matched episodes, supporting the finetuning-effect claim.",
+  "sampled_fractions": [
+    0.25,
+    0.55,
+    0.85
+  ],
+  "episodes": [
+    {
+      "cell": "humanoid, multi-view",
+      "task": "mobile car",
+      "episode": "episode_AIRBOT_MMK2_mobile_car__000019",
+      "psnr_base": 13.381606737772623,
+      "psnr_finetuned": 21.09852409362793,
+      "psnr_gain": 7.717,
+      "n_frames": {
+        "gt": 37,
+        "base": 37,
+        "ft": 37
+      },
+      "compared_span": 37
+    },
+    {
+      "cell": "bimanual, multi-view",
+      "task": "insert gear shaft",
+      "episode": "episode_find_insert_small_gear_shaft__000018",
+      "psnr_base": 14.64321772257487,
+      "psnr_finetuned": 21.1034730275472,
+      "psnr_gain": 6.46,
+      "n_frames": {
+        "gt": 117,
+        "base": 117,
+        "ft": 117
+      },
+      "compared_span": 117
+    }
+  ]
+}

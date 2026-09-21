@@ -240,5 +240,22 @@ metrics/sim2real_out/*
 compare/*
 results/*
 assets/*
+# ...but the paper-figure/table generators living under assets/ ARE source and
+# must stay in git (assets/* above is meant to exclude heavy binary artifacts).
+!assets/scripts/
+!assets/scripts/**
+# the negation above also re-included bytecode, so re-exclude it
+assets/scripts/__pycache__/
+# extracted video frames cached for the hero montage (regenerable, ~3 MB of JPEG)
+metrics/reports/_hero_frames/
+# transcoded analysis clips for the qualitative NR report (~5 MB of mp4, regenerable
+# from the scored records via assets/scripts/make_nr_qualitative_report.py)
+metrics/reports/nr_qualitative/clips/
 archive/*
 checkpoint_ablation/*
+# LaTeX preview builds (tectonic output, regenerable)
+assets/paper/_build/
+assets/paper/_preview_*.tex
+assets/paper/*.aux
+assets/paper/*.log
+assets/paper/*.out

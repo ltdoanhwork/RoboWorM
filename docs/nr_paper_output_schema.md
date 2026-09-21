@@ -11,7 +11,7 @@ through the identical protocol and are the plausibility anchor for every column.
 | Paper column | Stored field | Scale | Direction | Claim permitted |
 |---|---|---|---|---|
 | Visual Integrity | `visual_integrity` | CLIP-IQA+ frame p10 × 100, [0,100] | **descriptive only** | **No ranking claim.** Failed the GT-is-ceiling audit (E1, 2026-09-16): pred beats co-located GT on dreamdojo (+0.90, p=5e-05) and 4view (+0.52). Motion/smoothness/sharpness explanations all rejected → domain bias, not quality. Report as a descriptive statistic with this caveat or omit. |
-| Text Alignment | `text_condition_alignment` | CLIPScore [0,100] | **paired only** | Dropped by E2 on 2026-09-16, **reinstated the same day** — the prompt-shuffle control (n=100, +0.088 [−1.043, +0.930]) was itself confounded, because swapping in another task's instruction also swaps caption style/length, and CLIPScore's per-caption bias (≈7 pts) dwarfs image-text agreement (≈2). The double-centered clip-by-prompt matrix (`scripts/_exp_text_matrix.py`) shows real discrimination on every embodiment (centered diagonal +1.40 / +2.53 / +1.64, all CIs excluding 0; retrieval top-1 37.5% vs 6.2% chance). **Report paired deltas only**: pred and its own GT are scored against the same prompt (83/83 pairs), so the bias cancels exactly, and GT wins RESOLVED (ctrlworld −0.552 [−1.019, −0.302]; 4view −0.209 [−0.703, −0.066]). Never quote an unpaired median — it pools different captions. Enforced by `PAIRED_ONLY` in `scripts/table_dense_nr.py`. |
+| Text Alignment | `text_condition_alignment` | CLIPScore [0,100] | **paired only** | Dropped by E2 on 2026-09-16, **reinstated the same day** — the prompt-shuffle control (n=100, +0.088 [−1.043, +0.930]) was itself confounded, because swapping in another task's instruction also swaps caption style/length, and CLIPScore's per-caption bias (≈7 pts) dwarfs image-text agreement (≈2). The double-centered clip-by-prompt matrix (`scripts/_exp_text_matrix.py`) shows real discrimination on every embodiment (centered diagonal +1.40 / +2.53 / +1.64, all CIs excluding 0; retrieval top-1 37.5% vs 6.2% chance). **Report paired deltas only**: pred and its own GT are scored against the same prompt (83/83 pairs), so the bias cancels exactly, and GT wins RESOLVED (ctrlworld −0.552 [−1.019, −0.302]; 4view −0.209 [−0.703, −0.066]). Never quote an unpaired median — it pools different captions. Enforced by `PAIRED_ONLY` in `assets/scripts/table_dense_nr.py`. |
 | Actor Activity | `actor_motion_raw`, `actor_motion_active_rate` | px/source-frame, mount-specific: static = subject-mask p95 flow (uncorrected); head = subject p95 after background-translation removal, pairs with background < 5% invalid (E4; was 10); wrist = whole-frame median flow (camera rides end effector). Active-pair fraction [0,1] at >= 1 px/source-frame. `actor_motion_median_raw` is diagnostic only | descriptive | Amount and temporal extent of robot movement. Compare to GT within mount; never higher-is-better globally. |
 | Active Motion Continuity | `active_motion_continuity` | activity-weighted clip(1 − MSE_VFI / MSE_copy) × 100, [0,100] | high | Motion explainable by interpolation, normalized by motion amount. N/A without valid arm / active pairs, or when `active_motion_continuity_weight_sum` < 3 activity-equivalent triples. |
 | Actor Flicker | `actor_flicker_raw` | flow-aligned RGB residual [0,1] | low | **DROPPED — must not appear in any paper table.** Two independent failures: (E7) it *improves* under blur at every severity, incl. realistic (−0.001 [−0.0020, −0.0004]), and does not react to frame-dup/smoothing/blocking; (E3) the prescribed per-pixel fix was built and run — 9 candidate normalizations, and **none** passes `\|rho(motion,·)\| < 0.25` on all three mounts. Kept in the record as experimental. See E3/E7. |
@@ -190,10 +190,10 @@ one number per cell is readable and unit-free. Two rules:
    null. Before this fix the whole `DreamGen/Bimanual/SV` row read `ns` for all 9 methods,
    which looks like "all methods are free here" — it actually means "n=1–4, nothing tested".
 
-Rendered candidates live in `scripts/table_main_options.py` (retention, loss index, win
+Rendered candidates live in `assets/scripts/table_main_options.py` (retention, loss index, win
 rate, two-row per-metric, severity tiers, transposed).
 
-## Storing BOTH views: unpaired absolute + paired delta (`scripts/table_paper_main.py`)
+## Storing BOTH views: unpaired absolute + paired delta (`assets/scripts/table_paper_main.py`)
 
 Both are kept, because **scoring is already unpaired** — `run_dense_nr.py` scores every
 clip independently and writes one JSON record per clip. Pairing is only a join on
@@ -269,7 +269,7 @@ Outputs: `<run>/tables/paper_unpaired.csv` (516 rows, incl. dense and GT-ceiling
 
 ### The paper grid: rows = method x model family, cols = speedup + every metric
 
-`scripts/table_paper_main.py` also emits the layout meant for the paper slot — one block
+`assets/scripts/table_paper_main.py` also emits the layout meant for the paper slot — one block
 per method, split into its model families, with **all five metrics as columns** next to
 speedup, so no single metric hogs the table:
 

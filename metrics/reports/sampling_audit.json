@@ -1,0 +1,1144 @@
+{
+  "generated_by": "assets/scripts/audit_sampling_distribution.py",
+  "purpose": "Audited rollout counts. Figures MUST read these, not a raw directory walk: this applies the non-benchmark exclusions (stale iter tags, _fps_compare) and merges the two Ctrl-World tree variants into one model column.",
+  "scope_matches_design": true,
+  "dense_total": 3166,
+  "grand_total": 29343,
+  "model_totals": {
+    "dreamgen": 1605,
+    "dreamdojo": 756,
+    "ctrlworld": 805
+  },
+  "method_totals": {
+    "dense": 3166,
+    "itm": 2410,
+    "sito": 2410,
+    "worldcache": 3166,
+    "fastercache": 2361,
+    "dicache": 3166,
+    "svg2": 3166,
+    "svg1": 3166,
+    "radial": 3166,
+    "pisa": 3166
+  },
+  "groups": [
+    {
+      "name": "Dense (no acceleration)",
+      "members": [
+        "dense"
+      ],
+      "total": 3166
+    },
+    {
+      "name": "Acceleration caching",
+      "members": [
+        "worldcache",
+        "dicache",
+        "fastercache"
+      ],
+      "total": 8693
+    },
+    {
+      "name": "Sparse attention",
+      "members": [
+        "svg1",
+        "svg2",
+        "radial",
+        "pisa"
+      ],
+      "total": 12664
+    },
+    {
+      "name": "Token reduction",
+      "members": [
+        "sito",
+        "itm"
+      ],
+      "total": 4820
+    }
+  ],
+  "dense_cells": [
+    {
+      "embodiment": "bimanual",
+      "view": "MV",
+      "model": "dreamgen",
+      "makovian": 150,
+      "non_makovian": 150,
+      "total": 300,
+      "scope_makovian": 150,
+      "scope_non_makovian": 150
+    },
+    {
+      "embodiment": "bimanual",
+      "view": "MV",
+      "model": "ctrlworld",
+      "makovian": 150,
+      "non_makovian": 150,
+      "total": 300,
+      "scope_makovian": 150,
+      "scope_non_makovian": 150
+    },
+    {
+      "embodiment": "bimanual",
+      "view": "SV",
+      "model": "dreamgen",
+      "makovian": 150,
+      "non_makovian": 150,
+      "total": 300,
+      "scope_makovian": 150,
+      "scope_non_makovian": 150
+    },
+    {
+      "embodiment": "bimanual",
+      "view": "SV",
+      "model": "dreamdojo",
+      "makovian": 150,
+      "non_makovian": 150,
+      "total": 300,
+      "scope_makovian": 150,
+      "scope_non_makovian": 150
+    },
+    {
+      "embodiment": "humanoid",
+      "view": "MV",
+      "model": "dreamgen",
+      "makovian": 98,
+      "non_makovian": 150,
+      "total": 248,
+      "scope_makovian": 98,
+      "scope_non_makovian": 150
+    },
+    {
+      "embodiment": "humanoid",
+      "view": "MV",
+      "model": "ctrlworld",
+      "makovian": 98,
+      "non_makovian": 150,
+      "total": 248,
+      "scope_makovian": 98,
+      "scope_non_makovian": 150
+    },
+    {
+      "embodiment": "humanoid",
+      "view": "SV",
+      "model": "dreamgen",
+      "makovian": 130,
+      "non_makovian": 130,
+      "total": 260,
+      "scope_makovian": 130,
+      "scope_non_makovian": 130
+    },
+    {
+      "embodiment": "humanoid",
+      "view": "SV",
+      "model": "dreamdojo",
+      "makovian": 118,
+      "non_makovian": 98,
+      "total": 216,
+      "scope_makovian": 118,
+      "scope_non_makovian": 98
+    },
+    {
+      "embodiment": "single_arm",
+      "view": "MV",
+      "model": "dreamgen",
+      "makovian": 128,
+      "non_makovian": 129,
+      "total": 257,
+      "scope_makovian": 128,
+      "scope_non_makovian": 129
+    },
+    {
+      "embodiment": "single_arm",
+      "view": "MV",
+      "model": "ctrlworld",
+      "makovian": 128,
+      "non_makovian": 129,
+      "total": 257,
+      "scope_makovian": 128,
+      "scope_non_makovian": 129
+    },
+    {
+      "embodiment": "single_arm",
+      "view": "SV",
+      "model": "dreamgen",
+      "makovian": 120,
+      "non_makovian": 120,
+      "total": 240,
+      "scope_makovian": 120,
+      "scope_non_makovian": 120
+    },
+    {
+      "embodiment": "single_arm",
+      "view": "SV",
+      "model": "dreamdojo",
+      "makovian": 120,
+      "non_makovian": 120,
+      "total": 240,
+      "scope_makovian": 120,
+      "scope_non_makovian": 120
+    }
+  ],
+  "method_cells": [
+    {
+      "method": "itm",
+      "embodiment": "bimanual",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "itm",
+      "embodiment": "bimanual",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "itm",
+      "embodiment": "bimanual",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "itm",
+      "embodiment": "bimanual",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 0,
+      "scope_total": 300
+    },
+    {
+      "method": "itm",
+      "embodiment": "humanoid",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 248,
+      "scope_total": 248
+    },
+    {
+      "method": "itm",
+      "embodiment": "humanoid",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 248,
+      "scope_total": 248
+    },
+    {
+      "method": "itm",
+      "embodiment": "humanoid",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 260,
+      "scope_total": 260
+    },
+    {
+      "method": "itm",
+      "embodiment": "humanoid",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 0,
+      "scope_total": 216
+    },
+    {
+      "method": "itm",
+      "embodiment": "single_arm",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 257,
+      "scope_total": 257
+    },
+    {
+      "method": "itm",
+      "embodiment": "single_arm",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 257,
+      "scope_total": 257
+    },
+    {
+      "method": "itm",
+      "embodiment": "single_arm",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 240,
+      "scope_total": 240
+    },
+    {
+      "method": "itm",
+      "embodiment": "single_arm",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 0,
+      "scope_total": 240
+    },
+    {
+      "method": "sito",
+      "embodiment": "bimanual",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "sito",
+      "embodiment": "bimanual",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "sito",
+      "embodiment": "bimanual",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "sito",
+      "embodiment": "bimanual",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 0,
+      "scope_total": 300
+    },
+    {
+      "method": "sito",
+      "embodiment": "humanoid",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 248,
+      "scope_total": 248
+    },
+    {
+      "method": "sito",
+      "embodiment": "humanoid",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 248,
+      "scope_total": 248
+    },
+    {
+      "method": "sito",
+      "embodiment": "humanoid",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 260,
+      "scope_total": 260
+    },
+    {
+      "method": "sito",
+      "embodiment": "humanoid",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 0,
+      "scope_total": 216
+    },
+    {
+      "method": "sito",
+      "embodiment": "single_arm",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 257,
+      "scope_total": 257
+    },
+    {
+      "method": "sito",
+      "embodiment": "single_arm",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 257,
+      "scope_total": 257
+    },
+    {
+      "method": "sito",
+      "embodiment": "single_arm",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 240,
+      "scope_total": 240
+    },
+    {
+      "method": "sito",
+      "embodiment": "single_arm",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 0,
+      "scope_total": 240
+    },
+    {
+      "method": "worldcache",
+      "embodiment": "bimanual",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "worldcache",
+      "embodiment": "bimanual",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "worldcache",
+      "embodiment": "bimanual",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "worldcache",
+      "embodiment": "bimanual",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "worldcache",
+      "embodiment": "humanoid",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 248,
+      "scope_total": 248
+    },
+    {
+      "method": "worldcache",
+      "embodiment": "humanoid",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 248,
+      "scope_total": 248
+    },
+    {
+      "method": "worldcache",
+      "embodiment": "humanoid",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 260,
+      "scope_total": 260
+    },
+    {
+      "method": "worldcache",
+      "embodiment": "humanoid",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 216,
+      "scope_total": 216
+    },
+    {
+      "method": "worldcache",
+      "embodiment": "single_arm",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 257,
+      "scope_total": 257
+    },
+    {
+      "method": "worldcache",
+      "embodiment": "single_arm",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 257,
+      "scope_total": 257
+    },
+    {
+      "method": "worldcache",
+      "embodiment": "single_arm",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 240,
+      "scope_total": 240
+    },
+    {
+      "method": "worldcache",
+      "embodiment": "single_arm",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 240,
+      "scope_total": 240
+    },
+    {
+      "method": "fastercache",
+      "embodiment": "bimanual",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "fastercache",
+      "embodiment": "bimanual",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 0,
+      "scope_total": 300
+    },
+    {
+      "method": "fastercache",
+      "embodiment": "bimanual",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "fastercache",
+      "embodiment": "bimanual",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "fastercache",
+      "embodiment": "humanoid",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 248,
+      "scope_total": 248
+    },
+    {
+      "method": "fastercache",
+      "embodiment": "humanoid",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 0,
+      "scope_total": 248
+    },
+    {
+      "method": "fastercache",
+      "embodiment": "humanoid",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 260,
+      "scope_total": 260
+    },
+    {
+      "method": "fastercache",
+      "embodiment": "humanoid",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 216,
+      "scope_total": 216
+    },
+    {
+      "method": "fastercache",
+      "embodiment": "single_arm",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 257,
+      "scope_total": 257
+    },
+    {
+      "method": "fastercache",
+      "embodiment": "single_arm",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 0,
+      "scope_total": 257
+    },
+    {
+      "method": "fastercache",
+      "embodiment": "single_arm",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 240,
+      "scope_total": 240
+    },
+    {
+      "method": "fastercache",
+      "embodiment": "single_arm",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 240,
+      "scope_total": 240
+    },
+    {
+      "method": "dicache",
+      "embodiment": "bimanual",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "dicache",
+      "embodiment": "bimanual",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "dicache",
+      "embodiment": "bimanual",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "dicache",
+      "embodiment": "bimanual",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "dicache",
+      "embodiment": "humanoid",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 248,
+      "scope_total": 248
+    },
+    {
+      "method": "dicache",
+      "embodiment": "humanoid",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 248,
+      "scope_total": 248
+    },
+    {
+      "method": "dicache",
+      "embodiment": "humanoid",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 260,
+      "scope_total": 260
+    },
+    {
+      "method": "dicache",
+      "embodiment": "humanoid",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 216,
+      "scope_total": 216
+    },
+    {
+      "method": "dicache",
+      "embodiment": "single_arm",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 257,
+      "scope_total": 257
+    },
+    {
+      "method": "dicache",
+      "embodiment": "single_arm",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 257,
+      "scope_total": 257
+    },
+    {
+      "method": "dicache",
+      "embodiment": "single_arm",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 240,
+      "scope_total": 240
+    },
+    {
+      "method": "dicache",
+      "embodiment": "single_arm",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 240,
+      "scope_total": 240
+    },
+    {
+      "method": "svg2",
+      "embodiment": "bimanual",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "svg2",
+      "embodiment": "bimanual",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "svg2",
+      "embodiment": "bimanual",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "svg2",
+      "embodiment": "bimanual",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "svg2",
+      "embodiment": "humanoid",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 248,
+      "scope_total": 248
+    },
+    {
+      "method": "svg2",
+      "embodiment": "humanoid",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 248,
+      "scope_total": 248
+    },
+    {
+      "method": "svg2",
+      "embodiment": "humanoid",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 260,
+      "scope_total": 260
+    },
+    {
+      "method": "svg2",
+      "embodiment": "humanoid",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 216,
+      "scope_total": 216
+    },
+    {
+      "method": "svg2",
+      "embodiment": "single_arm",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 257,
+      "scope_total": 257
+    },
+    {
+      "method": "svg2",
+      "embodiment": "single_arm",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 257,
+      "scope_total": 257
+    },
+    {
+      "method": "svg2",
+      "embodiment": "single_arm",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 240,
+      "scope_total": 240
+    },
+    {
+      "method": "svg2",
+      "embodiment": "single_arm",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 240,
+      "scope_total": 240
+    },
+    {
+      "method": "svg1",
+      "embodiment": "bimanual",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "svg1",
+      "embodiment": "bimanual",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "svg1",
+      "embodiment": "bimanual",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "svg1",
+      "embodiment": "bimanual",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "svg1",
+      "embodiment": "humanoid",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 248,
+      "scope_total": 248
+    },
+    {
+      "method": "svg1",
+      "embodiment": "humanoid",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 248,
+      "scope_total": 248
+    },
+    {
+      "method": "svg1",
+      "embodiment": "humanoid",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 260,
+      "scope_total": 260
+    },
+    {
+      "method": "svg1",
+      "embodiment": "humanoid",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 216,
+      "scope_total": 216
+    },
+    {
+      "method": "svg1",
+      "embodiment": "single_arm",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 257,
+      "scope_total": 257
+    },
+    {
+      "method": "svg1",
+      "embodiment": "single_arm",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 257,
+      "scope_total": 257
+    },
+    {
+      "method": "svg1",
+      "embodiment": "single_arm",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 240,
+      "scope_total": 240
+    },
+    {
+      "method": "svg1",
+      "embodiment": "single_arm",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 240,
+      "scope_total": 240
+    },
+    {
+      "method": "radial",
+      "embodiment": "bimanual",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "radial",
+      "embodiment": "bimanual",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "radial",
+      "embodiment": "bimanual",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "radial",
+      "embodiment": "bimanual",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "radial",
+      "embodiment": "humanoid",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 248,
+      "scope_total": 248
+    },
+    {
+      "method": "radial",
+      "embodiment": "humanoid",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 248,
+      "scope_total": 248
+    },
+    {
+      "method": "radial",
+      "embodiment": "humanoid",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 260,
+      "scope_total": 260
+    },
+    {
+      "method": "radial",
+      "embodiment": "humanoid",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 216,
+      "scope_total": 216
+    },
+    {
+      "method": "radial",
+      "embodiment": "single_arm",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 257,
+      "scope_total": 257
+    },
+    {
+      "method": "radial",
+      "embodiment": "single_arm",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 257,
+      "scope_total": 257
+    },
+    {
+      "method": "radial",
+      "embodiment": "single_arm",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 240,
+      "scope_total": 240
+    },
+    {
+      "method": "radial",
+      "embodiment": "single_arm",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 240,
+      "scope_total": 240
+    },
+    {
+      "method": "pisa",
+      "embodiment": "bimanual",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "pisa",
+      "embodiment": "bimanual",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "pisa",
+      "embodiment": "bimanual",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "pisa",
+      "embodiment": "bimanual",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "pisa",
+      "embodiment": "humanoid",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 248,
+      "scope_total": 248
+    },
+    {
+      "method": "pisa",
+      "embodiment": "humanoid",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 248,
+      "scope_total": 248
+    },
+    {
+      "method": "pisa",
+      "embodiment": "humanoid",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 260,
+      "scope_total": 260
+    },
+    {
+      "method": "pisa",
+      "embodiment": "humanoid",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 216,
+      "scope_total": 216
+    },
+    {
+      "method": "pisa",
+      "embodiment": "single_arm",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 257,
+      "scope_total": 257
+    },
+    {
+      "method": "pisa",
+      "embodiment": "single_arm",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 257,
+      "scope_total": 257
+    },
+    {
+      "method": "pisa",
+      "embodiment": "single_arm",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 240,
+      "scope_total": 240
+    },
+    {
+      "method": "pisa",
+      "embodiment": "single_arm",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 240,
+      "scope_total": 240
+    },
+    {
+      "method": "dense",
+      "embodiment": "bimanual",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "dense",
+      "embodiment": "bimanual",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "dense",
+      "embodiment": "bimanual",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "dense",
+      "embodiment": "bimanual",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 300,
+      "scope_total": 300
+    },
+    {
+      "method": "dense",
+      "embodiment": "humanoid",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 248,
+      "scope_total": 248
+    },
+    {
+      "method": "dense",
+      "embodiment": "humanoid",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 248,
+      "scope_total": 248
+    },
+    {
+      "method": "dense",
+      "embodiment": "humanoid",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 260,
+      "scope_total": 260
+    },
+    {
+      "method": "dense",
+      "embodiment": "humanoid",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 216,
+      "scope_total": 216
+    },
+    {
+      "method": "dense",
+      "embodiment": "single_arm",
+      "view": "MV",
+      "model": "dreamgen",
+      "total": 257,
+      "scope_total": 257
+    },
+    {
+      "method": "dense",
+      "embodiment": "single_arm",
+      "view": "MV",
+      "model": "ctrlworld",
+      "total": 257,
+      "scope_total": 257
+    },
+    {
+      "method": "dense",
+      "embodiment": "single_arm",
+      "view": "SV",
+      "model": "dreamgen",
+      "total": 240,
+      "scope_total": 240
+    },
+    {
+      "method": "dense",
+      "embodiment": "single_arm",
+      "view": "SV",
+      "model": "dreamdojo",
+      "total": 240,
+      "scope_total": 240
+    }
+  ]
+}

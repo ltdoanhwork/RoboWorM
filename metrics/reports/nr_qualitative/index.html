@@ -1,0 +1,746 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PhyWorld-NR &mdash; qualitative examples</title><style>
+:root{--bg:#0f1115;--card:#181b22;--line:#272b35;--txt:#e6e8ee;--dim:#98a0b0;
+      --bad:#e5484d;--good:#30a46c;--neutral:#5b6cff}
+*{box-sizing:border-box}
+body{margin:0;padding:32px 28px 80px;background:var(--bg);color:var(--txt);
+     font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+h1{font-size:26px;margin:0 0 6px} h2{font-size:20px;margin:44px 0 4px}
+h3{font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);
+   margin:26px 0 10px;font-weight:600}
+.sub{color:var(--dim);max-width:70ch;margin:0 0 10px}
+.unit{display:inline-block;font:12px ui-monospace,Menlo,monospace;color:var(--dim);
+      border:1px solid var(--line);border-radius:4px;padding:1px 6px}
+.note{background:#1b1f28;border-left:3px solid var(--neutral);padding:10px 14px;
+      border-radius:0 6px 6px 0;color:#c3c9d6;max-width:80ch;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}
+.card{margin:0;background:var(--card);border:1px solid var(--line);border-radius:10px;
+      overflow:hidden;position:relative}
+.card video{width:100%;display:block;background:#000;aspect-ratio:4/3}
+.badge{position:absolute;top:8px;left:8px;z-index:2;font:600 11px ui-monospace,Menlo,monospace;
+       padding:3px 8px;border-radius:20px;color:#fff;background:#333}
+.badge.bad{background:var(--bad)} .badge.good{background:var(--good)}
+.badge.mid{background:var(--neutral)}
+figcaption{padding:10px 12px 12px;font-size:12px}
+.meta{color:var(--txt)} .path{color:var(--dim);font:11px ui-monospace,Menlo,monospace;
+      word-break:break-all;margin:3px 0 0}
+.prompt{color:#b9c0cf;margin:6px 0 0;font-style:italic}
+table.others{width:100%;margin:8px 0 0;border-collapse:collapse;color:var(--dim)}
+table.others td{padding:2px 0;border-top:1px solid var(--line);font-size:11px}
+table.others td.num{text-align:right;font-family:ui-monospace,Menlo,monospace;color:var(--txt)}
+footer{margin-top:60px;color:var(--dim);font-size:12px;border-top:1px solid var(--line);
+       padding-top:14px}
+code{font-family:ui-monospace,Menlo,monospace;background:#1b1f28;padding:1px 5px;border-radius:4px}
+.card.pair{grid-column:span 1}
+.twin{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:#000}
+.twin>div{position:relative}
+.twin video{width:100%;display:block;background:#000;aspect-ratio:4/3}
+.tag{position:absolute;bottom:4px;left:4px;font:600 9px ui-monospace,Menlo,monospace;
+     padding:2px 5px;border-radius:3px;color:#fff;background:#000a}
+.tag.real{background:#1f6f4aee} .tag.gen{background:#4a4f8fee}
+table.audit{border-collapse:collapse;margin:14px 0;font-size:13px}
+table.audit th,table.audit td{border:1px solid var(--line);padding:6px 11px;text-align:left}
+table.audit th{background:#1b1f28;color:var(--dim);font-weight:600}
+table.audit td.num{text-align:right;font-family:ui-monospace,Menlo,monospace}
+.ok{color:var(--good);font-weight:600} .fail{color:var(--bad);font-weight:600}
+.warn{color:#e0a83a;font-weight:600}
+.note.bad-note{border-left-color:var(--bad)}
+</style></head><body>
+<h1>PhyWorld-NR &mdash; what each metric actually reacts to</h1>
+<p class="sub">Every clip below is the <b>analysis clip</b>: re-created with the same
+<code>prepare()</code> the scorer used, so it is the same view crop, the same 5&nbsp;fps
+sampling and the same 256&times;192 grid that produced the number. The conditioning
+frame is dropped, exactly as in scoring. Numbers come from
+<code>table_dense_nr.gated()</code>, i.e. the current gates.</p>
+<p class="sub">The galleries show model predictions only; the
+<a href="#ceiling">reality check</a> at the end puts each prediction next to its own
+real video. Each card also lists the other columns, so you can see that the metrics
+move independently &mdash; and a clip may legitimately appear in two galleries if it is
+weak on two of them.</p>
+<h2>Visual Integrity <span class="unit">CLIP-IQA+ p10 x100</span></h2><p class="sub">Is the picture clean? Blur, blocking and noise push it down. It says nothing about whether the robot does the right thing.</p><p class="sub">scored on 23413 clips &middot; median 27.25 &middot; range shown: 13.15 to 59.56</p><div class="note"><b>Caveat.</b> This column failed the GT-is-ceiling audit, so it may not rank models. Use these clips to see what the metric reacts to, not to conclude which model is better.</div><h3>POOR &mdash; lowest Visual Integrity</h3><div class="grid">
+    <figure class="card">
+      <span class="badge bad">POOR &nbsp;13.15</span>
+      <video src="clips/visual_integrity_bad_3211a21780.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          humanoid &middot;
+          mount <b>wrist</b> &middot;
+          view left_wrist</div>
+        <div class="path">humanoid/output/multiview/dreamgen/makovian/iter_000100000/Airbot_MMK2_move_pan/episode_000047/full_pred.mp4</div>
+        <div class="prompt">prompt: &ldquo;push the pan to the edge of the table with your left hand and place it on the building block with your right hand&rdquo;</div>
+        <table class="others"><tr><td>Text Alignment</td><td class="num">20.519</td></tr><tr><td>Actor Activity (px/frame)</td><td class="num">0.71</td></tr><tr><td>AMC</td><td class="num">41.74</td></tr></table>
+      </figcaption>
+    </figure>
+    <figure class="card">
+      <span class="badge bad">POOR &nbsp;13.58</span>
+      <video src="clips/visual_integrity_bad_493efce676.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          humanoid &middot;
+          mount <b>static</b> &middot;
+          view grid_top_right</div>
+        <div class="path">humanoid/output/multiview/dreamgen/makovian/iter_000100000/Airbot_MMK2_move_pan/episode_000004/full_pred.mp4</div>
+        <div class="prompt">prompt: &ldquo;push the pan to the edge of the table with your left hand and place it on the building block with your right hand&rdquo;</div>
+        <table class="others"><tr><td>Text Alignment</td><td class="num">22.669</td></tr><tr><td>Actor Activity (px/frame)</td><td class="num">&mdash;</td></tr><tr><td>AMC</td><td class="num">&mdash;</td></tr></table>
+      </figcaption>
+    </figure>
+    <figure class="card">
+      <span class="badge bad">POOR &nbsp;13.81</span>
+      <video src="clips/visual_integrity_bad_2c9c22c6ed.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>ctrlworld_4view_grid</b> &middot;
+          humanoid &middot;
+          mount <b>head</b> &middot;
+          view cam_head_rgb</div>
+        <div class="path">humanoid/output/multiview/ctrlworld_4view_grid/non_makovian/episode_Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate__000026/pred_all_views.mp4</div>
+        <div class="prompt">prompt: &ldquo;pick up the pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box&rdquo;</div>
+        <table class="others"><tr><td>Text Alignment</td><td class="num">22.102</td></tr><tr><td>Actor Activity (px/frame)</td><td class="num">7.30</td></tr><tr><td>AMC</td><td class="num">38.59</td></tr></table>
+      </figcaption>
+    </figure></div><h3>GOOD &mdash; highest Visual Integrity</h3><div class="grid">
+    <figure class="card">
+      <span class="badge good">GOOD &nbsp;59.56</span>
+      <video src="clips/visual_integrity_good_33123b10de.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>dreamdojo</b> &middot;
+          humanoid &middot;
+          mount <b>head</b> &middot;
+          view singleview</div>
+        <div class="path">humanoid/output/singleview/dreamdojo/non_makovian/iter_000050000/episode_017558/full_pred.mp4</div>
+        
+        <table class="others"><tr><td>Text Alignment</td><td class="num">&mdash;</td></tr><tr><td>Actor Activity (px/frame)</td><td class="num">1.98</td></tr><tr><td>AMC</td><td class="num">55.85</td></tr></table>
+      </figcaption>
+    </figure>
+    <figure class="card">
+      <span class="badge good">GOOD &nbsp;55.56</span>
+      <video src="clips/visual_integrity_good_23bb1d64a2.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          humanoid &middot;
+          mount <b>head</b> &middot;
+          view singleview</div>
+        <div class="path">humanoid/output/singleview/dreamgen/non_makovian/iter_000090000_static16fps/episode_017558.mp4</div>
+        <div class="prompt">prompt: &ldquo;The robot uses both hands to lift the black video game controller from the table and place it on top of the white cup&rdquo;</div>
+        <table class="others"><tr><td>Text Alignment</td><td class="num">31.348</td></tr><tr><td>Actor Activity (px/frame)</td><td class="num">0.98</td></tr><tr><td>AMC</td><td class="num">51.53</td></tr></table>
+      </figcaption>
+    </figure>
+    <figure class="card">
+      <span class="badge good">GOOD &nbsp;49.73</span>
+      <video src="clips/visual_integrity_good_404a75be52.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>dreamdojo</b> &middot;
+          bimanual &middot;
+          mount <b>static</b> &middot;
+          view singleview</div>
+        <div class="path">bimanual/output/singleview/dreamdojo/makovian/iter_000100000/close_toolbox__episode_000077/full_pred.mp4</div>
+        
+        <table class="others"><tr><td>Text Alignment</td><td class="num">&mdash;</td></tr><tr><td>Actor Activity (px/frame)</td><td class="num">2.02</td></tr><tr><td>AMC</td><td class="num">80.51</td></tr></table>
+      </figcaption>
+    </figure></div><h2>Text Alignment <span class="unit">CLIPScore [0,100]</span></h2><p class="sub">Does the video show the task that was asked for? Compare each clip against its own prompt, printed under the video.</p><p class="sub">scored on 21494 clips &middot; median 24.25 &middot; range shown: 15.49 to 40.69</p><div class="note"><b>Caveat.</b> Paired only: an absolute CLIPScore carries a per-caption bias of ~7 points, so compare a clip against its own reference, never across prompts. The prompts differ between the clips below.</div><h3>POOR &mdash; lowest Text Alignment</h3><div class="grid">
+    <figure class="card">
+      <span class="badge bad">POOR &nbsp;15.493</span>
+      <video src="clips/text_condition_alignment_bad_2bc3e6cf4b.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>ctrlworld_4view_grid</b> &middot;
+          humanoid &middot;
+          mount <b>static</b> &middot;
+          view cam_front_rgb</div>
+        <div class="path">humanoid/output/multiview/ctrlworld_4view_grid/non_makovian/episode_Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate__000028/pred_all_views.mp4</div>
+        <div class="prompt">prompt: &ldquo;pick up the pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box&rdquo;</div>
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">17.62</td></tr><tr><td>Actor Activity (px/frame)</td><td class="num">1.18</td></tr><tr><td>AMC</td><td class="num">38.08</td></tr></table>
+      </figcaption>
+    </figure>
+    <figure class="card">
+      <span class="badge bad">POOR &nbsp;15.904</span>
+      <video src="clips/text_condition_alignment_bad_1c95184a1a.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          humanoid &middot;
+          mount <b>wrist</b> &middot;
+          view left_wrist</div>
+        <div class="path">humanoid/output/multiview/dreamgen/non_makovian/iter_000100000/Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate/episode_000088/full_pred.mp4</div>
+        <div class="prompt">prompt: &ldquo;pick up the pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box&rdquo;</div>
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">15.68</td></tr><tr><td>Actor Activity (px/frame)</td><td class="num">0.25</td></tr><tr><td>AMC</td><td class="num">&mdash;</td></tr></table>
+      </figcaption>
+    </figure>
+    <figure class="card">
+      <span class="badge bad">POOR &nbsp;15.920</span>
+      <video src="clips/text_condition_alignment_bad_14c8ff6818.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>ctrlworld</b> &middot;
+          humanoid &middot;
+          mount <b>wrist</b> &middot;
+          view cam_right_wrist</div>
+        <div class="path">humanoid/output/multiview/ctrlworld/non_makovian/episode_Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate__000054/pred_all_views.mp4</div>
+        <div class="prompt">prompt: &ldquo;pick up the pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box&rdquo;</div>
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">19.55</td></tr><tr><td>Actor Activity (px/frame)</td><td class="num">3.02</td></tr><tr><td>AMC</td><td class="num">41.27</td></tr></table>
+      </figcaption>
+    </figure></div><h3>GOOD &mdash; highest Text Alignment</h3><div class="grid">
+    <figure class="card">
+      <span class="badge good">GOOD &nbsp;40.687</span>
+      <video src="clips/text_condition_alignment_good_3777804d64.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          single_arm &middot;
+          mount <b>static</b> &middot;
+          view singleview</div>
+        <div class="path">single_arm/output/singleview/dreamgen/non_makovian/iter_000090000_static16fps/global/episode_000020.mp4</div>
+        <div class="prompt">prompt: &ldquo;A robot arm presses the pink, blue, and green buttons in sequence&rdquo;</div>
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">36.36</td></tr><tr><td>Actor Activity (px/frame)</td><td class="num">1.56</td></tr><tr><td>AMC</td><td class="num">49.51</td></tr></table>
+      </figcaption>
+    </figure>
+    <figure class="card">
+      <span class="badge good">GOOD &nbsp;39.745</span>
+      <video src="clips/text_condition_alignment_good_361c10883e.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          humanoid &middot;
+          mount <b>head</b> &middot;
+          view singleview</div>
+        <div class="path">humanoid/output/singleview/dreamgen/makovian/iter_000090000_static16fps/episode_012093.mp4</div>
+        <div class="prompt">prompt: &ldquo;The right robotic arm picks up a red apple from the table and places it on the bottom shelf&rdquo;</div>
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">44.11</td></tr><tr><td>Actor Activity (px/frame)</td><td class="num">1.15</td></tr><tr><td>AMC</td><td class="num">62.91</td></tr></table>
+      </figcaption>
+    </figure>
+    <figure class="card">
+      <span class="badge good">GOOD &nbsp;32.664</span>
+      <video src="clips/text_condition_alignment_good_f83f88d23c.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          humanoid &middot;
+          mount <b>static</b> &middot;
+          view grid_top_right</div>
+        <div class="path">humanoid/output/multiview/dreamgen/non_makovian/iter_000100000/Airbot_MMK2_storage_bottle_part/episode_000039/full_pred.mp4</div>
+        <div class="prompt">prompt: &ldquo;put the water bottle and handle into the cardboard box&rdquo;</div>
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">20.92</td></tr><tr><td>Actor Activity (px/frame)</td><td class="num">4.69</td></tr><tr><td>AMC</td><td class="num">42.34</td></tr></table>
+      </figcaption>
+    </figure></div><h2>Active Motion Continuity <span class="unit">activity-weighted VFI gain x100</span></h2><p class="sub">While the robot is moving, does the motion continue sensibly from frame to frame, or does something jump / pop / teleport? Clips with no motion are not scored at all (N/A) instead of scoring perfectly.</p><p class="sub">scored on 21317 clips &middot; median 59.06 &middot; range shown: 19.48 to 88.03</p><div class="note"><b>You have to play these.</b> This column is about what happens <i>between</i> frames, so a still frame cannot show it &mdash; a low score means something jumps, pops or slides wrongly from one frame to the next, not that the picture is ugly. The clips are slowed to 3&nbsp;fps and loop.</div><h3>POOR &mdash; lowest Active Motion Continuity</h3><div class="grid">
+    <figure class="card">
+      <span class="badge bad">POOR &nbsp;19.48</span>
+      <video src="clips/active_motion_continuity_bad_3ec62ce77e.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          single_arm &middot;
+          mount <b>static</b> &middot;
+          view exterior_2_left</div>
+        <div class="path">single_arm/output/multiview/dreamgen/makovian/episode_009622.mp4</div>
+        <div class="prompt">prompt: &ldquo;Put the rings inside the black bowl&rdquo;</div>
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">32.00</td></tr><tr><td>Text Alignment</td><td class="num">22.496</td></tr><tr><td>Actor Activity (px/frame)</td><td class="num">5.09</td></tr></table>
+      </figcaption>
+    </figure>
+    <figure class="card">
+      <span class="badge bad">POOR &nbsp;21.48</span>
+      <video src="clips/active_motion_continuity_bad_156553324c.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>dreamdojo</b> &middot;
+          single_arm &middot;
+          mount <b>static</b> &middot;
+          view singleview</div>
+        <div class="path">single_arm/output/singleview/dreamdojo/makovian/iter_000030000/episode_000096/full_pred.mp4</div>
+        
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">28.04</td></tr><tr><td>Text Alignment</td><td class="num">&mdash;</td></tr><tr><td>Actor Activity (px/frame)</td><td class="num">0.13</td></tr></table>
+      </figcaption>
+    </figure>
+    <figure class="card">
+      <span class="badge bad">POOR &nbsp;22.96</span>
+      <video src="clips/active_motion_continuity_bad_2dbe42a845.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          single_arm &middot;
+          mount <b>wrist</b> &middot;
+          view wrist_left</div>
+        <div class="path">single_arm/output/multiview/dreamgen/non_makovian/episode_002070.mp4</div>
+        <div class="prompt">prompt: &ldquo;Put the orange rings inside the white cup, place the blue ring inside the clear cup&rdquo;</div>
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">20.71</td></tr><tr><td>Text Alignment</td><td class="num">24.205</td></tr><tr><td>Actor Activity (px/frame)</td><td class="num">4.68</td></tr></table>
+      </figcaption>
+    </figure></div><h3>GOOD &mdash; highest Active Motion Continuity</h3><div class="grid">
+    <figure class="card">
+      <span class="badge good">GOOD &nbsp;88.03</span>
+      <video src="clips/active_motion_continuity_good_40804b3872.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          bimanual &middot;
+          mount <b>static</b> &middot;
+          view singleview</div>
+        <div class="path">bimanual/output/singleview/dreamgen/makovian/iter_000110000_bimanual16fps/wipe_the_desk_with_a_blue_cloth__episode_000019.mp4</div>
+        <div class="prompt">prompt: &ldquo;Wipe the desk with a blue cloth&rdquo;</div>
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">28.22</td></tr><tr><td>Text Alignment</td><td class="num">24.058</td></tr><tr><td>Actor Activity (px/frame)</td><td class="num">2.07</td></tr></table>
+      </figcaption>
+    </figure>
+    <figure class="card">
+      <span class="badge good">GOOD &nbsp;87.81</span>
+      <video src="clips/active_motion_continuity_good_4102d4c1e1.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>dreamdojo</b> &middot;
+          bimanual &middot;
+          mount <b>static</b> &middot;
+          view singleview</div>
+        <div class="path">bimanual/output/singleview/dreamdojo/makovian/iter_000100000/spoon_yellow_block_bowl__episode_000016/full_pred.mp4</div>
+        
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">39.43</td></tr><tr><td>Text Alignment</td><td class="num">&mdash;</td></tr><tr><td>Actor Activity (px/frame)</td><td class="num">1.25</td></tr></table>
+      </figcaption>
+    </figure>
+    <figure class="card">
+      <span class="badge good">GOOD &nbsp;86.14</span>
+      <video src="clips/active_motion_continuity_good_47d9cfa8c3.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>dreamdojo</b> &middot;
+          single_arm &middot;
+          mount <b>static</b> &middot;
+          view singleview</div>
+        <div class="path">single_arm/output/singleview/dreamdojo/makovian/iter_000030000/episode_000095/full_pred.mp4</div>
+        
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">27.02</td></tr><tr><td>Text Alignment</td><td class="num">&mdash;</td></tr><tr><td>Actor Activity (px/frame)</td><td class="num">0.23</td></tr></table>
+      </figcaption>
+    </figure></div><h2>Actor Activity <span class="unit">px / source frame</span></h2><p class="sub">How much the robot and the objects move, in pixels per source frame. This is NOT a score: more motion is not better, because the real video defines the right amount. It is reported so the other columns can be read next to it.</p><div class="note"><b>No poor/good here.</b> There is no "good" value to show: the co-located real video defines how much the robot should move, so this column is descriptive. Below is a magnitude ladder per camera mount &mdash; the statistic itself differs by mount (static: subject p95; head: ego-compensated subject p95; wrist: whole-frame median), because on a wrist camera the "background" moves more than the subject does.</div><h3>static mount &mdash; still &rarr; fast</h3><div class="grid">
+    <figure class="card">
+      <span class="badge bad">STILL &nbsp;0.00</span>
+      <video src="clips/actor_motion_raw_static_5d6f59ea84.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          single_arm &middot;
+          mount <b>static</b> &middot;
+          view exterior_2_left</div>
+        <div class="path">single_arm/output/multiview/dreamgen/non_makovian/episode_000017.mp4</div>
+        <div class="prompt">prompt: &ldquo;Put the green block on top of the other blocks&rdquo;</div>
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">28.25</td></tr><tr><td>Text Alignment</td><td class="num">20.766</td></tr><tr><td>AMC</td><td class="num">&mdash;</td></tr></table>
+      </figcaption>
+    </figure>
+    <figure class="card">
+      <span class="badge mid">MID &nbsp;1.43</span>
+      <video src="clips/actor_motion_raw_static_3a5c2045c7.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          humanoid &middot;
+          mount <b>static</b> &middot;
+          view grid_top_right</div>
+        <div class="path">humanoid/output/multiview/dreamgen/makovian/iter_000100000/AIRBOT_MMK2_mobile_car/episode_000034/full_pred.mp4</div>
+        <div class="prompt">prompt: &ldquo;push the yellow cart to the right with your left hand&rdquo;</div>
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">32.28</td></tr><tr><td>Text Alignment</td><td class="num">22.483</td></tr><tr><td>AMC</td><td class="num">72.40</td></tr></table>
+      </figcaption>
+    </figure>
+    <figure class="card">
+      <span class="badge mid">MID &nbsp;3.03</span>
+      <video src="clips/actor_motion_raw_static_2e7afdc78c.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          humanoid &middot;
+          mount <b>static</b> &middot;
+          view grid_top_right</div>
+        <div class="path">humanoid/output/multiview/dreamgen/non_makovian/iter_000100000/AIRBOT_MMK2_boxs_storage/episode_000073/full_pred.mp4</div>
+        <div class="prompt">prompt: &ldquo;throw the potato into the left square with your left hand and the pumpkin into the right square with your right hand&rdquo;</div>
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">17.82</td></tr><tr><td>Text Alignment</td><td class="num">21.857</td></tr><tr><td>AMC</td><td class="num">40.30</td></tr></table>
+      </figcaption>
+    </figure>
+    <figure class="card">
+      <span class="badge good">FAST &nbsp;29.52</span>
+      <video src="clips/actor_motion_raw_static_391c97a9a8.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>ctrlworld_4view_grid</b> &middot;
+          bimanual &middot;
+          mount <b>static</b> &middot;
+          view cam_low</div>
+        <div class="path">bimanual/output/multiview/ctrlworld_4view_grid/non_makovian/episode_brush_screws_into_dustpan_human_brush_left_hold__000006/pred_all_views.mp4</div>
+        <div class="prompt">prompt: &ldquo;brush screws into dustpan human brush left hold&rdquo;</div>
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">31.64</td></tr><tr><td>Text Alignment</td><td class="num">24.984</td></tr><tr><td>AMC</td><td class="num">52.42</td></tr></table>
+      </figcaption>
+    </figure></div><h3>head mount &mdash; still &rarr; fast</h3><div class="grid">
+    <figure class="card">
+      <span class="badge bad">STILL &nbsp;0.11</span>
+      <video src="clips/actor_motion_raw_head_4745c80882.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          humanoid &middot;
+          mount <b>head</b> &middot;
+          view singleview</div>
+        <div class="path">humanoid/output/singleview/dreamgen/non_makovian/iter_000090000_static16fps/episode_002606.mp4</div>
+        <div class="prompt">prompt: &ldquo;The right robotic hand moves a green vegetable on a plate while the left hand holds a cup&rdquo;</div>
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">32.60</td></tr><tr><td>Text Alignment</td><td class="num">29.495</td></tr><tr><td>AMC</td><td class="num">&mdash;</td></tr></table>
+      </figcaption>
+    </figure>
+    <figure class="card">
+      <span class="badge mid">MID &nbsp;1.75</span>
+      <video src="clips/actor_motion_raw_head_23542374c1.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          humanoid &middot;
+          mount <b>head</b> &middot;
+          view grid_top_left</div>
+        <div class="path">humanoid/output/multiview/dreamgen/non_makovian/iter_000100000/Airbot_MMK2_doodled_line/episode_000061/full_pred.mp4</div>
+        <div class="prompt">prompt: &ldquo;Pick up the ballpoint pen and leave your handwriting on the paper&rdquo;</div>
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">32.71</td></tr><tr><td>Text Alignment</td><td class="num">20.827</td></tr><tr><td>AMC</td><td class="num">54.72</td></tr></table>
+      </figcaption>
+    </figure>
+    <figure class="card">
+      <span class="badge mid">MID &nbsp;3.96</span>
+      <video src="clips/actor_motion_raw_head_2effdf62c0.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>ctrlworld_4view_grid</b> &middot;
+          humanoid &middot;
+          mount <b>head</b> &middot;
+          view cam_head_rgb</div>
+        <div class="path">humanoid/output/multiview/ctrlworld_4view_grid/non_makovian/episode_Airbot_MMK2_doodled_line__000013/pred_all_views.mp4</div>
+        <div class="prompt">prompt: &ldquo;Pick up the ballpoint pen and leave your handwriting on the paper&rdquo;</div>
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">30.84</td></tr><tr><td>Text Alignment</td><td class="num">19.446</td></tr><tr><td>AMC</td><td class="num">54.01</td></tr></table>
+      </figcaption>
+    </figure>
+    <figure class="card">
+      <span class="badge good">FAST &nbsp;20.77</span>
+      <video src="clips/actor_motion_raw_head_2cc6fcbc47.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>ctrlworld_4view_grid</b> &middot;
+          humanoid &middot;
+          mount <b>head</b> &middot;
+          view cam_high_rgb</div>
+        <div class="path">humanoid/output/multiview/ctrlworld_4view_grid/makovian/episode_AIRBOT_MMK2_mobile_car__000015/pred_all_views.mp4</div>
+        <div class="prompt">prompt: &ldquo;push the yellow cart to the right with your left hand&rdquo;</div>
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">32.75</td></tr><tr><td>Text Alignment</td><td class="num">22.963</td></tr><tr><td>AMC</td><td class="num">60.13</td></tr></table>
+      </figcaption>
+    </figure></div><h3>wrist mount &mdash; still &rarr; fast</h3><div class="grid">
+    <figure class="card">
+      <span class="badge bad">STILL &nbsp;0.01</span>
+      <video src="clips/actor_motion_raw_wrist_2d0723c64f.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          single_arm &middot;
+          mount <b>wrist</b> &middot;
+          view wrist_left</div>
+        <div class="path">single_arm/output/multiview/dreamgen/non_makovian/episode_017985.mp4</div>
+        <div class="prompt">prompt: &ldquo;No action&rdquo;</div>
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">31.05</td></tr><tr><td>Text Alignment</td><td class="num">21.663</td></tr><tr><td>AMC</td><td class="num">&mdash;</td></tr></table>
+      </figcaption>
+    </figure>
+    <figure class="card">
+      <span class="badge mid">MID &nbsp;0.91</span>
+      <video src="clips/actor_motion_raw_wrist_641b9a5777.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>ctrlworld_4view_grid</b> &middot;
+          humanoid &middot;
+          mount <b>wrist</b> &middot;
+          view cam_right_wrist_rgb</div>
+        <div class="path">humanoid/output/multiview/ctrlworld_4view_grid/makovian/episode_Airbot_MMK2_move_pan__000011/pred_all_views.mp4</div>
+        <div class="prompt">prompt: &ldquo;push the pan to the edge of the table with your left hand and place it on the building block with your right hand&rdquo;</div>
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">16.94</td></tr><tr><td>Text Alignment</td><td class="num">22.704</td></tr><tr><td>AMC</td><td class="num">45.09</td></tr></table>
+      </figcaption>
+    </figure>
+    <figure class="card">
+      <span class="badge mid">MID &nbsp;2.67</span>
+      <video src="clips/actor_motion_raw_wrist_1dd0959c4a.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>ctrlworld_4view_grid</b> &middot;
+          bimanual &middot;
+          mount <b>wrist</b> &middot;
+          view cam_right_wrist</div>
+        <div class="path">bimanual/output/multiview/ctrlworld_4view_grid/non_makovian/episode_take_out_reel_clear_zip_bag__000039/pred_all_views.mp4</div>
+        <div class="prompt">prompt: &ldquo;take out reel clear zip bag&rdquo;</div>
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">23.32</td></tr><tr><td>Text Alignment</td><td class="num">19.913</td></tr><tr><td>AMC</td><td class="num">61.88</td></tr></table>
+      </figcaption>
+    </figure>
+    <figure class="card">
+      <span class="badge good">FAST &nbsp;18.66</span>
+      <video src="clips/actor_motion_raw_wrist_3ce6172899.mp4" controls loop muted playsinline preload="metadata"></video>
+      <figcaption>
+        <div class="meta"><b>ctrlworld</b> &middot;
+          single_arm &middot;
+          mount <b>wrist</b> &middot;
+          view wrist_left</div>
+        <div class="path">single_arm/output/multiview/ctrlworld/makovian/episode_005468/pred_all_views.mp4</div>
+        <div class="prompt">prompt: &ldquo;Put the marker in the mug&rdquo;</div>
+        <table class="others"><tr><td>Visual Integrity</td><td class="num">22.85</td></tr><tr><td>Text Alignment</td><td class="num">23.797</td></tr><tr><td>AMC</td><td class="num">57.72</td></tr></table>
+      </figcaption>
+    </figure></div><h2 id="ceiling">Reality check &mdash; does real video score higher?</h2><p class="sub">A metric that claims to measure quality must rank the <b>real</b> video above the generated one. Each pair below is the same episode and the same view: real on the left, generated on the right. Only pairs that are the same measurement are used (identical source and effective fps, frame counts within 10%), so a difference cannot be a rendering artifact.</p><table class="audit"><tr><th>Metric</th><th>pairs</th><th>configs (n&ge;8)</th><th>configs where real wins</th><th>median of config medians</th><th>verdict</th></tr><tr><td>Visual Integrity</td><td class="num">1199</td><td class="num">17</td><td class="num">9/17 (53%)</td><td class="num">+0.159</td><td class="fail">CEILING FAILED &mdash; may not rank models</td></tr><tr><td>Text Alignment</td><td class="num">1138</td><td class="num">16</td><td class="num">13/16 (81%)</td><td class="num">+0.162</td><td class="ok">prefers reality</td></tr><tr><td>Active Motion Continuity</td><td class="num">1062</td><td class="num">17</td><td class="num">8/17 (47%)</td><td class="num">-0.217</td><td class="warn">prefers reality &mdash; within an embodiment</td></tr></table><div class="note bad-note"><b>Visual Integrity:</b> CLIP-IQA+ fails GT-is-ceiling: pred beats co-located GT on dreamdojo (+0.90, p=5e-05), 4view (+0.52) and ties ctrlworld (-0.02). Motion, smoothness and sharpness hypotheses were all rejected. Descriptive only - do NOT rank models on this column.</div><div class="note"><b>Active Motion Continuity &mdash; why the config count above looks weak:</b> humanoid GT AMC ~48 vs ~66 for bimanual/single_arm at matched motion and identical geometry. Do NOT compare absolute AMC across embodiments, and do not read a small positive humanoid GT-delta as beating reality.</div><div class="note"><b>The verdict column is the paper's, not this page's.</b> It reports membership of <code>CEILING_FAILED</code> in <code>assets/scripts/table_dense_nr.py</code>, which was decided by the pre-registered audit over the whole wave &mdash; not by the sample shown here. Counting per configuration (not per clip) is deliberate: pooled over clips, a metric can look like it prefers reality simply because the configurations that happen to have the most clips are the ones where it does.</div><div class="note"><b>How to read a failure.</b> "Ceiling failed" does not mean the metric is useless &mdash; it means its <i>absolute</i> value may not rank models, because it is insensitive to the gap between real and generated video. Such a column is still valid for comparing a method against its own dense baseline, where that insensitivity cancels on both sides of the difference.</div><p class="sub"><b>Visual Integrity</b> per configuration (pred &minus; real; negative = real video wins):<br><span class="ok">ctrlworld_4view_grid/bimanual/wrist +1.00</span> &nbsp;&middot;&nbsp; <span class="ok">ctrlworld_4view_grid/bimanual/static +0.90</span> &nbsp;&middot;&nbsp; <span class="ok">dreamdojo/single_arm/static +0.78</span> &nbsp;&middot;&nbsp; <span class="ok">ctrlworld/humanoid/head +0.51</span> &nbsp;&middot;&nbsp; <span class="ok">ctrlworld/humanoid/wrist +0.50</span> &nbsp;&middot;&nbsp; <span class="ok">ctrlworld/bimanual/static +0.43</span> &nbsp;&middot;&nbsp; <span class="ok">ctrlworld_4view_grid/humanoid/wrist +0.28</span> &nbsp;&middot;&nbsp; <span class="ok">ctrlworld/bimanual/wrist +0.13</span> &nbsp;&middot;&nbsp; <span class="fail">ctrlworld_4view_grid/humanoid/static -0.16</span> &nbsp;&middot;&nbsp; <span class="fail">ctrlworld_4view_grid/humanoid/head -0.23</span> &nbsp;&middot;&nbsp; <span class="fail">ctrlworld/single_arm/static -1.23</span> &nbsp;&middot;&nbsp; <span class="fail">dreamgen/humanoid/wrist -1.23</span> &nbsp;&middot;&nbsp; <span class="fail">dreamgen/bimanual/static -1.42</span> &nbsp;&middot;&nbsp; <span class="fail">ctrlworld/single_arm/wrist -2.23</span> &nbsp;&middot;&nbsp; <span class="fail">dreamgen/bimanual/wrist -2.45</span> &nbsp;&middot;&nbsp; <span class="fail">dreamgen/humanoid/static -3.05</span> &nbsp;&middot;&nbsp; <span class="fail">dreamgen/humanoid/head -3.50</span></p><p class="sub"><b>Text Alignment</b> per configuration (pred &minus; real; negative = real video wins):<br><span class="ok">dreamgen/bimanual/wrist +0.32</span> &nbsp;&middot;&nbsp; <span class="ok">dreamgen/humanoid/static +0.12</span> &nbsp;&middot;&nbsp; <span class="ok">dreamgen/humanoid/wrist +0.06</span> &nbsp;&middot;&nbsp; <span class="fail">ctrlworld/bimanual/static -0.01</span> &nbsp;&middot;&nbsp; <span class="fail">ctrlworld/single_arm/static -0.04</span> &nbsp;&middot;&nbsp; <span class="fail">ctrlworld/humanoid/wrist -0.10</span> &nbsp;&middot;&nbsp; <span class="fail">ctrlworld_4view_grid/humanoid/wrist -0.12</span> &nbsp;&middot;&nbsp; <span class="fail">ctrlworld_4view_grid/humanoid/static -0.15</span> &nbsp;&middot;&nbsp; <span class="fail">dreamgen/humanoid/head -0.17</span> &nbsp;&middot;&nbsp; <span class="fail">ctrlworld_4view_grid/humanoid/head -0.18</span> &nbsp;&middot;&nbsp; <span class="fail">ctrlworld_4view_grid/bimanual/static -0.22</span> &nbsp;&middot;&nbsp; <span class="fail">dreamgen/bimanual/static -0.29</span> &nbsp;&middot;&nbsp; <span class="fail">ctrlworld_4view_grid/bimanual/wrist -0.30</span> &nbsp;&middot;&nbsp; <span class="fail">ctrlworld/bimanual/wrist -0.30</span> &nbsp;&middot;&nbsp; <span class="fail">ctrlworld/humanoid/head -0.39</span> &nbsp;&middot;&nbsp; <span class="fail">ctrlworld/single_arm/wrist -1.11</span></p><p class="sub"><b>Active Motion Continuity</b> per configuration (pred &minus; real; negative = real video wins):<br><span class="ok">ctrlworld/humanoid/wrist +2.38</span> &nbsp;&middot;&nbsp; <span class="ok">ctrlworld/humanoid/head +1.54</span> &nbsp;&middot;&nbsp; <span class="ok">dreamgen/humanoid/head +1.48</span> &nbsp;&middot;&nbsp; <span class="ok">ctrlworld_4view_grid/humanoid/wrist +1.12</span> &nbsp;&middot;&nbsp; <span class="ok">ctrlworld_4view_grid/humanoid/head +0.94</span> &nbsp;&middot;&nbsp; <span class="ok">dreamgen/bimanual/wrist +0.82</span> &nbsp;&middot;&nbsp; <span class="ok">ctrlworld_4view_grid/humanoid/static +0.81</span> &nbsp;&middot;&nbsp; <span class="ok">dreamgen/humanoid/static +0.54</span> &nbsp;&middot;&nbsp; <span class="ok">dreamdojo/single_arm/static +0.22</span> &nbsp;&middot;&nbsp; <span class="fail">ctrlworld_4view_grid/bimanual/wrist -0.18</span> &nbsp;&middot;&nbsp; <span class="fail">ctrlworld/single_arm/wrist -0.25</span> &nbsp;&middot;&nbsp; <span class="fail">ctrlworld/single_arm/static -0.49</span> &nbsp;&middot;&nbsp; <span class="fail">ctrlworld/bimanual/wrist -0.59</span> &nbsp;&middot;&nbsp; <span class="fail">dreamgen/humanoid/wrist -0.64</span> &nbsp;&middot;&nbsp; <span class="fail">ctrlworld/bimanual/static -1.12</span> &nbsp;&middot;&nbsp; <span class="fail">dreamgen/bimanual/static -2.17</span> &nbsp;&middot;&nbsp; <span class="fail">ctrlworld_4view_grid/bimanual/static -2.64</span></p><h3>Visual Integrity &mdash; real video wins here (as it should)</h3><div class="grid">
+    <figure class="card pair">
+      <span class="badge good">GT higher &nbsp;+15.46</span>
+      <div class="twin">
+        <div><video src="clips/pair_visual_integrity_gt_b9aeb69989.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag real">REAL &nbsp;38.47</span></div>
+        <div><video src="clips/pair_visual_integrity_pred_06bad41eed.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag gen">GENERATED &nbsp;23.01</span></div>
+      </div>
+      <figcaption>
+        <div class="meta"><b>ctrlworld</b> &middot;
+          single_arm &middot;
+          mount <b>wrist</b> &middot;
+          view wrist_left</div>
+        <div class="path">single_arm/output/multiview/ctrlworld/non_makovian/episode_006069/pred_all_views.mp4</div>
+      </figcaption>
+    </figure>
+    <figure class="card pair">
+      <span class="badge good">GT higher &nbsp;+10.03</span>
+      <div class="twin">
+        <div><video src="clips/pair_visual_integrity_gt_1bcd10b293.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag real">REAL &nbsp;42.18</span></div>
+        <div><video src="clips/pair_visual_integrity_pred_1cff93c269.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag gen">GENERATED &nbsp;32.15</span></div>
+      </div>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          humanoid &middot;
+          mount <b>head</b> &middot;
+          view grid_top_left</div>
+        <div class="path">humanoid/output/multiview/dreamgen/non_makovian/iter_000100000/Airbot_MMK2_doodled_line/episode_000054/full_pred.mp4</div>
+      </figcaption>
+    </figure>
+    <figure class="card pair">
+      <span class="badge good">GT higher &nbsp;+9.94</span>
+      <div class="twin">
+        <div><video src="clips/pair_visual_integrity_gt_2b53f05575.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag real">REAL &nbsp;31.02</span></div>
+        <div><video src="clips/pair_visual_integrity_pred_4b7c9e1aae.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag gen">GENERATED &nbsp;21.08</span></div>
+      </div>
+      <figcaption>
+        <div class="meta"><b>ctrlworld</b> &middot;
+          single_arm &middot;
+          mount <b>wrist</b> &middot;
+          view wrist_left</div>
+        <div class="path">single_arm/output/multiview/ctrlworld/non_makovian/episode_005082/pred_all_views.mp4</div>
+      </figcaption>
+    </figure></div><h3>Visual Integrity &mdash; generated beats real (the metric is wrong here)</h3><div class="grid">
+    <figure class="card pair">
+      <span class="badge bad">PRED higher &nbsp;-8.76</span>
+      <div class="twin">
+        <div><video src="clips/viol_visual_integrity_gt_3091fa784e.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag real">REAL &nbsp;25.86</span></div>
+        <div><video src="clips/viol_visual_integrity_pred_188ab08570.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag gen">GENERATED &nbsp;34.62</span></div>
+      </div>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          bimanual &middot;
+          mount <b>static</b> &middot;
+          view grid_top_right</div>
+        <div class="path">bimanual/output/multiview/dreamgen/makovian/iter_000120000/fit_small_gear_shaft/episode_000021/full_pred.mp4</div>
+      </figcaption>
+    </figure>
+    <figure class="card pair">
+      <span class="badge bad">PRED higher &nbsp;-5.48</span>
+      <div class="twin">
+        <div><video src="clips/viol_visual_integrity_gt_12bb19d870.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag real">REAL &nbsp;24.53</span></div>
+        <div><video src="clips/viol_visual_integrity_pred_0365b40d3a.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag gen">GENERATED &nbsp;30.01</span></div>
+      </div>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          bimanual &middot;
+          mount <b>static</b> &middot;
+          view grid_top_left</div>
+        <div class="path">bimanual/output/multiview/dreamgen/makovian/iter_000120000/insert_lan_cable_into_the_hub/episode_000053/full_pred.mp4</div>
+      </figcaption>
+    </figure>
+    <figure class="card pair">
+      <span class="badge bad">PRED higher &nbsp;-5.45</span>
+      <div class="twin">
+        <div><video src="clips/viol_visual_integrity_gt_6ef85375e5.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag real">REAL &nbsp;31.14</span></div>
+        <div><video src="clips/viol_visual_integrity_pred_c58b298594.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag gen">GENERATED &nbsp;36.59</span></div>
+      </div>
+      <figcaption>
+        <div class="meta"><b>ctrlworld</b> &middot;
+          bimanual &middot;
+          mount <b>wrist</b> &middot;
+          view cam_left_wrist</div>
+        <div class="path">bimanual/output/multiview/ctrlworld/makovian/episode_put_cup_moved_red_handle_holder__000049/pred_all_views.mp4</div>
+      </figcaption>
+    </figure></div><h3>Text Alignment &mdash; real video wins here (as it should)</h3><div class="grid">
+    <figure class="card pair">
+      <span class="badge good">GT higher &nbsp;+5.089</span>
+      <div class="twin">
+        <div><video src="clips/pair_text_condition_alignment_gt_69c1bd8a55.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag real">REAL &nbsp;32.145</span></div>
+        <div><video src="clips/pair_text_condition_alignment_pred_58d9bd7b93.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag gen">GENERATED &nbsp;27.055</span></div>
+      </div>
+      <figcaption>
+        <div class="meta"><b>ctrlworld</b> &middot;
+          single_arm &middot;
+          mount <b>wrist</b> &middot;
+          view wrist_left</div>
+        <div class="path">single_arm/output/multiview/ctrlworld/non_makovian/episode_000073/pred_all_views.mp4</div>
+      </figcaption>
+    </figure>
+    <figure class="card pair">
+      <span class="badge good">GT higher &nbsp;+4.697</span>
+      <div class="twin">
+        <div><video src="clips/pair_text_condition_alignment_gt_4cbf3ce515.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag real">REAL &nbsp;31.089</span></div>
+        <div><video src="clips/pair_text_condition_alignment_pred_23f0aef59b.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag gen">GENERATED &nbsp;26.391</span></div>
+      </div>
+      <figcaption>
+        <div class="meta"><b>ctrlworld</b> &middot;
+          single_arm &middot;
+          mount <b>wrist</b> &middot;
+          view wrist_left</div>
+        <div class="path">single_arm/output/multiview/ctrlworld/non_makovian/episode_012409/pred_all_views.mp4</div>
+      </figcaption>
+    </figure>
+    <figure class="card pair">
+      <span class="badge good">GT higher &nbsp;+4.388</span>
+      <div class="twin">
+        <div><video src="clips/pair_text_condition_alignment_gt_4fbc5fe891.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag real">REAL &nbsp;27.883</span></div>
+        <div><video src="clips/pair_text_condition_alignment_pred_a4070ca6fd.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag gen">GENERATED &nbsp;23.495</span></div>
+      </div>
+      <figcaption>
+        <div class="meta"><b>ctrlworld</b> &middot;
+          single_arm &middot;
+          mount <b>wrist</b> &middot;
+          view wrist_left</div>
+        <div class="path">single_arm/output/multiview/ctrlworld/non_makovian/episode_014070/pred_all_views.mp4</div>
+      </figcaption>
+    </figure></div><h3>Text Alignment &mdash; generated beats real (the metric is wrong here)</h3><div class="grid">
+    <figure class="card pair">
+      <span class="badge bad">PRED higher &nbsp;-5.250</span>
+      <div class="twin">
+        <div><video src="clips/viol_text_condition_alignment_gt_4f72055965.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag real">REAL &nbsp;23.573</span></div>
+        <div><video src="clips/viol_text_condition_alignment_pred_d52f3e1a92.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag gen">GENERATED &nbsp;28.822</span></div>
+      </div>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          bimanual &middot;
+          mount <b>wrist</b> &middot;
+          view left_wrist</div>
+        <div class="path">bimanual/output/multiview/dreamgen/makovian/iter_000120000/wipe_the_desk_with_a_sponge/episode_000034/full_pred.mp4</div>
+      </figcaption>
+    </figure>
+    <figure class="card pair">
+      <span class="badge bad">PRED higher &nbsp;-3.779</span>
+      <div class="twin">
+        <div><video src="clips/viol_text_condition_alignment_gt_94b6d58d23.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag real">REAL &nbsp;24.527</span></div>
+        <div><video src="clips/viol_text_condition_alignment_pred_af8cfaaccb.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag gen">GENERATED &nbsp;28.306</span></div>
+      </div>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          bimanual &middot;
+          mount <b>static</b> &middot;
+          view grid_top_left</div>
+        <div class="path">bimanual/output/multiview/dreamgen/non_makovian/iter_000120000/take_out_reel_clear_zip_bag/episode_000030/full_pred.mp4</div>
+      </figcaption>
+    </figure>
+    <figure class="card pair">
+      <span class="badge bad">PRED higher &nbsp;-3.178</span>
+      <div class="twin">
+        <div><video src="clips/viol_text_condition_alignment_gt_0dd7bdd463.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag real">REAL &nbsp;21.988</span></div>
+        <div><video src="clips/viol_text_condition_alignment_pred_d02b5512d1.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag gen">GENERATED &nbsp;25.166</span></div>
+      </div>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          bimanual &middot;
+          mount <b>static</b> &middot;
+          view grid_top_left</div>
+        <div class="path">bimanual/output/multiview/dreamgen/non_makovian/iter_000120000/handover_metallic_zip_bag_upright/episode_000075/full_pred.mp4</div>
+      </figcaption>
+    </figure></div><h3>Active Motion Continuity &mdash; real video wins here (as it should)</h3><div class="grid">
+    <figure class="card pair">
+      <span class="badge good">GT higher &nbsp;+19.75</span>
+      <div class="twin">
+        <div><video src="clips/pair_active_motion_continuity_gt_50b3a98b3a.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag real">REAL &nbsp;76.62</span></div>
+        <div><video src="clips/pair_active_motion_continuity_pred_28f9534047.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag gen">GENERATED &nbsp;56.88</span></div>
+      </div>
+      <figcaption>
+        <div class="meta"><b>ctrlworld_4view_grid</b> &middot;
+          bimanual &middot;
+          mount <b>static</b> &middot;
+          view cam_low</div>
+        <div class="path">bimanual/output/multiview/ctrlworld_4view_grid/makovian/episode_insert_lan_cable_into_the_hub__000038/pred_all_views.mp4</div>
+      </figcaption>
+    </figure>
+    <figure class="card pair">
+      <span class="badge good">GT higher &nbsp;+19.35</span>
+      <div class="twin">
+        <div><video src="clips/pair_active_motion_continuity_gt_1565fb28e4.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag real">REAL &nbsp;49.75</span></div>
+        <div><video src="clips/pair_active_motion_continuity_pred_07d4e7a2d6.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag gen">GENERATED &nbsp;30.40</span></div>
+      </div>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          humanoid &middot;
+          mount <b>head</b> &middot;
+          view grid_top_left</div>
+        <div class="path">humanoid/output/multiview/dreamgen/non_makovian/iter_000100000/Airbot_MMK2_storage_bottle_part/episode_000016/full_pred.mp4</div>
+      </figcaption>
+    </figure>
+    <figure class="card pair">
+      <span class="badge good">GT higher &nbsp;+17.65</span>
+      <div class="twin">
+        <div><video src="clips/pair_active_motion_continuity_gt_0362459fc8.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag real">REAL &nbsp;69.37</span></div>
+        <div><video src="clips/pair_active_motion_continuity_pred_18ac2f423a.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag gen">GENERATED &nbsp;51.72</span></div>
+      </div>
+      <figcaption>
+        <div class="meta"><b>ctrlworld_4view_grid</b> &middot;
+          bimanual &middot;
+          mount <b>wrist</b> &middot;
+          view cam_right_wrist</div>
+        <div class="path">bimanual/output/multiview/ctrlworld_4view_grid/non_makovian/episode_brush_screws_into_dustpan_human_brush_left_hold__000023/pred_all_views.mp4</div>
+      </figcaption>
+    </figure></div><h3>Active Motion Continuity &mdash; generated beats real (the metric is wrong here)</h3><div class="grid">
+    <figure class="card pair">
+      <span class="badge bad">PRED higher &nbsp;-35.05</span>
+      <div class="twin">
+        <div><video src="clips/viol_active_motion_continuity_gt_4c48680200.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag real">REAL &nbsp;42.41</span></div>
+        <div><video src="clips/viol_active_motion_continuity_pred_21593a5cd9.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag gen">GENERATED &nbsp;77.46</span></div>
+      </div>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          humanoid &middot;
+          mount <b>static</b> &middot;
+          view grid_top_right</div>
+        <div class="path">humanoid/output/multiview/dreamgen/makovian/iter_000100000/AIRBOT_MMK2_mobile_car/episode_000003/full_pred.mp4</div>
+      </figcaption>
+    </figure>
+    <figure class="card pair">
+      <span class="badge bad">PRED higher &nbsp;-27.02</span>
+      <div class="twin">
+        <div><video src="clips/viol_active_motion_continuity_gt_363b141421.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag real">REAL &nbsp;48.01</span></div>
+        <div><video src="clips/viol_active_motion_continuity_pred_dc8cf89c06.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag gen">GENERATED &nbsp;75.03</span></div>
+      </div>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          humanoid &middot;
+          mount <b>wrist</b> &middot;
+          view left_wrist</div>
+        <div class="path">humanoid/output/multiview/dreamgen/makovian/iter_000100000/AIRBOT_MMK2_mobile_car/episode_000016/full_pred.mp4</div>
+      </figcaption>
+    </figure>
+    <figure class="card pair">
+      <span class="badge bad">PRED higher &nbsp;-26.74</span>
+      <div class="twin">
+        <div><video src="clips/viol_active_motion_continuity_gt_24b7e6fe13.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag real">REAL &nbsp;46.37</span></div>
+        <div><video src="clips/viol_active_motion_continuity_pred_0e27ff62bc.mp4" controls loop muted playsinline preload="metadata"></video>
+          <span class="tag gen">GENERATED &nbsp;73.11</span></div>
+      </div>
+      <figcaption>
+        <div class="meta"><b>dreamgen</b> &middot;
+          humanoid &middot;
+          mount <b>head</b> &middot;
+          view grid_top_left</div>
+        <div class="path">humanoid/output/multiview/dreamgen/makovian/iter_000100000/AIRBOT_MMK2_mobile_car/episode_000040/full_pred.mp4</div>
+      </figcaption>
+    </figure></div>
+<footer>run <code>/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/metrics/WorldScore/results/dense_nr_full</code> &middot;
+23413 prediction and 3545 real clips considered &middot;
+protocol <code>dense-nr-v3.2-closed-world</code> &middot;
+regenerate with <code>assets/scripts/make_nr_qualitative_report.py</code>.
+Active Rate is not shown: it is computed but no longer reported
+(&rho;&nbsp;+0.875 with Actor Activity).</footer>
+</body></html>

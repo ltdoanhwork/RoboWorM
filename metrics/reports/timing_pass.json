@@ -1,0 +1,1284 @@
+{
+  "generated_by": "assets/scripts/make_timing_pass_table.py",
+  "source": "/tmp/uniform_timing/results.jsonl",
+  "purpose": "Matched-protocol generation times and speedups: one shared episode per cell, every method timed sequentially on an idle GPU, read from each family's generation-time log.",
+  "protocol": {
+    "episodes_per_cell": 1,
+    "shared_episode": "dense and every method time the same episode",
+    "concurrency": "strictly sequential, single GPU, no context parallel",
+    "timing_source": {
+      "ctrlworld": "per-episode wall_time_s in metrics.json",
+      "dreamgen": "Total inference time / LVG Total inference time",
+      "dreamdojo": "[Timing] Generated"
+    },
+    "excluded_from_timing": "model load, VAE decode, ffmpeg, metric computation (wall clock is not used)",
+    "first_unit": "reported separately; it pays one-off attention profiling and k-means warm-up for SVG and PISA",
+    "output": "scratch only; the canonical sampling_dataset tree is never written by the timing pass"
+  },
+  "n_rows": 140,
+  "n_measured": 0,
+  "n_contended": 0,
+  "executed": false,
+  "rows": [
+    {
+      "cell": "ctrlworld_single_arm_mv",
+      "method": "dense",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_single_arm_mv",
+      "method": "sito",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_single_arm_mv",
+      "method": "itm",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_single_arm_mv",
+      "method": "worldcache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_single_arm_mv",
+      "method": "dicache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_single_arm_mv",
+      "method": "fastercache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_single_arm_mv",
+      "method": "pisa",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_single_arm_mv",
+      "method": "svg1",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_single_arm_mv",
+      "method": "svg2",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_single_arm_mv",
+      "method": "radial",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_bimanual_mv",
+      "method": "dense",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_bimanual_mv",
+      "method": "sito",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_bimanual_mv",
+      "method": "itm",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_bimanual_mv",
+      "method": "worldcache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_bimanual_mv",
+      "method": "dicache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_bimanual_mv",
+      "method": "fastercache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_bimanual_mv",
+      "method": "pisa",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_bimanual_mv",
+      "method": "svg1",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_bimanual_mv",
+      "method": "svg2",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_bimanual_mv",
+      "method": "radial",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_humanoid_mv",
+      "method": "dense",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_humanoid_mv",
+      "method": "sito",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_humanoid_mv",
+      "method": "itm",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_humanoid_mv",
+      "method": "worldcache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_humanoid_mv",
+      "method": "dicache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_humanoid_mv",
+      "method": "fastercache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_humanoid_mv",
+      "method": "pisa",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_humanoid_mv",
+      "method": "svg1",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_humanoid_mv",
+      "method": "svg2",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld_humanoid_mv",
+      "method": "radial",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld4_bimanual_mv",
+      "method": "dense",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld4_bimanual_mv",
+      "method": "sito",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld4_bimanual_mv",
+      "method": "itm",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld4_bimanual_mv",
+      "method": "worldcache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld4_bimanual_mv",
+      "method": "dicache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld4_bimanual_mv",
+      "method": "fastercache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld4_bimanual_mv",
+      "method": "pisa",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld4_bimanual_mv",
+      "method": "svg1",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld4_bimanual_mv",
+      "method": "svg2",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld4_bimanual_mv",
+      "method": "radial",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld4_humanoid_mv",
+      "method": "dense",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld4_humanoid_mv",
+      "method": "sito",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld4_humanoid_mv",
+      "method": "itm",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld4_humanoid_mv",
+      "method": "worldcache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld4_humanoid_mv",
+      "method": "dicache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld4_humanoid_mv",
+      "method": "fastercache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld4_humanoid_mv",
+      "method": "pisa",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld4_humanoid_mv",
+      "method": "svg1",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld4_humanoid_mv",
+      "method": "svg2",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "ctrlworld4_humanoid_mv",
+      "method": "radial",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_single_arm_mv",
+      "method": "dense",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_single_arm_mv",
+      "method": "sito",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_single_arm_mv",
+      "method": "itm",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_single_arm_mv",
+      "method": "worldcache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_single_arm_mv",
+      "method": "dicache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_single_arm_mv",
+      "method": "fastercache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_single_arm_mv",
+      "method": "pisa",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_single_arm_mv",
+      "method": "svg1",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_single_arm_mv",
+      "method": "svg2",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_single_arm_mv",
+      "method": "radial",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_bimanual_mv",
+      "method": "dense",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_bimanual_mv",
+      "method": "sito",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_bimanual_mv",
+      "method": "itm",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_bimanual_mv",
+      "method": "worldcache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_bimanual_mv",
+      "method": "dicache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_bimanual_mv",
+      "method": "fastercache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_bimanual_mv",
+      "method": "pisa",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_bimanual_mv",
+      "method": "svg1",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_bimanual_mv",
+      "method": "svg2",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_bimanual_mv",
+      "method": "radial",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_humanoid_mv",
+      "method": "dense",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_humanoid_mv",
+      "method": "sito",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_humanoid_mv",
+      "method": "itm",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_humanoid_mv",
+      "method": "worldcache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_humanoid_mv",
+      "method": "dicache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_humanoid_mv",
+      "method": "fastercache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_humanoid_mv",
+      "method": "pisa",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_humanoid_mv",
+      "method": "svg1",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_humanoid_mv",
+      "method": "svg2",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_humanoid_mv",
+      "method": "radial",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_single_arm_sv",
+      "method": "dense",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_single_arm_sv",
+      "method": "sito",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_single_arm_sv",
+      "method": "itm",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_single_arm_sv",
+      "method": "worldcache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_single_arm_sv",
+      "method": "dicache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_single_arm_sv",
+      "method": "fastercache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_single_arm_sv",
+      "method": "pisa",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_single_arm_sv",
+      "method": "svg1",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_single_arm_sv",
+      "method": "svg2",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_single_arm_sv",
+      "method": "radial",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_bimanual_sv",
+      "method": "dense",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_bimanual_sv",
+      "method": "sito",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_bimanual_sv",
+      "method": "itm",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_bimanual_sv",
+      "method": "worldcache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_bimanual_sv",
+      "method": "dicache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_bimanual_sv",
+      "method": "fastercache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_bimanual_sv",
+      "method": "pisa",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_bimanual_sv",
+      "method": "svg1",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_bimanual_sv",
+      "method": "svg2",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_bimanual_sv",
+      "method": "radial",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_humanoid_sv",
+      "method": "dense",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_humanoid_sv",
+      "method": "sito",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_humanoid_sv",
+      "method": "itm",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_humanoid_sv",
+      "method": "worldcache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_humanoid_sv",
+      "method": "dicache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_humanoid_sv",
+      "method": "fastercache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_humanoid_sv",
+      "method": "pisa",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_humanoid_sv",
+      "method": "svg1",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_humanoid_sv",
+      "method": "svg2",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamgen_humanoid_sv",
+      "method": "radial",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_single_arm_sv",
+      "method": "dense",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_single_arm_sv",
+      "method": "sito",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_single_arm_sv",
+      "method": "itm",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_single_arm_sv",
+      "method": "worldcache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_single_arm_sv",
+      "method": "dicache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_single_arm_sv",
+      "method": "fastercache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_single_arm_sv",
+      "method": "pisa",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_single_arm_sv",
+      "method": "svg1",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_single_arm_sv",
+      "method": "svg2",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_single_arm_sv",
+      "method": "radial",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_bimanual_sv",
+      "method": "dense",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_bimanual_sv",
+      "method": "sito",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_bimanual_sv",
+      "method": "itm",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_bimanual_sv",
+      "method": "worldcache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_bimanual_sv",
+      "method": "dicache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_bimanual_sv",
+      "method": "fastercache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_bimanual_sv",
+      "method": "pisa",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_bimanual_sv",
+      "method": "svg1",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_bimanual_sv",
+      "method": "svg2",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_bimanual_sv",
+      "method": "radial",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_humanoid_sv",
+      "method": "dense",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_humanoid_sv",
+      "method": "sito",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_humanoid_sv",
+      "method": "itm",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_humanoid_sv",
+      "method": "worldcache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_humanoid_sv",
+      "method": "dicache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_humanoid_sv",
+      "method": "fastercache",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_humanoid_sv",
+      "method": "pisa",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_humanoid_sv",
+      "method": "svg1",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_humanoid_sv",
+      "method": "svg2",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    },
+    {
+      "cell": "dreamdojo_humanoid_sv",
+      "method": "radial",
+      "status": "not_benchmarked",
+      "generation_s": null,
+      "speedup": null,
+      "steady_state_speedup": null,
+      "contended": null
+    }
+  ]
+}

@@ -1,0 +1,1817 @@
+{
+  "cells": [
+    {
+      "embodiment": "single_arm",
+      "track": "singleview",
+      "split": "makovian",
+      "units": 1,
+      "episodes": 120,
+      "videos": 120,
+      "views": 1,
+      "prompts": 2,
+      "skills": 2,
+      "source": "RoboChallenge (Traly/RoboChallenge-lerobot)"
+    },
+    {
+      "embodiment": "single_arm",
+      "track": "singleview",
+      "split": "non_makovian",
+      "units": 1,
+      "episodes": 120,
+      "videos": 120,
+      "views": 1,
+      "prompts": 2,
+      "skills": 2,
+      "source": "RoboChallenge (Traly/RoboChallenge-lerobot)"
+    },
+    {
+      "embodiment": "single_arm",
+      "track": "multiview",
+      "split": "makovian",
+      "units": 1,
+      "episodes": 128,
+      "videos": 384,
+      "views": 3,
+      "prompts": 126,
+      "skills": 8,
+      "source": "DROID (cadene/droid_1.0.1)"
+    },
+    {
+      "embodiment": "single_arm",
+      "track": "multiview",
+      "split": "non_makovian",
+      "units": 1,
+      "episodes": 129,
+      "videos": 387,
+      "views": 3,
+      "prompts": 127,
+      "skills": 12,
+      "source": "DROID (cadene/droid_1.0.1)"
+    },
+    {
+      "embodiment": "bimanual",
+      "track": "singleview",
+      "split": "makovian",
+      "units": 37,
+      "episodes": 150,
+      "videos": 150,
+      "views": 1,
+      "prompts": 34,
+      "skills": 8,
+      "source": "AIST Bimanual Manipulation (ALOHA)"
+    },
+    {
+      "embodiment": "bimanual",
+      "track": "singleview",
+      "split": "non_makovian",
+      "units": 17,
+      "episodes": 150,
+      "videos": 150,
+      "views": 1,
+      "prompts": 17,
+      "skills": 4,
+      "source": "AIST Bimanual Manipulation (ALOHA)"
+    },
+    {
+      "embodiment": "bimanual",
+      "track": "multiview",
+      "split": "makovian",
+      "units": 37,
+      "episodes": 150,
+      "videos": 600,
+      "views": 4,
+      "prompts": 34,
+      "skills": 8,
+      "source": "AIST Bimanual Manipulation (ALOHA)"
+    },
+    {
+      "embodiment": "bimanual",
+      "track": "multiview",
+      "split": "non_makovian",
+      "units": 17,
+      "episodes": 150,
+      "videos": 600,
+      "views": 4,
+      "prompts": 17,
+      "skills": 4,
+      "source": "AIST Bimanual Manipulation (ALOHA)"
+    },
+    {
+      "embodiment": "humanoid",
+      "track": "singleview",
+      "split": "makovian",
+      "units": 1,
+      "episodes": 130,
+      "videos": 130,
+      "views": 1,
+      "prompts": 118,
+      "skills": 1,
+      "source": "NVIDIA PhysicalAI-Robotics-GR00T-Teleop-GR1"
+    },
+    {
+      "embodiment": "humanoid",
+      "track": "singleview",
+      "split": "non_makovian",
+      "units": 1,
+      "episodes": 130,
+      "videos": 130,
+      "views": 1,
+      "prompts": 73,
+      "skills": 3,
+      "source": "NVIDIA PhysicalAI-Robotics-GR00T-Teleop-GR1"
+    },
+    {
+      "embodiment": "humanoid",
+      "track": "multiview",
+      "split": "makovian",
+      "units": 2,
+      "episodes": 98,
+      "videos": 392,
+      "views": 4,
+      "prompts": 2,
+      "skills": 1,
+      "source": "RoboCOIN (AIRBOT MMK2)"
+    },
+    {
+      "embodiment": "humanoid",
+      "track": "multiview",
+      "split": "non_makovian",
+      "units": 4,
+      "episodes": 150,
+      "videos": 642,
+      "views": 4,
+      "prompts": 6,
+      "skills": 1,
+      "source": "RoboCOIN (AIRBOT MMK2)"
+    }
+  ],
+  "total_episodes": 1605,
+  "total_videos": 3805,
+  "distinct_prompts": 507,
+  "skills_primary": {
+    "pick & place": 304,
+    "push / slide": 56,
+    "remove / extract": 44,
+    "insert / assemble": 23,
+    "open / close": 21,
+    "fold / unfold": 15,
+    "press / actuate": 15,
+    "wipe / clean": 12,
+    "pour": 7,
+    "stack": 4,
+    "handover": 3,
+    "sort": 1,
+    "hang / cover": 1,
+    "draw / trace": 1
+  },
+  "skills_mentions": {
+    "pick & place": 339,
+    "push / slide": 69,
+    "remove / extract": 45,
+    "insert / assemble": 23,
+    "open / close": 22,
+    "fold / unfold": 17,
+    "wipe / clean": 16,
+    "press / actuate": 16,
+    "pour": 11,
+    "stack": 5,
+    "handover": 3,
+    "sort": 2,
+    "hang / cover": 1,
+    "draw / trace": 1
+  },
+  "multi_primitive_prompts": 59,
+  "prompt_skills": {
+    "Build with the building blocks": [
+      "stack"
+    ],
+    "Clean the table": [
+      "wipe / clean"
+    ],
+    "Click on the remote": [
+      "press / actuate"
+    ],
+    "Close the dark grey container.": [
+      "open / close"
+    ],
+    "Close the kitchen drawer": [
+      "open / close"
+    ],
+    "Close the lid": [
+      "open / close"
+    ],
+    "Close the purple file holder": [
+      "open / close"
+    ],
+    "Close the top cabinet door": [
+      "open / close"
+    ],
+    "Close the top drawer of the white file cabinet": [
+      "open / close"
+    ],
+    "Close the top left cabinet door": [
+      "open / close"
+    ],
+    "Close the white and green bin.": [
+      "open / close"
+    ],
+    "Clover the corner of the bed with the blanket and move the remote controller out of the water": [
+      "hang / cover",
+      "push / slide"
+    ],
+    "Fold the shirt in half": [
+      "fold / unfold"
+    ],
+    "Fold the towel diagonally in half twice": [
+      "fold / unfold"
+    ],
+    "Fold the towel in half": [
+      "fold / unfold"
+    ],
+    "Get one scoop of the contents in the white bowl and put in the open clear cup": [
+      "pick & place"
+    ],
+    "Get the black pot and pour its contents onto the gray plate": [
+      "pick & place",
+      "pour"
+    ],
+    "Get the green tube then put it the sink": [
+      "pick & place"
+    ],
+    "Lift the lid off the small tea pot and put it on the kitchen counter, pick up the small tea pot and put it on the tray, pick up the lid and put it back on the small teapot": [
+      "pick & place"
+    ],
+    "Lift up the laptop screen": [
+      "pick & place"
+    ],
+    "Make the brown object  to the left lie flat on the table and then put the car plush toy on top of it": [
+      "push / slide",
+      "pick & place"
+    ],
+    "Move all the towels from the headrest to the top of the sealed cardboard box": [
+      "push / slide"
+    ],
+    "Move the black basket to the right": [
+      "push / slide"
+    ],
+    "Move the black object with the red spot on it to the right bowl": [
+      "push / slide"
+    ],
+    "Move the blue box from the plastic bag to the table": [
+      "push / slide"
+    ],
+    "Move the blue towel to the left": [
+      "push / slide"
+    ],
+    "Move the bottle to the left": [
+      "push / slide"
+    ],
+    "Move the brown to the left": [
+      "push / slide"
+    ],
+    "Move the cup from right to left.": [
+      "push / slide"
+    ],
+    "Move the cup slightly backward": [
+      "push / slide"
+    ],
+    "Move the cup to the left": [
+      "push / slide"
+    ],
+    "Move the faucet handle on the right forwards": [
+      "push / slide"
+    ],
+    "Move the forks from the plate to the table": [
+      "push / slide"
+    ],
+    "Move the highlighter from the table and place it in the blue bowl": [
+      "push / slide",
+      "pick & place"
+    ],
+    "Move the marker to the right": [
+      "push / slide"
+    ],
+    "Move the mug to the left": [
+      "push / slide"
+    ],
+    "Move the mug to the right.": [
+      "push / slide"
+    ],
+    "Move the orange tape closer to the coat hanger": [
+      "push / slide"
+    ],
+    "Move the pink cup to the right section of the plate rack": [
+      "push / slide"
+    ],
+    "Move the plush toy to the right side of the desk": [
+      "push / slide"
+    ],
+    "Move the purple object forward": [
+      "push / slide"
+    ],
+    "Move the red marker backwards": [
+      "push / slide"
+    ],
+    "Move the silver fork to the left then use the silver knife to move the tiles to the left.": [
+      "push / slide"
+    ],
+    "Move the spice bottle to the top shelf": [
+      "push / slide"
+    ],
+    "Move the stapler to the right": [
+      "push / slide"
+    ],
+    "Move the tea bag from the mug to the box": [
+      "push / slide"
+    ],
+    "Move the towels from the left armrest to the right armrest": [
+      "push / slide"
+    ],
+    "Move the toy car to the left then forward": [
+      "push / slide"
+    ],
+    "Move the white bottle with the yellow lid to the left side of the counter": [
+      "push / slide"
+    ],
+    "Move the white bowl slightly backward": [
+      "push / slide"
+    ],
+    "Move the white mug from the black bowl to the top of the cabinet": [
+      "push / slide"
+    ],
+    "Move the white mug to the left then use the green towel to wipe the countertop.": [
+      "push / slide",
+      "wipe / clean"
+    ],
+    "Move the white object to the left": [
+      "push / slide"
+    ],
+    "Move the white plate forwards.": [
+      "push / slide"
+    ],
+    "Open the bottom drawer of the cabinet to the right.": [
+      "open / close"
+    ],
+    "Open the door of the washing machine on the top right": [
+      "open / close"
+    ],
+    "Open the drawer": [
+      "open / close"
+    ],
+    "Open the drawer and put the pineapple plushie in it.": [
+      "open / close",
+      "pick & place"
+    ],
+    "Open the drawer on the right": [
+      "open / close"
+    ],
+    "Open the left cabinet door": [
+      "open / close"
+    ],
+    "Open the lid of the electric kettle": [
+      "open / close"
+    ],
+    "Open the middle cabinet door at the bottom and close the top left cabinet door": [
+      "open / close"
+    ],
+    "Open the storage bin": [
+      "open / close"
+    ],
+    "Open the top drawer": [
+      "open / close"
+    ],
+    "Open the topmost drawer on the left side of the cabinet, remove the red cup from the drawer and place it on the countertop, close the open drawer": [
+      "open / close",
+      "remove / extract",
+      "pick & place"
+    ],
+    "Pick the bottle from the table": [
+      "pick & place"
+    ],
+    "Pick the lemon from the white plate and put it in the blue bowl": [
+      "pick & place"
+    ],
+    "Pick the lid and put it on the table": [
+      "pick & place"
+    ],
+    "Pick the lid from the table and place it on top of the jar": [
+      "pick & place"
+    ],
+    "Pick the marker and put it in the cup": [
+      "pick & place"
+    ],
+    "Pick the marker from the cup and put it on the table": [
+      "pick & place"
+    ],
+    "Pick the pink bowl and put it in the sink": [
+      "pick & place"
+    ],
+    "Pick up one of the small bottles from the plastic container and put it on the table.": [
+      "pick & place"
+    ],
+    "Pick up one pair of scissors, then place them in the clear object": [
+      "pick & place"
+    ],
+    "Pick up the ballpoint pen and leave your handwriting on the paper.": [
+      "pick & place"
+    ],
+    "Pick up the black cable and put it in the tool box": [
+      "pick & place"
+    ],
+    "Pick up the black spatula and put it on the right side of the kitchen counter, pick up the tongs and turn them ninety degrees anticlockwise, put the tongs on the kitchen counter next to the spatula": [
+      "pick & place",
+      "fold / unfold"
+    ],
+    "Pick up the blue marker and put it in the cup": [
+      "pick & place"
+    ],
+    "Pick up the blue pen from the table and put it in the cardboard box, pick up the black pen from the table and put it in the cardboard box": [
+      "pick & place"
+    ],
+    "Pick up the clear ring from the wooden tray and put it on the stack of rings on the table": [
+      "pick & place"
+    ],
+    "Pick up the green block and put it on the orange block": [
+      "pick & place"
+    ],
+    "Pick up the green grapes from the stove and place them inside the silver pot in the sink": [
+      "pick & place"
+    ],
+    "Pick up the green ring and drop it in the wooden tray": [
+      "pick & place"
+    ],
+    "Pick up the left spice bottle on the right of the utensil holding bucket and put it on the left side of the top shelf of the top wall spice bottles rack": [
+      "pick & place"
+    ],
+    "Pick up the lid from the pot and put it on the table, then pick up the orange object from the pot and put it on the table, then pick up the lid and put it back on the pot": [
+      "pick & place"
+    ],
+    "Pick up the light blue cloth peg and put it on the table.": [
+      "pick & place"
+    ],
+    "Pick up the marker and put it in the cup": [
+      "pick & place"
+    ],
+    "Pick up the marker and wrap it on the cloth, then pick up the cloth and put it in the box": [
+      "pick & place"
+    ],
+    "Pick up the objects and put them in the box": [
+      "pick & place"
+    ],
+    "Pick up the pen and put it in the cup": [
+      "pick & place"
+    ],
+    "Pick up the pen at the edge of the kitchen counter and put it on the gray oven": [
+      "pick & place"
+    ],
+    "Pick up the pen from the bowl and put it on the table.": [
+      "pick & place"
+    ],
+    "Pick up the pen from the white bowl and put it on the table.": [
+      "pick & place"
+    ],
+    "Pick up the pink block and put it on the table": [
+      "pick & place"
+    ],
+    "Pick up the purple toy from the bowl and put it on the table.": [
+      "pick & place"
+    ],
+    "Pick up the red fruit on the table and put it in the bowl": [
+      "pick & place"
+    ],
+    "Pick up the scooper, wipe it against the towel, then put it on the left counter": [
+      "pick & place",
+      "wipe / clean"
+    ],
+    "Pick up the silver lid from the table and put it on the silver pot.": [
+      "pick & place"
+    ],
+    "Pick up the spatula and scoop up the white blocks then put them into the colander": [
+      "pick & place",
+      "pour"
+    ],
+    "Pick up the spoon from cup, then put it back in the cup": [
+      "pick & place"
+    ],
+    "Pick up the towel and put it in the washing machine": [
+      "pick & place"
+    ],
+    "Pick up the toy from the table and put it in the drawer.": [
+      "pick & place"
+    ],
+    "Pick up the white book and put it on the couch": [
+      "pick & place"
+    ],
+    "Pick up the white object and put it in the tool box": [
+      "pick & place"
+    ],
+    "Pick up the white plates and put them on the bottom white shelf": [
+      "pick & place"
+    ],
+    "Place the bag of doritos on the left side of the bottom shelf": [
+      "pick & place"
+    ],
+    "Place the box in the plastic bag": [
+      "pick & place"
+    ],
+    "Place the lid on the pot": [
+      "pick & place"
+    ],
+    "Place the rubber band over the brown cup": [
+      "pick & place"
+    ],
+    "Pour some of the contents of the clear lunchbox into the ceramic bowl on the left": [
+      "pour"
+    ],
+    "Pour the contents of the black pouch into the red basket": [
+      "pour"
+    ],
+    "Pour the water out of the blue cup on the right into the blue bowl then stack the blue cups": [
+      "pour",
+      "stack"
+    ],
+    "Press a button on the remote control": [
+      "press / actuate"
+    ],
+    "Press one keyboard key": [
+      "press / actuate"
+    ],
+    "Press the button atop the flask": [
+      "press / actuate"
+    ],
+    "Press the button on the top of the coffee maker": [
+      "press / actuate"
+    ],
+    "Press the lid ejector button of the clear electric kettle": [
+      "press / actuate"
+    ],
+    "Press the right button on the fridge": [
+      "press / actuate"
+    ],
+    "Press the third g key from the right on the piano": [
+      "press / actuate"
+    ],
+    "Push a black key on the piano": [
+      "push / slide"
+    ],
+    "Push down the toaster lever": [
+      "push / slide"
+    ],
+    "Push the button on the coffee machine": [
+      "push / slide"
+    ],
+    "Push the faucet to the right.": [
+      "push / slide"
+    ],
+    "Push the right lever on the toaster downwards": [
+      "push / slide"
+    ],
+    "Push the tap lever backwards": [
+      "push / slide"
+    ],
+    "Put all the objects in the measuring cup into the red bowl and press the red button on the thing": [
+      "pick & place",
+      "press / actuate"
+    ],
+    "Put some beans from the bowl in the small pot and pour them back in the bowl": [
+      "pick & place",
+      "pour"
+    ],
+    "Put some of the rings in the black bowl": [
+      "pick & place"
+    ],
+    "Put the black and white mugs inside the drawer": [
+      "pick & place"
+    ],
+    "Put the black cable inside the tool box on the first shelf": [
+      "pick & place"
+    ],
+    "Put the black lid on the mouthwash bottle": [
+      "pick & place"
+    ],
+    "Put the black object on the drawer tray": [
+      "pick & place"
+    ],
+    "Put the blue block inside the open drawer then close the drawer": [
+      "pick & place",
+      "open / close"
+    ],
+    "Put the blue cloth on the backrest of the chair.": [
+      "pick & place"
+    ],
+    "Put the blue cup under the tap in the sink and fill it with water": [
+      "pick & place"
+    ],
+    "Put the clear cup upright": [
+      "pick & place"
+    ],
+    "Put the crayon inside the measuring cup then put it on top of the white napkin.": [
+      "pick & place"
+    ],
+    "Put the green block on top of the other blocks": [
+      "pick & place"
+    ],
+    "Put the green can in the open upper cabinet.": [
+      "pick & place"
+    ],
+    "Put the green cylinder into the wooden box": [
+      "pick & place"
+    ],
+    "Put the grey short in the open drawer": [
+      "pick & place"
+    ],
+    "Put the lid on the small pot": [
+      "pick & place"
+    ],
+    "Put the marker in the cup": [
+      "pick & place"
+    ],
+    "Put the marker in the mug": [
+      "pick & place"
+    ],
+    "Put the marker into the green cup.": [
+      "pick & place"
+    ],
+    "Put the mug on the table": [
+      "pick & place"
+    ],
+    "Put the napkin box on the cabinet on the right": [
+      "pick & place"
+    ],
+    "Put the object on the table in the plastic bag": [
+      "pick & place"
+    ],
+    "Put the orange marker inside the white mug": [
+      "pick & place"
+    ],
+    "Put the orange objects on the silver spoon then use the spoon to place the objects in the small measuring cup.": [
+      "pick & place"
+    ],
+    "Put the orange rings inside the white cup, place the blue ring inside the clear cup": [
+      "pick & place"
+    ],
+    "Put the orange rubber duck in the pot": [
+      "pick & place"
+    ],
+    "Put the paper cup in an upright position": [
+      "pick & place"
+    ],
+    "Put the paper glue in the mug": [
+      "pick & place"
+    ],
+    "Put the pen in the cup": [
+      "pick & place"
+    ],
+    "Put the pen in the mug": [
+      "pick & place"
+    ],
+    "Put the pen on the table": [
+      "pick & place"
+    ],
+    "Put the red block on the yellow block": [
+      "pick & place"
+    ],
+    "Put the red object on the table on the object on the right": [
+      "pick & place"
+    ],
+    "Put the remote control on the footboard of the bed.": [
+      "pick & place"
+    ],
+    "Put the right shoe next to the left one": [
+      "pick & place"
+    ],
+    "Put the rings inside the black bowl": [
+      "pick & place"
+    ],
+    "Put the shaker in the dish": [
+      "pick & place"
+    ],
+    "Put the silver spoon in the black mug.": [
+      "pick & place"
+    ],
+    "Put the spoon in the cup on the counter": [
+      "pick & place"
+    ],
+    "Put the square block on the cylindrical block": [
+      "pick & place"
+    ],
+    "Put the strawberry and square plush toy in the box": [
+      "pick & place"
+    ],
+    "Put the tape on the plate": [
+      "pick & place"
+    ],
+    "Put the tissues inside the rubbish bin.": [
+      "pick & place"
+    ],
+    "Put the two packets in the open fridge drawer": [
+      "pick & place"
+    ],
+    "Put the white and blue object inside the purple cup in the open upper cabinet.": [
+      "pick & place"
+    ],
+    "Put the white container on the plate": [
+      "pick & place"
+    ],
+    "Put the white object upright": [
+      "pick & place"
+    ],
+    "Put the white plush bear on the orange towel": [
+      "pick & place"
+    ],
+    "Put the white spoon in the blue bowl, the put the right cup upright": [
+      "pick & place"
+    ],
+    "Put the yellow ball into the bowl": [
+      "pick & place"
+    ],
+    "Put two slices of bread in the bread toaster": [
+      "pick & place"
+    ],
+    "Remove one bottle from the container and place it on the table": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove one egg from the tray and place it on the counter": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the black jug from the silver jug and put it on the kitchen countertop": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the black pen from the box and put it on the table": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the black spoon from the utensil holder and put it on the table": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the blue masking tape from the open drawer": [
+      "remove / extract"
+    ],
+    "Remove the blue, purple and green cups from the tray": [
+      "remove / extract"
+    ],
+    "Remove the bowl from the microwave.": [
+      "remove / extract"
+    ],
+    "Remove the cables from the plastic bag and put them on the table": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the clear bowl with a light blue lid from the dishes drying rack and place it on the table, flip the light blue lid on the clear bowl to make it fit the clear bowl top perfectly": [
+      "remove / extract",
+      "pick & place",
+      "fold / unfold"
+    ],
+    "Remove the clear lunchbox from the clear lid and out it on the table": [
+      "remove / extract"
+    ],
+    "Remove the coffee pod from the top of the coffeemaker.": [
+      "remove / extract"
+    ],
+    "Remove the grey backpack from the sofa and place it on the chair": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the grey block from the stove and put it in the orange cup": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the lemon from the box": [
+      "remove / extract"
+    ],
+    "Remove the lid from the pot, put it on the stove and then pour the contents of the cup on the stove into the pot": [
+      "remove / extract",
+      "pick & place",
+      "pour"
+    ],
+    "Remove the marker from the bowl and put it on the table": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the marker from the cup and put it on the table": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the marker from the mug": [
+      "remove / extract"
+    ],
+    "Remove the marker from the mug and put it on the table": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the marker from the silver cup and place it on the table": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the object from the bowl and put it next to the object on the left of the table": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the orange bowl from the pile of stacked up bowls and put it on the table": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the orange can from the cabinet and put it on the counter": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the orange circle from the wooden object.": [
+      "remove / extract"
+    ],
+    "Remove the orange packet from the drawer and put it on the counter": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the pen from the cup": [
+      "remove / extract"
+    ],
+    "Remove the pen from the wooden plate and put it on the table": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the plate from the top of the blue bowl and place it on the table": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the rectangular block from on top of the other block and put it on the table": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the remote control from the pillow then place the pillow case on the pillow.": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the scissors from the cup": [
+      "remove / extract"
+    ],
+    "Remove the spoon from the yellow cup and put it on the counter top": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the spray bottle from the sink.": [
+      "remove / extract"
+    ],
+    "Remove the towels from the rail and place them on the black chair": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the toy car from on top of the microwave and put it on the table": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the white and orange bottle from the plastic bag and put it on the table": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the white container from the wooden rack, put it on the counter, move the clear black pepper container to the left and then put the white container on the right side of the clear black pepper container": [
+      "remove / extract",
+      "pick & place",
+      "push / slide"
+    ],
+    "Remove the white plate from the dishwasher and place it on top of the white plates on the counter": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Remove the white with black words bottle from the plastic bag and place it on the table": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Roll the basketball on the table": [
+      "push / slide"
+    ],
+    "Rotate the lid of the bottle anticlockwise": [
+      "press / actuate"
+    ],
+    "Separate the blocks on the table.": [
+      "sort"
+    ],
+    "Shift two objects from the storage bin to the paper plate": [
+      "push / slide"
+    ],
+    "Slide the curtain to the left": [
+      "push / slide"
+    ],
+    "Slide the grey towel to the right.": [
+      "push / slide"
+    ],
+    "Slide the tap to the left": [
+      "push / slide"
+    ],
+    "Spell the word 'Earl'.": [
+      "draw / trace"
+    ],
+    "Stack all the cups together": [
+      "stack"
+    ],
+    "Stack the black objects": [
+      "stack"
+    ],
+    "Stack the two black objects on the table": [
+      "stack"
+    ],
+    "Take the bottle out of the bowl and put it on the table": [
+      "pick & place"
+    ],
+    "Take the cutlery out of the drawer": [
+      "pick & place"
+    ],
+    "Take the marker from the brown bowl and put it on the table": [
+      "pick & place"
+    ],
+    "Take the marker from the cup and put it on the table": [
+      "pick & place"
+    ],
+    "Take the pen out of the clear cup": [
+      "pick & place"
+    ],
+    "Take the pen out of the cup and put it on the table": [
+      "pick & place"
+    ],
+    "Take the pen out of the mug and put it on the desk": [
+      "pick & place"
+    ],
+    "Take the screwdriver on the cabinet and put it near the window": [
+      "pick & place"
+    ],
+    "Take the three cups out of the yellow cup and separate them": [
+      "pick & place",
+      "sort"
+    ],
+    "Take the white plain paper and put it near the mouse, then pick up the mouse and place it on the plain paper": [
+      "pick & place"
+    ],
+    "Transfer one spoon of contents to the left cup": [
+      "pour"
+    ],
+    "Turn off the lamp": [
+      "press / actuate"
+    ],
+    "Turn on the third switch from the left": [
+      "press / actuate"
+    ],
+    "Twist the tea cup handle to the right": [
+      "press / actuate"
+    ],
+    "Unfold the white napkin on the right.": [
+      "fold / unfold"
+    ],
+    "Unhang one blue cloth from the hook on the bottom right drawer and place it on the countertop": [
+      "remove / extract",
+      "pick & place"
+    ],
+    "Unstack the two white plates": [
+      "remove / extract"
+    ],
+    "Use paper towel to wipe the remote": [
+      "wipe / clean"
+    ],
+    "Use the clear jug to fetch some water from the tap and the put the jug back on the countertop": [
+      "pick & place"
+    ],
+    "Use the eraser to wipe the markings on the whiteboard": [
+      "wipe / clean"
+    ],
+    "Use the paper towel to wipe the remote": [
+      "wipe / clean"
+    ],
+    "Use the spoon to transfer beans from the red bowl to the jar": [
+      "pour"
+    ],
+    "Wipe the arm of the chair": [
+      "wipe / clean"
+    ],
+    "Wipe the table with the paper towel": [
+      "wipe / clean"
+    ],
+    "Wipe the table with the towel": [
+      "wipe / clean"
+    ],
+    "Wipe the table with the towel then move the plush toy": [
+      "wipe / clean",
+      "push / slide"
+    ],
+    "brush screws into dustpan human brush left hold": [
+      "wipe / clean"
+    ],
+    "brush screws into dustpan left brush human hold": [
+      "wipe / clean"
+    ],
+    "close cardboard box": [
+      "open / close"
+    ],
+    "close toolbox": [
+      "open / close"
+    ],
+    "find hole and insert into gear": [
+      "insert / assemble"
+    ],
+    "find insert large gear shaft": [
+      "insert / assemble"
+    ],
+    "find insert small gear shaft": [
+      "insert / assemble"
+    ],
+    "fit large gear shaft": [
+      "insert / assemble"
+    ],
+    "fit small gear shaft": [
+      "insert / assemble"
+    ],
+    "fold bath towel": [
+      "fold / unfold"
+    ],
+    "fold big towel": [
+      "fold / unfold"
+    ],
+    "fold blue towel": [
+      "fold / unfold"
+    ],
+    "fold green towel": [
+      "fold / unfold"
+    ],
+    "fold light blue towel": [
+      "fold / unfold"
+    ],
+    "fold orange towel": [
+      "fold / unfold"
+    ],
+    "fold towel assist": [
+      "fold / unfold"
+    ],
+    "fold towel in random places": [
+      "fold / unfold"
+    ],
+    "fold yellow towel": [
+      "fold / unfold"
+    ],
+    "handover and wipe sponge": [
+      "handover",
+      "wipe / clean"
+    ],
+    "handover clear zip bag upright": [
+      "handover"
+    ],
+    "handover metallic zip bag upright": [
+      "handover"
+    ],
+    "hit mark with hammer": [
+      "press / actuate"
+    ],
+    "hook cable 8pin": [
+      "insert / assemble"
+    ],
+    "hook cable narrow 8pin": [
+      "insert / assemble"
+    ],
+    "hook rubber shaft": [
+      "insert / assemble"
+    ],
+    "insert gear onto shaft sliding": [
+      "insert / assemble"
+    ],
+    "insert lan cable into the hub": [
+      "insert / assemble"
+    ],
+    "insert large gear shaft": [
+      "insert / assemble"
+    ],
+    "insert random shaft random medium gear": [
+      "insert / assemble"
+    ],
+    "insert random shaft random small gear": [
+      "insert / assemble"
+    ],
+    "insert rod board": [
+      "insert / assemble"
+    ],
+    "insert rod moved board": [
+      "insert / assemble"
+    ],
+    "insert shaft into gear": [
+      "insert / assemble"
+    ],
+    "insert small gear shaft": [
+      "insert / assemble"
+    ],
+    "insert usb cable fix parts": [
+      "insert / assemble"
+    ],
+    "insert usb pcbox": [
+      "insert / assemble"
+    ],
+    "insert usb port hub": [
+      "insert / assemble"
+    ],
+    "insert washer shaft": [
+      "insert / assemble"
+    ],
+    "insert washer shaft both hands": [
+      "insert / assemble"
+    ],
+    "locked waist: Pick up corn to pink plate": [
+      "pick & place"
+    ],
+    "locked waist: Pick up silver kettle to beige plate and return": [
+      "pick & place"
+    ],
+    "locked waist: fold yellow rag on tan table with right hand": [
+      "fold / unfold"
+    ],
+    "locked waist: move right hand to bottom tier of wooden shelf": [
+      "push / slide"
+    ],
+    "locked waist: pick up Rubik's cube from top shelf to bottom level of shelf": [
+      "pick & place"
+    ],
+    "locked waist: pick up and move glass from tan table to turquoise plate": [
+      "pick & place",
+      "push / slide"
+    ],
+    "locked waist: pick up and place blue sweater on tan table, folding it over itself": [
+      "pick & place"
+    ],
+    "locked waist: pick up apple to plate, move glass to plate, place glass on plate, move hand back": [
+      "pick & place",
+      "push / slide"
+    ],
+    "locked waist: pick up avocado to lower level of black basket": [
+      "pick & place"
+    ],
+    "locked waist: pick up big green cup to small azure blue plate": [
+      "pick & place"
+    ],
+    "locked waist: pick up blue and white clock to teal plate": [
+      "pick & place"
+    ],
+    "locked waist: pick up blue clock to blue plate": [
+      "pick & place"
+    ],
+    "locked waist: pick up bouquet of flowers to glass vase": [
+      "pick & place"
+    ],
+    "locked waist: pick up can with yellow lid to white mug on blue plate": [
+      "pick & place"
+    ],
+    "locked waist: pick up clear red cup to blue plate and return": [
+      "pick & place"
+    ],
+    "locked waist: pick up coke can to brown basket": [
+      "pick & place"
+    ],
+    "locked waist: pick up corn on the cob to light blue plate": [
+      "pick & place"
+    ],
+    "locked waist: pick up fruits and push basket to table with left hand": [
+      "pick & place",
+      "push / slide"
+    ],
+    "locked waist: pick up green apple to center of teal plate": [
+      "pick & place"
+    ],
+    "locked waist: pick up green bell pepper to brown paper bag": [
+      "pick & place"
+    ],
+    "locked waist: pick up green bok choy to bottom black wire basket": [
+      "pick & place"
+    ],
+    "locked waist: pick up green bok choy to brown paper bag": [
+      "pick & place"
+    ],
+    "locked waist: pick up green bokchoy to bottom level of wire basket": [
+      "pick & place"
+    ],
+    "locked waist: pick up light red fruit to bottom level of wire basket": [
+      "pick & place"
+    ],
+    "locked waist: pick up milk bottle to pink bowl and back to light blue plate": [
+      "pick & place"
+    ],
+    "locked waist: pick up milk carton from pink bowl to blue plate": [
+      "pick & place"
+    ],
+    "locked waist: pick up milk carton to wooden shelf and plate": [
+      "pick & place"
+    ],
+    "locked waist: pick up mustard squeeze bottle to middle level of white shelf": [
+      "pick & place"
+    ],
+    "locked waist: pick up orange hand drill to silver toaster and back to middle of tan table": [
+      "pick & place"
+    ],
+    "locked waist: pick up orange juice carton from pink bowl to teal plate": [
+      "pick & place"
+    ],
+    "locked waist: pick up orange juice carton to tan table and return": [
+      "pick & place"
+    ],
+    "locked waist: pick up pink dragon fruit to black fruit basket, then return to original position": [
+      "pick & place"
+    ],
+    "locked waist: pick up pink dragonfruit to wire fruit basket": [
+      "pick & place"
+    ],
+    "locked waist: pick up plastic water bottle to pink plate": [
+      "pick & place"
+    ],
+    "locked waist: pick up red apple to bottom layer of wooden shelf": [
+      "pick & place"
+    ],
+    "locked waist: pick up red apple to silver pan and return": [
+      "pick & place"
+    ],
+    "locked waist: pick up red bell pepper to top brown wooden tray and place on top of brown wooden shelf": [
+      "pick & place"
+    ],
+    "locked waist: pick up red glass to blue plate": [
+      "pick & place"
+    ],
+    "locked waist: pick up rubik's cube to blue plate on left side of table": [
+      "pick & place"
+    ],
+    "locked waist: pick up rubik's cube to bottom level of brown wooden shelf": [
+      "pick & place"
+    ],
+    "locked waist: pick up rubik's cube to bottom level of wooden shelf and return": [
+      "pick & place"
+    ],
+    "locked waist: pick up rubik's cube to bottom shelf": [
+      "pick & place"
+    ],
+    "locked waist: pick up rubik's cube to top layer of shelf": [
+      "pick & place"
+    ],
+    "locked waist: pick up slice of bread to silver toaster": [
+      "pick & place"
+    ],
+    "locked waist: pick up tall red glass to bright blue plate and return": [
+      "pick & place"
+    ],
+    "locked waist: pick up toast to toaster": [
+      "pick & place"
+    ],
+    "locked waist: pick up white clock to bottom of wooden shelf": [
+      "pick & place"
+    ],
+    "locked waist: pick up white clock to grey plate and back": [
+      "pick & place"
+    ],
+    "locked waist: pick up yellow and green container to blue plate": [
+      "pick & place"
+    ],
+    "locked waist: pick up yellow corn on the cob to original position": [
+      "pick & place"
+    ],
+    "locked waist: pick up yellow corn to lower level of wire fruit basket": [
+      "pick & place"
+    ],
+    "locked waist: pick up yellow lemon to blue plate": [
+      "pick & place"
+    ],
+    "locked waist: pick up yellow mustard bottle to middle level of white shelf": [
+      "pick & place"
+    ],
+    "locked waist: pick up yellow starfruit from gray basket to middle of table": [
+      "pick & place"
+    ],
+    "pick up the pomegranate with left hand and put it in the storage box, and pick up the mango with right hand and put it in the storage box.": [
+      "pick & place"
+    ],
+    "place the chinese spoons on the cloth": [
+      "pick & place"
+    ],
+    "place the cup on the coaster": [
+      "pick & place"
+    ],
+    "press the pink, blue, and green buttons in sequence": [
+      "press / actuate"
+    ],
+    "pull out a tissue, wipe the stains on the table clean, and then discard the tissue into the trash bin": [
+      "push / slide",
+      "wipe / clean"
+    ],
+    "push the pan to the edge of the table with your left hand and place it on the building block with your right hand.": [
+      "push / slide",
+      "pick & place"
+    ],
+    "push the yellow cart to the right with your left hand.": [
+      "push / slide"
+    ],
+    "put cup moved red handle holder": [
+      "pick & place"
+    ],
+    "put tape white case alternating arms": [
+      "pick & place"
+    ],
+    "put the calculator box in the yellow bucket with your left hand and the power bank box in the yellow bucket with your right hand.": [
+      "pick & place"
+    ],
+    "put the water bottle and handle into the cardboard box.": [
+      "pick & place"
+    ],
+    "remove box from case": [
+      "remove / extract"
+    ],
+    "remove box from case right arm": [
+      "remove / extract"
+    ],
+    "spoon red block bowl": [
+      "pour"
+    ],
+    "spoon yellow block bowl": [
+      "pour"
+    ],
+    "take out reel clear zip bag": [
+      "pick & place"
+    ],
+    "tape closed cardboard": [
+      "insert / assemble"
+    ],
+    "throw the pomegranate into the left square with your left hand and the mango into the right square with your right hand.": [
+      "pick & place"
+    ],
+    "throw the potato into the left square with your left hand and the pumpkin into the right square with your right hand.": [
+      "pick & place"
+    ],
+    "turn on the light switch": [
+      "press / actuate"
+    ],
+    "turn towel over": [
+      "fold / unfold"
+    ],
+    "unlocked waist: move avocado from bottom left to bottom right of beige table": [
+      "push / slide"
+    ],
+    "unlocked waist: move blue glass to bottom level of wooden shelf": [
+      "push / slide"
+    ],
+    "unlocked waist: move orange to center of table with left hand": [
+      "push / slide"
+    ],
+    "unlocked waist: move red apple from left side to right side of white desk": [
+      "push / slide"
+    ],
+    "unlocked waist: move rubik's cube to original position": [
+      "push / slide"
+    ],
+    "unlocked waist: move rubix's cube from left side of table to center of table": [
+      "push / slide"
+    ],
+    "unlocked waist: pick up and move orange mango to center of white table": [
+      "pick & place",
+      "push / slide"
+    ],
+    "unlocked waist: pick up and move potato from top left center of table to bottom center of table": [
+      "pick & place",
+      "push / slide"
+    ],
+    "unlocked waist: pick up and move red nectarine to right side of tan table": [
+      "pick & place",
+      "push / slide"
+    ],
+    "unlocked waist: pick up and move yellow mango to center of white table": [
+      "pick & place",
+      "push / slide"
+    ],
+    "unlocked waist: pick up and move yellow pear from bottom edge to middle of table": [
+      "pick & place",
+      "push / slide"
+    ],
+    "unlocked waist: pick up and move yellow starfruit from left to right side of white table": [
+      "pick & place",
+      "push / slide"
+    ],
+    "unlocked waist: pick up and place potato to lower level of steel container with left hand": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up and place the pink peach to bottom level of white shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up and place yellow star fruit from left side to center of tan table": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up apple to center of table": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up beige potato to lower level of white shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up beige potato to middle of the table": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up black pan with green pepper to top left of tan table": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up black video game controller to top of white cup": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up blue glass to brown basket": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up blue glass to top layer of wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up blue glass to upper level of wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up brown glass to gray basket": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up brown glass to upper level of wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up brown potato from left side of wooden table to center of wooden table": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up brown potato to bottom level of metal shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up brown potato to lower white basket": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up brown potato to right side of tan table": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up brown potato to white bottom rack": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up brown potato to white shelf of two tier shelving": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up cucumber to bottom white shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up cucumber to original position": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up dark green avocado to bottom level of plastic shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up dark green avocado to bottom white shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up dark green avocado to steel basket": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up dark red apple to bottom level of wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up green avocado to lower level gray basket": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up green avocado to lower level of steel basket": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up green avocado to white square basket": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up green bell pepper from left side of table to bottom of wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up green bell pepper to bottom level of wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up green bell pepper to bottom of wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up green bell pepper to bottom tier of brown shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up green bell pepper to brown bottom rack": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up green bell pepper to center of rectangle table": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up green bell pepper to center of white table": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up green capsicum to bottom layer of wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up green cucumber to bottom level of wire basket": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up green cucumber to lower level white shelf on right side of table": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up green cucumber to lower white basket": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up green pepper to bottom level of wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up mango to center of the table": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up mango to lower level of wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up orange glass to bottom shelf of wooden basket": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up orange mango to bottom level of wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up orange mango to bottom tier of wooden basket": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up orange to bottom of white shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up orange to bottom white shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up orange to white holed basket with black cover": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up plastic potato to lower level of white shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up potato to basket": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up potato to bottom of black shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up potato to lower level of two-tier rack": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up potato to right of beige table": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up potato to right side of beige table": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to black rectangular basket and back to table": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to bottom layer of brown wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to bottom layer of wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to bottom level of metal shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to bottom level of plastic shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to bottom level of wooden basket": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to bottom level of wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to bottom white shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to bottom white tray of shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to brown basket": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to brown bottom rack": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to center of tan table": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to lower level of plastic shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to lower level of steel container": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to lower level of white shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to lower wooden basket": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to lower wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to middle of table": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to pink plate": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to white bottom rack": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to white bottom shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to white shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red apple to white shelf and return": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red bell pepper to bottom level of metal basket": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red coke can to blue bowl and return": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red grapes to bottom white shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up red plum to lower level of two-tier shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up ripe mango to bottom layer of wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up ripe mango to bottom wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up round potato to bottom level of shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up tall dark glass to blue plate": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up tan potato to bottom level of shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up water bottle from blue plate to seafoam bowl": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up white mug to black hook": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow carambola from center of white table to bottom level of wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow carambola to bottom level of wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow carambola to lower level of brown shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow fruit to bottom level of wooden basket": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow lemon to bottom level of shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow mango to bottom level of brown wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow mango to bottom level of wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow mango to center of white table": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow mango to right side of white desk": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow mango to top tier of wooden basket and return": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow pear from left side of wooden table and move to bottom level of metal shelf": [
+      "pick & place",
+      "push / slide"
+    ],
+    "unlocked waist: pick up yellow pear to bottom black shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow pear to bottom level of metal shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow pear to bottom level of plastic shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow pear to bottom level of shelf and return": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow pear to bottom white shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow pear to bottom white tray": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow pear to center of table": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow pear to lower level of steel basket": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow pear to lower level of two-tier rack": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow pear to lower shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow pear to right side of wooden table": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow star fruit to bottom level of wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow star-fruit from bottom of beige table to center-right of beige table": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow starfruit to bottom layer of wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow starfruit to bottom level of wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow starfruit to bottom right of table": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow starfruit to bottom tier of two-tier grating basket": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow starfruit to center of table and then to bottom level wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow starfruit to lower level of two-tier rack": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow starfruit to lower level of wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow starfruit to lower wooden basket": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow starfruit to right side of white table": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow starfruit to right side of wooden table then to lower wooden basket": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up yellow-orange mango to lower level of wooden shelf": [
+      "pick & place"
+    ],
+    "unlocked waist: pick up zucchini to white holed basket with a black cover": [
+      "pick & place"
+    ],
+    "unlocked waist: push cucumber to center of table and return": [
+      "push / slide"
+    ],
+    "wipe the desk with a blue cloth": [
+      "wipe / clean"
+    ],
+    "wipe the desk with a sponge": [
+      "wipe / clean"
+    ]
+  },
+  "gr1_scenes": [
+    "Art_Framing_Store",
+    "Bar",
+    "Book_Store",
+    "Boxing_Training_Gym",
+    "Bread_Bakery",
+    "Building_Materials_Shop",
+    "Cleaning_Supplies",
+    "Clothing_Printing_Shop",
+    "Clothing_Store",
+    "Coffee_Shop",
+    "Construction_Renovation_Company",
+    "Electronics_Lab",
+    "Electronics_Shop",
+    "Fresh_Pasta_Store",
+    "Garden_Center",
+    "Gardening",
+    "Gift_Shop",
+    "Grocery_Store",
+    "Home",
+    "Hotel",
+    "Leather_Goods_Workshop",
+    "Mobile_Repair",
+    "Nail_Salon",
+    "Office",
+    "Pastry_Shop",
+    "Pet_Store",
+    "Pizzeria",
+    "Pottery_Making_Studio",
+    "Print_Store",
+    "Restaurant_Kitchen",
+    "Salon",
+    "Sewing_Factory",
+    "Shoe_Cobbler",
+    "SoccerFootball_Field",
+    "Sticker_Shop",
+    "Water_Packaging_Factory",
+    "art_studio",
+    "butchery"
+  ],
+  "source_datasets": [
+    "AIST Bimanual Manipulation (ALOHA)",
+    "DROID (cadene/droid_1.0.1)",
+    "NVIDIA PhysicalAI-Robotics-GR00T-Teleop-GR1",
+    "RoboCOIN (AIRBOT MMK2)",
+    "RoboChallenge (Traly/RoboChallenge-lerobot)"
+  ]
+}

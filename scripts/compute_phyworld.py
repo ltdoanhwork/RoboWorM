@@ -309,7 +309,11 @@ def main():
                 print(f"[skip] {method} {ep} missing", flush=True)
                 continue
             ep_dir = Path(rec["episode_dir"])
-            out_path = ep_dir / "phyworld.json"
+            # Per-episode sidecar. For flat `episode_*.mp4` cells this is
+            # `episode_XXXX.phyworld.json` (NOT `<split>/phyworld.json`, which
+            # every episode would share -> the exists() check below would then
+            # hand the first episode's scores to the whole cell).
+            out_path = Path(rec.get("sidecar") or (ep_dir / "phyworld.json"))
             if out_path.exists() and not args.overwrite:
                 payload = json.loads(out_path.read_text())
                 stored[(method, ep)] = payload
@@ -422,7 +426,11 @@ def main():
                 )
                 pred.update(fid)
                 stored[(method, ep)] = pred
-                merge_json(Path(rec["episode_dir"]) / "phyworld.json", pred)
+                merge_json(
+                    Path(rec.get("sidecar")
+                         or (Path(rec["episode_dir"]) / "phyworld.json")),
+                    pred,
+                )
                 print(f"  MotionFid={fid['motion_fidelity']:.3f} "
                       f"KinDrift={kd:.3f} ActorMotionDrift={amd:.3f} "
                       f"PhyFid={fid['phy_fid']:.1f}", flush=True)
@@ -453,14 +461,35 @@ def main():
             )
         }
     out_sum = ds / "phyworld_tables.json"
-    merge_json(out_sum, {f"{args.embodiment}/{args.view}/{args.model}/{args.split}": tables})
+    cell_key = f"{args.embodiment}/{args.view}/{args.model}/{args.split}"
+    # Deep-merge at the METHOD level. A large wave is run one method at a time
+    # (`--methods dense <accel>` per invocation) to keep GPU memory flat and to
+    # stay resumable, so a shallow update of `cell_key` would silently drop the
+    # aggregate row of every method scored by an earlier invocation.
+    prev_cell = {}
+    if out_sum.exists():
+        try:
+            prev_cell = json.loads(out_sum.read_text()).get(cell_key) or {}
+        except (json.JSONDecodeError, OSError):
+            prev_cell = {}
+    merged_cell = dict(prev_cell)
+    for key, val in tables.items():
+        if key == "cell" and isinstance(prev_cell.get("cell"), dict):
+            prev_meta = prev_cell["cell"]
+            val = dict(val)
+            for list_key in ("methods", "episodes"):
+                val[list_key] = sorted(
+                    set(prev_meta.get(list_key) or []) | set(val.get(list_key) or [])
+                )
+        merged_cell[key] = val
+    merge_json(out_sum, {cell_key: merged_cell})
     cell_sum = (
         ds / method_order[0] / args.embodiment / "output" / args.view
         / args.model / args.split / "phyworld_summary.json"
     )
     # write a copy next to the first method's split as well as the combined file
     cell_sum.parent.mkdir(parents=True, exist_ok=True)
-    cell_sum.write_text(json.dumps(tables, indent=2))
+    cell_sum.write_text(json.dumps(merged_cell, indent=2))
     print("\n===== PhyWorld summary =====")
     print(json.dumps(tables, indent=2))
     print(f"wrote {out_sum} and {cell_sum}")
