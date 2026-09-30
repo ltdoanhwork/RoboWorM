@@ -57,6 +57,7 @@ from imaginaire.utils.ema import FastEmaModelUpdater
 from methods.cache_strategy.common import reset_cache_runtime
 from methods.prunning.importance_token_merge.runtime import build_itm_attention_context, compute_itm_heat_map
 from methods.cache_strategy.common import (
+    BSCConfig,
     CacheRuntimeConfig,
     WorldCacheConfig,
     DiCacheConfig,
@@ -460,6 +461,24 @@ class Video2WorldPipeline(BasePipeline):
 
             log.info("[ScalingCache] Applying ScalingCache runtime from AM_DiT/src/scl")
             return apply_scalingcache(net, self.cache_config)
+        if isinstance(self.cache_config, BSCConfig):
+            # BSC is ours: algorithm core in AM_DiT/src/bsc, DiT adaptation in
+            # AM_DiT/methods/cache_strategy/BSC. Same route as ScalingCache above --
+            # AM_DiT/src is on this process's PYTHONPATH, its root is not.
+            #
+            # Unlike the step-level backends, BSC patches net.blocks AND wraps net.forward
+            # to advance its own step counter (this pipeline never tells a backend when a
+            # denoise step begins). The per-episode reset is wired through
+            # `reset_cache_runtime`, which __call__ already invokes per chunk.
+            from bsc.backend import apply_bsc
+
+            log.info(
+                "[BSC] Applying BSC runtime from AM_DiT: gate=%s tau=%s mfi=%s group=%s "
+                "predict=%s predictor=%s",
+                self.cache_config.gate_mode, self.cache_config.rcs_threshold,
+                self.cache_config.min_full_interval, self.cache_config.group_size,
+                self.cache_config.group_predict, self.cache_config.predictor_mode)
+            return apply_bsc(net, self.cache_config)
 
         raise TypeError(f"Unsupported cache config type: {type(self.cache_config)!r}")
 

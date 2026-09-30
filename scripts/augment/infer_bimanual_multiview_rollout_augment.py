@@ -463,10 +463,13 @@ def main() -> None:
     pipe_args.natten = False
 
     # Forward any cache-backend flags (worldcache_*/dicache_*/fastercache_*/
-    # scalingcache_*) onto the pipeline setup args so setup_pipeline can build
+    # scalingcache_*/bsc_*) onto the pipeline setup args so setup_pipeline can build
     # the matching cache_config. build_cache_runtime_config reads these attrs.
+    # A backend missing from this prefix list is accepted on the command line, printed in
+    # the launcher banner, and then silently ignored -- so keep it in step with
+    # methods.cache_strategy.config.CACHE_SELECTOR_FLAGS.
     for _attr in vars(args):
-        if _attr.startswith(("worldcache_", "dicache_", "fastercache_", "scalingcache_")):
+        if _attr.startswith(("worldcache_", "dicache_", "fastercache_", "scalingcache_", "bsc_")):
             setattr(pipe_args, _attr, getattr(args, _attr))
 
     # Forward sparse-attention flags (use_pisa/pisa_*, use_svg/svg_*, use_radial/

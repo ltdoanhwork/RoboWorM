@@ -58,7 +58,16 @@ def _import_sparse_backends():
     from methods.sparse_attention.pisa.config import add_pisa_args
     from methods.sparse_attention.svg.config import add_dreamgen_svg_args
     from methods.sparse_attention.radial.config import add_dreamgen_radial_args
-    return add_pisa_args, add_dreamgen_svg_args, add_dreamgen_radial_args, add_dreamgen_sito_args, add_dreamgen_itm_args
+    from methods.cache_strategy.config import add_dreamgen_cache_args, build_cache_runtime_config
+    return (
+        add_pisa_args,
+        add_dreamgen_svg_args,
+        add_dreamgen_radial_args,
+        add_dreamgen_sito_args,
+        add_dreamgen_itm_args,
+        add_dreamgen_cache_args,
+        build_cache_runtime_config,
+    )
 # -----------------------------------
 
 _DEFAULT_NEGATIVE_PROMPT = "The video captures a series of frames showing ugly scenes, static with no motion, motion blur, over-saturation, shaky footage, low resolution, grainy texture, pixelated images, poorly lit areas, underexposed and overexposed scenes, poor color balance, washed out colors, choppy sequences, jerky movements, low frame rate, artifacting, color banding, unnatural transitions, outdated special effects, fake elements, unconvincing visuals, poorly edited content, jump cuts, visual noise, and flickering. Overall, the video is of poor quality."
@@ -190,13 +199,22 @@ def parse_args() -> argparse.Namespace:
         "--disable_prompt_refiner", action="store_true", help="Disable prompt refiner that enhances short prompts"
     )
 
-    # ---- Sparse Backend Integration ----
-    add_pisa_args, add_svg_args, add_radial_args, add_sito_args, add_itm_args = _import_sparse_backends()
+    # ---- Sparse / Cache Backend Integration ----
+    (
+        add_pisa_args,
+        add_svg_args,
+        add_radial_args,
+        add_sito_args,
+        add_itm_args,
+        add_cache_args,
+        _,
+    ) = _import_sparse_backends()
     add_pisa_args(parser)
     add_svg_args(parser)
     add_radial_args(parser)
     add_sito_args(parser)
     add_itm_args(parser)
+    add_cache_args(parser)
     # -----------------------------------
 
     return parser.parse_args()
@@ -284,6 +302,22 @@ def setup_pipeline(args: argparse.Namespace):
 
     # Load models
     log.info(f"Initializing Video2WorldPipeline with model size: {args.model_size}")
+    # Cache backends (WorldCache / DiCache / FasterCache-v2 / ScalingCache / BSC) are
+    # single-GPU only (context_parallel_size must be 1). Guard so a bad
+    # --num_gpus fails fast instead of silently producing incomparable timings.
+    # The selector list lives in methods.cache_strategy.config so a newly added backend
+    # cannot be omitted here (BSC would have been).
+    *_, build_cache_runtime_config = _import_sparse_backends()
+    from methods.cache_strategy.config import enabled_cache_backends
+
+    _enabled_caches = enabled_cache_backends(args)
+    if _enabled_caches and getattr(args, "num_gpus", 1) > 1:
+        raise ValueError(
+            f"[Cache] DreamGen cache backends ({', '.join(_enabled_caches)}) are "
+            "single-GPU only; set --num_gpus 1."
+        )
+    # build_cache_runtime_config also enforces mutual exclusion between backends.
+    cache_config = build_cache_runtime_config(args)
     pipe = Video2WorldPipeline.from_config(
         config=config,
         dit_path=dit_path,
@@ -291,6 +325,7 @@ def setup_pipeline(args: argparse.Namespace):
         torch_dtype=torch.bfloat16,
         load_ema_to_reg=args.load_ema,
         load_prompt_refiner=True,
+        cache_config=cache_config,
     )
 
     return pipe

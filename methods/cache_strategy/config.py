@@ -2,6 +2,7 @@ import argparse
 from typing import Any
 
 from methods.cache_strategy.common import (
+    BSCConfig,
     CacheRuntimeConfig,
     DiCacheConfig,
     FasterCacheConfig,
@@ -59,8 +60,92 @@ def add_dreamgen_cache_args(parser: argparse.ArgumentParser):
     group.add_argument("--scalingcache-update-alpha", action="store_true", help="Offline alpha-fitting pass (force Scaling, fit alphas).")
     group.add_argument("--scalingcache-granularity", type=str, default="block", choices=["block", "submodule"], help="Cache granularity: 'block' (memory-safe, default) or 'submodule' (faithful, ~3x memory).")
 
+    # BSC -- ours (implemented in AM_DiT: src/bsc core + methods/cache_strategy/BSC).
+    # Unlike the step-level baselines above, BSC gates GROUPS OF DiT BLOCKS and predicts a
+    # skipped group's output from its cached anchor, so the knobs are per-block/per-group.
+    # Defaults are the Ctrl-World reference point from AM_DiT/docs/ALGORITHM.md section 9;
+    # DreamGen is a different backbone and needs its own sweep.
+    #
+    # NOTE ON STEP COUNTS: DreamGen runs CFG sequentially, so net.forward (and therefore
+    # the BSC step counter) fires TWICE per denoise step. --bsc-warmup-steps and
+    # --bsc-min-full-interval are in net-forward units: 6 means "re-anchor every 3 denoise
+    # steps". Same doubling reset_worldcache_state applies to its own num_steps.
+    group.add_argument("--bsc-enabled", action="store_true", help="Enable BSC (block/group-level skip-eligibility caching) from AM_DiT.")
+    group.add_argument("--bsc-gate-mode", type=str, default="group", choices=["group", "perblock_pooled", "step3", "step", "drift"], help="Gate granularity. 'group' (default) = one shared decision per contiguous block group.")
+    group.add_argument("--bsc-rcs-threshold", type=float, default=0.1, help="tau: drift above which the group is fully computed. THE main speed/quality knob.")
+    group.add_argument("--bsc-copy-threshold", type=float, default=0.03, help="Drift below this uses the free 'copy' predictor.")
+    group.add_argument("--bsc-min-full-interval", type=int, default=3, help="Max reuse horizon: force a full compute at least every N net forwards (2 per denoise step).")
+    group.add_argument("--bsc-warmup-steps", type=int, default=3, help="Initial net forwards always fully computed.")
+    group.add_argument("--bsc-no-output-gate", dest="bsc_output_gate", action="store_false", help="Gate on the raw input drift E_I instead of the predicted output error s*E_I.")
+    group.set_defaults(bsc_output_gate=True)
+    # groups
+    group.add_argument("--bsc-group-size", type=int, default=4, help="Contiguous DiT blocks per skip-group (1 = per-block).")
+    group.add_argument("--bsc-group-predict", type=str, default="io", choices=["io", "block", "io_vel"], help="'io' = intermediate members reuse their cached output; 'block' = each predicts.")
+    group.add_argument("--bsc-group-bounds", type=str, default=None, help="Non-uniform groups as 'a-b,c-d,...' (inclusive block indices). Overrides --bsc-group-size.")
+    # protection
+    group.add_argument("--bsc-protect-first-n", type=int, default=0, help="Force full compute for groups covering the first N blocks (the unstable head).")
+    group.add_argument("--bsc-protect-last-frac", type=float, default=0.0, help="Force full compute during the final fraction of the denoise schedule.")
+    group.add_argument("--bsc-protect-from-block", type=int, default=None, help="Always fully compute blocks with index >= this.")
+    group.add_argument("--bsc-max-skip-run", type=int, default=0, help="Cap consecutive skipped blocks within a step's chain (0 = no cap).")
+    # skip-eligibility
+    group.add_argument("--bsc-skip-eligibility", action="store_true", help="Data-driven protection: force a group full when its measured I->O ratio is unreliable.")
+    group.add_argument("--bsc-elig-s-dev", type=float, default=0.5, help="Eligibility: max |s_ema - 1| before a group is forced full.")
+    group.add_argument("--bsc-elig-cv", type=float, default=0.35, help="Eligibility: max CV(s) before a group is forced full.")
+    group.add_argument("--bsc-elig-warmup-fits", type=int, default=2, help="Full computes needed to seed the eligibility statistics.")
+    group.add_argument("--bsc-s-ema-beta", type=float, default=0.8, help="EMA factor for the per-block I->O ratio.")
+    # predictor
+    group.add_argument("--bsc-predictor-mode", type=str, default="linear_s1", help="Skip predictor: linear_s1|copy|linear|linear_ema|hybrid_cos|linear_decay|block_extrap|...")
+    group.add_argument("--bsc-s-clamp", type=float, default=None, help="Upper clamp on the fitted ratio s.")
+    group.add_argument("--bsc-s-floor", type=float, default=None, help="Lower clamp on the fitted ratio s.")
+    group.add_argument("--bsc-decay-rate", type=float, default=0.5, help="(linear_decay*) shrink the correction as the anchor goes stale.")
+    # adaptive cadence
+    group.add_argument("--bsc-adaptive-interval", action="store_true", help="Self-calibrating per-block re-anchor cadence instead of the fixed timer.")
+    group.add_argument("--bsc-adaptive-rate", type=float, default=1.0, help="(--bsc-adaptive-interval) higher = skip more aggressively.")
+    group.add_argument("--bsc-error-budget", type=float, default=None, help="Cumulative reuse-error budget; force a full step once exceeded.")
+    group.add_argument("--bsc-mfi-max", type=int, default=12, help="Hard cap on the per-block effective min_full_interval.")
+    group.add_argument("--bsc-cv-interval", type=float, default=0.0, help="Shorten the reuse horizon for volatile (high-CV) blocks.")
+    group.add_argument("--bsc-depth-interval-scale", type=float, default=0.0, help="Lengthen the reuse horizon for mid-network blocks.")
+    group.add_argument("--bsc-step-copy-threshold", type=float, default=0.0, help="Whole-step copy escalation threshold (0 = off).")
+    # SNR-phase gate
+    group.add_argument("--bsc-snr-skip-frac", type=float, default=0.0, help="Allow skipping only once the schedule fraction passes this (step-index proxy).")
+    group.add_argument("--bsc-snr-skip-t", type=float, default=0.0, help="Physical noise gate: skip only when the true t=sigma/(sigma+1) is BELOW this. 0 = off.")
+
+
+#: Every backend's selector flag, in the order `build_cache_runtime_config` tests them.
+#: Kept as data so the mutual-exclusion check and the dispatch cannot disagree, and so the
+#: single-GPU guards in `models/dreamgen/examples/video2world*.py` have one list to read
+#: instead of each hard-coding its own (which is how BSC would have been quietly omitted).
+CACHE_SELECTOR_FLAGS: tuple[str, ...] = (
+    "fastercache_enabled",
+    "worldcache_enabled",
+    "dicache_enabled",
+    "scalingcache_enabled",
+    "bsc_enabled",
+)
+
+
+def enabled_cache_backends(setup_args: Any) -> list[str]:
+    """Names of the cache backends selected on the command line."""
+    names = [f.removesuffix("_enabled") for f in CACHE_SELECTOR_FLAGS
+             if getattr(setup_args, f, False)]
+    # Legacy alias kept for older launchers.
+    if getattr(setup_args, "use_fastercache", False) and "fastercache" not in names:
+        names.append("fastercache")
+    return names
+
 
 def build_cache_runtime_config(setup_args: Any) -> CacheRuntimeConfig | None:
+    # Two backends at once would silently produce a number attributable to neither: each
+    # patches the same DiT, and whichever ran second wraps the first's patched forwards.
+    # Fail here, in the one place every entry point goes through, rather than relying on
+    # each launcher to remember its own guard.
+    selected = enabled_cache_backends(setup_args)
+    if len(selected) > 1:
+        raise ValueError(
+            "[Cache] cache backends are mutually exclusive; got "
+            f"{', '.join(sorted(selected))}. They all patch the same DiT, so enabling two "
+            "yields a measurement attributable to neither. Pick one.")
+
     if getattr(setup_args, "fastercache_enabled", False) or getattr(setup_args, "use_fastercache", False):
         from methods.cache_strategy.common import FasterCacheConfig
         return FasterCacheConfig(
@@ -107,5 +192,39 @@ def build_cache_runtime_config(setup_args: Any) -> CacheRuntimeConfig | None:
             alpha_dict_path=getattr(setup_args, "scalingcache_alpha_dict_path", None),
             update_alpha=getattr(setup_args, "scalingcache_update_alpha", False),
             granularity=getattr(setup_args, "scalingcache_granularity", "block"),
+        )
+    if getattr(setup_args, "bsc_enabled", False):
+        return BSCConfig(
+            gate_mode=getattr(setup_args, "bsc_gate_mode", "group"),
+            rcs_threshold=getattr(setup_args, "bsc_rcs_threshold", 0.1),
+            copy_threshold=getattr(setup_args, "bsc_copy_threshold", 0.03),
+            min_full_interval=getattr(setup_args, "bsc_min_full_interval", 3),
+            warmup_steps=getattr(setup_args, "bsc_warmup_steps", 3),
+            output_gate=getattr(setup_args, "bsc_output_gate", True),
+            group_size=getattr(setup_args, "bsc_group_size", 4),
+            group_predict=getattr(setup_args, "bsc_group_predict", "io"),
+            group_bounds=getattr(setup_args, "bsc_group_bounds", None),
+            protect_first_n=getattr(setup_args, "bsc_protect_first_n", 0),
+            protect_last_frac=getattr(setup_args, "bsc_protect_last_frac", 0.0),
+            protect_from_block=getattr(setup_args, "bsc_protect_from_block", None),
+            max_skip_run=getattr(setup_args, "bsc_max_skip_run", 0),
+            skip_eligibility=getattr(setup_args, "bsc_skip_eligibility", False),
+            elig_s_dev=getattr(setup_args, "bsc_elig_s_dev", 0.5),
+            elig_cv=getattr(setup_args, "bsc_elig_cv", 0.35),
+            elig_warmup_fits=getattr(setup_args, "bsc_elig_warmup_fits", 2),
+            s_ema_beta=getattr(setup_args, "bsc_s_ema_beta", 0.8),
+            predictor_mode=getattr(setup_args, "bsc_predictor_mode", "linear_s1"),
+            s_clamp=getattr(setup_args, "bsc_s_clamp", None),
+            s_floor=getattr(setup_args, "bsc_s_floor", None),
+            decay_rate=getattr(setup_args, "bsc_decay_rate", 0.5),
+            adaptive_interval=getattr(setup_args, "bsc_adaptive_interval", False),
+            adaptive_rate=getattr(setup_args, "bsc_adaptive_rate", 1.0),
+            error_budget=getattr(setup_args, "bsc_error_budget", None),
+            mfi_max=getattr(setup_args, "bsc_mfi_max", 12),
+            cv_interval=getattr(setup_args, "bsc_cv_interval", 0.0),
+            depth_interval_scale=getattr(setup_args, "bsc_depth_interval_scale", 0.0),
+            step_copy_threshold=getattr(setup_args, "bsc_step_copy_threshold", 0.0),
+            snr_skip_frac=getattr(setup_args, "bsc_snr_skip_frac", 0.0),
+            snr_skip_t=getattr(setup_args, "bsc_snr_skip_t", 0.0),
         )
     return None

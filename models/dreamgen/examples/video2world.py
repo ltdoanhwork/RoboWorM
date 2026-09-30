@@ -264,15 +264,16 @@ def setup_pipeline(args: argparse.Namespace, text_encoder: CosmosTextEncoder | N
             raise ValueError("[FasterCache] DreamGen FasterCache v1 is single-GPU only; set --num_gpus 1.")
         if args.use_cuda_graphs:
             raise ValueError("[FasterCache] DreamGen FasterCache v1 is incompatible with --use_cuda_graphs.")
-    # WorldCache / DiCache / FasterCache-v2 / ScalingCache are single-GPU only
+    # WorldCache / DiCache / FasterCache-v2 / ScalingCache / BSC are single-GPU only
     # (context_parallel_size must be 1). Guard here so a bad NUM_GPUS fails fast.
-    _cache_enabled = any(
-        getattr(args, f, False)
-        for f in ("worldcache_enabled", "dicache_enabled", "fastercache_enabled", "scalingcache_enabled")
-    )
-    if _cache_enabled and getattr(args, "num_gpus", 1) > 1:
+    # The selector list lives in methods.cache_strategy.config so a newly added backend
+    # cannot be omitted here (BSC would have been).
+    from methods.cache_strategy.config import enabled_cache_backends
+
+    _enabled_caches = enabled_cache_backends(args)
+    if _enabled_caches and getattr(args, "num_gpus", 1) > 1:
         raise ValueError(
-            "[Cache] DreamGen cache backends (WorldCache/DiCache/FasterCache) are "
+            f"[Cache] DreamGen cache backends ({', '.join(_enabled_caches)}) are "
             "single-GPU only; set --num_gpus 1."
         )
 

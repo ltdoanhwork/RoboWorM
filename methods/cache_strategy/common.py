@@ -59,7 +59,66 @@ class ScalingCacheConfig:
     granularity: str = "block"  # "block" (memory-safe) or "submodule" (faithful, ~3x memory)
 
 
-CacheRuntimeConfig = WorldCacheConfig | DiCacheConfig | FasterCacheConfig | ScalingCacheConfig
+@dataclass(frozen=True)
+class BSCConfig:
+    """BSC (Block Skip-eligibility Caching) -- ours. Implemented in AM_DiT.
+
+    Algorithm core: ``AM_DiT/src/bsc/`` (gate, groups, metrics -- backbone-agnostic).
+    DiT adaptation: ``AM_DiT/methods/cache_strategy/BSC/{dit,dreamgen}.py``, reached from
+    here as ``bsc.backend`` because ``AM_DiT/src`` is what this process has on PYTHONPATH
+    (same route as ``scl.backend``).
+
+    Unlike the step-level baselines above, BSC gates *groups of DiT blocks* and predicts a
+    skipped group's output from its cached anchor, so the knobs are per-block/per-group
+    rather than per-step. See ``AM_DiT/docs/ALGORITHM.md``.
+
+    Step-count convention: DreamGen runs classifier-free guidance sequentially, so
+    ``net.forward`` fires twice per denoise step. ``warmup_steps`` and
+    ``min_full_interval`` are therefore in net-forward units (two per denoise step) --
+    the same doubling ``reset_worldcache_state`` applies.
+    """
+
+    # --- gate (AM_DiT docs/ALGORITHM.md 3.1, 3.4) ---
+    gate_mode: str = "group"          # "group" | "perblock_pooled" | "step3" | "drift"
+    rcs_threshold: float = 0.1        # tau: threshold on the (predicted-output) drift
+    copy_threshold: float = 0.03
+    min_full_interval: int = 3        # max reuse horizon, in net forwards
+    warmup_steps: int = 3
+    output_gate: bool = True          # gate on s*E_I (output space), not raw E_I
+    # --- groups (3.1) ---
+    group_size: int = 4
+    group_predict: str = "io"         # "io" = members copy, leader maps I->O; "block"
+    group_bounds: str | None = None   # non-uniform, e.g. "0-1,2-5,6-9"; None = uniform
+    # --- protection ---
+    protect_first_n: int = 0
+    protect_last_frac: float = 0.0
+    protect_from_block: int | None = None
+    max_skip_run: int = 0
+    # --- skip-eligibility (3.2) ---
+    skip_eligibility: bool = False
+    elig_s_dev: float = 0.5
+    elig_cv: float = 0.35
+    elig_warmup_fits: int = 2
+    s_ema_beta: float = 0.8
+    # --- predictor (3.5) ---
+    predictor_mode: str = "linear_s1"
+    s_clamp: float | None = None
+    s_floor: float | None = None
+    decay_rate: float = 0.5
+    # --- adaptive cadence (3.6) ---
+    adaptive_interval: bool = False
+    adaptive_rate: float = 1.0
+    error_budget: float | None = None
+    mfi_max: int = 12
+    cv_interval: float = 0.0
+    depth_interval_scale: float = 0.0
+    step_copy_threshold: float = 0.0
+    # --- SNR-phase gate (3.3) ---
+    snr_skip_frac: float = 0.0
+    snr_skip_t: float = 0.0
+
+
+CacheRuntimeConfig = WorldCacheConfig | DiCacheConfig | FasterCacheConfig | ScalingCacheConfig | BSCConfig
 
 
 def get_cache_backend_name(config: CacheRuntimeConfig | None) -> str | None:
@@ -73,6 +132,8 @@ def get_cache_backend_name(config: CacheRuntimeConfig | None) -> str | None:
         return "fastercache"
     if isinstance(config, ScalingCacheConfig):
         return "scalingcache"
+    if isinstance(config, BSCConfig):
+        return "bsc"
     raise TypeError(f"Unsupported cache config type: {type(config)!r}")
 
 
@@ -167,6 +228,17 @@ def reset_cache_runtime(model, config: CacheRuntimeConfig | None, num_steps: int
         from scl.backend import reset_scalingcache_state
 
         return reset_scalingcache_state(model, config, num_steps=num_steps)
+    if isinstance(config, BSCConfig):
+        # Per-episode reset is NOT optional. The DeepCache baseline produced a whole
+        # table of numbers that had to be retracted twice because its cache was never
+        # cleared between episodes: step 0 of every later episode hit an anchor computed
+        # from a different episode, which flattered compute (a warm cache it never paid
+        # for) and corrupted quality (a stale tensor from elsewhere) simultaneously.
+        # See AM_DiT/docs/INSIGHTS.md section 47. `reset_bsc_state` therefore RAISES if
+        # it cannot find the runtime rather than returning quietly.
+        from bsc.backend import reset_bsc_state
+
+        return reset_bsc_state(model, config, num_steps=num_steps)
     raise TypeError(f"Unsupported cache config type: {type(config)!r}")
 
 

@@ -180,6 +180,14 @@ def parse_args() -> argparse.Namespace:
                         "1 => 1 latent frame (matches image-conditioning, consistent across segments); "
                         "5 => 2 latent frames (also in train distribution, smoother but mixes with seg0).")
     p.add_argument("--max-episodes", default=None, type=int)
+    p.add_argument("--episode-ids", default="",
+                   help="Select exact episodes to run. Two forms: a bare id list "
+                        "('1,29') applies to every task, or task-scoped entries "
+                        "('task_a:1,task_b:29') restrict each id to one task. "
+                        "Prefer the task-scoped form for qualitative/timing studies: "
+                        "episode ids repeat across tasks, so a bare list yields the "
+                        "task x id cross product rather than the intended episodes. "
+                        "Tasks not named in a task-scoped list are skipped entirely.")
     p.add_argument("--max-segments", default=None, type=int,
                    help="Hard cap on rolled-out segments per episode (safety). Default: derived from GT length.")
     p.add_argument("--seed", default=0, type=int)
@@ -424,10 +432,13 @@ def main() -> None:
     pipe_args.natten = False
 
     # Forward any cache-backend flags (worldcache_*/dicache_*/fastercache_*/
-    # scalingcache_*) onto the pipeline setup args so setup_pipeline can build
+    # scalingcache_*/bsc_*) onto the pipeline setup args so setup_pipeline can build
     # the matching cache_config. build_cache_runtime_config reads these attrs.
+    # A backend missing from this prefix list is accepted on the command line, printed in
+    # the launcher banner, and then silently ignored -- so keep it in step with
+    # methods.cache_strategy.config.CACHE_SELECTOR_FLAGS.
     for _attr in vars(args):
-        if _attr.startswith(("worldcache_", "dicache_", "fastercache_", "scalingcache_")):
+        if _attr.startswith(("worldcache_", "dicache_", "fastercache_", "scalingcache_", "bsc_")):
             setattr(pipe_args, _attr, getattr(args, _attr))
 
     # Forward sparse-attention flags (use_pisa/pisa_*, use_svg/svg_*, use_radial/
@@ -477,6 +488,30 @@ def main() -> None:
             continue
 
         ep_indices = sorted(episodes_meta.keys())
+        if args.episode_ids:
+            # Task-scoped entries ("task:id") bind an id to one task; bare ids
+            # apply to every task. Episode ids repeat across tasks, so mixing the
+            # two would silently widen the selection -- a task named anywhere in
+            # the spec is therefore driven ONLY by its own scoped ids.
+            scoped, bare = {}, set()
+            for tok in args.episode_ids.split(","):
+                tok = tok.strip()
+                if not tok:
+                    continue
+                if ":" in tok:
+                    t, i = tok.rsplit(":", 1)
+                    scoped.setdefault(t.strip(), set()).add(int(i))
+                else:
+                    bare.add(int(tok))
+            if scoped:
+                if task_name not in scoped:
+                    continue
+                wanted = scoped[task_name]
+            else:
+                wanted = bare
+            ep_indices = [e for e in ep_indices if e in wanted]
+            if not ep_indices:
+                continue
         save_task_dir = Path(args.save_root) / category / iter_name / task_name
 
         # max_episodes is PER-TASK (matches single_arm balance across the benchmark).
