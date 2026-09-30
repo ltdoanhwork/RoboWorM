@@ -60,9 +60,11 @@ FAMILY = {
     "svg2": "sparse attention", "radial": "sparse attention",
 }
 CELL_DISPLAY = {
-    "ctrlworld_single_arm_mv": ("Ctrl-World", "single-arm MV"),
-    "ctrlworld_bimanual_mv": ("Ctrl-World", "bimanual MV"),
-    "ctrlworld_humanoid_mv": ("Ctrl-World", "humanoid MV"),
+    # The Ctrl-World 3-view strip is reported only for single-arm; bimanual and
+    # humanoid are reported on their 4-view grid, which supersedes the strip
+    # (assets/scripts/benchmark_cells.py). The two excluded ids are therefore
+    # absent here, so the timing pass never measures a cell the paper drops.
+    "ctrlworld_single_arm_mv": ("Ctrl-World", "single-arm MV (3-view)"),
     "ctrlworld4_bimanual_mv": ("Ctrl-World", "bimanual MV (4-view)"),
     "ctrlworld4_humanoid_mv": ("Ctrl-World", "humanoid MV (4-view)"),
     "dreamgen_single_arm_mv": ("DreamGen", "single-arm MV (14B)"),

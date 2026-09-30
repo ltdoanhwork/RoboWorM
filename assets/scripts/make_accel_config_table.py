@@ -62,6 +62,9 @@ is a full-width section header, which survives any break.
 from __future__ import annotations
 
 import argparse
+import collections
+import statistics
+import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
@@ -81,6 +84,7 @@ METHODS = [
 ]
 
 EMB = [("single_arm", "single-arm"), ("bimanual", "bimanual"), ("humanoid", "humanoid")]
+EMB_KEY = {d: k for k, d in EMB}      # display label -> the key used in the records
 
 # (method, model family) pairs that were never run -- reported as `--`, not dropped.
 NOT_RUN = {("sito", "DreamDojo"), ("itm", "DreamDojo")}
@@ -158,10 +162,112 @@ def config_rows(split_layouts: bool):
     return rows
 
 
+def load_cells(run: Path):
+    """(family, track, embodiment, method) -> {metric_key: [values]} from scored records.
+
+    `track` is derived from the record's path, not from the model name: DreamGen is the
+    only family with both a multi-view and a single-view tree, and the only thing that
+    distinguishes them in a record is `relative` containing `/multiview/` or
+    `/singleview/`.
+
+    Ctrl-World's two multi-view layouts (3-view `ctrlworld`, and the `ctrlworld_4view_grid`
+    that exists only for bimanual/humanoid) are POOLED into one Ctrl-World line, matching
+    FAMILY_OF in table_paper_main.py. Note the 3-view records only exist for single_arm in
+    this wave -- the bimanual/humanoid 3-view renders are deliberately excluded from
+    scoring (see excluded_row() in scripts/run_dense_nr.py), so those lines are 4-grid only.
+    """
+    sys.path.insert(0, str(REPO / 'assets/scripts'))
+    import table_dense_nr as T
+
+    cells = collections.defaultdict(lambda: collections.defaultdict(list))
+    for r in T.load_records(run):
+        method = r.get('method')
+        if method == 'gt':
+            continue
+        model = r.get('model', '')
+        rel = r.get('relative', '')
+        if model.startswith('ctrlworld'):
+            fam = 'Ctrl-World'
+        elif model.startswith('dreamdojo'):
+            fam = 'DreamDojo'
+        elif model.startswith('dreamgen'):
+            fam = 'DreamGen'
+        else:
+            continue
+        track = ('multi-view' if '/multiview/' in rel
+                 else 'single-view' if '/singleview/' in rel else None)
+        if track is None:
+            continue
+        key = (fam, track, r.get('embodiment'), method)
+        sm = T.subject_metrics(r)
+        for _, mk, _ in METRICS:
+            v = sm[mk] if mk in sm else r.get(mk)
+            if v is not None:
+                cells[key][mk].append(v)
+    return cells
+
+
+def load_paired(run: Path):
+    """Same keying, but each value is (method - its OWN dense clip) for that metric.
+
+    Pairing is on `pair_key` (episode + view, method-free by construction) and gated by
+    T.comparable_pair, which drops pairs whose two clips are not the same measurement --
+    12.4% of accel pairs on this dataset came from a re-render at a different length/grid
+    and would otherwise contribute a difference that is not caused by the method.
+    """
+    sys.path.insert(0, str(REPO / 'assets/scripts'))
+    import table_dense_nr as T
+
+    recs = T.load_records(run)
+    dense = {r.get('pair_key'): r for r in recs if r.get('method') == 'dense'}
+    out = collections.defaultdict(lambda: collections.defaultdict(list))
+    for r in recs:
+        method = r.get('method')
+        if method in ('gt', 'dense'):
+            continue
+        g = dense.get(r.get('pair_key'))
+        if g is None or not T.comparable_pair(r, g):
+            continue
+        model = r.get('model', '')
+        rel = r.get('relative', '')
+        if model.startswith('ctrlworld'):
+            fam = 'Ctrl-World'
+        elif model.startswith('dreamdojo'):
+            fam = 'DreamDojo'
+        elif model.startswith('dreamgen'):
+            fam = 'DreamGen'
+        else:
+            continue
+        track = ('multi-view' if '/multiview/' in rel
+                 else 'single-view' if '/singleview/' in rel else None)
+        if track is None:
+            continue
+        sa, sb = T.subject_metrics(r), T.subject_metrics(g)
+        for _, mk, _ in METRICS:
+            a = sa[mk] if mk in sa else r.get(mk)
+            b = sb[mk] if mk in sb else g.get(mk)
+            if a is not None and b is not None:
+                out[(fam, track, r.get('embodiment'), method)][mk].append(a - b)
+    return out
+
+
+def fmt(vals, digits, signed):
+    """Median of `vals`, or \\ph when the cell has no data at all."""
+    if not vals:
+        return r"\ph"
+    m = statistics.median(vals)
+    return f"{m:+.{digits}f}" if signed else f"{m:.{digits}f}"
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--paired", action="store_true",
                     help="paired delta-vs-dense view (no Dense row) instead of absolute")
+    ap.add_argument("--run", type=Path,
+                    default=REPO / 'metrics/WorldScore/results/dense_nr_full',
+                    help="scored run to read; omit --run only with --structure-only")
+    ap.add_argument("--structure-only", action="store_true",
+                    help="emit the layout with every number as \\ph (no run needed)")
     ap.add_argument("--with-text-align", action="store_true",
                     help="keep the Text Alignment column in the absolute view "
                          "(withheld by default: absolute CLIPScore is not comparable "
@@ -184,6 +290,8 @@ def main():
     nm = len(metrics)
 
     cfgs = config_rows(args.ctrlworld_layouts)
+    data = None if args.structure_only else (
+        load_paired(args.run) if paired else load_cells(args.run))
     lay_col = args.ctrlworld_layouts
     # Model | Track | (Layout) | Embodiment | Speedup | metrics... | n
     lead = 3 + (1 if lay_col else 0)
@@ -199,7 +307,11 @@ def main():
     L = []
     A = L.append
     A("% Generated by assets/scripts/make_accel_config_table.py -- do not edit by hand.")
-    A("% Numbers are PLACEHOLDERS until a scoring wave is joined in.")
+    if data is None:
+        A("% STRUCTURE ONLY: every number is a placeholder (--structure-only).")
+    else:
+        A(f"% Numbers: medians over the scored clips of {args.run.name}.")
+        A(r"% Speedup is a wall-clock measurement, not in these records -- still \ph.")
     A(r"% needs: longtable, booktabs, makecell, xcolor, cleveref, xspace")
     A(r"\providecommand{\ph}{\textcolor{black!30}{$\cdot$}}   % unfilled number")
     A(r"\providecommand{\na}{\texttt{--}}                      % not run / not measured")
@@ -255,10 +367,21 @@ def main():
             row.append(emb)
             if (key, model) in NOT_RUN:
                 body = [r"\na"] * (nm + 2)
-            else:
-                # dense IS the 1.00x reference; it has no speedup to report
+            elif data is None:
+                # --structure-only: layout review before a wave is joined in
                 body = ([r"1.00$\times$"] if key == "dense" else [r"\ph"]) \
                     + [r"\ph"] * (nm + 1)
+            else:
+                cell = data.get((model, track, EMB_KEY[emb], key), {})
+                # Speedup is a wall-clock measurement, not an NR metric, so it is not in
+                # these records at all -- left as \ph rather than invented.
+                body = [r"1.00$\times$"] if key == "dense" else [r"\ph"]
+                for _, mk in metrics:
+                    body.append(fmt(cell.get(mk, []), 3 if mk ==
+                                    'text_condition_alignment' else 2, paired))
+                # n = the largest per-metric count, matching what the caption promises.
+                nmax = max((len(cell.get(mk, [])) for _, mk in metrics), default=0)
+                body.append(str(nmax) if nmax else r"\ph")
             A(" & ".join(row + body) + r" \\")
             prev = grp
 

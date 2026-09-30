@@ -50,6 +50,14 @@ AUDIT = os.path.join(REPO, "metrics/reports/sampling_audit.json")
 OUT_JSON = os.path.join(REPO, "metrics/reports/impl_accel_configs.json")
 TABLE_DIR = os.path.join(REPO, "assets/paper/appendix/tables")
 
+# Which cells the paper reports is decided in one shared place, so these tables,
+# the dense-config table, the speedup CSV and the figures cannot disagree about
+# the benchmark's size.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from benchmark_cells import EXCLUDED_CELLS  # noqa: E402
+from benchmark_cells import describe as describe_exclusions  # noqa: E402
+from benchmark_cells import is_excluded  # noqa: E402
+
 METHODS = [
     "sito", "itm",
     "worldcache", "dicache", "fastercache",
@@ -423,6 +431,11 @@ def build_rows(parsed, coverage):
         for (model, emb, view, meth), rec in parsed.items():
             if meth != method:
                 continue
+            # Cells the paper does not report are dropped here, before variants
+            # and `layouts_agree` are computed, so an excluded layout cannot
+            # influence how the surviving one is labelled.
+            if is_excluded(model, emb, view):
+                continue
             by_cell.setdefault((family_of(model), emb, view), []).append((model, rec))
         for (fam, emb, view), entries in sorted(by_cell.items()):
             n = coverage.get((fam, emb, view, method))
@@ -446,6 +459,11 @@ def build_rows(parsed, coverage):
                     "tuning_note": rec["tuning_note"],
                     "provenance_is_tuning_note": rec["provenance_is_tuning_note"],
                     "layouts_agree": len(variants) == 1,
+                    # How many layouts of this cell survive exclusion. The table
+                    # collapses duplicates only when there is genuinely more than
+                    # one layout to collapse; without this a cell whose 3-view
+                    # strip was excluded would print nothing at all.
+                    "n_layouts": len(entries),
                 })
             del cells
     return rows
@@ -544,9 +562,11 @@ def emit_table(family, rows, path):
         r" transformer block the method is allowed to touch. \texttt{--} marks a"
         r" configuration whose script exists and runs but which is outside this"
         r" method's released coverage, so it is reported rather than dropped."
-        r" Ctrl-World's two multi-view layouts share one audited cell; where they"
-        r" ship different values both are listed. $n$ is the released rollout count"
-        r" of the cell.}",
+        r" Ctrl-World multi-view is reported on one latent canvas per embodiment ---"
+        r" the $4$-view $2{\times}2$ canvas for bimanual and humanoid, the $3$-view"
+        r" strip for single-arm, which has no grid variant --- so each row is that"
+        r" embodiment's only Ctrl-World multi-view configuration. $n$ is the released"
+        r" rollout count of the cell.}",
         r"\label{tab:supp_accel_cfg_%s}\\" % fam_label,
         r"\toprule",
         header,
@@ -575,11 +595,17 @@ def emit_table(family, rows, path):
         out.append(r"\addlinespace[1pt]")
         prev_model = None
         for r in sorted(mrows, key=lambda x: (x["model"], x["view"], x["embodiment"], x["layout"])):
-            if r["model"] == "ctrlworld" and not r["layouts_agree"]:
+            if r["model"] == "ctrlworld" and r["n_layouts"] > 1 and not r["layouts_agree"]:
                 track = "%s, %s" % (VIEW_DISPLAY[r["view"]], LAYOUT_DISPLAY[r["layout"]])
-            elif r["model"] == "ctrlworld" and r["layout"] != "ctrlworld":
+            elif (r["model"] == "ctrlworld" and r["n_layouts"] > 1
+                    and r["layout"] != "ctrlworld"):
                 continue  # identical to the 3-view layout already printed
             else:
+                # A single surviving layout is NOT labelled. After exclusion each
+                # embodiment reports exactly one Ctrl-World multi-view canvas, so a
+                # "3-view"/"4-view grid" tag distinguishes nothing within the table
+                # and instead invites the reader to look for the other layout. Which
+                # canvas each embodiment uses is stated once in the caption.
                 track = VIEW_DISPLAY[r["view"]]
             # Print the model name only on its first surviving row; computing
             # this after the `continue` above is what keeps it attached to the
@@ -630,6 +656,7 @@ def main():
         if method not in METHODS:
             continue  # `dense` is the baseline, it has no method wrapper
         has = any(family_of(m) == fam and (e, v, me) == (emb, view, method)
+                  and not is_excluded(m, e, v)
                   for (m, e, v, me) in parsed)
         if n and not has:
             ran_but_no_script.append(list(key))
@@ -652,6 +679,29 @@ def main():
                    "rollout audit.",
         "n_scripts_parsed": len(parsed),
         "n_rows": len(rows),
+        # The paper does not report every cell that exists on disk. Record the
+        # exclusion in the artefact itself, so a reader of this JSON can tell a
+        # cell that was never built from one that was deliberately not reported.
+        "excluded_cells": [
+            {"model": c["model"], "embodiment": c["embodiment"],
+             "view": c["view"], "layout": c["layout"],
+             "superseded_by": c["superseded_by"], "reason": c["reason"]}
+            for c in EXCLUDED_CELLS
+        ],
+        "excluded_cells_note": (
+            "Ctrl-World's 3-view latent strip is not reported for bimanual or "
+            "humanoid: the same episodes were regenerated on the 4-view 2x2 "
+            "latent canvas, which supersedes it. single_arm keeps its 3-view "
+            "strip because it has no 4-view grid variant. The rollouts and run "
+            "scripts of the excluded cells still exist; this is a reporting "
+            "decision, not a deletion."),
+        "n_scripts_excluded": sum(
+            1 for (m, e, v, _me) in parsed if is_excluded(m, e, v)),
+        # `n_scripts_parsed` counts every run script on disk; the paper's
+        # coverage claim must use the REPORTED count instead, which is what the
+        # tables actually print.
+        "n_scripts_reported": sum(
+            1 for (m, e, v, _me) in parsed if not is_excluded(m, e, v)),
         "audit_method_totals": audit["method_totals"],
         "aliased_env_names": aliased,
         "coverage_without_script": sorted(ran_but_no_script),

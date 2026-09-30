@@ -40,6 +40,19 @@ from statistics import mean
 
 ROOT = Path(__file__).resolve().parents[2]
 
+# NOTE ON SCOPE (see assets/scripts/benchmark_cells.py).
+# The two Ctrl-World cells below are measured on the 3-VIEW STRIP checkpoints,
+# which the paper no longer reports as benchmark cells (superseded by the 4-view
+# grid). They are deliberately KEPT here: this table is a base-vs-finetuned
+# ablation, not a benchmark cell, and no such ablation was ever run on the grid
+# checkpoints -- dropping these rows would delete the only evidence that
+# finetuning the Ctrl-World backbone helps at all.
+#
+# `benchmark_cells.is_excluded` is therefore NOT applied to this generator. The
+# appendix prose states the layout mismatch explicitly (the "Three caveats"
+# sentence in 3_implemetation_details.tex). If a grid ablation is ever run,
+# replace these two entries and drop that caveat.
+#
 # Each cell: (family, embodiment, view, label, [(base_metrics_path, finetuned_metrics_path), ...])
 CELLS = [
     {

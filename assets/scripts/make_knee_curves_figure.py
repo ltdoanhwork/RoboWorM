@@ -70,8 +70,12 @@ PANELS = [
      "DreamGen 2B, humanoid MV"),
     ("dreamdojo-humanoid-singleview-sparse-attention-insights",
      "DreamDojo 2B, humanoid SV"),
-    ("ctrlworld-humanoid-multiview-caching-insights",
-     "Ctrl-World U-Net, humanoid MV"),
+    # Ctrl-World is shown on the 4-view GRID, not the 3-view strip: the strip is
+    # not a reported cell for humanoid (see assets/scripts/benchmark_cells.py),
+    # so a panel drawn from its sweep would illustrate a cell absent from every
+    # table in the paper.
+    ("ctrlworld-humanoid-multiview-4view-grid-caching-insights",
+     "Ctrl-World U-Net, humanoid MV (4-view)"),
 ]
 
 BOLD = re.compile(r"\*\*")

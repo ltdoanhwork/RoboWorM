@@ -90,6 +90,13 @@ BSC_SNR_SKIP_T="${BSC_SNR_SKIP_T:-0.0}"
 MULTIVIEW_ROOT="${MULTIVIEW_ROOT:-${ROOT}/datasets/bimanual/multiview}"
 SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/bsc/bimanual/output/multiview/dreamgen}"
 
+# WHERE THE SKIP ACCOUNTING LANDS. The rollout harness reports PSNR/SSIM/LPIPS and
+# nothing about cache behaviour, so without this a run that produced a perfectly good
+# video and a run where the gate never fired look IDENTICAL -- and every sweep row would
+# be a dense run wearing a BSC label. bsc.backend writes this at exit; the schema is the
+# one AM_DiT/analysis/flops_profile.py::score_skip_json reads.
+export BSC_STATS_JSON="${BSC_STATS_JSON:-${SAVE_ROOT}/${ITER_TAG}_bsc_skip.json}"
+
 if [[ ! -f "${DIT_PATH}" ]]; then
   echo "[ERROR] Checkpoint not found: ${DIT_PATH}" >&2
   exit 1
@@ -122,6 +129,7 @@ echo "  BSC         : gate=${BSC_GATE_MODE} tau=${BSC_TAU} mfi=${BSC_MFI} (net f
 echo "                group=${BSC_GROUP_SIZE}/${BSC_GROUP_PREDICT} predictor=${BSC_PREDICTOR}"
 echo "                bounds=${BSC_GROUP_BOUNDS:-uniform} protect_first_n=${BSC_PROTECT_FIRST_N} elig=${BSC_SKIP_ELIGIBILITY} snr_t=${BSC_SNR_SKIP_T}"
 echo "  Save root   : ${SAVE_ROOT}"
+echo "  Skip json   : ${BSC_STATS_JSON}"
 echo "  Episodes    : ${MAX_EPISODES:-all} (per task)"
 echo "============================================"
 

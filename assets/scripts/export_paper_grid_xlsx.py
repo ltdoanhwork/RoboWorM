@@ -15,9 +15,10 @@ The source of the layout is the benchmark workbook's `KIVA-main` / `RIGIS-main` 
  51 SINGLE-ARM ...
 
 `RIGIS-main` adds a second pair of blocks to the right under a `NORM -->` label, whose
-cells are the same numbers divided by that block's Real Video row. Those are written as
-real formulas (`=C4/$C$3`) so the sheet recalculates, which is also how the original does
-it.
+cells are the same numbers divided by that block's Real Video row. The original holds those
+as LITERAL values, not formulas (verified on the source workbook: `L4` is
+0.9264723238522365, not `=C4/$C$3`), so this matches that — which also keeps the file free
+of any formula needing a LibreOffice recalc pass, unavailable on this box.
 
 One sheet per metric, named for the metric. Values come from
 `table_paper_grid.py --run <run>` (its `table_paper_grid_absolute.csv`), i.e. the median
@@ -33,8 +34,10 @@ import csv
 import datetime
 from pathlib import Path
 
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+
+REPO = Path(__file__).resolve().parents[2]
 
 # (csv key, sheet name, sheet title, decimals, higher-is-better)
 METRICS = [
@@ -50,7 +53,11 @@ SPLITS = [('makovian', 'Markovian'), ('non_makovian', 'Non \u2013 Markovian')]
 # The sheet's method row order (same as the KIVA tab).
 METHOD_ORDER = ['Dense', 'itm', 'sito', 'World-cache', 'Faster-cache', 'Di-cache',
                 'SVG2', 'SVG1', 'Radial Attention', 'PISA']
-MODEL_ORDER = ['Dreamgen', 'DreamDojo', 'Ctrl-World', 'CW-4view']
+MODEL_ORDER = ['Dreamgen MV', 'Dreamgen SV', 'DreamDojo SV', 'Ctrl-World MV',
+               'CW-4view MV',
+               # pooled (no --by-track) labels, kept so the exporter still reads an
+               # older CSV that did not separate the camera tracks
+               'Dreamgen', 'DreamDojo', 'Ctrl-World', 'CW-4view']
 
 # Layout constants, matching the original tabs.
 # The original hardcodes a 25-row stride (1 -> 26 -> 51) because its blocks hold only two
@@ -257,6 +264,90 @@ def write_delta_block(ws, top, emb_key, emb_label, data, mkey, title, digits, mo
     return top + 2 + len(models) * len(methods) - 1
 
 
+def write_flat(ws, data, delta):
+    """One ROW per (embodiment, model, split, method); every metric is a COLUMN.
+
+    The *-main / *-delta sheets copy the original workbook's shape: three column groups
+    side by side, one sheet per metric. That is good for eyeballing one metric and useless
+    for anything else -- you cannot sort it, filter it, pivot it, or read two metrics of
+    the same cell without jumping sheets. This tab is the same numbers in long form, so a
+    single row carries a cell's absolute value, its clip count, and its delta vs dense for
+    all four metrics at once.
+
+    `n` is kept beside each value on purpose: the wave is unfinished, so cells differ in
+    size by an order of magnitude and a bare median hides that. Sort by `n` to find the
+    cells that are still too thin to quote.
+    """
+    head = ['Embodiment', 'Model', 'Method', 'Split']
+    for _, _, title, _, _ in METRICS:
+        head += [title, f'{title} n', f'{title} \u0394 vs dense']
+    for i, h in enumerate(head, start=1):
+        c = ws.cell(1, i, h)
+        c.font = HDR
+        c.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        c.fill = HDR_FILL
+        c.border = BOX
+
+    row = 2
+    for emb_key, emb_label in EMB_LABEL:
+        models = ['Real Video'] + [m for m in MODEL_ORDER
+                                   if any(k[:2] == (emb_key, m) for k in data)]
+        for model in models:
+            # Real Video is the GT anchor: one row, method '' , and no delta (a delta is
+            # against dense, and GT has no dense counterpart).
+            methods = [''] if model == 'Real Video' else METHOD_ORDER
+            for method in methods:
+                rec = data.get((emb_key, model, method))
+                if rec is None:
+                    continue
+                drec = delta.get((emb_key, model, method))
+                for split, split_label in SPLITS:
+                    vals = [(num(rec, f'{k}_{split}'),
+                             rec.get(f'{k}_{split}_n'),
+                             num(drec, f'{k}_{split}'))
+                            for k, _, _, _, _ in METRICS]
+                    if all(v is None for v, _, _ in vals):
+                        continue
+                    for col, value in ((1, emb_label), (2, model),
+                                       (3, method or 'Real Video'), (4, split_label)):
+                        c = ws.cell(row, col, value)
+                        c.font = TXT
+                        c.alignment = LEFT
+                        c.border = BOX
+                    col = 5
+                    for (v, n, d), (_, _, _, digits, _) in zip(vals, METRICS):
+                        cv = ws.cell(row, col)
+                        if v is None:
+                            cv.value, cv.font = '---', MISSING
+                        else:
+                            cv.value = round(v, digits)
+                            cv.number_format = f'0.{"0" * digits}'
+                            cv.font = VAL
+                        cn = ws.cell(row, col + 1, int(n) if n else 0)
+                        cn.font = VAL
+                        cn.number_format = '#,##0'
+                        cd = ws.cell(row, col + 2)
+                        if d is None:
+                            cd.value, cd.font = '---', MISSING
+                        else:
+                            cd.value = round(d, digits)
+                            cd.number_format = f'+0.{"0" * digits};-0.{"0" * digits};0'
+                            cd.font = VAL
+                        for c in (cv, cn, cd):
+                            c.alignment = RIGHT
+                            c.border = BOX
+                        col += 3
+                    row += 1
+
+    widths = [13, 12, 17, 15] + [11, 8, 13] * len(METRICS)
+    for i, w in enumerate(widths, start=1):
+        ws.column_dimensions[ws.cell(1, i).column_letter].width = w
+    ws.row_dimensions[1].height = 32
+    ws.freeze_panes = 'E2'
+    ws.auto_filter.ref = f'A1:{ws.cell(1, len(head)).column_letter}{row - 1}'
+    return row - 2
+
+
 def write_readme(ws, run, src, n_scored, n_manifest):
     """Provenance + the two reading rules the numbers are only valid under.
 
@@ -264,17 +355,44 @@ def write_readme(ws, run, src, n_scored, n_manifest):
     barred from cross-embodiment comparison (table_dense_nr.NOT_CROSS_EMBODIMENT), so a
     reader who scans ACROSS the three blocks gets a wrong answer. The original sheet has
     no such note, which is exactly why it needs one here.
+
+    The scored count is reported TWICE on purpose. This script is cheap (seconds) while
+    table_paper_grid.py takes ~25 min over 30k+ JSONs on the shared filesystem, so the CSV
+    it reads is routinely older than the run. Printing only the live count would label
+    medians computed from 33k clips as if they came from 39k.
     """
+    src_mtime = datetime.datetime.fromtimestamp(Path(src).stat().st_mtime)
+    age_h = (datetime.datetime.now() - src_mtime).total_seconds() / 3600
     lines = [
         ('PhyWorld NR grid \u2014 auto-generated', True),
         ('', False),
-        (f'run              : {run}', False),
-        (f'source table     : {src}', False),
-        (f'clips scored     : {n_scored:,} of {n_manifest:,} manifest rows '
+        (f'run                    : {run}', False),
+        (f'source table           : {src}', False),
+        (f'  computed at          : {src_mtime:%Y-%m-%d %H:%M} local '
+         f'({age_h:.1f} h ago)  <- THE NUMBERS BELOW ARE AS OF THIS TIME', False),
+        (f'run progress NOW       : {n_scored:,} of {n_manifest:,} manifest rows '
          f'({100 * n_scored / n_manifest:.1f}%)', False),
-        (f'generated        : {datetime.datetime.now():%Y-%m-%d %H:%M} local', False),
+        (f'workbook written       : {datetime.datetime.now():%Y-%m-%d %H:%M} local',
+         False),
         ('', False),
+    ]
+    if age_h > 2:
+        lines += [
+            ('  NOTE: the run has advanced since the source table was computed. '
+             'Re-run the two', False),
+            ('  table_paper_grid.py commands at the bottom to refresh, then re-run this '
+             'exporter.', False),
+            ('', False),
+        ]
+    lines += [
         ('LAYOUT (mirrors the KIVA-main / RIGIS-main tabs)', True),
+        ('  All-metrics-flat \u2014 START HERE. One ROW per '
+         '(embodiment, model, split, method);', False),
+        ('     every metric is a column, with its clip count n and its delta vs dense '
+         'beside it.', False),
+        ('     Sortable / filterable (autofilter on row 1). Sort by n to spot cells that '
+         'are still', False),
+        ('     too thin to quote.', False),
         ('  *-main sheets  \u2014 ABSOLUTE medians', False),
         ('     A:C  Markovian        E:G  Non-Markovian', False),
         ('     J:L / N:P  the same numbers divided by that block\'s Real Video row',
@@ -324,10 +442,50 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--run', required=True)
     ap.add_argument('--out', required=True)
+    ap.add_argument('--main-only', action='store_true',
+                    help='emit only the four *-main sheets (drop the *-delta ones and '
+                         'All-metrics-flat)')
+    ap.add_argument('--with-reference', nargs='?', const=str(
+        REPO / 'sampling_dataset/data_for_web/'
+        '[BENCHMARK] Accelerating Inference of Video World Models (1).xlsx'),
+        default=None, metavar='XLSX',
+        help='copy the RIGIS-main / KIVA-main tabs out of the benchmark workbook so the '
+             'NR grid sits beside them in one file (values only, no formatting)')
+    ap.add_argument('--ctrlworld-single-layout', action='store_true',
+                    help="keep ONE Ctrl-World line per embodiment: the 3-view render for "
+                         "single_arm (its only one) and the 4-view grid for bimanual / "
+                         "humanoid, whose 3-view clips are excluded from the wave. "
+                         "Without this both layouts appear, and the stale 3-view records "
+                         "that predate the exclusion show up as a second line.")
+    ap.add_argument('--by-track', action='store_true',
+                    help='read the *_by_track CSVs (multi-view and single-view kept '
+                         'apart) instead of the pooled ones. Build them first with '
+                         'table_paper_grid.py --by-track [--delta].')
     args = ap.parse_args()
 
-    data, src = load(args.run)
-    delta, delta_src = load(args.run, 'delta_vs_dense')
+    suffix = '_by_track' if args.by_track else ''
+    data, src = load(args.run, 'absolute' + suffix)
+    delta, delta_src = load(args.run, 'delta_vs_dense' + suffix)
+
+    if args.ctrlworld_single_layout:
+        # Ctrl-World exists in two multi-view renders and only ONE is wanted per
+        # embodiment. single_arm has 3-view only ('Ctrl-World'); bimanual and humanoid are
+        # 4-grid ('CW-4view') because their 3-view clips are excluded from scoring
+        # (excluded_row() in scripts/run_dense_nr.py). Their 'Ctrl-World' rows in the CSV
+        # come from records scored BEFORE that exclusion landed, so they are stale and
+        # would otherwise print a second, thinner Ctrl-World line.
+        cw3 = 'Ctrl-World MV' if args.by_track else 'Ctrl-World'
+        cw4 = 'CW-4view MV' if args.by_track else 'CW-4view'
+        drop = {('bimanual', cw3), ('humanoid', cw3)}
+        for d in (data, delta):
+            for k in [k for k in d if k[:2] in drop]:
+                del d[k]
+        # Relabel the surviving 4-grid rows to plain Ctrl-World: with one layout per
+        # embodiment the distinction no longer carries information in the sheet.
+        for d in (data, delta):
+            for k in [k for k in d if k[1] == cw4]:
+                d[(k[0], cw3) + k[2:]] = d.pop(k)
+
     run = Path(args.run)
     n_scored = len(list((run / 'results').glob('*.json')))
     import json
@@ -336,6 +494,12 @@ def main():
     wb = Workbook()
     write_readme(wb.active, args.run, src, n_scored, n_manifest)
     wb.active.title = 'README'
+
+    # Flat long-form tab first: it is the one you can sort/filter/pivot, and it is the
+    # only place where all four metrics of one cell sit on a single row.
+    n_flat = 0
+    if not args.main_only:
+        n_flat = write_flat(wb.create_sheet('All-metrics-flat'), data, delta)
 
     for mkey, sheet, title, digits, _higher in METRICS:
         ws = wb.create_sheet(sheet)
@@ -357,7 +521,7 @@ def main():
         ws.freeze_panes = 'A2'
 
     # The defensible form for a claim: each method minus its OWN dense clip.
-    for mkey, sheet, title, digits, _higher in METRICS:
+    for mkey, sheet, title, digits, _higher in ([] if args.main_only else METRICS):
         ws = wb.create_sheet(sheet.replace('-main', '-delta'))
         top = 1
         for emb_key, emb_label in EMB_LABEL:
@@ -373,11 +537,49 @@ def main():
             ws.column_dimensions[col].width = width
         ws.freeze_panes = 'A2'
 
+    ref_tabs = []
+    if args.with_reference:
+        # Copy the two reference tabs in VALUES-only form. A cross-workbook openpyxl copy
+        # cannot carry formatting or formulas, and a formula would break anyway: it would
+        # point at rows that do not exist here. Reading with data_only=True gives the
+        # cached results, which is what a reader of a comparison sheet wants.
+        ref_path = Path(args.with_reference)
+        if not ref_path.exists():
+            raise SystemExit(f'--with-reference: {ref_path} not found')
+        ref = load_workbook(ref_path, data_only=True)
+        for name in ('RIGIS-main', 'KIVA-main'):
+            if name not in ref.sheetnames:
+                print(f'  ! reference workbook has no {name!r} -- skipped')
+                continue
+            src_ws = ref[name]
+            dst = wb.create_sheet(name)
+            for row in src_ws.iter_rows():
+                for c in row:
+                    if c.value is not None:
+                        dst.cell(c.row, c.column, c.value).font = VAL
+            for col, width in (('A', 17), ('B', 18), ('C', 14), ('D', 3),
+                               ('E', 17), ('F', 18), ('G', 14), ('H', 3), ('I', 10),
+                               ('J', 17), ('K', 18), ('L', 14)):
+                dst.column_dimensions[col].width = width
+            dst.freeze_panes = 'A2'
+            ref_tabs.append(name)
+        ref.close()
+
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     wb.save(args.out)
     print(f'wrote {args.out}')
-    print(f'  sheets: README + {", ".join(s for _, s, _, _, _ in METRICS)}')
-    print(f'          + {", ".join(s.replace("-main", "-delta") for _, s, _, _, _ in METRICS)}')
+    print(f'  sheets: README'
+          + (f', All-metrics-flat ({n_flat} rows)' if n_flat else ''))
+    print(f'          + {", ".join(s for _, s, _, _, _ in METRICS)}')
+    if not args.main_only:
+        print('          + ' + ', '.join(
+            s.replace('-main', '-delta') for _, s, _, _, _ in METRICS))
+    if ref_tabs:
+        print(f'          + {", ".join(ref_tabs)}  (copied from the benchmark workbook, '
+              f'values only)')
+    if args.ctrlworld_single_layout:
+        print('  Ctrl-World: 3-view for single_arm, 4-view grid for bimanual/humanoid '
+              '(one line each)')
     print(f'  based on {n_scored:,}/{n_manifest:,} scored clips')
 
 

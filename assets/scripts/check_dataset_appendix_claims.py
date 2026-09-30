@@ -178,10 +178,15 @@ def main() -> int:
     } | {
         str(v) for _, v in checks
     } | {"2", "3", "5", "6", "9", "12", "14"}
-    for m in re.finditer(r"(?<![\w.])\d[\d,]*(?![\w])", method):
+    # A closed interval such as `$[0,100]$` is a metric's range, not a count, and
+    # the comma inside it made the scanner read it as the number "0,100". Strip
+    # bracketed intervals before scanning so a score range cannot be reported as
+    # an untraceable measurement.
+    scanned = re.sub(r"\[\s*\d+\s*,\s*\d+\s*\]", "[range]", method)
+    for m in re.finditer(r"(?<![\w.])\d[\d,]*(?![\w])", scanned):
         tok = m.group(0)
         if tok not in known and tok.replace(",", "") not in known:
-            line = method[: m.start()].count("\n") + 1
+            line = scanned[: m.start()].count("\n") + 1
             failures.append(
                 f"method line {line}: untraced number '{tok}'"
             )

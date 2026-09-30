@@ -53,8 +53,31 @@ MODEL_LABEL = {'dreamgen': 'Dreamgen', 'dreamdojo': 'DreamDojo',
                'ctrlworld': 'Ctrl-World', 'ctrlworld_4view_grid': 'CW-4view'}
 
 
+def model_label(model):
+    """Display label, understanding the `<model>|MV` / `|SV` suffix --by-track adds."""
+    base, _, tr = model.partition('|')
+    lbl = MODEL_LABEL.get(base, base)
+    return f'{lbl} {tr}' if tr else lbl
+
+
 def base_model(model):
     return model[3:] if model.startswith('gt_') else model
+
+
+def track_of(rec):
+    """'multiview' / 'singleview' from the record's path, or None.
+
+    The camera track is NOT in the model name -- DreamGen is the only family rendered on
+    both tracks and the only thing separating them in a record is `relative` containing
+    `/multiview/` or `/singleview/`. Without this the two are pooled into one DreamGen
+    line, which mixes a 4-view grid with a single ego view.
+    """
+    rel = rec.get('relative', '')
+    if '/multiview/' in rel:
+        return 'multiview'
+    if '/singleview/' in rel:
+        return 'singleview'
+    return None
 
 
 def main():
@@ -67,6 +90,12 @@ def main():
                          'absolute value')
     ap.add_argument('--min-n', type=int, default=T.MIN_PAIRS_FOR_CLAIM,
                     help='cells with fewer clips print as "?"')
+    ap.add_argument('--by-track', action='store_true',
+                    help='split multi-view from single-view instead of pooling them. '
+                         'Only DreamGen has both, so this turns its one line into two '
+                         '(Dreamgen MV / Dreamgen SV); Ctrl-World stays multi-view only '
+                         'and DreamDojo single-view only. Writes '
+                         'table_paper_grid_<tag>_by_track.csv so the pooled CSV is kept.')
     args = ap.parse_args()
     run = Path(args.run)
     out = Path(args.out) if args.out else run / 'tables'
@@ -86,6 +115,15 @@ def main():
     for r in rows:
         method = r.get('method') or 'gt'
         model = base_model(r['model'])
+        if args.by_track:
+            # Fold the track INTO the model label so every downstream consumer (the
+            # printed table, the CSV, the xlsx exporter) gets one row per
+            # (embodiment, model+track, split, method) with no further changes.
+            tr = track_of(r)
+            if tr is None:
+                continue
+            if model != 'gt':
+                model = f'{model}|{"MV" if tr == "multiview" else "SV"}'
         key_base = (r['embodiment'], model, r['split'])
         for col, _, _, _ in T.COLUMNS:
             v = T.gated(r, col)
@@ -102,9 +140,21 @@ def main():
                 deltas[key_base + (method, col)].append(b - a)
 
     table = deltas if args.delta else absolute
-    models = args.models or sorted(
-        {base_model(r['model']) for r in rows
-         if base_model(r['model']) not in ('gt',)})
+    # Derive the model list from the TABLE, not from `rows`: with --by-track the keys carry
+    # a `|MV` / `|SV` suffix that base_model() knows nothing about, so re-deriving it from
+    # the raw records yields plain 'dreamgen' and matches no key -- every model block then
+    # comes out empty (measured: a 693-byte CSV with only the Real Video rows).
+    present = {k[1] for k in table} - {'gt', 'Real Video'}
+    if args.models:
+        models = args.models
+    else:
+        # Keep the paper's model order (Dreamgen, DreamDojo, Ctrl-World, CW-4view) instead
+        # of sorting alphabetically, and put MV before SV within a family.
+        rank = {m: i for i, m in enumerate(
+            ['dreamgen', 'dreamdojo', 'ctrlworld', 'ctrlworld_4view_grid'])}
+        models = sorted(present, key=lambda m: (
+            rank.get(m.partition('|')[0], 99),
+            {'MV': 0, 'SV': 1}.get(m.partition('|')[2], 0), m))
 
     csv_rows = []
     for emb in [e for e in EMB_ORDER if any(k[0] == e for k in table)] + \
@@ -155,13 +205,15 @@ def main():
                 if not any((emb, model, s, method, c) in table
                            for s, _ in SPLITS for c, _, _, _ in T.COLUMNS):
                     continue
-                emit(MODEL_LABEL.get(model, model) if first else '',
+                emit(model_label(model) if first else '',
                      METHOD_LABEL[method],
                      lambda s, c, _m=model, _me=method: table.get(
                          (emb, _m, s, _me, c), []))
                 first = False
 
     tag = 'delta_vs_dense' if args.delta else 'absolute'
+    if args.by_track:
+        tag += '_by_track'
     path = out / f'table_paper_grid_{tag}.csv'
     if csv_rows:
         keys = list(csv_rows[0])
