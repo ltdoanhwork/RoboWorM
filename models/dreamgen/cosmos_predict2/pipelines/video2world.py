@@ -472,12 +472,19 @@ class Video2WorldPipeline(BasePipeline):
             # `reset_cache_runtime`, which __call__ already invokes per chunk.
             from bsc.backend import apply_bsc
 
+            # loguru's `log.info` takes ONE already-formatted message -- it is not
+            # stdlib logging, so the `("...%s", a, b)` form raises TypeError. Every
+            # other branch above passes a single literal string and so never hit this;
+            # this branch was written with %s args and had never executed (AM_DiT
+            # docs/INSIGHTS.md section 52), so the very first GPU run died here, after
+            # loading the checkpoint and before a single denoise step.
             log.info(
-                "[BSC] Applying BSC runtime from AM_DiT: gate=%s tau=%s mfi=%s group=%s "
-                "predict=%s predictor=%s",
-                self.cache_config.gate_mode, self.cache_config.rcs_threshold,
-                self.cache_config.min_full_interval, self.cache_config.group_size,
-                self.cache_config.group_predict, self.cache_config.predictor_mode)
+                f"[BSC] Applying BSC runtime from AM_DiT: "
+                f"gate={self.cache_config.gate_mode} tau={self.cache_config.rcs_threshold} "
+                f"mfi={self.cache_config.min_full_interval} (net forwards) "
+                f"group={self.cache_config.group_size} "
+                f"predict={self.cache_config.group_predict} "
+                f"predictor={self.cache_config.predictor_mode}")
             return apply_bsc(net, self.cache_config)
 
         raise TypeError(f"Unsupported cache config type: {type(self.cache_config)!r}")
