@@ -216,6 +216,12 @@ def reset_dicache_state(model, _config: DiCacheConfig, num_steps: int) -> int:
 def reset_cache_runtime(model, config: CacheRuntimeConfig | None, num_steps: int) -> int | None:
     if config is None:
         return None
+    # One reset per chunk. Counted so the run's own accounting can PROVE the cache is
+    # cleared between chunks instead of asserting it from a code path -- the DeepCache
+    # retraction in AM_DiT/docs/INSIGHTS.md section 47 is what an unverified reset costs.
+    from methods.cache_strategy import stats as _cache_stats
+
+    _cache_stats.note_reset()
     if isinstance(config, WorldCacheConfig):
         return reset_worldcache_state(model, config, num_steps=num_steps)
     if isinstance(config, DiCacheConfig):

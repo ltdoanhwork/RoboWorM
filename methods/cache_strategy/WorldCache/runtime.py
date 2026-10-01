@@ -8,6 +8,7 @@ import torch.amp as amp
 import torch.nn.functional as F
 from einops import rearrange
 
+from methods.cache_strategy import stats as cache_stats
 from methods.cache_strategy.common import (
     WorldCacheConfig,
     _maybe_concat_condition_mask,
@@ -233,6 +234,16 @@ def worldcache_mini_train_dit_forward(
     current_idx = 0 if is_parallel_cfg else self.cnt % 2
     test_x = x_B_T_H_W_D.clone()
 
+    # Block-work accounting (methods/cache_strategy/stats.py). `_wc_gated` records
+    # whether the probe actually ran this forward, because `probe_depth` block
+    # invocations are paid BEFORE the gate decides -- so a step the gate declines to
+    # skip costs num_blocks + probe_depth, more block work than dense. Measuring that
+    # honestly is the whole point of a baseline tune.
+    _wc_gated = self.cnt >= int(self.worldcache_num_steps * self.worldcache_ret_ratio)
+    _wc_num_blocks = len(self.blocks)
+    _wc_probe = int(self.worldcache_probe_depth)
+    _wc_exec = _wc_probe if _wc_gated else 0   # probe blocks, paid before the gate decides
+
     if self.cnt >= int(self.worldcache_num_steps * self.worldcache_ret_ratio):
         probe_depth = self.worldcache_probe_depth
         for blk in self.blocks[:probe_depth]:
@@ -266,6 +277,9 @@ def worldcache_mini_train_dit_forward(
                 if current_idx == 1 and step_ratio > getattr(self, "worldcache_aduc_start", 0.5):
                     if len(self.previous_output) > 1 and self.previous_output[1] is not None:
                         self.cnt += 1
+                        cache_stats.record_forward(
+                            blocks_executed=_wc_exec, skipped=True, gated=_wc_gated
+                        )
                         return self.previous_output[1]
 
             input_velocity = delta_x
@@ -367,6 +381,7 @@ def worldcache_mini_train_dit_forward(
 
         for i, blk in enumerate(remaining):
             x_B_T_H_W_D = blk(x_B_T_H_W_D, **block_kwargs)
+            _wc_exec += 1
             real_idx = i if not self.resume_flag[current_idx] else i + self.worldcache_probe_depth
             if real_idx == self.worldcache_probe_depth - 1:
                 self.previous_internal_states[current_idx] = x_B_T_H_W_D.clone()
@@ -399,6 +414,9 @@ def worldcache_mini_train_dit_forward(
     x_B_C_Tt_Hp_Wp = self.unpatchify(x_out)
 
     self.cnt += 1
+    cache_stats.record_forward(
+        blocks_executed=_wc_exec, skipped=skip_forward, gated=_wc_gated
+    )
     if self.cnt >= self.worldcache_num_steps:
         rate = self.worldcache_step_skipped_count / max(self.worldcache_num_steps, 1)
         log.info(
@@ -435,6 +453,18 @@ def apply_worldcache(model, config: WorldCacheConfig):
     initialize_worldcache_state(model, num_steps=config.num_steps)
     prepare_cache_runtime_model(model)
     model.forward = types.MethodType(worldcache_mini_train_dit_forward, model)
+    cache_stats.configure(
+        "worldcache",
+        num_blocks=len(model.blocks),
+        config={
+            "num_steps": config.num_steps,
+            "rel_l1_thresh": config.rel_l1_thresh,
+            "ret_ratio": config.ret_ratio,
+            "probe_depth": config.probe_depth,
+            "motion_sensitivity": config.motion_sensitivity,
+            "dynamic_decay": config.dynamic_decay,
+        },
+    )
 
     log.info(
         f"[WorldCache] Applied: steps={config.num_steps} thresh={config.rel_l1_thresh} "

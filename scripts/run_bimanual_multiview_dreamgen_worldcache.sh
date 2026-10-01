@@ -61,12 +61,38 @@ ITER_TAG="${ITER_TAG:-${ITER_NAME}}"
 # tolerates thresh 0.20 (like DiCache). Speed ladder: probe4 t0.12=289s(1.17x)
 # -> t0.16=277s -> t0.20/ret0.3=244s -> probe2 t0.20/ret0.2=217s. Now competitive
 # with DiCache (1.66x). Lowering ret (warm-up) helps once thresh is high enough.
+#
+# PUBLISHED-METHOD KNOBS (arXiv:2603.22286 "WorldCache: Content-Aware Caching for
+# Accelerated Video World Models"). The paper's method is FOUR modules, and three
+# of them were implemented in methods/cache_strategy/WorldCache/runtime.py but had
+# no way in from this launcher, so every WorldCache row this repo has ever produced
+# on DreamGen is the paper's `+ CFC` ABLATION ROW, not WorldCache:
+#
+#   paper Table 4 (Cosmos-Predict2.5-2B, I2W)   speedup
+#     + CFC                                      1.52x   <- what this launcher ran
+#     + CFC + SWD                                1.67x
+#     + CFC + SWD + OFA                          1.49x
+#     + CFC + SWD + OFA + ATS  (= WorldCache)    2.30x
+#
+# and the paper calls ATS "the primary source of WorldCache's speedup gains".
+# Comparing anything against the CFC-only row is comparing against a strawman
+# (AM_DiT/docs/INSIGHTS.md sections 41, 55). Defaults are left unchanged so existing
+# results stay reproducible; the published configuration is
+#   WORLDCACHE_REL_L1_THRESH=0.08 WORLDCACHE_MOTION_SENSITIVITY=2.0 \
+#   WORLDCACHE_SALIENCY_ENABLED=1 WORLDCACHE_SALIENCY_WEIGHT=0.12 \
+#   WORLDCACHE_OSI_ENABLED=1 WORLDCACHE_DYNAMIC_DECAY=1
+# (tau0=0.08, alpha=2.0, beta_s=0.12, beta_d=4.0 -- paper Sec 4.1).
 WORLDCACHE_NUM_STEPS="${WORLDCACHE_NUM_STEPS:-35}"
 WORLDCACHE_REL_L1_THRESH="${WORLDCACHE_REL_L1_THRESH:-0.20}"
 WORLDCACHE_RET_RATIO="${WORLDCACHE_RET_RATIO:-0.2}"
 WORLDCACHE_PROBE_DEPTH="${WORLDCACHE_PROBE_DEPTH:-2}"
 WORLDCACHE_MOTION_SENSITIVITY="${WORLDCACHE_MOTION_SENSITIVITY:-5.0}"
 WORLDCACHE_DYNAMIC_DECAY="${WORLDCACHE_DYNAMIC_DECAY:-0}"
+WORLDCACHE_SALIENCY_ENABLED="${WORLDCACHE_SALIENCY_ENABLED:-0}"
+WORLDCACHE_SALIENCY_WEIGHT="${WORLDCACHE_SALIENCY_WEIGHT:-5.0}"
+WORLDCACHE_OSI_ENABLED="${WORLDCACHE_OSI_ENABLED:-0}"
+WORLDCACHE_FLOW_ENABLED="${WORLDCACHE_FLOW_ENABLED:-0}"
+WORLDCACHE_FLOW_SCALE="${WORLDCACHE_FLOW_SCALE:-0.5}"
 
 MULTIVIEW_ROOT="${MULTIVIEW_ROOT:-${ROOT}/datasets/bimanual/multiview}"
 SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/worldcache/bimanual/output/multiview/dreamgen}"
@@ -99,6 +125,7 @@ echo "  Model       : ${MODEL_SIZE} | Res: ${RESOLUTION} | FPS: ${FPS}"
 echo "  GPUs        : ${NUM_GPUS} (cache = single-GPU)"
 echo "  Guidance    : ${GUIDANCE} | cond_frames: ${NUM_CONDITIONAL_FRAMES}"
 echo "  WorldCache  : steps=${WORLDCACHE_NUM_STEPS} thresh=${WORLDCACHE_REL_L1_THRESH} ret=${WORLDCACHE_RET_RATIO} probe=${WORLDCACHE_PROBE_DEPTH} motion=${WORLDCACHE_MOTION_SENSITIVITY} decay=${WORLDCACHE_DYNAMIC_DECAY}"
+echo "  modules     : CFC=on(always) SWD=${WORLDCACHE_SALIENCY_ENABLED}(beta=${WORLDCACHE_SALIENCY_WEIGHT}) OFA/OSI=${WORLDCACHE_OSI_ENABLED} ATS=${WORLDCACHE_DYNAMIC_DECAY} warp=${WORLDCACHE_FLOW_ENABLED}"
 echo "  Save root   : ${SAVE_ROOT}"
 echo "  Episodes    : ${MAX_EPISODES:-all} (per task)"
 echo "============================================"
@@ -113,6 +140,17 @@ WORLDCACHE_FLAGS=(
 )
 if [[ "${WORLDCACHE_DYNAMIC_DECAY}" == "1" ]]; then
   WORLDCACHE_FLAGS+=(--worldcache-dynamic-decay)
+fi
+if [[ "${WORLDCACHE_SALIENCY_ENABLED}" == "1" ]]; then
+  WORLDCACHE_FLAGS+=(--worldcache-saliency-enabled
+                     --worldcache-saliency-weight "${WORLDCACHE_SALIENCY_WEIGHT}")
+fi
+if [[ "${WORLDCACHE_OSI_ENABLED}" == "1" ]]; then
+  WORLDCACHE_FLAGS+=(--worldcache-osi-enabled)
+fi
+if [[ "${WORLDCACHE_FLOW_ENABLED}" == "1" ]]; then
+  WORLDCACHE_FLAGS+=(--worldcache-flow-enabled
+                     --worldcache-flow-scale "${WORLDCACHE_FLOW_SCALE}")
 fi
 
 PY_ARGS=(

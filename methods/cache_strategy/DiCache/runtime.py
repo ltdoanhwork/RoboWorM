@@ -6,6 +6,7 @@ from typing import List, Optional, Tuple, Union
 import torch
 import torch.amp as amp
 
+from methods.cache_strategy import stats as cache_stats
 from methods.cache_strategy.common import (
     DiCacheConfig,
     _maybe_concat_condition_mask,
@@ -114,6 +115,12 @@ def dicache_mini_train_dit_forward(
     current_idx = self.cnt % 2
     test_x = x_B_T_H_W_D.clone()
 
+    # Block-work accounting; see methods/cache_strategy/stats.py. The probe's
+    # `probe_depth` blocks are paid before the gate decides, so they count as executed
+    # work even on a step that is then skipped.
+    _dc_gated = self.cnt >= int(self.dicache_num_steps * self.dicache_ret_ratio)
+    _dc_exec = int(self.dicache_probe_depth) if _dc_gated else 0
+
     if self.cnt >= int(self.dicache_num_steps * self.dicache_ret_ratio):
         for blk in self.blocks[: self.dicache_probe_depth]:
             test_x = blk(test_x, **block_kwargs)
@@ -159,6 +166,7 @@ def dicache_mini_train_dit_forward(
 
         for i, blk in enumerate(remaining):
             x_B_T_H_W_D = blk(x_B_T_H_W_D, **block_kwargs)
+            _dc_exec += 1
             real_idx = i if not self.resume_flag[current_idx] else i + self.dicache_probe_depth
             if real_idx == self.dicache_probe_depth - 1:
                 self.previous_internal_states[current_idx] = x_B_T_H_W_D.clone()
@@ -189,6 +197,9 @@ def dicache_mini_train_dit_forward(
     x_B_C_Tt_Hp_Wp = self.unpatchify(x_out)
 
     self.cnt += 1
+    cache_stats.record_forward(
+        blocks_executed=_dc_exec, skipped=skip_forward, gated=_dc_gated
+    )
     if self.cnt >= self.dicache_num_steps:
         initialize_dicache_state(self, num_steps=self.dicache_num_steps)
 
@@ -205,6 +216,16 @@ def apply_dicache(model, config: DiCacheConfig):
     initialize_dicache_state(model, num_steps=config.num_steps)
     prepare_cache_runtime_model(model)
     model.forward = types.MethodType(dicache_mini_train_dit_forward, model)
+    cache_stats.configure(
+        "dicache",
+        num_blocks=len(model.blocks),
+        config={
+            "num_steps": config.num_steps,
+            "rel_l1_thresh": config.rel_l1_thresh,
+            "ret_ratio": config.ret_ratio,
+            "probe_depth": config.probe_depth,
+        },
+    )
 
     log.info(
         f"[DiCache] Applied: steps={config.num_steps} thresh={config.rel_l1_thresh} "

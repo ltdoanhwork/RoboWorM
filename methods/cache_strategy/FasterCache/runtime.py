@@ -20,6 +20,7 @@ except Exception:  # pragma: no cover - test fallback for minimal environments
 
     log = _FallbackLog()
 
+from methods.cache_strategy import stats as cache_stats
 from methods.cache_strategy.common import FasterCacheConfig
 
 
@@ -221,8 +222,10 @@ def _patch_dit_block_self_attention(model) -> None:
             if can_reuse:
                 latest = _materialize_to_device(layer_history[-1], x.device).type_as(x)
                 previous = _materialize_to_device(layer_history[-2], x.device).type_as(x)
+                cache_stats.record_attn(reused=True)
                 return latest + (latest - previous) * runtime_state.block_alpha
 
+            cache_stats.record_attn(reused=False)
             out = self._fastercache_original_forward(
                 x,
                 context=context,
@@ -261,6 +264,8 @@ def apply_fastercache(model, config: FasterCacheConfig, *, cfg_mode: str = "sequ
             if runtime_state.config.debug:
                 log.info(f"[FasterCache] Step {runtime_state.current_step_idx} ({runtime_state.current_branch}): Model forward SKIPPED completely")
             runtime_state.skipped_timesteps_count += 1
+            _fc_blocks_executed = 0
+            _fc_skipped = True
             
             # Move needed tensors back to GPU for reconstruction
             device = next(self.parameters()).device
@@ -276,6 +281,13 @@ def apply_fastercache(model, config: FasterCacheConfig, *, cfg_mode: str = "sequ
                 else:
                     log.info(f"[FasterCache] Step {runtime_state.current_step_idx} ({runtime_state.current_branch}): Model EXECUTED (Blocks REUSED)")
             output = self._fastercache_original_forward(*args, **kwargs)
+            # FasterCache's model-level shortcut is all-or-nothing: when it does not
+            # fire, every block runs. Its block-level mechanism reuses only the
+            # self-attention inside a block, which `record_attn` tracks separately --
+            # folding that into skip_pct would claim a whole block was elided when the
+            # block's cross-attention and MLP still ran.
+            _fc_blocks_executed = len(getattr(self, "blocks", []))
+            _fc_skipped = False
 
         if runtime_state.current_branch == "cond":
             if model_shortcut_eligible:
@@ -307,9 +319,26 @@ def apply_fastercache(model, config: FasterCacheConfig, *, cfg_mode: str = "sequ
             runtime_state.pending_cond_output = None
 
         runtime_state.call_idx += 1
+        cache_stats.record_forward(
+            blocks_executed=_fc_blocks_executed,
+            skipped=_fc_skipped,
+            # The model-level gate is armed on every forward past `start_step`; unlike
+            # the step caches there is no probe, so an un-skipped forward costs exactly
+            # dense rather than dense + probe.
+            gated=runtime_state.current_step_idx >= runtime_state.resolved_start_step,
+        )
         return output
 
     model.forward = types.MethodType(_wrapped_forward, model)
+    cache_stats.configure(
+        "fastercache",
+        num_blocks=len(getattr(model, "blocks", [])),
+        config={
+            "start_step": config.start_step,
+            "model_interval": config.model_interval,
+            "block_interval": config.block_interval,
+        },
+    )
     log.info(
         f"[FasterCache] Applied DiT runtime: start_step={config.start_step} model_interval={config.model_interval} block_interval={config.block_interval} cfg_mode={cfg_mode}"
     )
