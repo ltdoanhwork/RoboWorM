@@ -13,19 +13,15 @@ absolute values.
 ## Benchmark checkpoints
 
 One reader per embodiment, the checkpoints the paper's tables were scored
-with. All files sit in the public bucket
+with. They sit in the public bucket
 [twanghcmut/hallucinate-bench](https://huggingface.co/buckets/twanghcmut/hallucinate-bench)
-and download without a token.
+and download without a token (see [Download](#download)).
 
-| embodiment | robot | reader | input | sha256 |
-|---|---|---|---|---|
-| single arm | Galaxea A1X | `a1x_ee.a1x_sv.sv1_4x3` | 640×480 | `5e463b70358e` |
-| bimanual | ALOHA | `aloha_bimanual.bimanual_sv.sv1_16x9` | 768×432 | `663a39a11e0f` |
-| humanoid | Fourier GR-1 | `fourier_gr1.humanoid_sv.sv1_16x9` | 768×432 | `c40fc00688a5` |
-
-Each reader folder holds `diffusion/checkpoint.pt` and `val/`, the real
-clips its thresholds are fitted on. Every run records the checkpoint's sha256 in
-`summary.json`.
+| embodiment | robot | reader | input |
+|---|---|---|---|
+| single arm | Galaxea A1X | `a1x_ee.a1x_sv.sv1_4x3` | 640×480 |
+| bimanual | ALOHA | `aloha_bimanual.bimanual_sv.sv1_16x9` | 768×432 |
+| humanoid | Fourier GR-1 | `fourier_gr1.humanoid_sv.sv1_16x9` | 768×432 |
 
 ## Install
 
@@ -52,21 +48,32 @@ KINESCORE_OUTPUT_DIR=/data/kinescore/out     # scores
 
 ## Download
 
-The `hf` command comes with the install above.
+The `hf` command comes with the install above. Run the asset line once, then
+the two lines of each embodiment you need: the checkpoint, and the real clips
+its thresholds are fitted on.
 
 ```bash
-B=hf://buckets/twanghcmut/hallucinate-bench
-hf sync $B/asset $KINESCORE_ASSETS
+# URDF and mesh trees, shared by every reader
+hf sync hf://buckets/twanghcmut/hallucinate-bench/asset $KINESCORE_ASSETS
 
-for R in a1x_ee.a1x_sv.sv1_4x3 \
-         aloha_bimanual.bimanual_sv.sv1_16x9 \
-         fourier_gr1.humanoid_sv.sv1_16x9; do
-  hf buckets cp $B/train/$R/diffusion/checkpoint.pt $KINESCORE_CKPT_DIR/$R.pt
-  hf sync $B/train/$R/val $KINESCORE_DATA_ROOT/trees/$R/videos/val
-done
+# single arm
+hf buckets cp hf://buckets/twanghcmut/hallucinate-bench/train/a1x_ee.a1x_sv.sv1_4x3/diffusion/checkpoint.pt \
+    $KINESCORE_CKPT_DIR/a1x_ee.a1x_sv.sv1_4x3.pt
+hf sync hf://buckets/twanghcmut/hallucinate-bench/train/a1x_ee.a1x_sv.sv1_4x3/val \
+    $KINESCORE_DATA_ROOT/trees/a1x_ee.a1x_sv.sv1_4x3/videos/val
+
+# bimanual
+hf buckets cp hf://buckets/twanghcmut/hallucinate-bench/train/aloha_bimanual.bimanual_sv.sv1_16x9/diffusion/checkpoint.pt \
+    $KINESCORE_CKPT_DIR/aloha_bimanual.bimanual_sv.sv1_16x9.pt
+hf sync hf://buckets/twanghcmut/hallucinate-bench/train/aloha_bimanual.bimanual_sv.sv1_16x9/val \
+    $KINESCORE_DATA_ROOT/trees/aloha_bimanual.bimanual_sv.sv1_16x9/videos/val
+
+# humanoid
+hf buckets cp hf://buckets/twanghcmut/hallucinate-bench/train/fourier_gr1.humanoid_sv.sv1_16x9/diffusion/checkpoint.pt \
+    $KINESCORE_CKPT_DIR/fourier_gr1.humanoid_sv.sv1_16x9.pt
+hf sync hf://buckets/twanghcmut/hallucinate-bench/train/fourier_gr1.humanoid_sv.sv1_16x9/val \
+    $KINESCORE_DATA_ROOT/trees/fourier_gr1.humanoid_sv.sv1_16x9/videos/val
 ```
-
-Drop a reader from the loop to skip that embodiment.
 
 ## Score
 
@@ -89,7 +96,7 @@ lowers GPU memory.
 
 | file | one row per | holds |
 |---|---|---|
-| `summary.json` | run | cell, reader, checkpoint sha256, fitted thresholds |
+| `summary.json` | run | cell, reader, checkpoint, fitted thresholds |
 | `segments.csv` | 16-frame segment | value, threshold and verdict per detector |
 | `metrics.csv` | clip | flagged fraction and worst segment per detector |
 | `results.jsonl` | clip | per-frame series and flagged intervals |
