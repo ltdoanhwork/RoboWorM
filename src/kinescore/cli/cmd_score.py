@@ -114,6 +114,9 @@ def run(args: argparse.Namespace) -> int:
             cell_id=cell.cell_id, robot=cell.robot,
             view_id=cell.view.view_id, n_views=layout.n_views,
             packing=layout.packing))
+    if reader.n_keypoints != len(robot.keypoint_links):
+        # an older reader of this robot that predicts fewer keypoints
+        robot = get_robot(cell.robot, n_keypoints=reader.n_keypoints)
 
     def read(path: str) -> ClipContext:
         clip = resolve_timebase(path, view_layout=layout)

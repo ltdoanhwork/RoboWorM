@@ -36,6 +36,9 @@ class GR1Spec:
         Override the URDF location instead of resolving it from
         ``KINESCORE_ASSETS`` / :data:`GR1_URDF_RELPATH`. Mainly for tests that
         point at a specific fixture URDF.
+    n_keypoints:
+        22 (arms and fingertips) or 12 (arms only). Readers trained before the
+        fingertips were added predict 12, and scoring builds the spec to match.
 
     Raises
     ------
@@ -59,10 +62,10 @@ class GR1Spec:
 
     ``keypoint_links`` layout
     --------------------------
-    ``KEYPOINTS_LEFT + KEYPOINTS_RIGHT`` (``K = 12``): indices ``0..5`` are the
-    left arm (shoulder -> ... -> end effector), ``6..11`` the right arm, in the
-    same per-arm order ``GR1FK.keypoints_fk`` returns. :meth:`ee_sites` names
-    indices 5 and 11 (the two ``*_end_effector_link`` keypoints).
+    Left side, then right side. Each side is its six arm keypoints (shoulder
+    -> ... -> end effector) followed by its five fingertips when
+    ``n_keypoints = 22``, in the order ``GR1FK.keypoints_fk`` returns.
+    :meth:`ee_sites` names the two ``*_end_effector_link`` keypoints.
     """
 
     #: Registry key (kinescore.robots.get_robot).
@@ -72,7 +75,12 @@ class GR1Spec:
 
     def __init__(self, device: str | torch.device = "cpu",
                  dtype: torch.dtype = torch.float32,
-                 urdf_path: str | None = None) -> None:
+                 urdf_path: str | None = None, n_keypoints: int = 22) -> None:
+        arm, tips = len(KEYPOINTS_LEFT), len(FINGERTIPS_LEFT)
+        if n_keypoints not in (2 * arm, 2 * (arm + tips)):
+            raise ValueError(
+                f"GR-1 reads {2 * arm} or {2 * (arm + tips)} keypoints, "
+                f"got {n_keypoints}")
         if urdf_path is None:
             urdf_path = str(resolve_asset_urdf(GR1_URDF_RELPATH))
         self.urdf_sha256: str | None = sha256_file(urdf_path)
@@ -80,10 +88,11 @@ class GR1Spec:
         self.fk = GR1FK(urdf_path, device=device, dtype=dtype)
         self.colliders = RobotColliders(urdf_path)
 
-        left = KEYPOINTS_LEFT + FINGERTIPS_LEFT
-        right = KEYPOINTS_RIGHT + FINGERTIPS_RIGHT
+        hands = n_keypoints > 2 * arm
+        left = KEYPOINTS_LEFT + (FINGERTIPS_LEFT if hands else ())
+        right = KEYPOINTS_RIGHT + (FINGERTIPS_RIGHT if hands else ())
         self.keypoint_links: tuple[str, ...] = left + right
-        n_left = len(left)
+        n_left = self._per_side = len(left)
 
         # ---- joint limits (29,); GR1FK has no effort data -> no EFFORT_LIMITS
         self.q_lo = self.fk.q_lo.clone()
@@ -110,18 +119,21 @@ class GR1Spec:
     # ------------------------------------------------------------------ #
     def forward_kinematics(self, q: torch.Tensor,
                            aux: Any | None = None) -> torch.Tensor:
-        """``(B,T,29) -> (B,T,22,3)``. ``aux`` is unused (reserved for hand DoF;
+        """``(B,T,29) -> (B,T,K,3)``. ``aux`` is unused (reserved for hand DoF;
         """
-        left = self.fk.keypoints_fk(q, "left")
-        right = self.fk.keypoints_fk(q, "right")
+        k = self._per_side
+        left = self.fk.keypoints_fk(q, "left")[:, :, :k]
+        right = self.fk.keypoints_fk(q, "right")[:, :, :k]
         return torch.cat([left, right], dim=2)
 
     def forward_transforms(self, q: torch.Tensor, aux: Any | None = None
                            ) -> tuple[torch.Tensor, torch.Tensor]:
-        """``(B,T,29) -> P (B,T,22,3), R (B,T,22,3,3)``. ``aux`` unused, see above."""
+        """``(B,T,29) -> P (B,T,K,3), R (B,T,K,3,3)``. ``aux`` unused, see above."""
+        k = self._per_side
         p_l, r_l = self.fk.forward_transforms(q, "left")
         p_r, r_r = self.fk.forward_transforms(q, "right")
-        return torch.cat([p_l, p_r], dim=2), torch.cat([r_l, r_r], dim=2)
+        return (torch.cat([p_l[:, :, :k], p_r[:, :, :k]], dim=2),
+                torch.cat([r_l[:, :, :k], r_r[:, :, :k]], dim=2))
 
     def ee_sites(self) -> tuple[int, ...]:
         """Two end-effector sites: left, then right ``*_end_effector_link``."""
