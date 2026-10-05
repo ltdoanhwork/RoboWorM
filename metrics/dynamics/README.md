@@ -8,14 +8,13 @@ SEA-RAFT, VFIMamba and/or GroundingDINO from `metrics/WorldScore/.../third_party
 
 | file | metric | models used |
 |---|---|---|
-| `motion_accuracy_probe.py` | `motion_accuracy` (WorldScore original) | SAM2 (object mask) + SEA-RAFT |
 | `motion_accuracy_gdino.py` | `motion_accuracy` (**our version**) | GroundingDINO (arm + object) → SAM2 → SEA-RAFT |
 | `motion_mag_smooth_probe.py` | `motion_magnitude` + `motion_smoothness` | SEA-RAFT (median flow), VFIMamba (interpolation) |
-| `motion_smoothness_viz.py` | `motion_smoothness` visualization | VFIMamba — per-triple panels + error heatmaps |
 | `physics_metrics.py` | paired-GT flow EPE / magnitude ratio vs GT | (backend-agnostic, numpy only) |
 | `flow_backend.py` | SEA-RAFT wrapper for `physics_metrics.py` | SEA-RAFT |
 
-Why two `motion_accuracy` probes: WorldScore's original only tracks the *object* and
+Why not WorldScore's original `motion_accuracy` probe (archived to
+`tmp/20261005_refactor/misc/metrics/dynamics/motion_accuracy_probe.py`): it only tracks the *object* and
 treats everything else as background, but on robot data the **moving robot arm sits in
 that "background"**, which poisons the `max(bg_flow)` term. `motion_accuracy_gdino.py`
 detects the arm *and* the object from the task prompt and merges them into one
@@ -76,8 +75,8 @@ Hide every odd frame and ask a video-interpolation model to redraw it:
 Smooth, temporally continuous motion is easy to interpolate → high SSIM / low MSE. Jerky or
 flickering motion breaks the interpolation. **Caveat: it rewards slowness** — a near-static
 clip is trivially interpolatable — so it must always be paired with a magnitude term.
-`motion_smoothness_viz.py` renders this per triple: `anchor | interpolated | real | |error|`
-heatmap, so you can see *where* interpolation failed.
+(The per-triple `anchor | interpolated | real | |error|` viewer `motion_smoothness_viz.py`
+was archived to `tmp/20261005_refactor/misc/metrics/dynamics/`.)
 
 ### `physics_metrics.py` (our paired-GT addition, not in WorldScore)
 
@@ -93,24 +92,11 @@ not merely present.
 # motion_accuracy — our GroundingDINO+SAM2 version (raw grid)
 CUDA_VISIBLE_DEVICES=0 bash scripts/run_motion_accuracy_gdino.sh
 
-# motion_accuracy — WorldScore original (SAM2 only)
-CUDA_VISIBLE_DEVICES=0 bash scripts/run_motion_accuracy_probe.sh
-
 # motion_accuracy on the MATCHED grid (GT resampled to each model's res+fps) <- correct protocol
 CUDA_VISIBLE_DEVICES=0 bash scripts/run_motion_accuracy_matched.sh
 
 # motion_magnitude + motion_smoothness on the matched grid
 CUDA_VISIBLE_DEVICES=0 SMOOTH_STRIDE=8 bash scripts/run_motion_mag_smooth_matched.sh
-```
-
-`motion_smoothness_viz.py` has no wrapper script; call it directly with the third_party
-paths on `PYTHONPATH` (run from `metrics/WorldScore` so the vendored configs resolve):
-
-```bash
-REPO=$PWD; WS=$REPO/metrics/WorldScore; TP=$WS/worldscore/benchmark/metrics/third_party
-cd "$WS" && PYTHONPATH="$TP:$TP/SEA-RAFT/core:$TP/SEA-RAFT:$TP/VFIMamba" \
-  CUDA_VISIBLE_DEVICES=0 "$REPO/models/dreamgen/.venv/bin/python" \
-  "$REPO/metrics/dynamics/motion_smoothness_viz.py" --help
 ```
 
 ## ⚠️ Protocol that matters: always match the grid
@@ -119,7 +105,7 @@ Optical flow is measured in **px/frame**, so it scales with resolution *and* fps
 (800 frames), DreamGen (768×432@16) and DreamDojo (640×480@10) are **not commensurable**
 on the raw grid — comparing them directly inverts the ranking. Resample GT to each
 prediction's own (resolution, fps) and score each model against *its own matched GT*
-(`run_motion_accuracy_matched.sh`). See `metrics/WORLDSCORE_PHYSICS_REPORT.md` §8.
+(`run_motion_accuracy_matched.sh`). See `docs/metrics/WORLDSCORE_PHYSICS_REPORT.md` §8.
 
 ## Known findings
 

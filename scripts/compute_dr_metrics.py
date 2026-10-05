@@ -42,8 +42,9 @@ FVD_MIN_CLIPS clips is reported as null rather than as a number -- with ~50 clip
 covariance of a 400-d feature is severely rank-deficient and the resulting FVD is dominated
 by estimator bias, not by video quality.
 
-I3D weights: checkpoints/fvd/i3d_torchscript.pt (the StyleGAN-V torchscript export, the
-de-facto standard for FVD; 400-d pre-logit features).
+I3D weights: checkpoints/metrics/fvd/i3d_torchscript.pt (the StyleGAN-V torchscript export,
+the de-facto standard for FVD; 400-d pre-logit features; override with $FVD_I3D_CKPT).
+All I3D / Frechet code lives in metrics/fvd.py; this script only orchestrates the DR pass.
 
 Usage:
   # per-clip pass (GPU, shardable exactly like run_dense_nr.py)
@@ -72,17 +73,12 @@ REPO = Path(__file__).resolve().parents[1]
 if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 
+# I3D / FVD pieces are shared with the paper's FVD metric (metrics/fvd.py); re-exported
+# here because assets/scripts/* import get_models / read_video from this module.
+from metrics.fvd import (FVD_MIN_CLIPS, I3D_CKPT, I3D_SIZE, I3D_WINDOW,  # noqa: E402,F401
+                         CorruptVideo, I3DWindowStream, frechet, load_i3d, read_video)
+
 PROTOCOL = 'dr-v1'
-I3D_CKPT = REPO / 'checkpoints/fvd/i3d_torchscript.pt'
-# 16 frames is the I3D clip length the FVD reference implementations use; a video is cut
-# into consecutive 16-frame windows and every window contributes one feature vector.
-I3D_WINDOW = 16
-I3D_SIZE = 224
-FVD_MIN_CLIPS = 64          # below this the 400x400 covariance is too ill-conditioned
-
-
-class CorruptVideo(Exception):
-    """Source mp4 that cannot be decoded -- a data defect, not a transient fault."""
 
 
 # --------------------------------------------------------------------------- #
@@ -232,34 +228,9 @@ def get_models(device):
     from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
     _MODELS['lpips'] = LearnedPerceptualImagePatchSimilarity(
         net_type='vgg', normalize=False).to(device).eval()
-    _MODELS['i3d'] = torch.jit.load(str(I3D_CKPT)).to(device).eval()
+    _MODELS['i3d'] = load_i3d(device)
     _MODELS['device'] = device
     return _MODELS
-
-
-def read_video(path: str) -> np.ndarray:
-    """(T,H,W,3) uint8. cv2 rather than imageio: it is already a dependency of the NR
-    pipeline and does not need a plugin per container.
-
-    Raises CorruptVideo for a file cv2 cannot decode -- 13 mp4s in this dataset are
-    truncated (`moov atom not found`, 0-48 bytes or an exact 2 MB buffer multiple). That is
-    a source-data defect, so the caller records it as a skip rather than burning four retry
-    attempts on something that cannot succeed.
-    """
-    import cv2
-    cap = cv2.VideoCapture(path)
-    if not cap.isOpened():
-        raise CorruptVideo(f'cannot open {path}')
-    out = []
-    while True:
-        ok, fr = cap.read()
-        if not ok:
-            break
-        out.append(cv2.cvtColor(fr, cv2.COLOR_BGR2RGB))
-    cap.release()
-    if not out:
-        raise CorruptVideo(f'no frames in {path}')
-    return np.stack(out)
 
 
 def score(row, device):
@@ -286,8 +257,7 @@ def score(row, device):
     #    OOM on its own.
     CH = 16
     mses, ssim_acc, lp_acc = [], 0.0, 0.0
-    feats = {'pred': [], 'ref': []}
-    win_pred, win_ref = [], []
+    streams = {'pred': I3DWindowStream(m['i3d']), 'ref': I3DWindowStream(m['i3d'])}
     with torch.no_grad():
         for s in range(0, n, CH):
             ca = torch.from_numpy(a[s:s + CH]).to(device).permute(0, 3, 1, 2).float() / 255
@@ -299,25 +269,10 @@ def score(row, device):
             mses.append(((ca - cb) ** 2).mean(dim=(1, 2, 3)).cpu())
             ssim_acc += float(ssim_f(ca, cb, data_range=1.0)) * k
             lp_acc += float(m['lpips'](ca * 2 - 1, cb * 2 - 1)) * k
-            win_pred.append(ca)
-            win_ref.append(cb)
             # I3D consumes consecutive I3D_WINDOW-frame windows; CH is a multiple of it so
-            # a window never straddles a chunk boundary.
-            for tag, buf in (('pred', win_pred), ('ref', win_ref)):
-                vid = torch.cat(buf) if len(buf) > 1 else buf[0]
-                while len(vid) >= I3D_WINDOW:
-                    w = vid[:I3D_WINDOW]
-                    vid = vid[I3D_WINDOW:]
-                    w = torch.nn.functional.interpolate(
-                        w, size=(I3D_SIZE, I3D_SIZE), mode='bilinear',
-                        align_corners=False)
-                    w = (w * 2 - 1).permute(1, 0, 2, 3).unsqueeze(0)   # 1,3,T,H,W
-                    feats[tag].append(m['i3d'](w, rescale=False, resize=False,
-                                               return_features=True)
-                                      .squeeze(0).cpu().numpy().tolist())
-                buf.clear()
-                if len(vid):
-                    buf.append(vid)
+            # a window never straddles a chunk boundary (metrics/fvd.I3DWindowStream).
+            streams['pred'].push(ca)
+            streams['ref'].push(cb)
             del ca, cb
 
     mse = torch.cat(mses)
@@ -325,7 +280,7 @@ def score(row, device):
     return dict(psnr=psnr, ssim=ssim_acc / n, lpips=lp_acc / n, n_frames=int(n),
                 n_frames_pred=int(n_pred), n_frames_ref=int(n_ref),
                 height=int(a.shape[1]), width=int(a.shape[2]),
-                i3d_pred=feats['pred'], i3d_ref=feats['ref'])
+                i3d_pred=streams['pred'].feats, i3d_ref=streams['ref'].feats)
 
 
 def dump(path: Path, obj):
@@ -343,18 +298,6 @@ def dump(path: Path, obj):
 # --------------------------------------------------------------------------- #
 # FVD aggregation
 # --------------------------------------------------------------------------- #
-def frechet(x: np.ndarray, y: np.ndarray) -> float:
-    from scipy import linalg
-    mx, my = x.mean(0), y.mean(0)
-    cx = np.cov(x, rowvar=False)
-    cy = np.cov(y, rowvar=False)
-    covmean, _ = linalg.sqrtm(cx.dot(cy), disp=False)
-    if np.iscomplexobj(covmean):
-        covmean = covmean.real
-    return float(((mx - my) ** 2).sum() + np.trace(cx) + np.trace(cy)
-                 - 2 * np.trace(covmean))
-
-
 def aggregate_fvd(out: Path):
     import collections
     cells = collections.defaultdict(lambda: {'pred': [], 'ref': []})

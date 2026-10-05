@@ -147,17 +147,65 @@ def test_safe_id_and_collisions():
 
 
 def test_registry_lazy_and_complete():
-    assert {"psnr", "ssim", "lpips", "fidelity", "clip_score",
-            "multiview_consistency", "hallucination"} <= set(available())
-    assert get_metric_class("hal") is get_metric_class("hallucination")
+    assert {"psnr", "ssim", "lpips", "fidelity", "clip_score", "fvd",
+            "rigis", "kiva"} <= set(available())
+    # pre-refactor names stay valid aliases
+    assert get_metric_class("hallucination") is get_metric_class("kiva")
+    assert get_metric_class("hal") is get_metric_class("kiva")
+    assert get_metric_class("multiview_consistency") is get_metric_class("rigis")
     h = build_metric("hallucination", embodiment="bimanual", score_ref=True)
+    assert h.name == "kiva"
     assert h.requires_ref and "rigidity_rate_excess" in h.higher_is_better
     assert all(v is False for v in h.higher_is_better.values())   # all lower-is-better
     with pytest.raises(ValueError):
-        build_metric("hallucination", embodiment="quadruped")
-    m = build_metric("multiview_consistency")
-    assert m.launcher_path().is_file()
-    assert build_metric("hallucination").launcher_path().is_file()
+        build_metric("kiva", embodiment="quadruped")
+    m = build_metric("rigis")
+    assert m.name == "rigis" and m.launcher_path().is_file()
+    assert build_metric("kiva").launcher_path().is_file()
+    assert build_metric("fvd").requires_ref
+    assert not build_metric("fvd", ref_pool="pool.npy").requires_ref
+
+
+def test_fvd_frechet_and_guards():
+    from metrics import fvd
+
+    rng = np.random.default_rng(0)
+    x = rng.normal(size=(200, 8))
+    assert abs(fvd.frechet(x, x)) < 1e-6                       # identical sets -> 0
+    y = x + 3.0
+    assert math.isclose(fvd.frechet(x, y), 9.0 * 8, rel_tol=1e-6)  # pure mean shift
+    mx, cx = fvd.moments(x)
+    my, cy = fvd.moments(y)
+    assert math.isclose(fvd.frechet_from_moments(mx, cx, my, cy), fvd.frechet(x, y), rel_tol=1e-9)
+    assert fvd.fvd_or_none(x[:10], y[:10]) is None             # < FVD_MIN_CLIPS windows
+    v = np.zeros((40, 4, 4, 3), np.uint8)
+    assert len(fvd.resample_fps(v, 16.0)) == 16                # max(round(40*5/16)=12, 16)
+    assert len(fvd.resample_fps(v, 5.0)) == 40                 # never upsampled / touched
+    tiles = fvd.split_mosaic(np.zeros((2, 432, 768, 3), np.uint8))
+    assert len(tiles) == 4 and tiles[0].shape == (2, 216, 384, 3)
+    assert fvd.ep_key("a/makovian/episode_close_toolbox__000002/gt_all_views.mp4") == ("close_toolbox", 2)
+
+
+def test_fvd_window_stream_matches_batch():
+    """I3DWindowStream (DR pass) and i3d_features (pool pass) cut identical windows."""
+    import torch
+    from metrics import fvd
+
+    calls = []
+
+    def fake_i3d(w, rescale, resize, return_features):
+        calls.append(w.shape)
+        return w.mean(dim=(2, 3, 4))                           # (1, 3)
+
+    vid = _video(T=40, H=32, W=48)
+    batch = fvd.i3d_features(vid, fake_i3d, "cpu")
+    st = fvd.I3DWindowStream(fake_i3d)
+    t = torch.from_numpy(vid).permute(0, 3, 1, 2).float() / 255
+    for s in range(0, len(t), 16):
+        st.push(t[s:s + 16])
+    assert len(batch) == len(st.feats) == 2                    # trailing 8 frames dropped
+    np.testing.assert_allclose(np.asarray(batch), np.asarray(st.feats), rtol=1e-6)
+    assert calls[0] == (1, 3, 16, fvd.I3D_SIZE, fvd.I3D_SIZE)
 
 
 # --------------------------------------------------------------------------- #

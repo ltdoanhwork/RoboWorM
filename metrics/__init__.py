@@ -10,8 +10,9 @@ Unified interface (``metrics/base.py``)::
 Registered metrics (``metrics.registry.available()``):
   psnr, ssim, lpips, fidelity   piq, reference-based          metrics/fidelity.py
   clip_score                    torchmetrics CLIP ViT-B/16     metrics/clip_score.py
-  multiview_consistency         VGGT-Omega (external launcher) metrics/multiview_consistency/
-  hallucination                 kinescore  (external launcher) metrics/hallucination/
+  fvd                           I3D, 16f windows @5fps         metrics/fvd.py
+  rigis  (multiview_consistency) VGGT-Omega (external launcher) metrics/rigis/
+  kiva   (hallucination)        kinescore  (external launcher) metrics/kiva/
 
 CLI: ``python -m metrics.evaluate --help``. Details: ``metrics/README.md``.
 

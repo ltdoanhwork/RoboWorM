@@ -1,4 +1,6 @@
-# Multi-view consistency metric (VGGT-Omega rigid-geometry variant)
+# Multi-view consistency metric (RIGIS; VGGT-Omega rigid-geometry variant)
+
+> **2026-10-05 refactor:** the metric code is now **vendored** into `metrics/rigis` (`git archive 8015d97`, see `metrics/rigis/VENDORED.md`); the old `external/multiview-consistency` git worktree was removed after a parity test. Registry name `rigis` (old name `multiview_consistency` kept as an alias). Historical sections below that mention a worktree describe the pre-refactor setup; the code is byte-identical.
 
 How to measure whether our generated multi-view robot videos are *geometrically
 consistent across views*, and how to turn that into a one-command SOTA
@@ -8,16 +10,16 @@ comparison across our method variants.
 
 ```bash
 # 1. frames (once per variant)
-python metrics/multiview_consistency/extract_frames.py \
+python metrics/rigis/extract_frames.py \
   --videos-root sampling_dataset/pisa/bimanual/output/multiview/ctrlworld_4view_grid \
   --out-root    sampling_dataset/multiview_consistency/frames/pisa/bimanual/ctrlworld \
   --video-name pred_all_views.mp4 --layout 2x2 --fps 2
 
 # 2. score every variant in one invocation
-VARIANTS="dense pisa radial svg1 svg2" bash metrics/multiview_consistency/run.sh --tmux
+VARIANTS="dense pisa radial svg1 svg2" bash metrics/rigis/run.sh --tmux
 
 # 3. leaderboard
-python metrics/multiview_consistency/aggregate.py \
+python metrics/rigis/aggregate.py \
   --results-root results/multiview_consistency \
   --variants dense pisa radial svg1 svg2
 ```
@@ -111,7 +113,7 @@ Trade-offs of this choice:
 ## 2. Exact metric definition, with citations
 
 All citations are to the metric checkout, i.e.
-`external/multiview-consistency/...` == `origin/thanhnv/multiview-consistency-indep`.
+`metrics/rigis/...` == `origin/thanhnv/multiview-consistency-indep`.
 
 ### 2.1 Per-frame pipeline
 
@@ -233,7 +235,7 @@ name,geometric_consistency,pose_stability,num_disjoint_frames,disjoint_frame_rat
 > `VideoWorldModelBenchmark/video_gen_physics/` adds two more columns
 > (`num_frames,time_seconds`), so the 654 CSVs already on disk under
 > `VideoWorldModelBenchmark/output/` have 7 columns. Our
-> `metrics/multiview_consistency/aggregate.py` accepts both schemas.
+> `metrics/rigis/aggregate.py` accepts both schemas.
 
 ---
 
@@ -283,7 +285,7 @@ The metric reads **PNG frames, never mp4**:
 
 ### 3.3 Getting from mp4 to that layout
 
-Use `metrics/multiview_consistency/extract_frames.py` (adapted from
+Use `metrics/rigis/extract_frames.py` (adapted from
 `VideoWorldModelBenchmark/frame_extractor_one.py`). It supports mosaic videos
 (`--layout 2x2|1x2|1x3|1x4`, crops view1/view2 out of the grid) and
 per-view mp4s (`--layout per_view --view-globs view_0.mp4,view_1.mp4`).
@@ -341,20 +343,19 @@ No DUSt3R, MASt3R, FeatUp, or DINO checkpoint is used or needed.
 ```bash
 cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
 
-git fetch --all
-git worktree add --detach external/multiview-consistency origin/thanhnv/multiview-consistency-indep
-(cd external/multiview-consistency && uv sync)        # ~4 min, builds numpy 1.26.4
+# code is vendored in metrics/rigis/ (VENDORED.md); only the venv may need building
+(cd metrics/rigis && uv sync)        # ~4 min, builds numpy 1.26.4 -> metrics/rigis/.venv
 
 mkdir -p checkpoints/metrics/vggt_omega && ln -sfn <path-to>/vggt_omega_1b_512.pt checkpoints/metrics/vggt_omega/
 ```
 
-`metrics/multiview_consistency/run.sh` creates the worktree itself if missing.
+`metrics/rigis/run.sh` runs `uv run --project metrics/rigis`, which creates the venv if missing.
 
 ### 5.2 Extract frames per variant
 
 ```bash
 for V in dense pisa radial svg1 svg2; do
-  python metrics/multiview_consistency/extract_frames.py \
+  python metrics/rigis/extract_frames.py \
     --videos-root sampling_dataset/$V/bimanual/output/multiview/ctrlworld_4view_grid \
     --out-root    sampling_dataset/multiview_consistency/frames/$V/bimanual/ctrlworld \
     --video-name pred_all_views.mp4 --layout 2x2 --fps 2 --skip-existing
@@ -371,10 +372,10 @@ of re-extracting (that is what the smoke test below did).
 ```bash
 # all variants, one model-service load, backgrounded in tmux
 CUDA_VISIBLE_DEVICES=0 VARIANTS="dense pisa radial svg1 svg2" \
-  bash metrics/multiview_consistency/run.sh --tmux
+  bash metrics/rigis/run.sh --tmux
 # tmux attach -t mvc_<HHMMSS>   |   log: logs/exp_logs/tmux_logs/mvc_<HHMMSS>.log
 
-python metrics/multiview_consistency/aggregate.py \
+python metrics/rigis/aggregate.py \
   --results-root results/multiview_consistency \
   --variants dense pisa radial svg1 svg2 \
   --baseline dense \
@@ -386,11 +387,11 @@ Other modes:
 ```bash
 # smoke: 1 episode per episodes-root, restricted subtree
 MAX_EPISODES=1 VARIANTS="dense pisa" SUBTREE=bimanual/ctrlworld/non_makovian \
-  bash metrics/multiview_consistency/run.sh
+  bash metrics/rigis/run.sh
 
 # one explicit episode folder
 EPISODE_DIR=/tmp/mvc_frames/episode_000070 OUT_CSV=/tmp/one.csv \
-  bash metrics/multiview_consistency/run.sh
+  bash metrics/rigis/run.sh
 ```
 
 ### 5.3b Score the real-GT reference (do this first)
@@ -399,20 +400,20 @@ The scores have no meaning without a ceiling (§7). Extract the **real** input
 views and score them as if they were another variant:
 
 ```bash
-python metrics/multiview_consistency/extract_frames.py \
+python metrics/rigis/extract_frames.py \
   --videos-root sampling_dataset/dense/bimanual/input/multiview/ctrlworld_4view_grid \
   --out-root    sampling_dataset/multiview_consistency/frames/real/bimanual/ctrlworld \
   --layout per_view --view-globs view_0.mp4,view_1.mp4 --fps 2 --skip-existing
 
-VARIANTS="real dense pisa radial svg1 svg2" bash metrics/multiview_consistency/run.sh --tmux
-python metrics/multiview_consistency/aggregate.py \
+VARIANTS="real dense pisa radial svg1 svg2" bash metrics/rigis/run.sh --tmux
+python metrics/rigis/aggregate.py \
   --results-root results/multiview_consistency \
   --variants real dense pisa radial svg1 svg2 --baseline real
 ```
 
 With `--baseline real`, the `Δ` column directly reads as "how far below real".
 
-Full env-var list is in the header of `metrics/multiview_consistency/run.sh`
+Full env-var list is in the header of `metrics/rigis/run.sh`
 (`MVC_ROOT MVC_CKPT MVC_PYTHON MVC_DATA_ROOT MVC_OUT_ROOT VARIANTS SUBTREE VIEWS
 FRAME_BATCH_SIZE MAX_EPISODES MVC_PORT MVC_DTYPE MVC_COMPILE EPISODE_DIR`).
 
@@ -429,8 +430,8 @@ the multi-GPU shells guide). Use `MVC_COMPILE=1` only for long sweeps.
 ## 6. Smoke-test results (actually measured)
 
 Date: 2026-10-01. GPU: one A100-SXM4-80GB (shared, ~98% util from another job).
-Metric checkout: `external/multiview-consistency` @ `8015d97`.
-Interpreter: `uv run --project external/multiview-consistency --with numba python`
+Metric checkout: `metrics/rigis` @ `8015d97`.
+Interpreter: `uv run --project metrics/rigis --with numba python`
 (torch 2.14.1+cu126, numpy 1.26.4, numba 0.68.0).
 
 ### 6.1 Variant comparison, 4 variants × 2 episodes (pre-extracted frames, 2 fps)
@@ -438,7 +439,7 @@ Interpreter: `uv run --project external/multiview-consistency --with numba pytho
 Subtree `bimanual/ctrlworld/non_makovian/handover_clear_zip_bag_upright`,
 episodes `000004` + `000025`, 65 scored frames each, `view1,view2` @ 640×96,
 `FRAME_BATCH_SIZE=4`. Produced by a single invocation
-(`MAX_EPISODES=2 VARIANTS='dense pisa radial svg1' SUBTREE=... bash metrics/multiview_consistency/run.sh`)
+(`MAX_EPISODES=2 VARIANTS='dense pisa radial svg1' SUBTREE=... bash metrics/rigis/run.sh`)
 then aggregated with `--baseline dense`:
 
 ```
@@ -465,8 +466,8 @@ rather than a method discriminator.
 ### 6.2 Full mp4 → number end-to-end
 
 `sampling_dataset/svg1/bimanual/output/multiview/ctrlworld_4view_grid/non_makovian/episode_fold_blue_towel__000070/pred_all_views.mp4`
-→ `multiview_consistency/extract_frames.py --layout 2x2 --fps 2` (66 frames/view,
-640×96) → `multiview_consistency/run.sh EPISODE_DIR=...`:
+→ `metrics/rigis/extract_frames.py --layout 2x2 --fps 2` (66 frames/view,
+640×96) → `metrics/rigis/run.sh EPISODE_DIR=...`:
 
 ```json
 {
@@ -529,7 +530,7 @@ before quoting a "% of real" figure (recipe in §5.3b).
   (`camera_pose_stability.py:27-28`, `geometric_consistency.py:429-437`), so a
   "0.70" has no external meaning. **Only differences between variants scored on
   the identical episode set at the identical fps are meaningful.** This is why
-  `multiview_consistency/aggregate.py` defaults to `--intersect`.
+  `metrics/rigis/aggregate.py` defaults to `--intersect`.
   The one useful anchor we measured: **real video scores ≈ 0.87-0.89 with
   `disjoint_frame_ratio = 0.0`** (§6.3). Treat ~0.89, not 1.0, as the ceiling.
 - The product over views (§2.1 Step 6) makes the metric *conjunctive*: scores
@@ -609,9 +610,8 @@ the `-indep` branch did not exist. **That was stale remote state.** After
 (head `8015d97 Update`, 5 commits ahead of the non-indep head `f7f99b1`).
 
 We use `origin/thanhnv/multiview-consistency-indep`, as originally requested.
-There is still no *local* branch of that name — `external/multiview-consistency`
-is a **detached-HEAD git worktree** pinned at `8015d97`. Re-pin with
-`MVC_BRANCH=<ref>`.
+It is vendored into `metrics/rigis/` at `8015d97`; to re-pin, re-run the `git archive`
+command in `metrics/rigis/VENDORED.md` with the new SHA.
 
 ### 9.2 "rigid" option (resolved with a caveat)
 
@@ -662,7 +662,7 @@ treat them as unreproducible until the baseline is scored with the pinned commit
 
 ### 9.4 Verified
 
-- `origin/thanhnv/multiview-consistency-indep` exists; worktree at `8015d97`.
+- `origin/thanhnv/multiview-consistency-indep` exists; vendored at `8015d97` (was a worktree).
 - Python env builds and imports (torch 2.14.1+cu126 / numpy 1.26.4 / numba 0.68.0).
 - Checkpoint loads (strict `load_state_dict`, 4.26 GiB).
 - Model service + client IPC round-trip works.
@@ -701,16 +701,16 @@ Created in this repo:
 
 | Path | Role |
 |---|---|
-| `metrics/multiview_consistency/run.sh` | Launcher: worktree bootstrap, model service, multi-variant sweep, tmux mode, single-episode mode. |
-| `metrics/multiview_consistency/extract_frames.py` | mp4 (mosaic or per-view) → `view1/frame_XXXX.png` layout. |
-| `metrics/multiview_consistency/aggregate.py` | Per-episode CSVs → variant leaderboard (+ JSON). |
+| `metrics/rigis/run.sh` | Launcher: uv interpreter, model service, multi-variant sweep, tmux mode, single-episode mode. |
+| `metrics/rigis/extract_frames.py` | mp4 (mosaic or per-view) → `view1/frame_XXXX.png` layout. |
+| `metrics/rigis/aggregate.py` | Per-episode CSVs → variant leaderboard (+ JSON). |
 | `docs/multiview_consistency_metric.md` | This document. |
 
 Created outside git tracking:
 
 | Path | Role |
 |---|---|
-| `external/multiview-consistency/` | git worktree, detached at `8015d97`, plus its `.venv`. |
+| `metrics/rigis/` | vendored code @ `8015d97` + our wrappers (`VENDORED.md`), plus its git-ignored `.venv`. |
 | `checkpoints/metrics/vggt_omega/vggt_omega_1b_512.pt` | symlink to the shared checkpoint (gitignored). |
 | `sampling_dataset/multiview_consistency/frames/` | staged/extracted frames. |
 | `results/multiview_consistency/` | output CSVs + `smoke_summary.json`. |

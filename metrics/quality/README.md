@@ -12,7 +12,6 @@ on its own frames. Needs the dreamgen venv (`models/dreamgen/.venv`).
 | | `subjective_quality` | `clip_aesthetic` | pyiqa `laion_aes` (CLIP **ViT-L/14** + MLP head) — ~[1,10] ↑ |
 | | `content_alignment` | `clip_score` | **torchmetrics** `CLIPScore(clip-vit-base-patch16)` — [0,100] ↑ |
 | | `object_control` | `object_detection` | GroundingDINO SwinT-OGC (thr 0.4) + spaCy noun match — [0,1] ↑ |
-| `object_control_viz.py` | `object_control` | visualization | draws detected boxes on representative frames |
 
 Each raw score is also normalized to [0,1] with WorldScore's own constants
 (`benchmark/utils/utils.py::aspect_info`) so numbers are comparable to published values.
@@ -104,20 +103,10 @@ CUDA_VISIBLE_DEVICES=0 STRIDE=10 bash scripts/run_quality_control_probe.sh
 
 Overridable env: `GT`, `DG`, `DD`, `OUT`, `CAPTION`, `OBJECTS`, `STRIDE`.
 
-`object_control_viz.py` has no wrapper script; run it from `metrics/WorldScore` with the
-third_party paths on `PYTHONPATH`:
+(The box-overlay viewer `object_control_viz.py` was archived to
+`tmp/20261005_refactor/misc/metrics/quality/` in the 2026-10-05 refactor.)
 
-```bash
-REPO=$PWD; WS=$REPO/metrics/WorldScore; TP=$WS/worldscore/benchmark/metrics/third_party
-cd "$WS" && PYTHONPATH="$TP:$TP/groundingdino:$TP/sam2" CUDA_VISIBLE_DEVICES=0 \
-  "$REPO/models/dreamgen/.venv/bin/python" "$REPO/metrics/quality/object_control_viz.py" \
-  --clips "dreamgen=/path/to/pred.mp4" --out /tmp/objviz \
-  --objects "robot arm, cardboard box" --stride 10 \
-  --gdino_cfg "worldscore/benchmark/metrics/third_party/groundingdino/config/GroundingDINO_SwinT_OGC.py" \
-  --gdino_ckpt "$REPO/checkpoints/worldscore/groundingdino_swint_ogc.pth"
-```
-
-## Known findings (measured — see `WORLDSCORE_PHYSICS_REPORT.md` §9)
+## Known findings (measured — see `docs/metrics/WORLDSCORE_PHYSICS_REPORT.md` §9)
 
 - **`object_control` is the only one of the three that ranks models usefully**, and it
   agrees with visual inspection (GT 0.875 > DreamDojo 0.800 > DreamGen 0.543). It is a good

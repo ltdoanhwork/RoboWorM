@@ -54,7 +54,7 @@ Source: `metrics/dynamics/`. Env: `models/dreamgen/.venv`, cwd `metrics/WorldSco
 ActorMotion and ActorMotionActiveRate sit beside the mean, not inside it — Continuity rewards stillness (high
 SSIM on a frozen clip), ActorMotion penalizes it; averaging them blindly cancels the
 signal. Use ActorMotion≈0 + Continuity≈99 as a **smooth-but-inactive** flag (see
-`tables/wave0.md`, episode 000255).
+`tmp/20261005_refactor/misc/metrics/phyworld/tables/wave0.md` (archived), episode 000255).
 
 ActorMotion vs. RBench's Motion-Aware Score (MAS): same question — "does the robot
 actually move, not just the camera/background" — but ego-compensated flow-on-mask instead of
@@ -70,7 +70,7 @@ Files:
 |---|---|
 | `motion_mag_smooth_probe.py` | KineticBudget + MotionContinuity |
 | `motion_accuracy_gdino.py` | ActorDynamics (arm∪object) **and** ActorMotion (`mean_fg_flow_med` on the same mask) |
-| `motion_accuracy_probe.py` | WorldScore original (object-only) — comparison only |
+| ~~`motion_accuracy_probe.py`~~ | WorldScore original (object-only) — archived to `tmp/20261005_refactor/misc/metrics/dynamics/` |
 | `flow_backend.py` | SEA-RAFT loader for paired metrics |
 | `physics_metrics.py` | flow vs ref (GT or dense) |
 
@@ -101,7 +101,7 @@ For acceleration methods. Reference = **dense pred** of the same episode, never 
 **PhyFid** = mean of min-max mapped {MotionFidelity, KineticDrift, ContinuityGap}
 to 0–100 (higher = closer to dense). LookDrift and ActorMotionDrift reported beside,
 not in the mean — ActorMotionDrift on a near-zero-motion episode is a noisy log
-ratio (see `tables/wave0.md`, episode 000255: largest drift, 0.808, is the most
+ratio (see `tmp/20261005_refactor/misc/metrics/phyworld/tables/wave0.md` (archived), episode 000255: largest drift, 0.808, is the most
 static clip — expected, not a bug).
 
 Also available (appendix / older trial): GT-ref `flow_epe` via

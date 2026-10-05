@@ -1,0 +1,194 @@
+# reader = one trained head, <robot>.<corpus>.<view>.
+# cell   = one scored unit, <embodiment>.<view>.<model>.
+# method (dense/augment/worldcache), role and split partition a cell's clips.
+
+_corpus_bimanual_mv: &bimanual_mv
+  corpus: bimanual_mv
+  adapter: lerobot
+  root: ${KINESCORE_DATA_ROOT}/corpus/bimanual/multiview
+  cameras: [cam_high, cam_low, cam_left_wrist, cam_right_wrist]
+  joint_field: observation.state
+  joint_columns: [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12]
+  gripper_columns: [6, 13]
+
+_corpus_bimanual_sv: &bimanual_sv
+  corpus: bimanual_sv
+  adapter: lerobot
+  root: ${KINESCORE_DATA_ROOT}/corpus/bimanual/singleview
+  cameras: [cam_high]
+  joint_field: observation.state
+  joint_columns: [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12]
+  gripper_columns: [6, 13]
+
+_corpus_humanoid_mv: &humanoid_mv
+  corpus: humanoid_mv
+  adapter: lerobot
+  root: ${KINESCORE_DATA_ROOT}/corpus/humanoid/multiview
+  cameras: ["cam_head_rgb|cam_high_rgb", "cam_front_rgb|cam_third_view",
+            cam_left_wrist_rgb, cam_right_wrist_rgb]
+  joint_field: observation.state
+  joint_columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+
+_corpus_humanoid_sv: &humanoid_sv
+  corpus: humanoid_sv
+  adapter: lerobot
+  root: ${KINESCORE_DATA_ROOT}/corpus/humanoid/singleview
+  cameras: [ego_view_freq20]
+  joint_field: observation.state
+  joint_columns: [0, 1, 2, 3, 4, 5, 6, 22, 23, 24, 25, 26, 27, 28, 41, 42, 43,
+                  7, 8, 9, 10, 11, 12, 29, 30, 31, 32, 33, 34]
+  scene_key: episode
+
+# Galaxea A1X singleview (makovian splits only -- non_makovian's
+# press_three_buttons is a Franka Panda). observation.state is an EE pose
+# (x, y, z, roll, pitch, yaw, gripper_width), not joint angles -- see
+# kinescore.robots.a1x_ee.spec.
+_corpus_a1x_sv: &a1x_sv
+  corpus: a1x_sv
+  adapter: lerobot
+  root: ${KINESCORE_DATA_ROOT}/corpus/single_arm/singleview_a1x
+  cameras: [global]
+  joint_field: observation.state
+  joint_columns: [0, 1, 2, 3, 4, 5]
+  gripper_columns: [6]
+  scene_key: episode
+
+# DROID-style Franka multiview: the two exterior cameras are static, the
+# wrist camera rides the arm, so the static bench reads panels [0, 1] only
+# and the wrist view never enters the tree.
+_corpus_single_arm_mv: &single_arm_mv
+  corpus: single_arm_mv
+  adapter: lerobot
+  root: ${KINESCORE_DATA_ROOT}/corpus/single_arm/multiview
+  cameras: [exterior_1_left, exterior_2_left]
+  joint_field: observation.state.joint_position
+  joint_columns: [0, 1, 2, 3, 4, 5, 6]
+  gripper_field: observation.state.gripper_position
+  scene_key: episode
+
+readers:
+  aloha_bimanual.bimanual_mv.mv4_row:
+    robot: aloha_bimanual
+    view: mv4_row
+    train: *bimanual_mv
+
+  aloha_bimanual.bimanual_mv.mv4_grid:
+    robot: aloha_bimanual
+    view: mv4_grid
+    train: *bimanual_mv
+
+  aloha_bimanual.bimanual_sv.sv1_16x9:
+    robot: aloha_bimanual
+    view: sv1_16x9
+    train: *bimanual_sv
+
+  aloha_bimanual.bimanual_sv.sv1_4x3:
+    robot: aloha_bimanual
+    view: sv1_4x3
+    train: *bimanual_sv
+
+  airbot_mmk2.humanoid_mv.mv4_row:
+    robot: airbot_mmk2
+    view: mv4_row
+    train: *humanoid_mv
+
+  airbot_mmk2.humanoid_mv.mv4_grid:
+    robot: airbot_mmk2
+    view: mv4_grid
+    train: *humanoid_mv
+
+  airbot_mmk2.humanoid_mv.mv4_row_static:
+    robot: airbot_mmk2
+    view: mv4_row_static
+    train: *humanoid_mv
+
+  airbot_mmk2.humanoid_mv.mv4_grid_static:
+    robot: airbot_mmk2
+    view: mv4_grid_static
+    train: *humanoid_mv
+
+  fourier_gr1.humanoid_sv.sv1_16x9:
+    robot: fourier_gr1
+    view: sv1_16x9
+    train: *humanoid_sv
+
+  fourier_gr1.humanoid_sv.sv1_4x3:
+    robot: fourier_gr1
+    view: sv1_4x3
+    train: *humanoid_sv
+
+  franka_panda.single_arm_mv.mv4_grid_static:
+    robot: franka_panda
+    view: mv4_grid_static
+    train: *single_arm_mv
+
+  a1x_ee.a1x_sv.sv1_4x3:
+    robot: a1x_ee
+    view: sv1_4x3
+    train: *a1x_sv
+
+cells:
+  bimanual.mv4_row.ctrlworld_4view_grid:
+    reader: aloha_bimanual.bimanual_mv.mv4_row
+    select: {embodiment: bimanual, view: multiview, model: ctrlworld_4view_grid}
+
+  bimanual.mv4_grid.dreamgen:
+    reader: aloha_bimanual.bimanual_mv.mv4_grid
+    select: {embodiment: bimanual, view: multiview, model: dreamgen}
+
+  bimanual.sv1_16x9.dreamgen:
+    reader: aloha_bimanual.bimanual_sv.sv1_16x9
+    select: {embodiment: bimanual, view: singleview, model: dreamgen}
+
+  bimanual.sv1_4x3.dreamdojo:
+    reader: aloha_bimanual.bimanual_sv.sv1_4x3
+    select: {embodiment: bimanual, view: singleview, model: dreamdojo}
+
+  # Scored from the radial tree via `score --videos`; the select matches no
+  # manifest clip on purpose, so a run without --videos fails loudly.
+  bimanual.sv1_16x9.radial_dreamgen:
+    reader: aloha_bimanual.bimanual_sv.sv1_16x9
+    select: {embodiment: bimanual, view: singleview, model: radial_dreamgen}
+
+  humanoid.mv4_row.ctrlworld_4view_grid:
+    reader: airbot_mmk2.humanoid_mv.mv4_row
+    select: {embodiment: humanoid, view: multiview, model: ctrlworld_4view_grid}
+
+  humanoid.mv4_row_static.ctrlworld_4view_grid:
+    reader: airbot_mmk2.humanoid_mv.mv4_row_static
+    select: {embodiment: humanoid, view: multiview, model: ctrlworld_4view_grid}
+
+  humanoid.mv4_grid.dreamgen:
+    reader: airbot_mmk2.humanoid_mv.mv4_grid
+    select: {embodiment: humanoid, view: multiview, model: dreamgen}
+
+  humanoid.mv4_grid_static.dreamgen:
+    reader: airbot_mmk2.humanoid_mv.mv4_grid_static
+    select: {embodiment: humanoid, view: multiview, model: dreamgen}
+
+  humanoid.sv1_16x9.dreamgen:
+    reader: fourier_gr1.humanoid_sv.sv1_16x9
+    select: {embodiment: humanoid, view: singleview, model: dreamgen}
+
+  humanoid.sv1_16x9.cosmos:
+    reader: fourier_gr1.humanoid_sv.sv1_16x9
+    select: {embodiment: humanoid, view: singleview, model: cosmos}
+
+  humanoid.sv1_4x3.dreamdojo:
+    reader: fourier_gr1.humanoid_sv.sv1_4x3
+    select: {embodiment: humanoid, view: singleview, model: dreamdojo}
+
+
+  # Scored from the radial tree via `score --videos`; the select matches no
+  # manifest clip on purpose, so a run without --videos fails loudly.
+  single_arm.sv1_4x3.radial_dreamgen:
+    reader: a1x_ee.a1x_sv.sv1_4x3
+    select: {embodiment: single_arm, view: singleview, model: radial_dreamgen}
+
+  single_arm.sv1_4x3.dense_dreamgen:
+    reader: a1x_ee.a1x_sv.sv1_4x3
+    select: {embodiment: single_arm, view: singleview, model: dense_dreamgen}
+
+  single_arm.mv4_grid_static.radial_dreamgen:
+    reader: franka_panda.single_arm_mv.mv4_grid_static
+    select: {embodiment: single_arm, view: multiview, model: radial_dreamgen}

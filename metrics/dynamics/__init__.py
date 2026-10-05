@@ -2,12 +2,15 @@
 
 WorldScore's three "dynamics" aspects, plus our paired-GT (reference-based) variants:
 
-  motion_accuracy    ``motion_accuracy_probe.py``   SAM2-seeded object vs background flow
-                     ``motion_accuracy_gdino.py``   GroundingDINO(arm+object) -> SAM2 -> SEA-RAFT
-                                                    foreground-vs-background flow (our version)
+  motion_accuracy    ``motion_accuracy_gdino.py``   GroundingDINO(arm+object) -> SAM2 -> SEA-RAFT
+                                                    foreground-vs-background flow (our version; the
+                                                    WorldScore-original SAM2-only probe and the
+                                                    smoothness viz were archived to
+                                                    tmp/20261005_refactor/misc/metrics/dynamics/)
   motion_magnitude   ``motion_mag_smooth_probe.py`` SEA-RAFT median flow
   motion_smoothness  ``motion_mag_smooth_probe.py`` VFIMamba mid-frame interpolation (SSIM/MSE)
-                     ``motion_smoothness_viz.py``   per-triple panels + error heatmaps
+
+  actor flicker      ``actor_flicker.py``           FB-filtered photometric residual (NR pipeline)
 
   paired-GT flow     ``physics_metrics.py``         flow EPE / magnitude ratio vs GT
                      ``flow_backend.py``            SEA-RAFT wrapper used by the above

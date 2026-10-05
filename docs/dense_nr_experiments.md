@@ -136,7 +136,7 @@ report; do not publish it.
 >
 > Reproduce (≈70 min on 1 GPU, 3 embodiments × 16 clips); raw matrices, per-clip scores
 > and retrieval ranks are archived at
-> `metrics/WorldScore/results/_experiments/e2_text_matrix.json`:
+> `tmp/20261005_refactor/misc/worldscore_results/_experiments/e2_text_matrix.json`:
 > ```bash
 > bash scripts/_exp_text_matrix.sh --out /tmp/e2_matrix --n 16 --device cuda
 > ```
@@ -714,5 +714,5 @@ measured numbers and the pass/fail verdict, and update the frozen column list in
 redefined. Record negative results — a column that had to be dropped is a finding.
 
 <!-- E3 raw numbers (selection 53, confirmation 305, artifact-sign 70) are archived at
-     metrics/WorldScore/results/_experiments/e3_flicker_variants.json (0.35 MB) so the
+     tmp/20261005_refactor/misc/worldscore_results/_experiments/e3_flicker_variants.json (0.35 MB) so the
      drop stays auditable after the scratch run dirs were deleted. -->

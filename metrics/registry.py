@@ -2,7 +2,7 @@
 
 Each metric pulls a different heavy stack (piq, torchmetrics+CLIP, or nothing
 but a subprocess), so classes are imported only when built: listing or
-building the hallucination metric never imports torch.
+building the kiva (hallucination) metric never imports torch.
 """
 from __future__ import annotations
 
@@ -17,12 +17,16 @@ _REGISTRY: dict[str, str | type[BaseMetric]] = {
     "lpips": "metrics.fidelity:LPIPS",
     "fidelity": "metrics.fidelity:Fidelity",
     "clip_score": "metrics.clip_score:CLIPScore",
-    "multiview_consistency": "metrics.multiview_consistency.metric:MultiviewConsistency",
-    "hallucination": "metrics.hallucination.metric:Hallucination",
+    "fvd": "metrics.fvd:FVD",
+    "rigis": "metrics.rigis.metric:MultiviewConsistency",
+    "kiva": "metrics.kiva.metric:Hallucination",
 }
 
-ALIASES = {"clip": "clip_score", "mvc": "multiview_consistency", "multiview": "multiview_consistency",
-           "hal": "hallucination", "kinescore": "hallucination"}
+# Pre-refactor names stay valid: ``multiview_consistency`` -> rigis, ``hallucination`` -> kiva.
+ALIASES = {"clip": "clip_score",
+           "multiview_consistency": "rigis", "mvc": "rigis", "multiview": "rigis",
+           "hallucination": "kiva", "hal": "kiva", "kinescore": "kiva",
+           "i3d_fvd": "fvd"}
 
 
 def register(name: str, cls: type[BaseMetric] | None = None):

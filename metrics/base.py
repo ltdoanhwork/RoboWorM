@@ -6,9 +6,10 @@ Three layers::
     ├── FrameMetric        in-process, decodes frames, scores (pred[, ref][, text])
     │   ├── PSNR / SSIM / LPIPS              metrics/fidelity.py
     │   └── CLIPScore                        metrics/clip_score.py
+    ├── FVD                set-level I3D Frechet distance  metrics/fvd.py
     └── ExternalMetric     batch-only, shells out to a launcher in its own env
-        ├── MultiviewConsistency             metrics/multiview_consistency/metric.py
-        └── Hallucination                    metrics/hallucination/metric.py
+        ├── MultiviewConsistency  (rigis)    metrics/rigis/metric.py
+        └── Hallucination         (kiva)     metrics/kiva/metric.py
 
 Why two subclasses: the reference metrics need ``piq``/``torchmetrics`` (the
 ``models/dreamgen/.venv``), while VGGT-Omega runs in a ``uv`` project and kinescore

@@ -1,4 +1,6 @@
-# Hallucination metric (kinescore embodiment-integrity, rigidity + jerk)
+# Hallucination metric (KIVA; kinescore embodiment-integrity, rigidity + jerk)
+
+> **2026-10-05 refactor:** the metric code is now **vendored** into `metrics/kiva` (`git archive 5225ce7`, see `metrics/kiva/VENDORED.md`); the old `external/hallucination` git worktree was removed after a parity test. Registry name `kiva` (old name `hallucination` kept as an alias). Historical sections below that mention a worktree describe the pre-refactor setup; the code is byte-identical.
 
 How to measure whether our generated robot videos **hallucinate the robot's own
 body** — an arm that stretches, snaps, folds through itself or teleports — and
@@ -8,18 +10,18 @@ how to turn that into a one-command comparison across our method variants.
 
 ```bash
 # 0. pre-flight: will the reader even accept these clips?
-python metrics/hallucination/probe_clips.py --variant dense pisa radial svg1 svg2
+python metrics/kiva/probe_clips.py --variant dense pisa radial svg1 svg2
 
 # 1. score the real-video anchor FIRST (it is what makes the numbers mean anything)
 HAL_OUT_ROOT=/tmp/hal_results ROLE=gt VARIANTS="dense pisa radial svg1 svg2" \
-  EMBODIMENTS=single_arm SPLITS=makovian bash metrics/hallucination/run.sh --tmux
+  EMBODIMENTS=single_arm SPLITS=makovian bash metrics/kiva/run.sh --tmux
 
 # 2. score every variant in one invocation
 HAL_OUT_ROOT=/tmp/hal_results VARIANTS="dense pisa radial svg1 svg2" \
-  EMBODIMENTS=single_arm SPLITS=makovian bash metrics/hallucination/run.sh --tmux
+  EMBODIMENTS=single_arm SPLITS=makovian bash metrics/kiva/run.sh --tmux
 
 # 3. leaderboard, anchored on real video
-python metrics/hallucination/aggregate.py --results-root /tmp/hal_results \
+python metrics/kiva/aggregate.py --results-root /tmp/hal_results \
   --variants dense pisa radial svg1 svg2 --embodiment single_arm \
   --anchor-role gt --baseline real
 ```
@@ -41,11 +43,11 @@ of the self-contained benchmark repo that lives on branch
 
 | | |
 |---|---|
-| package | `kinescore` (`external/hallucination/src/kinescore/`) |
+| package | `kinescore` (`metrics/kiva/src/kinescore/`) |
 | CLI entry point | `kinescore = kinescore.cli.main:main` (`pyproject.toml`) |
 | self-description | "Physics-plausibility benchmark for AI-generated robot video." (`README.md:1-3`) |
 | author / history | 22 commits, all `triquang26`, 2026-08-29 → 2026-10-01 |
-| our pin | `external/hallucination` = detached worktree at `5225ce7` |
+| our pin | `metrics/kiva` = vendored copy of `5225ce7` (`VENDORED.md`) |
 
 So "run the hallucination metric" == "run `kinescore score`". The word
 *hallucination* appears in the **branch** name and the **HF bucket** name
@@ -89,7 +91,7 @@ every metric we already compute:
   our own audit (`metrics/reports/fvd_kinetics_domain_audit.json`) shows the
   domain gap already dominates it.
 - **WorldScore** has, in our own words, **"no true physics-law metric"**
-  (`metrics/WORLDSCORE_PHYSICS_REPORT.md:120-122`) — its physics signal is
+  (`docs/metrics/WORLDSCORE_PHYSICS_REPORT.md:120-122`) — its physics signal is
   indirect, via motion magnitude and smoothness.
 - **Multi-view consistency** (`docs/multiview_consistency_metric.md`) asks
   whether two *views* agree, which is a camera/scene question, and it needs a
@@ -119,7 +121,7 @@ There are four axes of choice. Ours, and the reasoning:
 We report **both** the segment **violation rate** and the **severity ratio**
 (`value / segment_threshold`), because a rate alone cannot distinguish "barely
 over the line everywhere" from "catastrophically over the line once"
-(`metrics/hallucination/aggregate.py:166-188`).
+(`metrics/kiva/aggregate.py:166-188`).
 
 Trade-offs of this choice:
 
@@ -140,7 +142,7 @@ Trade-offs of this choice:
 ## 2. Exact metric definition, with citations
 
 All citations are to the metric checkout, i.e.
-`external/hallucination/src/kinescore/...` == `origin/quang/hallucination-official`
+`metrics/kiva/src/kinescore/...` == `origin/quang/hallucination-official`
 @ `5225ce7`.
 
 ### 2.1 Pixels to keypoints
@@ -301,9 +303,9 @@ Two consequences you must carry:
 | `segments.csv` | **16-frame segment** | `id`, `segment`, `start_frame`, `end_frame`, and per detector `_reduce`, `_value`, `_threshold` (the **segment** threshold), `_violated` (`table.py:54-71`) |
 | `metrics.csv` | clip | per detector `n_segments`, `n_violated`, `worst_segment`, `frame_fraction`, `severity_median` (`table.py:14-31`) |
 | `results.jsonl` | clip | full per-frame series + flagged intervals; **this is the big file** |
-| `render/` | clip | overlay mp4s — large and slow, always produced, so our launcher deletes them unless `HAL_RENDER=1` (`hallucination/run.sh:240-243`; there is no `--no-render` on this branch) |
+| `render/` | clip | overlay mp4s — large and slow, always produced, so our launcher deletes them unless `HAL_RENDER=1` (`metrics/kiva/run.sh:240-243`; there is no `--no-render` on this branch) |
 
-`metrics/hallucination/aggregate.py` reads **`segments.csv`** only.
+`metrics/kiva/aggregate.py` reads **`segments.csv`** only.
 
 ---
 
@@ -333,12 +335,9 @@ superset: `-humanoid` is an ancestor. So this is not a fork to choose between �
 | `robots/gr1/{fk,spec}.py` reworked (+245 lines) | Fingertip keypoints. |
 | **removed** on `-official`: `docs/MULTIVIEW_STATIC.md`, `docs/BIMANUAL.md`, `docs/SINGLEARM.md` | Folded into `RUNBOOK.md`. Nothing functional lost. |
 
-**We use `origin/quang/hallucination-official`, pinned at `5225ce7`.** There is
-no local branch of that name — `external/hallucination` is a **detached-HEAD git
-worktree**. Re-pin with `HAL_BRANCH=<ref>`.
-
-Also note `-official` is where `git branch -a --contains HEAD` places our
-worktree, confirming the pin.
+**We use `origin/quang/hallucination-official`, pinned at `5225ce7`.** It is vendored into
+`metrics/kiva/` (`src/kinescore`, `configs/`, `docs/`, `scripts/`); to re-pin, re-run the
+`git archive` command in `metrics/kiva/VENDORED.md` with the new SHA.
 
 ### 3.2 On-disk input format — mp4 **directly**
 
@@ -359,7 +358,7 @@ Required sizes, from `configs/views.yaml`:
 | `bimanual` | `sv1_16x9` | **768x432** | `aloha_bimanual.bimanual_sv.sv1_16x9` |
 | `humanoid` | `sv1_16x9` | **768x432** | `fourier_gr1.humanoid_sv.sv1_16x9` |
 
-`metrics/hallucination/probe_clips.py` exists exactly to check this before you
+`metrics/kiva/probe_clips.py` exists exactly to check this before you
 burn GPU hours. It `ffprobe`s every clip and reports scorable / wrong-size /
 too-short counts per role, plus the estimated segment count. **Run it first.**
 
@@ -372,13 +371,13 @@ sampling_dataset/<variant>/<embodiment>/output/singleview/dreamgen/<split>/
 ```
 
 with `<split>` in `{makovian, non_makovian}`. The launcher composes exactly this
-path (`hallucination/run.sh:267`).
+path (`metrics/kiva/run.sh:267`).
 
 ### 3.3 The two roles that share every directory
 
 A prediction and its real ground truth sit **side by side in the same directory
 at the same resolution**. So the real-video anchor is a `--pattern` switch, not
-a second tree (`hallucination/run.sh:189-195`):
+a second tree (`metrics/kiva/run.sh:189-195`):
 
 | `ROLE` | `--pattern` | selects |
 |---|---|---|
@@ -427,7 +426,7 @@ checkpoints in the same directory:
 The four `newsampler`/`mse` checkpoints have **better `val_mm` and are still the
 wrong choice**: they predict `K = 22` (arms + fingertips) and are separate
 trainings, so they are not benchmark-consistent with the published tables. Our
-launcher defaults to `huber_old.pt` (`hallucination/run.sh:177`) and the commit
+launcher defaults to `huber_old.pt` (`metrics/kiva/run.sh:177`) and the commit
 message of `ef760d1` is the authority: "The humanoid benchmark reader predicts
 the 12 arm keypoints." Override with `HAL_CKPT_HUMANOID` if you deliberately
 want a K=22 ablation — but then you cannot compare to anything else.
@@ -440,14 +439,14 @@ be useful).
 
 ### 4.2 The other three things the store must have
 
-`hallucination/run.sh:132-138` hard-fails if any of these is absent:
+`metrics/kiva/run.sh:132-138` hard-fails if any of these is absent:
 
 | subdir | holds | notes |
 |---|---|---|
 | `ckpt/` | the readers above | |
 | `assets/` | URDF + mesh trees | GR-1 alone is ~285 MB upstream; the store carries the 29 MB `gr1t1` subtree. `assets/MANIFEST.json` pins `urdf_sha256` per robot (GR-1: `fc4a03e2...`, upstream `FFTAI/Wiki-GRx-Models` @ `7d96c758`). **Rigidity rest lengths come from here**, so a URDF swap silently changes every rigidity number. |
 | `data/trees/<reader_id>/videos/val/` | **the real calibration clips** | Not optional: with no clips here, `score` exits (`cmd_score.py:132-136`). Present counts: A1X **12**, ALOHA **29**, GR-1 **26**. |
-| `cache/hf/` | the DINOv3 weights | `models--facebook--dinov3-vitl16-pretrain-lvd1689m`. We run with `HF_HUB_OFFLINE=1` / `TRANSFORMERS_OFFLINE=1` (`hallucination/run.sh:158-159`), so this cache must be warm. |
+| `cache/hf/` | the DINOv3 weights | `models--facebook--dinov3-vitl16-pretrain-lvd1689m`. We run with `HF_HUB_OFFLINE=1` / `TRANSFORMERS_OFFLINE=1` (`metrics/kiva/run.sh:158-159`), so this cache must be warm. |
 
 **Note the A1X calibration set is only 12 clips** (158-180 frames each, 640x480,
 verified by `ffprobe`), so `CALIB_CLIPS=24` silently calibrates on 12. That is
@@ -458,7 +457,7 @@ the number that appears in `summary.json`.
 **There is no VLM judge and no judge-model version to pin.** Checked three ways:
 
 1. `README.md:5-8` states it outright: "with no simulator and no VLM judge".
-2. `find external/hallucination -name '*vlm*'` → **zero hits**. There is no
+2. `find metrics/kiva -name '*vlm*'` → **zero hits**. There is no
    `cmd_vlm.py`, despite `.env.example` reserving a `KINESCORE_MODEL_DIR` for
    "Vision-language model weights for `kinescore vlm`" — that subcommand does
    not exist on this branch.
@@ -522,8 +521,8 @@ kinescore train --reader $R --device cuda --steps 8000
 
 ### 5.1 One-time setup
 
-Nothing to install. The launcher bootstraps the worktree itself
-(`hallucination/run.sh:106-112`) and uses an existing conda env — see §8.1 for
+Nothing to install. The code is vendored in `metrics/kiva/` and imported via
+`PYTHONPATH=metrics/kiva/src` (`metrics/kiva/run.sh`), using an existing conda env — see §8.1 for
 why `uv sync` is not an option here.
 
 ```bash
@@ -536,7 +535,7 @@ export HAL_OUT_ROOT=/tmp/hal_results                         # see §8.2 (quota!
 ### 5.2 Pre-flight the clips (cheap, CPU-only, do this first)
 
 ```bash
-python metrics/hallucination/probe_clips.py \
+python metrics/kiva/probe_clips.py \
   --variant dense pisa radial svg1 svg2 --json /tmp/hal_ready.json
 ```
 
@@ -546,7 +545,7 @@ python metrics/hallucination/probe_clips.py \
 HAL_OUT_ROOT=/tmp/hal_results ROLE=gt \
   VARIANTS="dense pisa radial svg1 svg2" \
   EMBODIMENTS=single_arm SPLITS=makovian MAX_CLIPS=6 \
-  bash metrics/hallucination/run.sh --tmux
+  bash metrics/kiva/run.sh --tmux
 ```
 
 ### 5.4 The multi-variant comparison — one invocation
@@ -555,7 +554,7 @@ HAL_OUT_ROOT=/tmp/hal_results ROLE=gt \
 HAL_OUT_ROOT=/tmp/hal_results \
   VARIANTS="dense pisa radial svg1 svg2" \
   EMBODIMENTS=single_arm SPLITS=makovian \
-  bash metrics/hallucination/run.sh --tmux
+  bash metrics/kiva/run.sh --tmux
 # attach: tmux attach -t hal_<HHMMSS>
 # log:    logs/exp_logs/tmux_logs/hal_<HHMMSS>.log
 ```
@@ -565,7 +564,7 @@ Full sweep, all ten variants, all three embodiments, both splits:
 ```bash
 HAL_OUT_ROOT=/tmp/hal_results \
   VARIANTS="dense pisa radial svg1 svg2 itm sito dicache fastercache worldcache" \
-  bash metrics/hallucination/run.sh --tmux
+  bash metrics/kiva/run.sh --tmux
 ```
 
 Single explicit directory (bypasses the variant-tree layout):
@@ -573,13 +572,13 @@ Single explicit directory (bypasses the variant-tree layout):
 ```bash
 VIDEOS_DIR=sampling_dataset/dense/humanoid/output/singleview/dreamgen/makovian \
   EMBODIMENTS=humanoid OUT_DIR=/tmp/hal_results/single/dense.humanoid \
-  bash metrics/hallucination/run.sh
+  bash metrics/kiva/run.sh
 ```
 
 ### 5.5 Leaderboard
 
 ```bash
-python metrics/hallucination/aggregate.py \
+python metrics/kiva/aggregate.py \
   --results-root /tmp/hal_results \
   --variants dense pisa radial svg1 svg2 \
   --embodiment single_arm \
@@ -590,7 +589,7 @@ python metrics/hallucination/aggregate.py \
 All five detectors instead of the two headline ones:
 
 ```bash
-python metrics/hallucination/aggregate.py --results-root /tmp/hal_results \
+python metrics/kiva/aggregate.py --results-root /tmp/hal_results \
   --variants dense svg1 --embodiment single_arm \
   --detectors rigidity jerk teleport joint_limit self_collision \
   --anchor-role gt --baseline real
@@ -624,7 +623,7 @@ sweep at ~130 clips/cell is 60 cells x ~25 min ≈ **25 GPU-hours**. Use tmux.
 ## 6. Smoke-test results (actually measured)
 
 Date: 2026-10-04 / 2026-10-05. GPU: one idle A100-SXM4-80GB, ~5.2 GB peak.
-Metric checkout `external/hallucination` @ `5225ce7`. Interpreter: the `hdmi`
+Metric checkout `metrics/kiva` @ `5225ce7`. Interpreter: the `hdmi`
 conda env (`torch 2.7.0+cu128`, `transformers 5.2.0`, `numpy 1.26.4`).
 `FRAME_CHUNK=16`. Outputs under `/tmp/hal_results`, `/tmp/hal_agg`,
 `/tmp/hal_smoke` (**not** under the repo — §8.2).
@@ -657,7 +656,7 @@ Two things to read off this table:
 ### 6.2 The discriminative cell — single_arm (A1X), 5 variants, anchored on real video
 
 `EMBODIMENTS=single_arm SPLITS=makovian MAX_CLIPS=6 CALIB_CLIPS=12`,
-`VARIANTS="dense pisa radial svg1 svg2"`, one `hallucination/run.sh` invocation
+`VARIANTS="dense pisa radial svg1 svg2"`, one `metrics/kiva/run.sh` invocation
 per role. **6 clips intersected, 72 segments each.** Wall time for the
 5-variant prediction sweep: **13 min 37 s**.
 
@@ -723,7 +722,7 @@ the tail, but the right fix is a better bimanual/humanoid reader, not more clips
 
 > A stale `/tmp/hal_agg/humanoid.json` written on 2026-10-04 14:39 shows
 > `rate = 1.0` for both humanoid pred and gt. **That file is wrong** — it was
-> produced by an earlier revision of `hallucination/aggregate.py` that
+> produced by an earlier revision of `metrics/kiva/aggregate.py` that
 > truthiness-tested the `*_violated` CSV column, and the string `"False"` is
 > truthy in Python. Re-aggregating the identical directories with the committed
 > script gives `0.0000`, which matches a direct count of the CSV
@@ -863,7 +862,7 @@ substantially lower jerk-violation rate than the dense baseline** (0.31 vs 0.49,
 - **`severity` is a ratio, unbounded above, with a meaningful 1.0**:
   `value / segment_threshold`, median over segments, inverted for
   `self_collision` so that `> 1` always means "worse than the real-motion p95"
-  (`hallucination/aggregate.py:180-184`). `severity = 1.0` is exactly the p95 of
+  (`metrics/kiva/aggregate.py:180-184`). `severity = 1.0` is exactly the p95 of
   real motion. `severity = 3.85` (the broken control, §6.4) means the typical
   segment is nearly 4x past where real motion's 95th percentile sits.
 - **`rate` has no meaningful zero.** The reader's own keypoint error (24–85 mm)
@@ -967,7 +966,7 @@ believing a comparison.
    (`OSError: [Errno 122] Disk quota exceeded`). The launcher therefore defaults
    `HAL_PYTHON` to the `hdmi` conda env (torch 2.7.0+cu128, transformers 5.2.0,
    numpy 1.26.4) and supplies `pytorch_kinematics` via `PYTHONUSERBASE`
-   (`hallucination/run.sh:114-127`). This is the analogue of the multiview
+   (`metrics/kiva/run.sh:114-127`). This is the analogue of the multiview
    branch's missing `numba` — see §8.9 for the full undeclared-dependency list.
 2. **The pfss workspace quota is exhausted; writes silently truncate.** A 20 MiB
    `dd` into the repo wrote only 4 MiB. The first smoke attempt died in
@@ -987,11 +986,11 @@ believing a comparison.
 4. **Wrong frame size is a silent near-no-op.** `check_frame_size`
    (`views.py:67-90`) raises, `cmd_score.py:166-174` catches it and records
    `error` in `results.jsonl`, and the run exits **0-ish** with an empty
-   `segments.csv`. Always `hallucination/probe_clips.py` first.
+   `segments.csv`. Always `metrics/kiva/probe_clips.py` first.
 5. **`--pattern` defaults to `*.mp4`, which mixes predictions and GT.** Since
    `<episode>.mp4` and `<episode>_gt.mp4` share a directory, the upstream default
    scores both and halves the apparent violation rate. Our launcher forces
-   `*[0-9].mp4` / `*_gt.mp4` (`hallucination/run.sh:189-195`).
+   `*[0-9].mp4` / `*_gt.mp4` (`metrics/kiva/run.sh:189-195`).
 6. **`render/` is always produced and there is no `--no-render`.**
    `cmd_score.py:209` calls `render_results` unconditionally. The launcher
    `rm -rf`s it unless `HAL_RENDER=1`. On a quota-bound filesystem this matters.
@@ -1011,13 +1010,13 @@ believing a comparison.
    `numpy, torch, pytorch-kinematics, robot-descriptions` + extras
    `dino/video/bench`. In practice:
    - `pytorch_kinematics` is **not** in the conda env and is injected via
-     `PYTHONUSERBASE=/pfss/.../.local` (`hallucination/run.sh:125-151`).
+     `PYTHONUSERBASE=/pfss/.../.local` (`metrics/kiva/run.sh:125-151`).
    - `ffmpeg`/`ffprobe` must be on `PATH` (`README.md:36`) but are **not** a
      declared dependency. Worse, **`/usr/bin/ffprobe` segfaults on a
      gotoblas/liblapack symbol clash once `torch` is imported in the same
      process tree.** The launcher prepends a pfss ffmpeg build **and** its
      `lib/` to `LD_LIBRARY_PATH`, without which the binary cannot resolve
-     `libavdevice.so.62` (`hallucination/run.sh:140-148`).
+     `libavdevice.so.62` (`metrics/kiva/run.sh:140-148`).
    - The DINOv3 weights are a hard requirement but are not a package; they must
      be warm in `HF_HOME` because we force `HF_HUB_OFFLINE=1`.
 10. **No determinism guarantee.** fp16 autocast + a DDIM-10 x 5-sample
@@ -1077,7 +1076,7 @@ This was checked explicitly because both were plausible lineages:
 - **WorldScore**: vendored in *this* repo at `metrics/WorldScore/`, but **zero
   references from the metric branch**. And our own assessment of it concludes
   WorldScore has **"no true physics-law metric"**
-  (`metrics/WORLDSCORE_PHYSICS_REPORT.md:120-122`) — its physics signal is
+  (`docs/metrics/WORLDSCORE_PHYSICS_REPORT.md:120-122`) — its physics signal is
   indirect, via motion magnitude and smoothness. So WorldScore could not supply
   a baseline for rigidity/jerk even if it were wired up. **No lineage.**
 - A sibling doc, `docs/phyworld_nr_adapted_metrics.md`, covers the PhyWorld
@@ -1158,7 +1157,7 @@ branch.
 
 Measured 2026-10-05 by counting mp4s under
 `sampling_dataset/<variant>/<embodiment>/output/singleview/dreamgen/<split>/`,
-and validated for frame size with `hallucination/probe_clips.py`.
+and validated for frame size with `metrics/kiva/probe_clips.py`.
 
 | variant | single_arm mak / non_mak | bimanual mak / non_mak | humanoid mak / non_mak | paired `_gt`? | ready? |
 |---|---|---|---|---|---|
@@ -1191,7 +1190,7 @@ dicache, fastercache, worldcache` are each exactly one dir.
 ### 10.3 Undeclared dependencies hit
 
 The multiview branch needed `numba` injected into `uv run`. Here the
-equivalents, all worked around in `hallucination/run.sh`:
+equivalents, all worked around in `metrics/kiva/run.sh`:
 
 | # | dependency | declared? | symptom | workaround |
 |---|---|---|---|---|
@@ -1206,7 +1205,7 @@ Item 5 is the nastiest and has no upstream mention at all.
 
 ### 10.4 Verified
 
-- `origin/quang/hallucination-official` exists; worktree detached @ `5225ce7`;
+- `origin/quang/hallucination-official` exists; vendored @ `5225ce7` (was a detached worktree);
   12 commits ahead of `-humanoid`, 0 behind.
 - All three benchmark reader checkpoints load and score; sha256 recorded
   (`5e463b70358e53b5`, `663a39a11e0f0ef0`, `c40fc00688a53179`).
@@ -1217,8 +1216,8 @@ Item 5 is the nastiest and has no upstream mention at all.
 - End-to-end mp4 → `segments.csv` → leaderboard, for **all three embodiments**
   and **both roles** (`pred` and `gt`), via the committed launcher only.
 - Multi-variant sweep in one invocation: 5 variants, 13 min 37 s, 0 failures.
-- `hallucination/probe_clips.py` on all three embodiments; both roles reported.
-- `hallucination/aggregate.py`: `--intersect`/`--no-intersect`,
+- `metrics/kiva/probe_clips.py` on all three embodiments; both roles reported.
+- `metrics/kiva/aggregate.py`: `--intersect`/`--no-intersect`,
   `--anchor-role gt`, `--baseline`, `--embodiment`, all 5 `--detectors`,
   `--json` provenance.
 - **Real-video anchor measured** (§7.2) and **replicated**: A1X jerk
@@ -1263,7 +1262,7 @@ Item 5 is the nastiest and has no upstream mention at all.
 - **No `non_makovian` split scored** for any cell.
 - **No human-agreement study for this metric.** `metrics/reports/hallucinate_human_vs_dr.csv`
   holds 291 human ratings mapped to 258 local clips, and
-  `metrics/hallucination/map_to_dr.py` / upstream's `scripts/score_agreement.py`
+  `metrics/kiva/map_to_dr.py` / upstream's `scripts/score_agreement.py`
   are the hooks — but **the correlation between this metric and those human
   labels has not been computed.** This is the single highest-value next step: it
   would tell us whether `jerk` actually tracks perceived hallucination.
@@ -1285,9 +1284,9 @@ Created in this repo (sizes as of 2026-10-05):
 
 | Path | Bytes | Role |
 |---|---|---|
-| `metrics/hallucination/run.sh` | 13 921 | Launcher: worktree bootstrap, store/env/ffmpeg wiring, per-embodiment reader+cell+checkpoint resolution, `pred`/`gt` role switch, multi-variant sweep, tmux mode, single-directory mode. |
-| `metrics/hallucination/probe_clips.py` | 10 797 | Pre-flight: `ffprobe` every clip, report scorable / wrong-size / too-short per role, estimate segments. The analogue of the multiview frame extractor — this metric needs a *probe*, not extraction. |
-| `metrics/hallucination/aggregate.py` | 15 989 | `segments.csv` → variant leaderboard with rate + severity, real-video anchor as a pseudo-variant, `--intersect`, reader/threshold provenance, `--json`. |
+| `metrics/kiva/run.sh` | 13 921 | Launcher: vendored-code check, store/env/ffmpeg wiring, per-embodiment reader+cell+checkpoint resolution, `pred`/`gt` role switch, multi-variant sweep, tmux mode, single-directory mode. |
+| `metrics/kiva/probe_clips.py` | 10 797 | Pre-flight: `ffprobe` every clip, report scorable / wrong-size / too-short per role, estimate segments. The analogue of the multiview frame extractor — this metric needs a *probe*, not extraction. |
+| `metrics/kiva/aggregate.py` | 15 989 | `segments.csv` → variant leaderboard with rate + severity, real-video anchor as a pseudo-variant, `--intersect`, reader/threshold provenance, `--json`. |
 | `docs/hallucination_metric.md` | this file | This document. |
 
 Pre-existing in this repo (**prior work by others, not created here**):
@@ -1297,7 +1296,7 @@ Pre-existing in this repo (**prior work by others, not created here**):
 | `scripts/build_hallucination_segment_catalog.py` | September, segment catalog builder. |
 | `scripts/export_hallucinate_results.py` | September, result exporter. |
 | `tmp/20261005_refactor/web/scripts/export_hallucinate_final_labels.js` | September, label exporter. |
-| `metrics/hallucination/map_to_dr.py` | September, maps rated web clips → local paths. |
+| `metrics/kiva/map_to_dr.py` | September, maps rated web clips → local paths. |
 | `metrics/reports/hallucinate_human_vs_dr.csv` | September, 291 human ratings + PSNR/SSIM/LPIPS. |
 | `metrics/reports/hallucinate_source_map.json` | September, 258/291 resolved clip provenance. |
 
@@ -1305,7 +1304,7 @@ Created outside git tracking:
 
 | Path | Role |
 |---|---|
-| `external/hallucination/` | git worktree, detached @ `5225ce7`. |
+| `metrics/kiva/` | vendored kinescore @ `5225ce7` + our wrappers (`VENDORED.md`). |
 | `/tmp/hal_results/` | the §6.2/§6.5 5-variant sweep + GT anchor. |
 | `/tmp/hal_agg/` | the §6.2 8-clip anchored run + §6.4 broken control. |
 | `/tmp/hal_smoke/` | the §6.3 three-embodiment pred/gt runs. |
@@ -1316,7 +1315,7 @@ Upstream, read-only references:
 
 | Path | Role |
 |---|---|
-| `external/hallucination/src/kinescore/violations/{detectors,scorer,segments,table}.py` | the metric itself. |
-| `external/hallucination/docs/{METRICS,MODEL,RUNBOOK,QUICKSTART}.md` | upstream definition, reader maths, reproduction. |
+| `metrics/kiva/src/kinescore/violations/{detectors,scorer,segments,table}.py` | the metric itself. |
+| `metrics/kiva/docs/{METRICS,MODEL,RUNBOOK,QUICKSTART}.md` | upstream definition, reader maths, reproduction. |
 | `$HAL_STORE/{ckpt,assets,data,cache}/` | readers, URDFs, calibration clips, DINOv3 weights. |
 | `hf://buckets/twanghcmut/hallucinate-bench` | public, token-free source for all of the above. |

@@ -1,6 +1,6 @@
 """Sanity report for a dense NR smoke run: coverage, distributions, confounds, GT pairs.
 
-Usage: python scripts/analyze_dense_nr_smoke.py --run metrics/WorldScore/results/dense_nr_v3_smoke
+Usage: python scripts/analyze_dense_nr_smoke.py --run metrics/WorldScore/results/<smoke_run>  (e.g. the archived tmp/20261005_refactor/misc/worldscore_results/dense_nr_v3_smoke)
 """
 import argparse
 import collections

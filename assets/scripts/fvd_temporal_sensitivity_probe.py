@@ -57,7 +57,7 @@ from export_dr_grid_xlsx_vs_real import ref_identity                     # noqa:
 from fvd_pool_common import (I3D_SIZE, I3D_WINDOW, TARGET_FPS,           # noqa: E402
                              resample_fps, split_mosaic)
 
-I3D_CKPT = REPO / 'checkpoints/fvd/i3d_torchscript.pt'
+from metrics.fvd import I3D_CKPT                                         # noqa: E402
 FEAT_CACHE = REPO / 'metrics/WorldScore/results/fvd_perview/feats'
 OUT = REPO / 'metrics/reports/fvd_temporal_sensitivity.json'
 

@@ -8,7 +8,7 @@ matched-grid resampling is needed):
   content_alignment   ``quality_control_probe.py``  clip_score — torchmetrics
                                                     CLIPScore(clip-vit-base-patch16), 0-100
   object_control      ``quality_control_probe.py``  GroundingDINO detection rate
-                      ``object_control_viz.py``     annotated boxes on representative frames
+                      (the box-overlay viz was archived to tmp/20261005_refactor/misc/metrics/quality/)
 
 Note: WorldScore exports two CLIPScore classes; the evaluator uses the *torchmetrics*
 one (0-100), not pyiqa's (0-2.5, aliased ``IQACLIPScoreMetric`` and never used).

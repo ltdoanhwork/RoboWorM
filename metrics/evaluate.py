@@ -19,13 +19,13 @@ Examples::
     $PY -m metrics.evaluate --pred-root sampling_dataset/dense/single_arm/output/singleview/dreamgen/makovian \\
         --metrics fidelity clip_score --out results/metrics/dense_single_arm_mk
 
-    # kinescore hallucination with the GT anchor in the same call
-    $PY -m metrics.evaluate --pred-root <dir> --metrics hallucination \\
-        --opt hallucination.embodiment=single_arm --opt hallucination.score_ref=true --out <out>
+    # KIVA (kinescore hallucination) with the GT anchor in the same call
+    $PY -m metrics.evaluate --pred-root <dir> --metrics kiva \\
+        --opt kiva.embodiment=single_arm --opt kiva.score_ref=true --out <out>
 
-    # multiview consistency on extracted episode dirs
+    # RIGIS (multiview consistency) on extracted episode dirs
     $PY -m metrics.evaluate --pred-root sampling_dataset/multiview_consistency/frames/dense/<...> \\
-        --pred-glob '*' --ref-template '' --metrics multiview_consistency --out <out>
+        --pred-glob '*' --ref-template '' --metrics rigis --out <out>
 
 Outputs in ``--out``: ``<metric>.json`` (full MetricResult), ``per_sample.csv``
 (one row per sample, all metrics joined on id) and ``summary.json``.
@@ -135,7 +135,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--metrics", nargs="+", required=True, help=f"any of: {' '.join(available())}")
     ap.add_argument("--opt", action="append", default=[], metavar="METRIC.KEY=VALUE",
-                    help="per-metric constructor kwarg, e.g. hallucination.embodiment=bimanual")
+                    help="per-metric constructor kwarg, e.g. kiva.embodiment=bimanual")
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--out", required=True)
     ap.add_argument("--fail-fast", action="store_true")

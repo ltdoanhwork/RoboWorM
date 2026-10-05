@@ -95,7 +95,7 @@ human judgments; numerical smoke tests alone do not establish metric validity.
 ## v2 paper protocol queue
 
 `dense_nr_v2_queue` is queued behind the frozen v1 job and launches
-`results/dense_nr_v2` only after v1 exits. v2 fixes source-frame normalization
+`results/dense_nr_v2` (now archived in `tmp/20261005_refactor/misc/worldscore_results/`) only after v1 exits. v2 fixes source-frame normalization
 for activity thresholds, adds p10 VisualIntegrity, localized motion p95,
 activity-weighted continuity, and static-camera drift. It omits text scores for
 image-conditioned methods. Its paper columns and units are frozen in
