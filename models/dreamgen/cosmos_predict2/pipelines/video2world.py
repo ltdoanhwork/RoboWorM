@@ -58,6 +58,7 @@ from methods.cache_strategy.common import reset_cache_runtime
 from methods.prunning.importance_token_merge.runtime import build_itm_attention_context, compute_itm_heat_map
 from methods.cache_strategy.common import (
     BSCConfig,
+    BWCacheConfig,
     CacheRuntimeConfig,
     WorldCacheConfig,
     DiCacheConfig,
@@ -461,6 +462,18 @@ class Video2WorldPipeline(BasePipeline):
 
             log.info("[ScalingCache] Applying ScalingCache runtime from AM_DiT/src/scl")
             return apply_scalingcache(net, self.cache_config)
+        if isinstance(self.cache_config, BWCacheConfig):
+            # BWCache: runtime AM_DiT/methods/cache_strategy/BWCache/dit.py, DreamGen adapter
+            # .../BWCache/dreamgen.py, reached via AM_DiT/src (bwcache.backend).
+            from bwcache.backend import apply_bwcache
+
+            log.info(
+                f"[BWCache] Applying BWCache runtime from AM_DiT: "
+                f"thresh={self.cache_config.rel_l1_thresh} "
+                f"reuse_interval={self.cache_config.reuse_interval} "
+                f"last_step={self.cache_config.last_step} "
+                f"warmup={self.cache_config.warmup_steps} (denoise steps)")
+            return apply_bwcache(net, self.cache_config)
         if isinstance(self.cache_config, BSCConfig):
             # BSC is ours: algorithm core in AM_DiT/src/bsc, DiT adaptation in
             # AM_DiT/methods/cache_strategy/BSC. Same route as ScalingCache above --

@@ -468,8 +468,13 @@ def main() -> None:
     # A backend missing from this prefix list is accepted on the command line, printed in
     # the launcher banner, and then silently ignored -- so keep it in step with
     # methods.cache_strategy.config.CACHE_SELECTOR_FLAGS.
+    # Prefixes are DERIVED from CACHE_SELECTOR_FLAGS (one per backend) rather than
+    # hand-listed: a hand-written list once lacked a backend, and that backend's
+    # whole sweep ran dense with no error (AM_DiT BSC-on-DreamGen wiring bug).
+    from methods.cache_strategy.config import CACHE_SELECTOR_FLAGS as _CSF
+    _cache_prefixes = tuple(f.removesuffix("enabled") for f in _CSF)
     for _attr in vars(args):
-        if _attr.startswith(("worldcache_", "dicache_", "fastercache_", "scalingcache_", "bsc_")):
+        if _attr.startswith(_cache_prefixes):
             setattr(pipe_args, _attr, getattr(args, _attr))
 
     # Forward sparse-attention flags (use_pisa/pisa_*, use_svg/svg_*, use_radial/

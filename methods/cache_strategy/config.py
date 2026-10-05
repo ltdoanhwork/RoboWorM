@@ -3,6 +3,7 @@ from typing import Any
 
 from methods.cache_strategy.common import (
     BSCConfig,
+    BWCacheConfig,
     CacheRuntimeConfig,
     DiCacheConfig,
     FasterCacheConfig,
@@ -59,7 +60,17 @@ def add_dreamgen_cache_args(parser: argparse.ArgumentParser):
     group.add_argument("--scalingcache-alpha-dict-path", type=str, default=None, help="Path to alpha_dict_*.pth (when --scalingcache-use-alpha).")
     group.add_argument("--scalingcache-update-alpha", action="store_true", help="Offline alpha-fitting pass (force Scaling, fit alphas).")
     group.add_argument("--scalingcache-granularity", type=str, default="block", choices=["block", "submodule"], help="Cache granularity: 'block' (memory-safe, default) or 'submodule' (faithful, ~3x memory).")
+    group.add_argument("--scalingcache-no-warm-calibrate", dest="scalingcache_warm_calibrate", action="store_false", help="Disable Algorithm-1 seeding of delta_s (reproduces the unseeded defect; AM_DiT INSIGHTS SEC 61).")
+    group.set_defaults(scalingcache_warm_calibrate=True)
 
+    # BWCache (implemented in AM_DiT: methods/cache_strategy/BWCache/{dit,dreamgen}.py).
+    # Units are DENOISE steps. Paper defaults: delta=0.15, R=10% of T, last_step=1/2.
+    group.add_argument("--bwcache-enabled", action="store_true", help="Enable BWCache (step-level residual reuse) from AM_DiT.")
+    group.add_argument("--bwcache-num-steps", type=int, default=35, help="Total denoising steps (overwritten per chunk by the pipeline's own count).")
+    group.add_argument("--bwcache-rel-l1-thresh", type=float, default=0.15, help="Similarity threshold delta that triggers the periodic reuse schedule.")
+    group.add_argument("--bwcache-reuse-interval", type=int, default=3, help="R: reuse R steps then compute 1.")
+    group.add_argument("--bwcache-last-step", type=float, default=0.5, help="Fraction (<1) or count (>=1) of final steps always computed.")
+    group.add_argument("--bwcache-warmup-steps", type=int, default=3, help="Leading denoise steps always computed.")
     # BSC -- ours (implemented in AM_DiT: src/bsc core + methods/cache_strategy/BSC).
     # Unlike the step-level baselines above, BSC gates GROUPS OF DiT BLOCKS and predicts a
     # skipped group's output from its cached anchor, so the knobs are per-block/per-group.
@@ -120,6 +131,7 @@ CACHE_SELECTOR_FLAGS: tuple[str, ...] = (
     "worldcache_enabled",
     "dicache_enabled",
     "scalingcache_enabled",
+    "bwcache_enabled",
     "bsc_enabled",
 )
 
@@ -192,6 +204,15 @@ def build_cache_runtime_config(setup_args: Any) -> CacheRuntimeConfig | None:
             alpha_dict_path=getattr(setup_args, "scalingcache_alpha_dict_path", None),
             update_alpha=getattr(setup_args, "scalingcache_update_alpha", False),
             granularity=getattr(setup_args, "scalingcache_granularity", "block"),
+            warm_calibrate=getattr(setup_args, "scalingcache_warm_calibrate", True),
+        )
+    if getattr(setup_args, "bwcache_enabled", False):
+        return BWCacheConfig(
+            num_steps=getattr(setup_args, "bwcache_num_steps", 35),
+            rel_l1_thresh=getattr(setup_args, "bwcache_rel_l1_thresh", 0.15),
+            reuse_interval=getattr(setup_args, "bwcache_reuse_interval", 3),
+            last_step=getattr(setup_args, "bwcache_last_step", 0.5),
+            warmup_steps=getattr(setup_args, "bwcache_warmup_steps", 3),
         )
     if getattr(setup_args, "bsc_enabled", False):
         return BSCConfig(

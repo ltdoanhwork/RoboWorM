@@ -57,7 +57,29 @@ class ScalingCacheConfig:
     alpha_dict_path: str | None = None
     update_alpha: bool = False
     granularity: str = "block"  # "block" (memory-safe) or "submodule" (faithful, ~3x memory)
+    # Algorithm 1 seeding of delta_s from the full steps. ON: the unseeded threshold was a
+    # measured bug on Ctrl-World (AM_DiT docs/INSIGHTS.md SEC 61). The AM_DiT adapter
+    # (AM_DiT/methods/cache_strategy/ScalingCache/dreamgen.py) reads this by name.
+    warm_calibrate: bool = True
 
+
+@dataclass(frozen=True)
+class BWCacheConfig:
+    """BWCache (block-wise caching, ICLR 2026). Implemented in AM_DiT.
+
+    Runtime: ``AM_DiT/methods/cache_strategy/BWCache/dit.py::BWCacheRuntime`` (the DreamDojo
+    port, reused); DreamGen adapter: ``.../BWCache/dreamgen.py``, reached as
+    ``bwcache.backend`` via ``AM_DiT/src`` on PYTHONPATH (same route as ``scl.backend``).
+
+    Units are DENOISE steps (the runtime keeps one state per CFG branch). Paper defaults:
+    delta=0.15, R = 10% of T (3 at T=35), last_step = 1/2.
+    """
+
+    num_steps: int = 35
+    rel_l1_thresh: float = 0.15
+    reuse_interval: int = 3
+    last_step: float = 0.5
+    warmup_steps: int = 3
 
 @dataclass(frozen=True)
 class BSCConfig:
@@ -118,7 +140,8 @@ class BSCConfig:
     snr_skip_t: float = 0.0
 
 
-CacheRuntimeConfig = WorldCacheConfig | DiCacheConfig | FasterCacheConfig | ScalingCacheConfig | BSCConfig
+CacheRuntimeConfig = (WorldCacheConfig | DiCacheConfig | FasterCacheConfig | ScalingCacheConfig
+                      | BWCacheConfig | BSCConfig)
 
 
 def get_cache_backend_name(config: CacheRuntimeConfig | None) -> str | None:
@@ -132,6 +155,8 @@ def get_cache_backend_name(config: CacheRuntimeConfig | None) -> str | None:
         return "fastercache"
     if isinstance(config, ScalingCacheConfig):
         return "scalingcache"
+    if isinstance(config, BWCacheConfig):
+        return "bwcache"
     if isinstance(config, BSCConfig):
         return "bsc"
     raise TypeError(f"Unsupported cache config type: {type(config)!r}")
@@ -234,6 +259,11 @@ def reset_cache_runtime(model, config: CacheRuntimeConfig | None, num_steps: int
         from scl.backend import reset_scalingcache_state
 
         return reset_scalingcache_state(model, config, num_steps=num_steps)
+    if isinstance(config, BWCacheConfig):
+        # Same contract as BSC below: RAISES if the runtime is missing (INSIGHTS SEC 47).
+        from bwcache.backend import reset_bwcache_state
+
+        return reset_bwcache_state(model, config, num_steps=num_steps)
     if isinstance(config, BSCConfig):
         # Per-episode reset is NOT optional. The DeepCache baseline produced a whole
         # table of numbers that had to be retracted twice because its cache was never
