@@ -13,5 +13,16 @@ export OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 TOKENIZERS_PARALLELISM=false
 # from 5 -> 10 workers), so the last two workers buy little and cost reliability.
 export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0}"
+# Some Determined images (e.g. the one behind the VLAq shell) ship without OpenCV runtime
+# deps, so every worker there died instantly with
+#   ImportError: libGL.so.1: cannot open shared object file
+# while the launcher still printed a normal banner + PGID, so it looked like a good launch.
+# Those containers have no sudo, but /pfss is shared, so libs copied from a working image
+# (vendor/libgl/, 10 files: libGL, libGLX, libGLdispatch, libX11, libXext, libxcb, libXau,
+# libXdmcp, libgthread-2.0, libglib-2.0) are enough -- verified import cv2 -> 4.11.0.
+# Append rather than prepend so an image keeps its own newer libs in front.
+if [ -d "$REPO/vendor/libgl" ]; then
+  export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}$REPO/vendor/libgl"
+fi
 cd "$REPO/metrics/WorldScore"
 exec "$REPO/models/dreamgen/.venv/bin/python" -u "$REPO/scripts/run_dense_nr.py" "$@"

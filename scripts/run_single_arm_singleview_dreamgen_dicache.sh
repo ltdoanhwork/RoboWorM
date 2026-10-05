@@ -78,6 +78,7 @@ OUTPUT_ROOT="${OUTPUT_ROOT:-${ROOT}/sampling_dataset/dicache/single_arm/output/s
 SPLITS="${SPLITS:-makovian non_makovian}"
 NUM_CHUNKS="${NUM_CHUNKS:-2 3}"
 FORCE_REGENERATE="${FORCE_REGENERATE:-0}"
+MAX_EPISODES="${MAX_EPISODES:-}"
 PROMPT_REFINE="${PROMPT_REFINE:-0}"
 PROMPT_PREFIX="${PROMPT_PREFIX:-}"
 SOURCE_FPS=15
@@ -313,27 +314,27 @@ run_inference() {
 
   local tmp_batch_json=""
   local run_json="${batch_json}"
-  if [[ "${FORCE_REGENERATE}" != "1" ]]; then
-    tmp_batch_json="$(mktemp --suffix=_dreamgen_dicache.json)"
-    local pending
-    pending="$(python3 -c "
-import json
+  tmp_batch_json="$(mktemp --suffix=_dreamgen_dicache.json)"
+  local pending
+  pending="$(python3 - "${batch_json}" "${tmp_batch_json}" "${FORCE_REGENERATE}" "${MAX_EPISODES}" <<'PY'
+import json, sys
 from pathlib import Path
-items = json.loads(Path('${batch_json}').read_text())
-pending = [x for x in items if not Path(x['output_video']).is_file()]
-Path('${tmp_batch_json}').write_text(json.dumps(pending, indent=2))
+src, dst, force, max_eps = sys.argv[1:5]
+items = json.loads(Path(src).read_text())
+pending = list(items) if force == "1" else [x for x in items if not Path(x["output_video"]).is_file()]
+if max_eps:
+    pending = pending[: int(max_eps)]
+Path(dst).write_text(json.dumps(pending, indent=2))
 print(len(pending))
-")"
-    if [[ "${pending}" -eq 0 ]]; then
-      echo "  [SKIP] ${label}: all ${item_count} episodes done"
-      rm -f "${tmp_batch_json}"
-      return
-    fi
-    echo "  === Running: ${label} (${pending}/${item_count} pending, chunks=${num_chunks}) ==="
-    run_json="${tmp_batch_json}"
-  else
-    echo "  === Running: ${label} (${item_count} episodes, chunks=${num_chunks}) ==="
+PY
+)"
+  if [[ "${pending}" -eq 0 ]]; then
+    echo "  [SKIP] ${label}: all ${item_count} episodes done"
+    rm -f "${tmp_batch_json}"
+    return
   fi
+  echo "  === Running: ${label} (${pending}/${item_count} pending, chunks=${num_chunks}, cap=${MAX_EPISODES:-none}) ==="
+  run_json="${tmp_batch_json}"
 
   local pr_flag=""
   if [[ "${PROMPT_REFINE}" == "1" ]]; then

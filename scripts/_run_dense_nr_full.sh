@@ -103,7 +103,21 @@ MODE_FILE="$RUN/wave_mode.json"
 MODE_LIST="full-manifest"
 [ -n "$ONLY_IDS" ] && MODE_LIST="ids:$(sha256sum "$ONLY_IDS" | cut -c1-16)"
 MODE_NOW="machines=$MACHINES workers=$WORKERS list=$MODE_LIST"
-if [ -f "$MODE_FILE" ]; then
+# A REVERSE walker is exempt from the lock, and must be: it is NOT part of the stride
+# partition at all. It forces MACHINES=1 above (run_dense_nr.py rejects --reverse with
+# --machines>1), so its MODE_NOW would read `machines=1 ...` and never match a wave pinned
+# at `machines=6 ...` -- the guard would block the one mechanism that is actually safe to
+# add mid-wave. Its safety comes from a different property: it walks the id-sorted manifest
+# backwards as its own queue, and the `dest.exists()` skip plus atomic per-id writes make
+# any overlap with the forward front a no-op. It can neither orphan a row (the forward
+# partition still covers all of them) nor double-score one in a way that matters.
+# Only ONE reverse walker may exist -- there is a single backwards direction.
+if [ "$REVERSE" = "1" ]; then
+  if [ -f "$MODE_FILE" ]; then
+    echo "REVERSE walker: joining wave pinned as '$(cat "$MODE_FILE")' (exempt from the"
+    echo "  partition lock -- it is a separate backwards queue, not a stride slot)."
+  fi
+elif [ -f "$MODE_FILE" ]; then
   MODE_WAS="$(cat "$MODE_FILE")"
   if [ "$MODE_WAS" != "$MODE_NOW" ] && [ "${FORCE_MODE:-0}" != "1" ]; then
     cat >&2 <<EOF
@@ -125,6 +139,9 @@ EOF
   fi
 else
   # Atomic: several boxes may launch at once.
+  # Reached only when NOT a reverse walker (that branch returns above), so a reverse
+  # walker never pins the mode. If it did, launching it first would pin `machines=1` and
+  # then every real forward box would be refused.
   printf '%s' "$MODE_NOW" > "$MODE_FILE.$$.tmp" && mv "$MODE_FILE.$$.tmp" "$MODE_FILE"
   MODE_WAS="$(cat "$MODE_FILE")"
   if [ "$MODE_WAS" != "$MODE_NOW" ]; then

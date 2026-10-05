@@ -34,6 +34,17 @@ for split in makovian non_makovian; do
   save_base="${SAVE_ROOT}/${split}"
   mkdir -p "${save_base}"
   echo "=== Full-episode inference: ${split} -> ${save_base} ==="
+  # SAVE_FULL=1 adds --save-full, which is what makes the script emit
+  # PSNR/SSIM/LPIPS. Off by default so the canonical bulk runs stay video-only
+  # (that is why sampling_dataset has 216 humanoid mp4s but no metrics.json);
+  # the timing pass turns it on so speed and quality come from the same run.
+  full_flag=()
+  if [ "${SAVE_FULL:-0}" = "1" ]; then full_flag=(--save-full); fi
+  # GT_ONLY=1 backfills full_gt.mp4 next to predictions that were written
+  # video-only, without running diffusion -- needed because the reference-based
+  # (vs_gt) half of the DR grid has no reference for this cell otherwise. It
+  # loads no checkpoint and needs no GPU.
+  if [ "${GT_ONLY:-0}" = "1" ]; then full_flag=(--gt-only); fi
   python "${ROOT}/scripts/infer_humanoid_singleview_full_episode.py" \
     --checkpoints-dir "${CHECKPOINTS_DIR}" \
     --experiment "${EXPERIMENT}" \
@@ -41,5 +52,6 @@ for split in makovian non_makovian; do
     --save-dir "${save_base}" \
     --num-frames "${NUM_FRAMES}" \
     --output-dir "${ROOT}/output/dreamdojo_full_ep_humanoid_sv_${split}" \
+    "${full_flag[@]}" \
     "${ep_flag[@]}"
 done

@@ -136,7 +136,31 @@ def main() -> None:
     ws: Path = args.workspace
     gr1_base = ws / "datasets" / "humanoid" / "singleview" / PHYSICAL_NAME
     if not gr1_base.is_dir():
-        raise SystemExit(f"Missing dataset root: {gr1_base}")
+        # This repair backfills split meta FROM the original PhysicalAI release.
+        # Once the splits carry complete meta the source is no longer needed, and
+        # it is not kept in the workspace. Hard-failing here turned a finished
+        # one-off migration into a permanent startup error for every caller
+        # (run_humanoid_singleview_dreamdojo_{dense,sito,itm}.sh and the grid
+        # searches), which is why SiTo/ITM on this cell had never run. Treat an
+        # absent source as "nothing left to repair" when the splits already look
+        # complete, and only fail when they do not.
+        sv_root = ws / "datasets" / "humanoid" / "singleview"
+        incomplete = []
+        for name in (args.only if args.only else ["makovian", "non_makovian"]):
+            episodes = sv_root / name / "meta" / "episodes.jsonl"
+            n_meta = len(load_episode_lines(episodes)) if episodes.is_file() else 0
+            n_data = len(list((sv_root / name / "data").rglob("*.parquet")))
+            if n_meta == 0 or n_meta != n_data:
+                incomplete.append(f"{name} (meta={n_meta}, parquet={n_data})")
+        if incomplete:
+            raise SystemExit(
+                f"Missing dataset root: {gr1_base}\n"
+                f"and the splits are NOT already repaired: {', '.join(incomplete)}.\n"
+                "Restore the PhysicalAI release to repair them."
+            )
+        print(f"[skip] {gr1_base} absent, but split meta is already complete "
+              "-> nothing to repair")
+        return
 
     sv_root = ws / "datasets" / "humanoid" / "singleview"
     splits = args.only if args.only else ["makovian", "non_makovian"]

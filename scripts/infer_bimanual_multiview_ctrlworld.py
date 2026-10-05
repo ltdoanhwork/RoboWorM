@@ -355,6 +355,23 @@ def episode_output_dir(base_dir, episode_id):
     return base / f"episode_{name}"
 
 
+_CHUNK_TIMES = []
+
+# DD_MAX_CHUNKS / CW_MAX_CHUNKS: stop generating after N chunks.
+#
+# The benchmark unit is ONE chunk, and per-chunk cost is flat within an episode,
+# so generating all 9-33 chunks of an episode adds GPU time without adding
+# statistical power. The timing harness sets this to a small number; unset or 0
+# keeps the full episode, so canonical runs are unaffected.
+def _max_chunks():
+    import os
+    for k in ("BENCH_MAX_CHUNKS", "DD_MAX_CHUNKS", "CW_MAX_CHUNKS"):
+        v = os.environ.get(k)
+        if v and v.strip().isdigit() and int(v) > 0:
+            return int(v)
+    return 0
+
+
 def run_episode(agent, episode_id, save_dir, input_save_dir=None):
     args = agent.args
     pred_step = args.num_frames  # 5
@@ -390,6 +407,7 @@ def run_episode(agent, episode_id, save_dir, input_save_dir=None):
     video_to_save_gt = []
     history_idx = [0, 0, -8, -6, -4, -2]
 
+    _ep_chunks = 0
     for i in range(interact_num):
         start_id = int(i * (pred_step - 1))
         end_id = start_id + pred_step
@@ -404,11 +422,20 @@ def run_episode(agent, episode_id, save_dir, input_save_dir=None):
         his_cond_input = torch.cat([his_cond[idx] for idx in history_idx], dim=0).unsqueeze(0)
         current_latent = his_cond[-1]
 
+        _chunk_t0 = time.time()
         true_videos, pred_videos, predicted_latents = agent.forward_wm(
             action_cond, video_latent_true, current_latent,
             his_cond=his_cond_input,
             text=instruction if args.text_cond else None,
         )
+        _chunk_dt = time.time() - _chunk_t0
+        _CHUNK_TIMES.append(_chunk_dt)
+        print(f"  [ChunkTiming] chunk {len(_CHUNK_TIMES)}: {_chunk_dt:.3f}s", flush=True)
+        _cap = _max_chunks()
+        _ep_chunks += 1
+        if _cap and _ep_chunks >= _cap:
+            print(f"  [ChunkTiming] stopping after {_cap} chunk(s) (cap)", flush=True)
+            break
 
         his_eef.append(qpos_pose[pred_step - 1:pred_step])
         his_cond.append(
@@ -694,6 +721,25 @@ def _enable_backend(agent, args, num_inference_steps):
     return guidance_scale
 
 
+
+def _persist_wall_time(save_dir, episode_id, metrics):
+    """Re-dump metrics.json so it also carries `wall_time_s`.
+
+    run_episode() writes metrics.json before returning, and the caller only knows
+    the elapsed time afterwards, so without this the on-disk per-episode metrics
+    have no timing at all. That is the reason no Ctrl-World cell could have its
+    speedup computed from sampling_dataset and every timing had to be re-measured.
+    """
+    try:
+        ep_dir = episode_output_dir(save_dir, episode_id)
+        p = Path(ep_dir) / "metrics.json"
+        if p.is_file():
+            with open(p, "w") as f:
+                json.dump(metrics, f, indent=2)
+    except Exception as exc:  # never let bookkeeping kill a finished episode
+        print(f"  [warn] could not persist wall_time_s for {episode_id}: {exc}")
+
+
 def main():
     parser = ArgumentParser()
     parser.add_argument("--svd_model_path", type=str, required=True)
@@ -707,6 +753,13 @@ def main():
     parser.add_argument("--save_dir", type=str, required=True)
     parser.add_argument("--input_save_dir", type=str, default=None)
     parser.add_argument("--num_episodes", type=int, default=None)
+    parser.add_argument("--num_episodes_per_category", type=int, default=None,
+                        help="Keep the first N episodes of EACH category "
+                             "(makovian / non_makovian) instead of the first N "
+                             "overall. `--num_episodes` slices a list sorted by "
+                             "stem, where every `makovian_*` sorts before every "
+                             "`non_makovian_*`, so a small --num_episodes yields "
+                             "makovian-only and silently measures one category.")
     parser.add_argument("--num_inference_steps", type=int, default=None)
     parser.add_argument("--guidance_scale", type=float, default=None,
                         help="CFG scale for action conditioning. >1.0 amplifies "
@@ -781,7 +834,20 @@ def main():
         if anno_dir.exists():
             episode_ids += sorted([f.stem for f in anno_dir.glob("*.json")])
     episode_ids = sorted(set(episode_ids))
-    if args.num_episodes:
+    if args.num_episodes_per_category:
+        # Balanced subset: the first N of each category. Used by the timing pass,
+        # which must cover both categories without running the whole split.
+        by_cat = {}
+        for ep in episode_ids:
+            by_cat.setdefault(split_category(ep)[0], []).append(ep)
+        episode_ids = sorted(
+            ep for eps in by_cat.values()
+            for ep in eps[: args.num_episodes_per_category]
+        )
+        print(f"[balanced] {args.num_episodes_per_category} episode(s) per category "
+              f"-> {len(episode_ids)} total "
+              f"({', '.join(f'{k}:{min(len(v), args.num_episodes_per_category)}' for k, v in sorted(by_cat.items(), key=lambda kv: str(kv[0])))})")
+    elif args.num_episodes:
         episode_ids = episode_ids[:args.num_episodes]
     if args.num_shards > 1:
         # Interleaved sharding keeps each shard's episode-length mix balanced.
@@ -805,6 +871,7 @@ def main():
         _dt = time.time() - _t0
         if metrics:
             metrics["wall_time_s"] = _dt
+            _persist_wall_time(args.save_dir, episode_id, metrics)
             all_metrics.append(metrics)
             print(f"  -> {metrics['num_frames_pred']} frames, "
                   f"PSNR={metrics['psnr']:.2f}, SSIM={metrics['ssim']:.4f}, LPIPS={metrics['lpips']:.4f} "

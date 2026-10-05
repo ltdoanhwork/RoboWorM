@@ -19,11 +19,20 @@ import argparse
 import json
 import statistics
 import subprocess
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DENSE = ROOT / "sampling_dataset" / "dense"
+
+# Which cells the paper reports lives in ONE place (assets/scripts/benchmark_cells.py)
+# so this table, the accel tables, the speedup CSV and the figures cannot drift
+# apart. The Ctrl-World 3-view strip is excluded for bimanual/humanoid there
+# (superseded by their 4-view grid); single_arm keeps its strip.
+sys.path.insert(0, str(ROOT / "assets" / "scripts"))
+from benchmark_cells import cell_is_excluded as is_excluded  # noqa: E402
+from benchmark_cells import describe as describe_exclusions  # noqa: E402
 
 # --- Static, auditable per-cell facts -----------------------------------------
 # `pred` = glob (relative to <cell>/<split>/) of the video that IS the model
@@ -343,7 +352,15 @@ def main() -> None:
     ap.add_argument("--md", type=Path)
     args = ap.parse_args()
 
-    rows = [measure(c, args.max_clips, args.workers) for c in CELLS]
+    dropped = [c["cell"] for c in CELLS if is_excluded(c["cell"])]
+    if dropped:
+        # Printed, not silent: a cell disappearing from the paper should be
+        # visible in the log of the script that dropped it.
+        print("benchmark_cells: %s" % describe_exclusions())
+        for c in dropped:
+            print("  dropped %s" % c)
+    rows = [measure(c, args.max_clips, args.workers) for c in CELLS
+            if not is_excluded(c["cell"])]
     bad = [u for r in rows for u in r.get("unreadable", [])]
 
     md = ["# Dense generation configuration (measured)", "",

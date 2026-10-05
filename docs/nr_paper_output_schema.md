@@ -55,12 +55,23 @@ through the identical protocol and are the plausibility anchor for every column.
   stratum: `source_interval` is 1 for GT/Ctrl-World, 2–3 for DreamDojo, 3 for
   DreamGen, so px/source-frame spans different real time windows.
   `actor_motion_px_per_second` is the cross-fps-safe variant.
-- **On `head` mounts, AMC and VisualIntegrity are motion-confounded** (E1 criteria 3-4
-  at full n: `rho(actor_motion_raw, ·)` = **−0.541** and **−0.553**, vs a <0.35 bar;
-  static/wrist pass). Head is the only mount using ego-translation removal. Report those
-  two columns per mount with head flagged, or exclude head — never pool head into a
-  single AMC number. `table_dense_nr.CONFOUNDED_MOUNTS` stamps the warning on head rows
-  of **both** the GT-delta table (T2) and the accel-vs-dense table (T3).
+- **AMC, VisualIntegrity and TextAlignment are motion-confounded on `head` AND `wrist`**
+  (re-measured 2026-09-20 on the full run, 26,241 records, 400x bootstrap, via
+  `scripts/_check_confound_mounts.py`; bar |rho| >= 0.35 vs `actor_motion_raw`):
+
+  | col | head | static | wrist |
+  |---|---|---|---|
+  | `visual_integrity` | **-0.405** | +0.013 | **+0.380** |
+  | `text_condition_alignment` | **-0.377** | -0.069 | **+0.399** |
+  | `active_motion_continuity` | **-0.339** (dense-only -0.435 [-0.511,-0.353]) | -0.128 | +0.124 |
+
+  The sign flips by mount because head uses ego-translation removal (residual motion
+  coincides with hard/blurry frames) while on wrist the motion proxy IS whole-frame flow.
+  E1's earlier pass (-0.541 AMC, -0.553 VI, "head only") came from a ~1.5k head-heavy
+  sample and MISSED wrist entirely -- do not quote it. Report those columns per mount with
+  the flagged mounts marked, or exclude them -- never pool head into a single AMC number.
+  `table_dense_nr.CONFOUNDED_MOUNTS` is the authority and stamps the warning on flagged
+  rows of **both** the GT-delta table (T2) and the accel-vs-dense table (T3).
 - **VisualIntegrity is descriptive-only for MODEL ranking but claim-eligible for the
   ACCELERATION comparison.** Its GT-is-ceiling failure (E1) is an insensitivity to the
   generative-vs-real gap, and that bias cancels when a method clip is differenced against

@@ -50,7 +50,9 @@ from methods.human_assessment.video_overlay import overlay_flow_rgb  # noqa: E40
 
 N_VIDEOS = 300
 HF_REPO = "doanh25032004/video_gen_physics"
-HF_PREFIX = "assessment/multiview_static2"
+# Must match where the clips actually live in the HF dataset repo
+# (uploads land under data_for_web/, not a bare assessment/ prefix).
+HF_PREFIX = "data_for_web/assessment/multiview_static2"
 SAMPLING = REPO / "sampling_dataset"
 DEST = SAMPLING / "data_for_web" / "assessment" / "multiview_static2"
 ASSETS = REPO / "assets"

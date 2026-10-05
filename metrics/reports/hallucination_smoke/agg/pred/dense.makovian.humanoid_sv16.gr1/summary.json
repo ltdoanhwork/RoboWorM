@@ -1,0 +1,51 @@
+{
+  "cell_id": "humanoid.sv1_16x9.dreamgen",
+  "reader_id": "fourier_gr1.humanoid_sv.sv1_16x9",
+  "checkpoint": "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/triquang/kinescore-store/ckpt/fourier_gr1.humanoid_sv.sv1_16x9.huber_old.pt",
+  "checkpoint_sha256": "c40fc00688a53179b87943420e2c280021f8fea2de757c2562606b65cadb4aac",
+  "videos": "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/sampling_dataset/dense/humanoid/output/singleview/dreamgen/makovian",
+  "select": {
+    "embodiment": "humanoid",
+    "view": "singleview",
+    "model": "dreamgen"
+  },
+  "n_clips": 2,
+  "n_failed": 0,
+  "n_scored_by_role": {
+    "": 2
+  },
+  "n_calibration_clips": 24,
+  "percentile": 95.0,
+  "thresholds": {
+    "rigidity": {
+      "units": "mm",
+      "threshold": 43.47,
+      "segment_threshold": 42.81,
+      "segment_reduce": "median"
+    },
+    "jerk": {
+      "units": "mm/s^3",
+      "threshold": 456246.3,
+      "segment_threshold": 730814.77,
+      "segment_reduce": "worst"
+    },
+    "teleport": {
+      "units": "mm/s",
+      "threshold": 453.08,
+      "segment_threshold": 863.83,
+      "segment_reduce": "worst"
+    },
+    "joint_limit": {
+      "units": "deg",
+      "threshold": 3.3,
+      "segment_threshold": 12.61,
+      "segment_reduce": "worst"
+    },
+    "self_collision": {
+      "units": "mm(min-dist)",
+      "threshold": 164.25,
+      "segment_threshold": 159.15,
+      "segment_reduce": "worst"
+    }
+  }
+}

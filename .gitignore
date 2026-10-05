@@ -229,6 +229,12 @@ webpage/*
 metrics/motion_probe_out/
 metrics/sim2real_out/*
 
+# git worktree of origin/thanhnv/multiview-consistency-indep (the VGGT-Omega
+# multiview-consistency metric) plus its uv .venv. Created on demand by
+# scripts/run_multiview_consistency.sh — never commit its contents here.
+# See docs/multiview_consistency_metric.md
+external/multiview-consistency/
+
 # Deployable labeling site (tracked despite webpage/* above). config.js IS
 # committed here on purpose: SUPABASE_URL/PUBLISHABLE_KEY are meant to be
 # public (Supabase's "publishable key" is safe client-side, gated by RLS),
@@ -259,3 +265,6 @@ assets/paper/_preview_*.tex
 assets/paper/*.aux
 assets/paper/*.log
 assets/paper/*.out
+
+# local chromium loader shim for headless screenshots (symlinks into miniforge pkgs)
+.chromium-libs/

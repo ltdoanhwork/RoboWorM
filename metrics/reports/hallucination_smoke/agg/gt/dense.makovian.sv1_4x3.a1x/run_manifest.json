@@ -1,0 +1,86 @@
+{
+  "command": "score",
+  "argv": [
+    "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/external/hallucination/src/kinescore/cli/main.py",
+    "score",
+    "--cell",
+    "single_arm.sv1_4x3.dense_dreamgen",
+    "--device",
+    "cuda",
+    "--checkpoint",
+    "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/triquang/kinescore-store/ckpt/a1x_ee.a1x_sv.sv1_4x3.pt",
+    "--videos",
+    "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/sampling_dataset/dense/single_arm/output/singleview/dreamgen/makovian",
+    "--pattern",
+    "*_gt.mp4",
+    "--out",
+    "/tmp/hal_agg/gt/dense.makovian.sv1_4x3.a1x",
+    "--frame-chunk",
+    "16",
+    "--calibration-clips",
+    "24",
+    "--percentile",
+    "95",
+    "--limit",
+    "8"
+  ],
+  "started_at": "2026-10-04T15:00:42+00:00",
+  "kinescore_version": "0.2.0",
+  "git_sha": "5225ce75769df27bba6626fe0a4218aee2bcbcd3",
+  "git_dirty": true,
+  "host": "f750d639c356",
+  "config_sha256": {
+    "views.yaml": "e91d884d106b0a31460bfd50cd49b86574fadc4e7b98334e6ee2202e836b8e4e",
+    "robots.yaml": "44718130e67e4e3ac59fe2d0673ae7651d5ee1309c7336f117ea720e032fa4e9",
+    "cells.yaml": "51dd745f356f39a0ded4b1a24f2f4368f269efc1449c376e1744f025081bd011"
+  },
+  "cell_id": "single_arm.sv1_4x3.dense_dreamgen",
+  "reader_id": "a1x_ee.a1x_sv.sv1_4x3",
+  "checkpoint": "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/triquang/kinescore-store/ckpt/a1x_ee.a1x_sv.sv1_4x3.pt",
+  "checkpoint_sha256": "5e463b70358e53b53dc855fef1c39c95327977c6c03da275a230f11323e87b7e",
+  "videos": "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/sampling_dataset/dense/single_arm/output/singleview/dreamgen/makovian",
+  "select": {
+    "embodiment": "single_arm",
+    "view": "singleview",
+    "model": "dense_dreamgen"
+  },
+  "n_clips": 8,
+  "n_failed": 0,
+  "n_scored_by_role": {
+    "": 8
+  },
+  "n_calibration_clips": 12,
+  "percentile": 95.0,
+  "thresholds": {
+    "rigidity": {
+      "units": "mm",
+      "threshold": 18.0,
+      "segment_threshold": 8.48,
+      "segment_reduce": "median"
+    },
+    "jerk": {
+      "units": "mm/s^3",
+      "threshold": 246988.32,
+      "segment_threshold": 367914.02,
+      "segment_reduce": "worst"
+    },
+    "teleport": {
+      "units": "mm/s",
+      "threshold": 403.49,
+      "segment_threshold": 633.36,
+      "segment_reduce": "worst"
+    },
+    "joint_limit": {
+      "units": "deg",
+      "threshold": 3.0,
+      "segment_threshold": 5.26,
+      "segment_reduce": "worst"
+    },
+    "self_collision": {
+      "units": "mm(min-dist)",
+      "threshold": 32.15,
+      "segment_threshold": 29.64,
+      "segment_reduce": "worst"
+    }
+  }
+}

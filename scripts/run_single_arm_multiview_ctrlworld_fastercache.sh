@@ -23,7 +23,7 @@ export XLA_PYTHON_CLIENT_MEM_FRACTION=0.4
 # Model paths
 SVD_MODEL_PATH="./checkpoints/stabilityai/stable-video-diffusion-img2vid"
 CLIP_MODEL_PATH="./checkpoints/openai/clip-vit-base-patch32"
-CKPT_PATH="./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt"
+CKPT_PATH="${CKPT:-./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt}"
 DATASET_META_INFO="./models/Ctrl-World/dataset_meta_info"
 DATASET_EXAMPLE_DIR="./models/Ctrl-World/dataset_example"
 
@@ -32,8 +32,12 @@ FASTERCACHE_START_STEP="${FASTERCACHE_START_STEP:-0}"
 FASTERCACHE_MODEL_INTERVAL="${FASTERCACHE_MODEL_INTERVAL:-5}"
 FASTERCACHE_BLOCK_INTERVAL="${FASTERCACHE_BLOCK_INTERVAL:-3}"
 
-OUTPUT_BASE="${PROJECT_ROOT}/sampling_dataset/fastercache/single_arm/output/multiview/ctrlworld"
-INPUT_BASE="${PROJECT_ROOT}/sampling_dataset/fastercache/single_arm/input/multiview/ctrlworld"
+OUTPUT_BASE="${OUTPUT_ROOT:-${PROJECT_ROOT}/sampling_dataset/fastercache/single_arm/output/multiview/ctrlworld}"
+INPUT_BASE="${INPUT_ROOT:-${PROJECT_ROOT}/sampling_dataset/fastercache/single_arm/input/multiview/ctrlworld}"
+
+EXTRA=""
+if [ -n "${NUM_EPISODES:-}" ]; then EXTRA="${EXTRA} --num_episodes ${NUM_EPISODES}"; fi
+if [ -n "${NUM_INFERENCE_STEPS:-}" ]; then EXTRA="${EXTRA} --num_inference_steps ${NUM_INFERENCE_STEPS}"; fi
 
 echo "=========================================================="
 echo "Ctrl-World + FasterCache | Single-Arm Multiview Inference"
@@ -42,12 +46,14 @@ echo "Params: start_step=${FASTERCACHE_START_STEP}, model_interval=${FASTERCACHE
 echo "=========================================================="
 
 # Step 1: Prepare dataset
+if [ "${SKIP_PREPARE:-0}" != "1" ]; then
 echo ""
 echo "[Step 1] Preparing dataset (LeRoBot -> Ctrl-World format)..."
 python scripts/prepare_ctrlworld_single_arm_multiview.py \
     --subset "${SUBSET}" \
     --output-dir "${DATASET_EXAMPLE_DIR}" \
     --dataset-base "${PROJECT_ROOT}/datasets/single_arm/multiview"
+fi
 
 # Step 2: Run inference with FasterCache
 if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "makovian" ]; then
@@ -65,7 +71,7 @@ if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "makovian" ]; then
         --use_fastercache \
         --fastercache_start_step "${FASTERCACHE_START_STEP}" \
         --fastercache_model_interval "${FASTERCACHE_MODEL_INTERVAL}" \
-        --fastercache_block_interval "${FASTERCACHE_BLOCK_INTERVAL}"
+        --fastercache_block_interval "${FASTERCACHE_BLOCK_INTERVAL}" ${EXTRA}
 fi
 
 if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "non_makovian" ]; then
@@ -83,7 +89,7 @@ if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "non_makovian" ]; then
         --use_fastercache \
         --fastercache_start_step "${FASTERCACHE_START_STEP}" \
         --fastercache_model_interval "${FASTERCACHE_MODEL_INTERVAL}" \
-        --fastercache_block_interval "${FASTERCACHE_BLOCK_INTERVAL}"
+        --fastercache_block_interval "${FASTERCACHE_BLOCK_INTERVAL}" ${EXTRA}
 fi
 
 echo ""

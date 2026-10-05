@@ -188,6 +188,23 @@ def compute_metrics(pred_frames, gt_frames):
     return {"psnr": psnr_val, "ssim": ssim_val, "lpips": lpips_val}
 
 
+_CHUNK_TIMES = []
+
+# DD_MAX_CHUNKS / CW_MAX_CHUNKS: stop generating after N chunks.
+#
+# The benchmark unit is ONE chunk, and per-chunk cost is flat within an episode,
+# so generating all 9-33 chunks of an episode adds GPU time without adding
+# statistical power. The timing harness sets this to a small number; unset or 0
+# keeps the full episode, so canonical runs are unaffected.
+def _max_chunks():
+    import os
+    for k in ("BENCH_MAX_CHUNKS", "DD_MAX_CHUNKS", "CW_MAX_CHUNKS"):
+        v = os.environ.get(k)
+        if v and v.strip().isdigit() and int(v) > 0:
+            return int(v)
+    return 0
+
+
 def run_episode(agent, episode_id, save_dir, input_save_dir=None):
     """Run full-episode replay generation for one episode."""
     args = agent.args
@@ -226,6 +243,7 @@ def run_episode(agent, episode_id, save_dir, input_save_dir=None):
     video_to_save_gt = []
     history_idx = [0, 0, -8, -6, -4, -2]
 
+    _ep_chunks = 0
     for i in range(interact_num):
         start_id = int(i * (pred_step - 1))
         end_id = start_id + pred_step
@@ -243,11 +261,20 @@ def run_episode(agent, episode_id, save_dir, input_save_dir=None):
         current_latent = his_cond[-1]
 
         # Forward world model
+        _chunk_t0 = time.time()
         true_videos, pred_videos, predicted_latents = agent.forward_wm(
             action_cond, video_latent_true, current_latent,
             his_cond=his_cond_input,
             text=instruction if args.text_cond else None,
         )
+        _chunk_dt = time.time() - _chunk_t0
+        _CHUNK_TIMES.append(_chunk_dt)
+        print(f"  [ChunkTiming] chunk {len(_CHUNK_TIMES)}: {_chunk_dt:.3f}s", flush=True)
+        _cap = _max_chunks()
+        _ep_chunks += 1
+        if _cap and _ep_chunks >= _cap:
+            print(f"  [ChunkTiming] stopping after {_cap} chunk(s) (cap)", flush=True)
+            break
 
         # Update history
         his_eef.append(cartesian_pose[pred_step - 1:pred_step])
@@ -460,6 +487,24 @@ def _install_attn_profiler(unet):
               f"Non-attention = {100*(1-attn_ms/max(_fwd['ms'],1e-9)):.1f}%.")
 
     _atexit.register(_dump_fwd)
+
+
+
+def _persist_wall_time(save_dir, episode_id, metrics):
+    """Re-dump metrics.json so it also carries `wall_time_s`.
+
+    run_episode() writes metrics.json before returning, and the caller only knows
+    the elapsed time afterwards, so without this the on-disk per-episode metrics
+    have no timing at all. That is the reason no Ctrl-World cell could have its
+    speedup computed from sampling_dataset and every timing had to be re-measured.
+    """
+    try:
+        p = Path(save_dir) / f"episode_{episode_id}" / "metrics.json"
+        if p.is_file():
+            with open(p, "w") as f:
+                json.dump(metrics, f, indent=2)
+    except Exception as exc:  # never let bookkeeping kill a finished episode
+        print(f"  [warn] could not persist wall_time_s for {episode_id}: {exc}")
 
 
 def main():
@@ -726,6 +771,7 @@ def main():
         _dt = time.time() - _t0
         if metrics:
             metrics["wall_time_s"] = _dt
+            _persist_wall_time(args.save_dir, episode_id, metrics)
             all_metrics.append(metrics)
             print(f"  -> {metrics['num_frames_pred']} frames, "
                   f"PSNR={metrics['psnr']:.2f}, SSIM={metrics['ssim']:.4f}, LPIPS={metrics['lpips']:.4f} "

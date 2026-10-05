@@ -191,20 +191,16 @@ def build_model(args):
     from cosmos_predict2.config import MODEL_CHECKPOINTS
     from cosmos_predict2._src.predict2.inference.video2world import Video2WorldInference
 
-    setup_args = ActionConditionedSetupArguments(
-        model="2B/robot/action-cond",
-        config_file="cosmos_predict2/_src/predict2/action/configs/action_conditioned/config.py",
-        checkpoints_dir=args.checkpoints_dir,
-        experiment=args.experiment,
-        num_frames=args.num_frames,
-        dataset_path=args.dataset_path,
-        save_dir=args.save_dir,
-        output_dir=args.output_dir or args.save_dir,
-        num_samples=1,
-        data_split="full",
-        single_base_index=False,
-    )
 
+    # Resolve the LOCAL checkpoint FIRST.
+    #
+    # `ActionConditionedSetupArguments` runs a pydantic `validate_model` hook that
+    # fills `checkpoint_path` from `MODEL_CHECKPOINTS[...]` when it is not given,
+    # and that default is a *property* which eagerly downloads from the gated HF
+    # repo `nvidia/Cosmos-Predict2.5-2B` -> 401 GatedRepoError, aborting before a
+    # single frame is generated even though `--checkpoints-dir` points at a local
+    # finetuned checkpoint we hand to Video2WorldInference anyway. Resolving
+    # locally first and passing the path keeps the validator off the network.
     checkpoints_dir = Path(args.checkpoints_dir)
     last_checkpoint_file = checkpoints_dir / "latest_checkpoint.txt"
     if not last_checkpoint_file.exists():
@@ -222,6 +218,21 @@ def build_model(args):
 
     from examples.action_conditioned import resolve_checkpoint_path
     checkpoint_path = resolve_checkpoint_path(checkpoint_iter_dir)
+
+    setup_args = ActionConditionedSetupArguments(
+        model="2B/robot/action-cond",
+        config_file="cosmos_predict2/_src/predict2/action/configs/action_conditioned/config.py",
+        checkpoint_path=str(checkpoint_path),
+        checkpoints_dir=args.checkpoints_dir,
+        experiment=args.experiment,
+        num_frames=args.num_frames,
+        dataset_path=args.dataset_path,
+        save_dir=args.save_dir,
+        output_dir=args.output_dir or args.save_dir,
+        num_samples=1,
+        data_split="full",
+        single_base_index=False,
+    )
 
     checkpoint = MODEL_CHECKPOINTS[setup_args.model_key]
     experiment = setup_args.experiment or checkpoint.experiment
@@ -309,6 +320,23 @@ def get_episode_plan(dataset, chunk_size):
     return plan
 
 
+_CHUNK_TIMES = []
+
+# DD_MAX_CHUNKS / CW_MAX_CHUNKS: stop generating after N chunks.
+#
+# The benchmark unit is ONE chunk, and per-chunk cost is flat within an episode,
+# so generating all 9-33 chunks of an episode adds GPU time without adding
+# statistical power. The timing harness sets this to a small number; unset or 0
+# keeps the full episode, so canonical runs are unaffected.
+def _max_chunks():
+    import os
+    for k in ("BENCH_MAX_CHUNKS", "DD_MAX_CHUNKS", "CW_MAX_CHUNKS"):
+        v = os.environ.get(k)
+        if v and v.strip().isdigit() and int(v) > 0:
+            return int(v)
+    return 0
+
+
 def generate_autoregressive(video2world_cli, first_frame, all_actions, chunk_size, all_lam_video=None, guidance=0):
     """
     Pure autoregressive rollout from a single GT frame.
@@ -342,6 +370,7 @@ def generate_autoregressive(video2world_cli, first_frame, all_actions, chunk_siz
         vid_input = vid_input.to(torch.uint8)
         vid_input = vid_input.unsqueeze(0).permute(0, 2, 1, 3, 4)
 
+        _chunk_t0 = time.time()
         video = video2world_cli.generate_vid2world(
             prompt="",
             input_path=vid_input,
@@ -356,6 +385,13 @@ def generate_autoregressive(video2world_cli, first_frame, all_actions, chunk_siz
             negative_prompt="The video captures a scene with low visual quality, blurring, jittering, or distortion.",
             lam_video=current_lam_video,
         )
+        _chunk_dt = time.time() - _chunk_t0
+        _CHUNK_TIMES.append(_chunk_dt)
+        print(f"  [ChunkTiming] chunk {len(_CHUNK_TIMES)}: {_chunk_dt:.3f}s", flush=True)
+        _cap = _max_chunks()
+        if _cap and len(_CHUNK_TIMES) >= _cap:
+            print(f"  [ChunkTiming] stopping after {_cap} chunk(s) (cap)", flush=True)
+            break
 
         video_normalized = (video - (-1)) / (1 - (-1))
         video_clamped = (
@@ -453,6 +489,9 @@ def main():
             full_lam = torch.cat(all_lam_parts, dim=0) if isinstance(all_lam_parts[0], torch.Tensor) else None
 
         # Pure autoregressive rollout from first GT frame only
+        # The chunk budget is PER EPISODE, so clear the accumulator here or the
+        # first episode spends it all and every later episode records nothing.
+        _CHUNK_TIMES.clear()
         gen_start_time = time.time()
         pred_video = generate_autoregressive(
             video2world_cli, first_frame, full_actions, args.chunk_size, full_lam,

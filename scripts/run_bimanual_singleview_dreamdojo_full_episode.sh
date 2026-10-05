@@ -42,6 +42,36 @@ if [[ -n "${NUM_EPISODES}" ]]; then
   ep_flag=(--num-episodes "${NUM_EPISODES}")
 fi
 
+# SAVE_FULL=1 adds --save-full (PSNR/SSIM/LPIPS). The sparse-attention scripts
+# for this cell already pass it, so without this the dense baseline would have no
+# quality numbers to pair against theirs.
+full_flag=()
+if [ "${SAVE_FULL:-0}" = "1" ]; then full_flag=(--save-full); fi
+# GT_ONLY=1 backfills full_gt.mp4 next to predictions that were written video-only,
+# without running diffusion -- needed because the reference-based (vs_gt) half of the
+# DR grid has no reference for this cell otherwise. Loads no checkpoint, needs no GPU.
+if [ "${GT_ONLY:-0}" = "1" ]; then full_flag=(--gt-only); fi
+
+# This script fans the two splits onto GPU 0 and GPU 1 concurrently. That is
+# wrong whenever fewer than two devices are visible: the second split lands on a
+# device that does not exist (hard failure), or -- if CUDA_VISIBLE_DEVICES pins a
+# single card -- both splits share it and every timing is inflated by contention.
+# Count what is actually visible and fall back to sequential. SEQUENTIAL=1 forces
+# it regardless, which is what the timing harness wants even on a multi-GPU box.
+n_visible=2
+if [[ -n "${CUDA_VISIBLE_DEVICES:-}" ]]; then
+  n_visible=$(awk -F, '{print NF}' <<<"${CUDA_VISIBLE_DEVICES}")
+else
+  n_visible=$(nvidia-smi --query-gpu=index --format=csv,noheader 2>/dev/null | wc -l)
+  [[ "${n_visible}" -lt 1 ]] && n_visible=1
+fi
+SEQUENTIAL="${SEQUENTIAL:-0}"
+if [[ "${SEQUENTIAL}" != "1" && "${n_visible}" -lt 2 ]]; then
+  SEQUENTIAL=1
+  echo "[info] only ${n_visible} GPU visible -> running splits SEQUENTIALLY" \
+       "(set SEQUENTIAL=0 and expose 2 GPUs to parallelise)"
+fi
+
 pids=()
 gpu=0
 
@@ -53,17 +83,30 @@ for split in makovian non_makovian; do
   fi
   save_base="${SAVE_ROOT}/${split}"
   mkdir -p "${save_base}"
-  echo "=== Full-episode single-segment rollout: ${split} (GPU ${gpu}) -> ${save_base} ==="
-  CUDA_VISIBLE_DEVICES="${gpu}" python "${ROOT}/scripts/infer_bimanual_singleview_single_segment.py" \
+  # In sequential mode keep whatever device the caller pinned; only the parallel
+  # path needs to hand each split its own index.
+  if [[ "${SEQUENTIAL}" == "1" ]]; then
+    split_dev="${CUDA_VISIBLE_DEVICES:-0}"
+  else
+    split_dev="${gpu}"
+  fi
+  echo "=== Full-episode single-segment rollout: ${split} (GPU ${split_dev}) -> ${save_base} ==="
+  CUDA_VISIBLE_DEVICES="${split_dev}" python "${ROOT}/scripts/infer_bimanual_singleview_single_segment.py" \
     --checkpoints-dir "${CHECKPOINTS_DIR}" \
     --experiment "${EXPERIMENT}" \
     --dataset-path "${task_paths}" \
     --save-dir "${save_base}" \
     --save-fps 10 \
     --output-dir "${ROOT}/output/dreamdojo_full_ep_bimanual_sv_${split}" \
+    "${full_flag[@]}" \
     "${ep_flag[@]}" &
   pids+=($!)
   gpu=$((gpu + 1))
+  # Sequential mode: wait here so the next split does not share the device.
+  if [[ "${SEQUENTIAL}" == "1" ]]; then
+    wait "${pids[-1]}"
+    pids=()
+  fi
 done
 
 for pid in "${pids[@]}"; do

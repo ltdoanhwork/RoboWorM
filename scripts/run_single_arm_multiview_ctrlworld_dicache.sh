@@ -23,7 +23,7 @@ export XLA_PYTHON_CLIENT_MEM_FRACTION=0.4
 # Model paths
 SVD_MODEL_PATH="./checkpoints/stabilityai/stable-video-diffusion-img2vid"
 CLIP_MODEL_PATH="./checkpoints/openai/clip-vit-base-patch32"
-CKPT_PATH="./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt"
+CKPT_PATH="${CKPT:-./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt}"
 DATASET_META_INFO="./models/Ctrl-World/dataset_meta_info"
 DATASET_EXAMPLE_DIR="./models/Ctrl-World/dataset_example"
 
@@ -32,8 +32,12 @@ DICACHE_REL_L1_THRESH="${DICACHE_REL_L1_THRESH:-0.06}"
 DICACHE_RET_RATIO="${DICACHE_RET_RATIO:-0.3}"
 DICACHE_PROBE_DEPTH="${DICACHE_PROBE_DEPTH:-3}"
 
-OUTPUT_BASE="${PROJECT_ROOT}/sampling_dataset/dicache/single_arm/output/multiview/ctrlworld"
-INPUT_BASE="${PROJECT_ROOT}/sampling_dataset/dicache/single_arm/input/multiview/ctrlworld"
+OUTPUT_BASE="${OUTPUT_ROOT:-${PROJECT_ROOT}/sampling_dataset/dicache/single_arm/output/multiview/ctrlworld}"
+INPUT_BASE="${INPUT_ROOT:-${PROJECT_ROOT}/sampling_dataset/dicache/single_arm/input/multiview/ctrlworld}"
+
+EXTRA=""
+if [ -n "${NUM_EPISODES:-}" ]; then EXTRA="${EXTRA} --num_episodes ${NUM_EPISODES}"; fi
+if [ -n "${NUM_INFERENCE_STEPS:-}" ]; then EXTRA="${EXTRA} --num_inference_steps ${NUM_INFERENCE_STEPS}"; fi
 
 echo "=========================================================="
 echo "Ctrl-World + DiCache | Single-Arm Multiview Inference"
@@ -42,12 +46,14 @@ echo "Params: thresh=${DICACHE_REL_L1_THRESH}, ret_ratio=${DICACHE_RET_RATIO}, p
 echo "=========================================================="
 
 # Step 1: Prepare dataset
+if [ "${SKIP_PREPARE:-0}" != "1" ]; then
 echo ""
 echo "[Step 1] Preparing dataset (LeRoBot -> Ctrl-World format)..."
 python scripts/prepare_ctrlworld_single_arm_multiview.py \
     --subset "${SUBSET}" \
     --output-dir "${DATASET_EXAMPLE_DIR}" \
     --dataset-base "${PROJECT_ROOT}/datasets/single_arm/multiview"
+fi
 
 # Step 2: Run inference with DiCache
 if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "makovian" ]; then
@@ -65,7 +71,7 @@ if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "makovian" ]; then
         --use_dicache \
         --dicache_rel_l1_thresh "${DICACHE_REL_L1_THRESH}" \
         --dicache_ret_ratio "${DICACHE_RET_RATIO}" \
-        --dicache_probe_depth "${DICACHE_PROBE_DEPTH}"
+        --dicache_probe_depth "${DICACHE_PROBE_DEPTH}" ${EXTRA}
 fi
 
 if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "non_makovian" ]; then
@@ -83,7 +89,7 @@ if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "non_makovian" ]; then
         --use_dicache \
         --dicache_rel_l1_thresh "${DICACHE_REL_L1_THRESH}" \
         --dicache_ret_ratio "${DICACHE_RET_RATIO}" \
-        --dicache_probe_depth "${DICACHE_PROBE_DEPTH}"
+        --dicache_probe_depth "${DICACHE_PROBE_DEPTH}" ${EXTRA}
 fi
 
 echo ""

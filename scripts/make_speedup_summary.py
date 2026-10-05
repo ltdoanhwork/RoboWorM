@@ -46,11 +46,19 @@ import argparse
 import csv
 import json
 import re
+import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from statistics import mean
 from typing import Optional
+
+# Which cells the paper reports is decided in one shared place, so this CSV, the
+# appendix tables and the figures cannot disagree about the benchmark's size.
+sys.path.insert(
+    0, str(Path(__file__).resolve().parent.parent / "assets" / "scripts"))
+from benchmark_cells import describe as describe_exclusions  # noqa: E402
+from benchmark_cells import is_excluded  # noqa: E402
 
 METHODS = [
     "dense", "dicache", "worldcache", "fastercache",
@@ -94,6 +102,15 @@ SPEEDUP_LOOKUP: dict[tuple[str, str, str, str], dict] = {}
 
 
 def _add(method, family, embodiment, view, speedup, source, note=""):
+    """Register a documented speedup.
+
+    `family` here is the **model key**, i.e. the 4th path segment under
+    sampling_dataset/<method>/<emb>/output/<view>/ — so `ctrlworld` and
+    `ctrlworld_4view_grid` are DISTINCT keys. They MUST be: the 4-view 2x2 grid
+    tolerates caching far better than the 3-view strip (WorldCache 1.81x/1.60x
+    vs 1.27x/1.16x), so keying on the collapsed display family silently
+    stamped 3-view numbers onto every 4-view-grid row.
+    """
     SPEEDUP_LOOKUP[(method, family, embodiment, view)] = {
         "speedup": speedup, "source": source, "note": note,
     }
@@ -149,11 +166,21 @@ _add("sito", "dreamgen", "bimanual", "multiview", 1.30, "dreamgen-bimanual-multi
 _add("itm", "dreamgen", "bimanual", "multiview", 0.96, "dreamgen-bimanual-multiview-sparse-attention-insights", "net-negative")
 
 # --- DreamDojo humanoid singleview (2B GR1) ---
-# dreamdojo-humanoid-singleview-sparse-attention-insights.mdc, dense=56.41s
-_add("radial", "dreamdojo", "humanoid", "singleview", 1.03, "dreamdojo-humanoid-singleview-sparse-attention-insights", "start2/hunyuan/decay1.0")
-_add("pisa", "dreamdojo", "humanoid", "singleview", 0.99, "dreamdojo-humanoid-singleview-sparse-attention-insights", "density0.2 (last pt before break)")
-_add("svg1", "dreamdojo", "humanoid", "singleview", 0.93, "dreamdojo-humanoid-singleview-sparse-attention-insights", "sparsity0.25 (profile cached)")
-_add("svg2", "dreamdojo", "humanoid", "singleview", 0.59, "dreamdojo-humanoid-singleview-sparse-attention-insights", "q32/k64/top_p0.6")
+# MEASURED 2026-09-22 by scripts/_bench_uniform_timing.sh (1 makovian + 1
+# non_makovian episode, dense CONTROL re-run in the same batch on an idle GPU).
+# These supersede the single-episode tuning-note numbers for this cell: same
+# protocol for dense and every method, so the ratios are comparable.
+_add("dicache", "dreamdojo", "humanoid", "singleview", 1.56, "measured:_bench_uniform_timing 2026-09-22", "thresh0.15/ret0.2/probe2 (PSNR == dense)")
+_add("worldcache", "dreamdojo", "humanoid", "singleview", 1.08, "measured:_bench_uniform_timing 2026-09-22", "thresh0.15/ret0.3/probe2")
+_add("fastercache", "dreamdojo", "humanoid", "singleview", 0.91, "measured:_bench_uniform_timing 2026-09-22", "m5/b5 (net-negative, quality == dense)")
+_add("radial", "dreamdojo", "humanoid", "singleview", 1.00, "measured:_bench_uniform_timing 2026-09-22", "start2/hunyuan/decay1.0")
+_add("pisa", "dreamdojo", "humanoid", "singleview", 1.01, "measured:_bench_uniform_timing 2026-09-22", "density0.2/block64/start2")
+_add("svg1", "dreamdojo", "humanoid", "singleview", 0.96, "measured:_bench_uniform_timing 2026-09-22", "sparsity0.25 (profile cached)")
+_add("svg2", "dreamdojo", "humanoid", "singleview", 0.70, "measured:_bench_uniform_timing 2026-09-22", "q32/k64/top_p0.6")
+# SiTo / ITM on this cell FAIL to run at all: their run scripts point at
+# datasets/humanoid/singleview/PhysicalAI-Robo... which does not exist, and they
+# call `examples.action_conditioned` rather than the canonical infer script. Left
+# absent (not 0, not estimated) until those scripts are repaired.
 
 # --- DreamDojo bimanual singleview (2B ALOHA) ---
 # dreamdojo-bimanual-singleview-sparse-attention-insights.mdc, dense=390.08s
@@ -169,13 +196,102 @@ _add("radial", "dreamdojo", "single_arm", "singleview", 1.01, "dreamdojo-single-
 _add("svg1", "dreamdojo", "single_arm", "singleview", 0.91, "dreamdojo-single-arm-singleview-sparse-attention-insights", "sparsity0.25/rows16 (SLOWER)")
 _add("svg2", "dreamdojo", "single_arm", "singleview", 0.69, "dreamdojo-single-arm-singleview-sparse-attention-insights", "q32/k64/top_p0.6")
 
-# --- Ctrl-World humanoid multiview (SVD UNet) ---
+# --- Ctrl-World humanoid multiview 3-VIEW STRIP (SVD UNet) ---
 # ctrlworld-humanoid-multiview-caching-insights.mdc, dense=117.5s total gen (2 val eps)
 _add("worldcache", "ctrlworld", "humanoid", "multiview", 1.16, "ctrlworld-humanoid-multiview-caching-insights", "thresh0.04/ret0.4")
 _add("dicache", "ctrlworld", "humanoid", "multiview", 1.11, "ctrlworld-humanoid-multiview-caching-insights", "thresh0.03/ret0.4")
 # ctrlworld-humanoid-multiview-pruning-insights.mdc
 _add("sito", "ctrlworld", "humanoid", "multiview", 1.05, "ctrlworld-humanoid-multiview-pruning-insights", "ST-hold k0.8/d4")
 _add("itm", "ctrlworld", "humanoid", "multiview", 1.25, "ctrlworld-humanoid-multiview-pruning-insights", "ST-hold k0.8/d4")
+
+# --- Ctrl-World humanoid multiview 4-VIEW 2x2 GRID (separate ckpt, ~1.6x cache) ---
+# ctrlworld-humanoid-multiview-4view-grid-caching-insights.mdc, dense=130.5s (2 val eps)
+_add("worldcache", "ctrlworld_4view_grid", "humanoid", "multiview", 1.60, "ctrlworld-humanoid-multiview-4view-grid-caching-insights", "thresh0.03/ret0.0/probe1")
+_add("dicache", "ctrlworld_4view_grid", "humanoid", "multiview", 1.56, "ctrlworld-humanoid-multiview-4view-grid-caching-insights", "thresh0.03/ret0.0/probe1")
+# ctrlworld-humanoid-multiview-4view-grid-pruning-insights.mdc, dense=139.0s
+_add("sito", "ctrlworld_4view_grid", "humanoid", "multiview", 1.11, "ctrlworld-humanoid-multiview-4view-grid-pruning-insights", "ST-hold k0.8/d4")
+_add("itm", "ctrlworld_4view_grid", "humanoid", "multiview", 1.11, "ctrlworld-humanoid-multiview-4view-grid-pruning-insights", "ST-hold k0.85/d4")
+# ctrlworld-humanoid-multiview-4view-grid-sparse-attention-insights.mdc, dense=82.5s
+# All NET-NEGATIVE (kernel-bound at T<=3840) — valid negative benchmark points.
+_add("pisa", "ctrlworld_4view_grid", "humanoid", "multiview", 0.96, "ctrlworld-humanoid-multiview-4view-grid-sparse-attention-insights", "density0.2/block64/start0")
+_add("radial", "ctrlworld_4view_grid", "humanoid", "multiview", 0.92, "ctrlworld-humanoid-multiview-4view-grid-sparse-attention-insights", "fp2/hunyuan (mask held)")
+_add("svg1", "ctrlworld_4view_grid", "humanoid", "multiview", 0.85, "ctrlworld-humanoid-multiview-4view-grid-sparse-attention-insights", "sparsity0.25/fp2 (masked SDPA)")
+_add("svg2", "ctrlworld_4view_grid", "humanoid", "multiview", 0.66, "ctrlworld-humanoid-multiview-4view-grid-sparse-attention-insights", "q32/k64/top_p0.5/fp2")
+
+# --- Ctrl-World bimanual multiview 3-VIEW (5fps ckpt-280000) ---
+# ctrlworld-bimanual-multiview-caching-insights.mdc, dense=250.9s (117fr val ep)
+_add("worldcache", "ctrlworld", "bimanual", "multiview", 1.27, "ctrlworld-bimanual-multiview-caching-insights", "thresh0.04/ret0.4")
+_add("dicache", "ctrlworld", "bimanual", "multiview", 1.23, "ctrlworld-bimanual-multiview-caching-insights", "thresh0.04/ret0.4")
+_add("fastercache", "ctrlworld", "bimanual", "multiview", 1.00, "ctrlworld-bimanual-multiview-caching-insights", "m5/b3 (no-op: 0 attn_processors, CFG off)")
+
+# --- Ctrl-World bimanual multiview 4-VIEW 2x2 GRID (ckpt-110000) ---
+# ctrlworld-bimanual-multiview-4view-grid-caching-insights.mdc, dense=270.3s
+_add("worldcache", "ctrlworld_4view_grid", "bimanual", "multiview", 1.81, "ctrlworld-bimanual-multiview-4view-grid-caching-insights", "thresh0.04/ret0.0/probe1")
+_add("dicache", "ctrlworld_4view_grid", "bimanual", "multiview", 1.72, "ctrlworld-bimanual-multiview-4view-grid-caching-insights", "thresh0.03/ret0.0/probe1")
+_add("fastercache", "ctrlworld_4view_grid", "bimanual", "multiview", 1.02, "ctrlworld-bimanual-multiview-4view-grid-caching-insights", "m5/b3 (no-op: 0 attn layers)")
+# ctrlworld-bimanual-multiview-4view-grid-pruning-insights.mdc, dense=225.7s/ep
+_add("sito", "ctrlworld_4view_grid", "bimanual", "multiview", 1.08, "ctrlworld-bimanual-multiview-4view-grid-pruning-insights", "ST-hold k0.8/d4 (lossy)")
+_add("itm", "ctrlworld_4view_grid", "bimanual", "multiview", 1.04, "ctrlworld-bimanual-multiview-4view-grid-pruning-insights", "ST-hold k0.85/d4")
+# ctrlworld-bimanual-multiview-4view-grid-sparse-attention-insights.mdc, dense=225.7s/ep
+_add("pisa", "ctrlworld_4view_grid", "bimanual", "multiview", 0.98, "ctrlworld-bimanual-multiview-4view-grid-sparse-attention-insights", "density0.2/start0")
+_add("radial", "ctrlworld_4view_grid", "bimanual", "multiview", 0.94, "ctrlworld-bimanual-multiview-4view-grid-sparse-attention-insights", "fp2/hunyuan")
+_add("svg1", "ctrlworld_4view_grid", "bimanual", "multiview", 0.88, "ctrlworld-bimanual-multiview-4view-grid-sparse-attention-insights", "sparsity0.25/fp2")
+_add("svg2", "ctrlworld_4view_grid", "bimanual", "multiview", 0.74, "ctrlworld-bimanual-multiview-4view-grid-sparse-attention-insights", "q32/k64/top_p0.5/fp2")
+
+# --- Ctrl-World single_arm multiview 3-VIEW STRIP (pretrained ckpt-10000) ---
+# ctrlworld-single-arm-multiview-sparse-attention-insights.mdc, dense=164.6s/ep
+# All NET-NEGATIVE; time is FLAT vs the quality knob (launch/kernel bound).
+_add("pisa", "ctrlworld", "single_arm", "multiview", 0.95, "ctrlworld-single-arm-multiview-sparse-attention-insights", "density0.5/block64/start2")
+_add("radial", "ctrlworld", "single_arm", "multiview", 0.93, "ctrlworld-single-arm-multiview-sparse-attention-insights", "fp4/hunyuan/decay1.0")
+_add("svg1", "ctrlworld", "single_arm", "multiview", 0.88, "ctrlworld-single-arm-multiview-sparse-attention-insights", "sparsity0.25/rows32/fp2")
+_add("svg2", "ctrlworld", "single_arm", "multiview", 0.65, "ctrlworld-single-arm-multiview-sparse-attention-insights", "q32/k64/top_p0.7/fp2")
+_add("sito", "ctrlworld", "single_arm", "multiview", 1.00, "ctrlworld-pruning-insights", "ST-hold k0.9/d1 (quality-leaning, ~no speedup)")
+# NOT-YET-MEASURED on this cell (scripts exist, timing never recorded):
+#   dicache / worldcache / fastercache / itm -> run scripts/_timing_ctrlworld_sa_mv.sh
+
+# --- DreamGen bimanual multiview (2B seg16) ---
+# dreamgen-bimanual-multiview-caching-insights.mdc, dense=338s/ep (2 segments)
+_add("dicache", "dreamgen", "bimanual", "multiview", 1.66, "dreamgen-bimanual-multiview-caching-insights", "thresh0.20/ret0.2")
+_add("worldcache", "dreamgen", "bimanual", "multiview", 1.56, "dreamgen-bimanual-multiview-caching-insights", "thresh0.20/ret0.2/probe2")
+_add("fastercache", "dreamgen", "bimanual", "multiview", 0.94, "dreamgen-bimanual-multiview-caching-insights", "m2/b2 (clean but slower than dense)")
+
+# --- DreamGen bimanual singleview (2B, iter_000110000) ---
+# dreamgen-bimanual-singleview-caching-insights.mdc, dense~263s/2-chunk ep
+_add("dicache", "dreamgen", "bimanual", "singleview", 1.32, "dreamgen-bimanual-singleview-caching-insights", "thresh0.20/ret0.2/probe2")
+_add("worldcache", "dreamgen", "bimanual", "singleview", 1.31, "dreamgen-bimanual-singleview-caching-insights", "thresh0.20/ret0.2/probe2")
+_add("fastercache", "dreamgen", "bimanual", "singleview", 0.76, "dreamgen-bimanual-singleview-caching-insights", "m2/b2 (clean, net-negative)")
+# dreamgen-bimanual-singleview-sparse-attention-insights.mdc, dense~263s
+_add("pisa", "dreamgen", "bimanual", "singleview", 1.14, "dreamgen-bimanual-singleview-sparse-attention-insights", "density0.1/start0")
+_add("radial", "dreamgen", "bimanual", "singleview", 1.10, "dreamgen-bimanual-singleview-sparse-attention-insights", "decay0.2/start1")
+_add("svg1", "dreamgen", "bimanual", "singleview", 0.77, "dreamgen-bimanual-singleview-sparse-attention-insights", "sparsity0.25 (net-negative)")
+_add("svg2", "dreamgen", "bimanual", "singleview", 0.84, "dreamgen-bimanual-singleview-sparse-attention-insights", "kmeans warm cache (net-negative)")
+# dreamgen-bimanual-pruning-insights.mdc, dense 119.0s/seg (MV) & 118.9s/chunk (SV)
+_add("sito", "dreamgen", "bimanual", "singleview", 1.29, "dreamgen-bimanual-pruning-insights", "prune0.30")
+_add("itm", "dreamgen", "bimanual", "singleview", 0.95, "dreamgen-bimanual-pruning-insights", "mid start11/keep4/compress0.20 (net-negative)")
+
+# --- DreamGen humanoid multiview pruning ---
+# dreamgen-humanoid-multiview-pruning-insights.mdc, dense=119.9s/seg
+_add("sito", "dreamgen", "humanoid", "multiview", 1.20, "dreamgen-humanoid-multiview-pruning-insights", "prune0.20 (knee)")
+_add("itm", "dreamgen", "humanoid", "multiview", 0.96, "dreamgen-humanoid-multiview-pruning-insights", "mid (net-negative)")
+
+# =============================================================================
+# STILL NOT MEASURED ANYWHERE (no rule, no persisted timing) — these stay blank
+# in the CSV on purpose (never estimated). Runner helpers exist for each:
+#   Ctrl-World single_arm MV : dicache, worldcache, fastercache, itm
+#       -> bash scripts/_timing_ctrlworld_sa_mv.sh
+#   Ctrl-World humanoid MV 3-view : pisa, radial, svg1, svg2
+#       -> scripts/run_humanoid_multiview_ctrlworld_{pisa,radial,svg1,svg2}.sh
+#   DreamGen single_arm SV   : dicache, worldcache, fastercache
+#   DreamGen single_arm MV   : dicache, worldcache, fastercache, sito, itm
+#   DreamGen humanoid SV     : sito, itm
+#       -> bash scripts/_timing_dreamgen_gaps.sh {sa_sv,sa_mv,hum_sv}
+#   DreamDojo {humanoid,single_arm,bimanual} SV : dicache, worldcache, fastercache
+#   DreamDojo {humanoid,single_arm} SV          : sito, itm
+#       -> bash scripts/_timing_dreamdojo_sv_cache.sh <emb> <gpu>
+# NO script at all (real holes in the benchmark grid):
+#   FasterCache on Ctrl-World humanoid MV (3-view and 4-view grid)
+#   SiTo / ITM on DreamDojo bimanual SV
+# =============================================================================
 
 
 @dataclass
@@ -381,18 +497,47 @@ def build_cells(sampling_root: Path) -> list[dict]:
             if mt is not None and dt is not None and mt > 0:
                 row["speedup"] = round(dt / mt, 3)
                 row["timing_source"] = "persisted (mean_wall_time_s)"
+                row["timing_provenance"] = "persisted"
                 row["method_wall_time_s"] = round(mt, 2)
                 row["dense_wall_time_s"] = round(dt, 2)
             else:
-                fam_grain = (row["model_family"], row["embodiment"], row["view"])
+                # Key on the RAW model (ctrlworld vs ctrlworld_4view_grid are
+                # different checkpoints/configs with very different speedups),
+                # not on the collapsed display family.
+                fam_grain = (row["model"], row["embodiment"], row["view"])
                 lut = SPEEDUP_LOOKUP.get((method, *fam_grain))
                 if lut is not None:
+                    # Two provenances live in this LUT and must NOT be conflated.
+                    # `measured:_bench_uniform_timing` rows come from the uniform
+                    # pass: dense CONTROL re-run in the same batch, same episodes,
+                    # same pinned config, idle GPU. Everything else is a per-cell
+                    # tuning run -- same script and config, but its own episode
+                    # count and its own dense reference. Tagging the row here is
+                    # what lets the table mark them differently instead of
+                    # printing one undifferentiated number.
+                    uniform = lut["source"].startswith("measured:_bench_uniform_timing")
                     row["speedup"] = lut["speedup"]
-                    row["timing_source"] = f"tuning_notes:{lut['source']} ({lut['note']})"
+                    row["timing_provenance"] = ("uniform_pass" if uniform
+                                                else "tuning_notes")
+                    row["timing_source"] = (
+                        f"{lut['source']} ({lut['note']})" if uniform
+                        else f"tuning_notes:{lut['source']} ({lut['note']})")
                 else:
                     row["speedup"] = None
                     row["timing_source"] = "unavailable"
-    return rows
+                    row["timing_provenance"] = "unavailable"
+
+    # Cells the paper does not report are dropped last, so that the dense
+    # pairing and timing joins above are unaffected by the exclusion (a dropped
+    # row must not change any surviving row's numbers). See
+    # assets/scripts/benchmark_cells.py for the decision and its rationale.
+    kept = [r for r in rows
+            if not is_excluded(r["model"], r["embodiment"], r["view"])]
+    dropped = len(rows) - len(kept)
+    if dropped:
+        print("benchmark_cells: %s" % describe_exclusions())
+        print("  dropped %d of %d rows as unreported cells" % (dropped, len(rows)))
+    return kept
 
 
 def _make_row(method, family, model, embodiment, view, split, extra,
@@ -426,6 +571,7 @@ def _make_row(method, family, model, embodiment, view, split, extra,
         "psnr_retention": psnr_retention, "ssim_retention": ssim_retention,
         "lpips_retention": lpips_retention, "quality_retention": quality_retention,
         "speedup": None, "timing_source": "unavailable",
+        "timing_provenance": "unavailable",
         "method_wall_time_s": None, "dense_wall_time_s": None,
     }
 
@@ -441,11 +587,22 @@ def roll_up_by_method(rows: list[dict]) -> list[dict]:
         families = sorted({r["model_family"] for r in recs})
         n_cells = len(recs)
         n_episodes = sum(r["num_episodes"] or 0 for r in recs)
+        # Provenance travels with the roll-up. A mean speedup over cells of mixed
+        # provenance is still useful, but a reader must be able to see how much of
+        # it rests on the uniform pass -- otherwise the pooled number looks like a
+        # single calibrated measurement, which it is not.
+        prov = defaultdict(int)
+        for r in recs:
+            if r["speedup"] is not None:
+                prov[r.get("timing_provenance", "unknown")] += 1
         out.append({
             "method": method, "method_display": METHOD_DISPLAY.get(method, method),
             "model_families_covered": ",".join(families),
             "n_cells": n_cells, "n_cells_with_speedup": len(speedups),
             "n_cells_with_quality": len(qualities),
+            "n_cells_uniform_pass": prov.get("uniform_pass", 0),
+            "n_cells_tuning_notes": prov.get("tuning_notes", 0),
+            "n_cells_persisted": prov.get("persisted", 0),
             "total_episodes": n_episodes,
             "mean_speedup": round(mean(speedups), 3) if speedups else None,
             "mean_quality_retention": round(mean(qualities), 4) if qualities else None,
@@ -459,12 +616,15 @@ FULL_FIELDS = [
     "num_episodes", "mean_psnr", "mean_ssim", "mean_lpips", "quality_source",
     "dense_mean_psnr", "dense_mean_ssim", "dense_mean_lpips", "dense_num_episodes",
     "psnr_retention", "ssim_retention", "lpips_retention", "quality_retention",
-    "speedup", "timing_source", "method_wall_time_s", "dense_wall_time_s",
+    "speedup", "timing_source", "timing_provenance",
+    "method_wall_time_s", "dense_wall_time_s",
 ]
 
 BY_METHOD_FIELDS = [
     "method_display", "model_families_covered", "n_cells", "n_cells_with_speedup",
-    "n_cells_with_quality", "total_episodes", "mean_speedup", "mean_quality_retention",
+    "n_cells_with_quality", "n_cells_uniform_pass", "n_cells_tuning_notes",
+    "n_cells_persisted", "total_episodes", "mean_speedup",
+    "mean_quality_retention",
 ]
 
 
@@ -495,10 +655,14 @@ def write_appendix_tex(rows: list[dict], path: Path):
     lines.append(r"\begin{longtable}{l l l l r r r r r}")
     lines.append(r"\caption{Full per-cell speed--fidelity results for all acceleration methods "
                  r"(supplement to the star-chart summary in the main text). "
-                 r"``Timing source'' \texttt{tuning\_notes} means the speedup was measured during "
-                 r"method tuning on a small matched subset rather than the full sampling-dataset "
-                 r"sweep; see \texttt{metrics/reports/speedup\_summary\_full.csv} for exact provenance "
-                 r"per row.}")
+                 r"Speedups carry their provenance: $^{\ddagger}$ marks the uniform timing "
+                 r"pass (dense control re-run in the same batch, same episodes, same pinned "
+                 r"configuration, idle GPU), $^{\dagger}$ marks a per-cell tuning run (same "
+                 r"script and configuration, but its own episode count and its own dense "
+                 r"reference), and \texttt{--} marks a cell whose timing was never "
+                 r"instrumented --- never a value interpolated from a neighbouring cell. "
+                 r"See \texttt{metrics/reports/speedup\_summary\_full.csv} column "
+                 r"\texttt{timing\_provenance} for the exact source per row.}")
     lines.append(r"\label{tab:speedup_full_appendix}\\")
     lines.append(r"\toprule")
     lines.append(r"Family & Embodiment & View & Method & PSNR & SSIM & LPIPS & Speedup & N \\")
@@ -515,7 +679,11 @@ def write_appendix_tex(rows: list[dict], path: Path):
         ssim = f"{r['mean_ssim']:.3f}" if r["mean_ssim"] is not None else "--"
         lpips = f"{r['mean_lpips']:.3f}" if r["mean_lpips"] is not None else "--"
         speedup = f"{r['speedup']:.2f}x" if r["speedup"] is not None else "--"
-        if r["timing_source"].startswith("tuning_notes"):
+        # Two provenances, two marks. Collapsing them into one dagger would hide
+        # that exactly one cell has been measured under the uniform protocol.
+        if r.get("timing_provenance") == "uniform_pass":
+            speedup += r"$^{\ddagger}$"
+        elif r["timing_source"].startswith("tuning_notes"):
             speedup += r"$^{\dagger}$"
         n = r["num_episodes"] if r["num_episodes"] is not None else "--"
         lines.append(
@@ -523,8 +691,10 @@ def write_appendix_tex(rows: list[dict], path: Path):
             f"{_tex_escape(r['view'])} & {_tex_escape(r['method_display'])} & "
             f"{psnr} & {ssim} & {lpips} & {speedup} & {n} \\\\"
         )
-    lines.append(r"\multicolumn{9}{l}{\footnotesize $\dagger$ speedup from documented tuning-run "
-                 r"measurements, not the full sweep (see CSV for source rule).} \\")
+    lines.append(r"\multicolumn{9}{l}{\footnotesize $\ddagger$ uniform timing pass "
+                 r"(\texttt{scripts/\_bench\_uniform\_timing.sh}): dense control re-run in "
+                 r"the same batch on an idle GPU. \quad $\dagger$ per-cell tuning run: same "
+                 r"script and configuration, own episode count and own dense reference.} \\")
     lines.append(r"\end{longtable}")
     path.write_text("\n".join(lines) + "\n")
 

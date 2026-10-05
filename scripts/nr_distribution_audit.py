@@ -12,6 +12,24 @@ It answers the only three questions that matter before launching:
   3. how many view-clips does full coverage of the target actually cost, and how many of
      those are already scored?
 
+SCOPE NOTE (2026-09-22): bimanual and humanoid Ctrl-World multiview exist in TWO renders --
+a 3-view one (`model=ctrlworld`: cam_high + 2 wrists) and the 4-view grid
+(`model=ctrlworld_4view_grid`: adds cam_low / a third exterior). Only the 4-view render is
+used in the paper, so the 3-view rows -- 8,064 view-clips, of which 4,365 were still
+unscored (~5.3 h of wall time) -- are EXCLUDED from scoring by `excluded_row()` in
+scripts/run_dense_nr.py, together with their `gt_ctrlworld` anchor.
+
+They deliberately stay IN manifest.json: the shard is `rows[offset::stride]` by POSITION, so
+deleting rows renumbers every machine's slice and boxes that had not restarted would
+partition a different list. Skipping at the worker keeps every index stable.
+
+`single_arm` is untouched -- its Ctrl-World render only exists as `model=ctrlworld`
+(exterior_1_left, exterior_2_left, wrist_left) with no 4-view variant, so excluding
+`model == 'ctrlworld'` globally would have deleted that whole cell from the paper grid.
+
+So this script's totals still describe the FULL manifest; subtract the excluded rows when
+reading "still to score".
+
 Usage:
   python scripts/nr_distribution_audit.py --run metrics/WorldScore/results/dense_nr_full
   python scripts/nr_distribution_audit.py --run ... --ids-out /tmp/spec_ids.json

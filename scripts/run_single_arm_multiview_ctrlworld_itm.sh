@@ -22,7 +22,7 @@ export XLA_PYTHON_CLIENT_MEM_FRACTION=0.4
 # Model paths
 SVD_MODEL_PATH="./checkpoints/stabilityai/stable-video-diffusion-img2vid"
 CLIP_MODEL_PATH="./checkpoints/openai/clip-vit-base-patch32"
-CKPT_PATH="./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt"
+CKPT_PATH="${CKPT:-./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt}"
 DATASET_META_INFO="./models/Ctrl-World/dataset_meta_info"
 DATASET_EXAMPLE_DIR="./models/Ctrl-World/dataset_example"
 
@@ -36,8 +36,11 @@ ITM_MAX_DOWNSAMPLE_RATIO="${ITM_MAX_DOWNSAMPLE_RATIO:-4}"
 ITM_ST_KEEP_RATIO="${ITM_ST_KEEP_RATIO:-0.8}"
 NUM_INFERENCE_STEPS="${NUM_INFERENCE_STEPS:-25}"
 
-OUTPUT_BASE="${PROJECT_ROOT}/sampling_dataset/itm/single_arm/output/multiview/ctrlworld"
-INPUT_BASE="${PROJECT_ROOT}/sampling_dataset/itm/single_arm/input/multiview/ctrlworld"
+OUTPUT_BASE="${OUTPUT_ROOT:-${PROJECT_ROOT}/sampling_dataset/itm/single_arm/output/multiview/ctrlworld}"
+INPUT_BASE="${INPUT_ROOT:-${PROJECT_ROOT}/sampling_dataset/itm/single_arm/input/multiview/ctrlworld}"
+
+EXTRA=""
+if [ -n "${NUM_EPISODES:-}" ]; then EXTRA="${EXTRA} --num_episodes ${NUM_EPISODES}"; fi
 
 echo "=========================================================="
 echo "Ctrl-World + ITM | Single-Arm Multiview Inference"
@@ -46,12 +49,14 @@ echo "Params: max_downsample_ratio=${ITM_MAX_DOWNSAMPLE_RATIO}, st_keep_ratio=${
 echo "=========================================================="
 
 # Step 1: Prepare dataset
+if [ "${SKIP_PREPARE:-0}" != "1" ]; then
 echo ""
 echo "[Step 1] Preparing dataset (LeRoBot -> Ctrl-World format)..."
 python scripts/prepare_ctrlworld_single_arm_multiview.py \
     --subset "${SUBSET}" \
     --output-dir "${DATASET_EXAMPLE_DIR}" \
     --dataset-base "${PROJECT_ROOT}/datasets/single_arm/multiview"
+fi
 
 # Step 2: Run inference with ITM
 if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "makovian" ]; then
@@ -70,7 +75,7 @@ if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "makovian" ]; then
         --use_itm \
         --itm_spatiotemporal_hold \
         --itm_st_keep_ratio "${ITM_ST_KEEP_RATIO}" \
-        --itm_max_downsample_ratio "${ITM_MAX_DOWNSAMPLE_RATIO}"
+        --itm_max_downsample_ratio "${ITM_MAX_DOWNSAMPLE_RATIO}" ${EXTRA}
 fi
 
 if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "non_makovian" ]; then
@@ -89,7 +94,7 @@ if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "non_makovian" ]; then
         --use_itm \
         --itm_spatiotemporal_hold \
         --itm_st_keep_ratio "${ITM_ST_KEEP_RATIO}" \
-        --itm_max_downsample_ratio "${ITM_MAX_DOWNSAMPLE_RATIO}"
+        --itm_max_downsample_ratio "${ITM_MAX_DOWNSAMPLE_RATIO}" ${EXTRA}
 fi
 
 echo ""

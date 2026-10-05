@@ -41,6 +41,12 @@ for split in makovian non_makovian; do
   save_base="${SAVE_ROOT}/${split}"
   mkdir -p "${save_base}"
   echo "=== DreamDojo DiCache full-episode: ${split} -> ${save_base} ==="
+  # SAVE_FULL=1 adds --save-full (PSNR/SSIM/LPIPS). The sparse-attention
+  # scripts for this cell already pass it unconditionally, so without this the
+  # cache methods would be the only ones with no quality numbers to pair with
+  # their speedup.
+  full_flag=()
+  if [ "${SAVE_FULL:-0}" = "1" ]; then full_flag=(--save-full); fi
   python "${ROOT}/scripts/infer_humanoid_singleview_full_episode.py" \
     --checkpoints-dir "${CHECKPOINTS_DIR}" \
     --experiment "${EXPERIMENT}" \
@@ -54,5 +60,6 @@ for split in makovian non_makovian; do
     --dicache-rel-l1-thresh "${DICACHE_REL_L1_THRESH}" \
     --dicache-ret-ratio "${DICACHE_RET_RATIO}" \
     --dicache-probe-depth "${DICACHE_PROBE_DEPTH}" \
+    "${full_flag[@]}" \
     "${ep_flag[@]}"
 done

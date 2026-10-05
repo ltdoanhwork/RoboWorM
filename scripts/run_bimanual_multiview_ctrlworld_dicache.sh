@@ -48,6 +48,10 @@ INPUT_BASE="${INPUT_ROOT:-${ROOT}/sampling_dataset/dicache/bimanual/input/multiv
 
 EXTRA=""
 if [ -n "${NUM_EPISODES:-}" ]; then EXTRA="${EXTRA} --num_episodes ${NUM_EPISODES}"; fi
+# Balanced subset for the timing pass: N episodes of EACH category. Plain
+# NUM_EPISODES slices a stem-sorted list where every makovian_* precedes every
+# non_makovian_*, so a small value silently yields makovian only.
+if [ -n "${NUM_EPISODES_PER_CATEGORY:-}" ]; then EXTRA="${EXTRA} --num_episodes_per_category ${NUM_EPISODES_PER_CATEGORY}"; fi
 if [ -n "${NUM_INFERENCE_STEPS:-}" ]; then EXTRA="${EXTRA} --num_inference_steps ${NUM_INFERENCE_STEPS}"; fi
 if [ -n "${GUIDANCE:-}" ]; then EXTRA="${EXTRA} --guidance_scale ${GUIDANCE}"; fi
 if [ -n "${NUM_SHARDS:-}" ]; then EXTRA="${EXTRA} --num_shards ${NUM_SHARDS} --shard_id ${SHARD_ID:-0}"; fi

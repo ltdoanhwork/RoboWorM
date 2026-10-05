@@ -47,6 +47,13 @@ def parse_args():
                         help="Only save the generated prediction video (no GT/merged/metrics). Default on.")
     parser.add_argument("--save-full", dest="save_video_only", action="store_false",
                         help="Also save full_gt.mp4, full_merged.mp4 and metrics.json.")
+    parser.add_argument("--gt-only", action="store_true",
+                        help="Write ONLY full_gt.mp4 for episodes that already have a "
+                             "full_pred.mp4, and skip diffusion entirely (no GPU, no "
+                             "checkpoint load). Backfills the reference for runs made "
+                             "with the default video-only save mode.")
+    parser.add_argument("--force-gt", action="store_true",
+                        help="With --gt-only, overwrite an existing full_gt.mp4.")
 
     # WorldCache
     parser.add_argument("--worldcache-enabled", action="store_true")
@@ -196,21 +203,16 @@ def build_model(args):
     from cosmos_predict2.config import MODEL_CHECKPOINTS
     from cosmos_predict2._src.predict2.inference.video2world import Video2WorldInference
 
-    setup_args = ActionConditionedSetupArguments(
-        model="2B/robot/action-cond",
-        config_file="cosmos_predict2/_src/predict2/action/configs/action_conditioned/config.py",
-        checkpoints_dir=args.checkpoints_dir,
-        experiment=args.experiment,
-        num_frames=args.num_frames,
-        dataset_path=args.dataset_path,
-        save_dir=args.save_dir,
-        output_dir=args.output_dir or args.save_dir,
-        num_samples=1,
-        data_split="full",
-        single_base_index=True,
-    )
-
-    # Resolve checkpoint
+    # Resolve the LOCAL checkpoint FIRST.
+    #
+    # `ActionConditionedSetupArguments` runs a pydantic `validate_model` hook that
+    # fills `checkpoint_path` from `MODEL_CHECKPOINTS[...]` when it is not given,
+    # and that default is a *property* which eagerly downloads from the gated HF
+    # repo `nvidia/Cosmos-Predict2.5-2B` -> 401 GatedRepoError, aborting before a
+    # single frame is generated even though `--checkpoints-dir` points at a local
+    # finetuned checkpoint we then pass to Video2WorldInference anyway. Resolving
+    # locally first and handing the path to the constructor keeps the validator
+    # off the network entirely.
     checkpoints_dir = Path(args.checkpoints_dir)
     last_checkpoint_file = checkpoints_dir / "latest_checkpoint.txt"
     if not last_checkpoint_file.exists():
@@ -228,6 +230,21 @@ def build_model(args):
 
     from examples.action_conditioned import resolve_checkpoint_path
     checkpoint_path = resolve_checkpoint_path(checkpoint_iter_dir)
+
+    setup_args = ActionConditionedSetupArguments(
+        model="2B/robot/action-cond",
+        config_file="cosmos_predict2/_src/predict2/action/configs/action_conditioned/config.py",
+        checkpoint_path=str(checkpoint_path),
+        checkpoints_dir=args.checkpoints_dir,
+        experiment=args.experiment,
+        num_frames=args.num_frames,
+        dataset_path=args.dataset_path,
+        save_dir=args.save_dir,
+        output_dir=args.output_dir or args.save_dir,
+        num_samples=1,
+        data_split="full",
+        single_base_index=True,
+    )
 
     checkpoint = MODEL_CHECKPOINTS[setup_args.model_key]
     experiment = setup_args.experiment or checkpoint.experiment
@@ -309,6 +326,24 @@ def get_episode_plan(dataset, num_frames):
     return plan
 
 
+_CHUNK_TIMES = []
+
+# DD_MAX_CHUNKS / CW_MAX_CHUNKS: stop generating after N chunks.
+#
+# The benchmark unit is ONE chunk, and per-chunk cost is flat within an episode,
+# so generating all 9-33 chunks of an episode adds GPU time without adding
+# statistical power. The timing harness sets this to a small number; unset or 0
+# keeps the full episode, so canonical runs are unaffected.
+def _max_chunks():
+    import os
+    for k in ("BENCH_MAX_CHUNKS", "DD_MAX_CHUNKS", "CW_MAX_CHUNKS"):
+        v = os.environ.get(k)
+        if v and v.strip().isdigit() and int(v) > 0:
+            return int(v)
+    return 0
+
+
+
 def generate_segment(video2world_cli, img_array, actions, chunk_size, lam_video=None, guidance=0):
     """Generate one segment: initial GT frame + actions -> generated video frames."""
     chunk_video = []
@@ -336,6 +371,7 @@ def generate_segment(video2world_cli, img_array, actions, chunk_size, lam_video=
         vid_input = vid_input.to(torch.uint8)
         vid_input = vid_input.unsqueeze(0).permute(0, 2, 1, 3, 4)
 
+        _chunk_t0 = time.time()
         video = video2world_cli.generate_vid2world(
             prompt="",
             input_path=vid_input,
@@ -350,6 +386,13 @@ def generate_segment(video2world_cli, img_array, actions, chunk_size, lam_video=
             negative_prompt="The video captures a scene with low visual quality, blurring, jittering, or distortion.",
             lam_video=current_lam_video,
         )
+        _chunk_dt = time.time() - _chunk_t0
+        _CHUNK_TIMES.append(_chunk_dt)
+        print(f"  [ChunkTiming] chunk {len(_CHUNK_TIMES)}: {_chunk_dt:.3f}s", flush=True)
+        _cap = _max_chunks()
+        if _cap and len(_CHUNK_TIMES) >= _cap:
+            print(f"  [ChunkTiming] stopping after {_cap} chunk(s) (cap)", flush=True)
+            break
 
         video_normalized = (video - (-1)) / (1 - (-1))
         video_clamped = (
@@ -367,6 +410,46 @@ def generate_segment(video2world_cli, img_array, actions, chunk_size, lam_video=
     return np.concatenate(chunk_list, axis=0)
 
 
+def _resolve_iter_name(args) -> str:
+    """The checkpoint-iteration directory name, without loading the model.
+
+    Factored out of build_model so --gt-only lands in the SAME save_root as the run that
+    produced the predictions. Reading it from latest_checkpoint.txt is exactly what
+    build_model does, just without the 2B weight load.
+    """
+    checkpoints_dir = Path(args.checkpoints_dir)
+    last_checkpoint_file = checkpoints_dir / "latest_checkpoint.txt"
+    if not last_checkpoint_file.exists():
+        parent_file = checkpoints_dir.parent / "latest_checkpoint.txt"
+        if parent_file.exists():
+            checkpoints_dir = checkpoints_dir.parent
+            last_checkpoint_file = parent_file
+    if not last_checkpoint_file.exists():
+        raise FileNotFoundError(
+            f"Could not find latest_checkpoint.txt in {args.checkpoints_dir} or its parent.")
+    with open(last_checkpoint_file) as f:
+        return (checkpoints_dir / f.read().strip()).name
+
+
+def _count_frames(path) -> int:
+    """Exact frame count of an existing mp4, via the decoder rather than metadata.
+
+    Container `nb_frames` is absent or wrong on several of these files; GT length is
+    matched to the prediction, so a wrong count here would silently misalign the pair.
+    """
+    import cv2
+
+    cap = cv2.VideoCapture(str(path))
+    n = 0
+    while True:
+        ok, _ = cap.read()
+        if not ok:
+            break
+        n += 1
+    cap.release()
+    return n
+
+
 def main():
     args = parse_args()
 
@@ -374,8 +457,16 @@ def main():
     init_environment()
     torch.enable_grad(False)
 
-    print("Building model...")
-    video2world_cli, iter_name = build_model(args)
+    if args.gt_only:
+        # No diffusion, so no checkpoint and no GPU. iter_name still has to match the
+        # generating run's directory, and it comes from latest_checkpoint.txt rather
+        # than from the loaded model, so it can be read directly.
+        iter_name = _resolve_iter_name(args)
+        video2world_cli = None
+        print(f"[gt-only] skipping model load; iter={iter_name}")
+    else:
+        print("Building model...")
+        video2world_cli, iter_name = build_model(args)
 
     print("Building dataset...")
     dataset = build_dataset(args)
@@ -451,6 +542,38 @@ def main():
         ep_dir_name = f"episode_{traj_id:06d}"
         ep_save_dir = save_root / ep_dir_name
 
+        if args.gt_only:
+            # Backfill the reference beside an EXISTING prediction, no diffusion.
+            #
+            # The GT frames are the same `dataset[data_id]` tensors the generating run
+            # concatenated, taken over the same segment list, so this reproduces exactly
+            # what --save-full would have written. Only the final length differs in how
+            # it is obtained: --save-full trims to min(pred, gt), and here the prediction
+            # is already on disk, so it is read and used directly. That keeps pred and GT
+            # frame-aligned, which is the one property PSNR depends on.
+            pred_path = ep_save_dir / "full_pred.mp4"
+            gt_path = ep_save_dir / "full_gt.mp4"
+            if not pred_path.exists():
+                print(f"[{ep_idx}/{num_episodes}] {ep_dir_name}: no full_pred.mp4, skipping.")
+                continue
+            if gt_path.exists() and not args.force_gt:
+                print(f"[{ep_idx}/{num_episodes}] {ep_dir_name}: full_gt.mp4 exists, skipping.")
+                continue
+            gt_segs = []
+            for data_id in ep_info["segment_data_ids"]:
+                sample = dataset[data_id]
+                gt_segs.append(sample["video"].permute(1, 2, 3, 0).numpy())
+            if not gt_segs:
+                print(f"[{ep_idx}/{num_episodes}] {ep_dir_name}: no GT segments, skipping.")
+                continue
+            concat_gt = np.concatenate(gt_segs, axis=0)
+            n_pred = _count_frames(pred_path)
+            n = min(len(concat_gt), n_pred)
+            mediapy.write_video(str(gt_path), concat_gt[:n], fps=args.save_fps)
+            print(f"[{ep_idx}/{num_episodes}] {ep_dir_name}: wrote full_gt.mp4 "
+                  f"{n} frames (pred={n_pred}, gt_avail={len(concat_gt)})")
+            continue
+
         if (ep_save_dir / "full_pred.mp4").exists():
             print(f"[{ep_idx}/{num_episodes}] {ep_dir_name} already exists, skipping.")
             continue
@@ -464,6 +587,9 @@ def main():
         gt_segment_videos = []
         last_pred_frame = None  # autoregressive: carry forward last predicted frame
 
+        # The chunk budget is PER EPISODE, so clear the accumulator here or the
+        # first episode spends it all and every later episode records nothing.
+        _CHUNK_TIMES.clear()
         gen_start_time = time.time()
         for seg_idx, data_id in enumerate(ep_info["segment_data_ids"]):
             sample = dataset[data_id]
@@ -482,6 +608,11 @@ def main():
                 # Subsequent segments use the last predicted frame (autoregressive rollout)
                 img_array = torchvision.transforms.functional.to_tensor(last_pred_frame).unsqueeze(0) * 255.0
 
+            _cap = _max_chunks()
+            if _cap and len(_CHUNK_TIMES) >= _cap:
+                print(f"  [ChunkTiming] episode budget of {_cap} chunk(s) spent,"
+                      " skipping remaining segments", flush=True)
+                break
             segment = generate_segment(
                 video2world_cli, img_array, actions, args.chunk_size, lam_video,
                 guidance=guidance,

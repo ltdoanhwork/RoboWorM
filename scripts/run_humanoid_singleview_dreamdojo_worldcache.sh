@@ -42,6 +42,12 @@ for split in makovian non_makovian; do
   save_base="${SAVE_ROOT}/${split}"
   mkdir -p "${save_base}"
   echo "=== DreamDojo WorldCache full-episode: ${split} -> ${save_base} ==="
+  # SAVE_FULL=1 adds --save-full (PSNR/SSIM/LPIPS). The sparse-attention
+  # scripts for this cell already pass it unconditionally, so without this the
+  # cache methods would be the only ones with no quality numbers to pair with
+  # their speedup.
+  full_flag=()
+  if [ "${SAVE_FULL:-0}" = "1" ]; then full_flag=(--save-full); fi
   python "${ROOT}/scripts/infer_humanoid_singleview_full_episode.py" \
     --checkpoints-dir "${CHECKPOINTS_DIR}" \
     --experiment "${EXPERIMENT}" \
@@ -56,5 +62,6 @@ for split in makovian non_makovian; do
     --worldcache-ret-ratio "${WORLDCACHE_RET_RATIO}" \
     --worldcache-probe-depth "${WORLDCACHE_PROBE_DEPTH}" \
     --worldcache-motion-sensitivity "${WORLDCACHE_MOTION_SENSITIVITY}" \
+    "${full_flag[@]}" \
     "${ep_flag[@]}"
 done

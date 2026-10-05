@@ -68,6 +68,11 @@ for split in makovian non_makovian; do
   save_base="${SAVE_ROOT}/${split}"
   mkdir -p "${save_base}"
   echo "=== DreamDojo FasterCache bimanual SV: ${split} -> ${save_base} ==="
+  # SAVE_FULL=1 adds --save-full (PSNR/SSIM/LPIPS). The sparse-attention scripts
+  # for this cell already pass it, so without this the cache methods would be the
+  # only ones with no quality numbers to pair with their speedup.
+  full_flag=()
+  if [ "${SAVE_FULL:-0}" = "1" ]; then full_flag=(--save-full); fi
   python "${ROOT}/scripts/infer_bimanual_singleview_single_segment.py" \
     --checkpoints-dir "${CHECKPOINTS_DIR}" \
     --experiment "${EXPERIMENT}" \
@@ -81,5 +86,6 @@ for split in makovian non_makovian; do
     --fastercache-start-step "${FASTERCACHE_START_STEP}" \
     --fastercache-model-interval "${FASTERCACHE_MODEL_INTERVAL}" \
     --fastercache-block-interval "${FASTERCACHE_BLOCK_INTERVAL}" \
+    "${full_flag[@]}" \
     "${ep_flag[@]}"
 done

@@ -37,8 +37,11 @@ SITO_MAX_DOWNSAMPLE_RATIO="${SITO_MAX_DOWNSAMPLE_RATIO:-1}"
 SITO_ST_KEEP_RATIO="${SITO_ST_KEEP_RATIO:-0.9}"
 NUM_INFERENCE_STEPS="${NUM_INFERENCE_STEPS:-25}"
 
-OUTPUT_BASE="${PROJECT_ROOT}/sampling_dataset/sito/single_arm/output/multiview/ctrlworld"
-INPUT_BASE="${PROJECT_ROOT}/sampling_dataset/sito/single_arm/input/multiview/ctrlworld"
+EXTRA=""
+if [ -n "${NUM_EPISODES:-}" ]; then EXTRA="${EXTRA} --num_episodes ${NUM_EPISODES}"; fi
+
+OUTPUT_BASE="${OUTPUT_ROOT:-${PROJECT_ROOT}/sampling_dataset/sito/single_arm/output/multiview/ctrlworld}"
+INPUT_BASE="${INPUT_ROOT:-${PROJECT_ROOT}/sampling_dataset/sito/single_arm/input/multiview/ctrlworld}"
 
 echo "=========================================================="
 echo "Ctrl-World + SiTo | Single-Arm Multiview Inference"
@@ -48,11 +51,13 @@ echo "=========================================================="
 
 # Step 1: Prepare dataset
 echo ""
+if [ "${SKIP_PREPARE:-0}" = "1" ]; then echo "[Step 1] skipped (SKIP_PREPARE=1)"; else
 echo "[Step 1] Preparing dataset (LeRoBot -> Ctrl-World format)..."
 python scripts/prepare_ctrlworld_single_arm_multiview.py \
     --subset "${SUBSET}" \
     --output-dir "${DATASET_EXAMPLE_DIR}" \
     --dataset-base "${PROJECT_ROOT}/datasets/single_arm/multiview"
+fi
 
 # Step 2: Run inference with SiTo
 if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "makovian" ]; then
@@ -67,7 +72,7 @@ if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "makovian" ]; then
         --dataset_meta_info_path "${DATASET_META_INFO}" \
         --save_dir "${OUTPUT_BASE}/makovian" \
         --input_save_dir "${INPUT_BASE}/makovian" \
-        --num_inference_steps "${NUM_INFERENCE_STEPS}" \
+        --num_inference_steps "${NUM_INFERENCE_STEPS}" ${EXTRA} \
         --use_sito \
         --sito_spatiotemporal_hold \
         --sito_st_keep_ratio "${SITO_ST_KEEP_RATIO}" \
@@ -86,7 +91,7 @@ if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "non_makovian" ]; then
         --dataset_meta_info_path "${DATASET_META_INFO}" \
         --save_dir "${OUTPUT_BASE}/non_makovian" \
         --input_save_dir "${INPUT_BASE}/non_makovian" \
-        --num_inference_steps "${NUM_INFERENCE_STEPS}" \
+        --num_inference_steps "${NUM_INFERENCE_STEPS}" ${EXTRA} \
         --use_sito \
         --sito_spatiotemporal_hold \
         --sito_st_keep_ratio "${SITO_ST_KEEP_RATIO}" \

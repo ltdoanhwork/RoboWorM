@@ -1,0 +1,51 @@
+{
+  "cell_id": "single_arm.sv1_4x3.dense_dreamgen",
+  "reader_id": "a1x_ee.a1x_sv.sv1_4x3",
+  "checkpoint": "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/triquang/kinescore-store/ckpt/a1x_ee.a1x_sv.sv1_4x3.pt",
+  "checkpoint_sha256": "5e463b70358e53b53dc855fef1c39c95327977c6c03da275a230f11323e87b7e",
+  "videos": "/tmp/hal_broken",
+  "select": {
+    "embodiment": "single_arm",
+    "view": "singleview",
+    "model": "dense_dreamgen"
+  },
+  "n_clips": 2,
+  "n_failed": 0,
+  "n_scored_by_role": {
+    "": 2
+  },
+  "n_calibration_clips": 12,
+  "percentile": 95.0,
+  "thresholds": {
+    "rigidity": {
+      "units": "mm",
+      "threshold": 18.0,
+      "segment_threshold": 7.9,
+      "segment_reduce": "median"
+    },
+    "jerk": {
+      "units": "mm/s^3",
+      "threshold": 247590.06,
+      "segment_threshold": 366814.41,
+      "segment_reduce": "worst"
+    },
+    "teleport": {
+      "units": "mm/s",
+      "threshold": 402.09,
+      "segment_threshold": 663.56,
+      "segment_reduce": "worst"
+    },
+    "joint_limit": {
+      "units": "deg",
+      "threshold": 3.0,
+      "segment_threshold": 3.03,
+      "segment_reduce": "worst"
+    },
+    "self_collision": {
+      "units": "mm(min-dist)",
+      "threshold": 32.31,
+      "segment_threshold": 29.21,
+      "segment_reduce": "worst"
+    }
+  }
+}

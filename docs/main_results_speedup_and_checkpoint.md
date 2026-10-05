@@ -188,11 +188,18 @@ columns: base/finetuned PSNR/SSIM/LPIPS + deltas, checkpoint paths, n_episodes.
    footnote in the appendix table), not a fresh full-sweep timing pass. Only
    Ctrl-World multiview (bimanual/single_arm/humanoid) has persisted
    `mean_wall_time_s` for a subset of methods.
-2. **69 of 127 benchmarked cells have quality but no speedup number at all**
-   (mostly Ctrl-World bimanual/single_arm with PISA/Radial/SVG1/SVG2/SiTo/ITM,
-   where no tuning-insight rule documents a timing and no
-   `mean_wall_time_s` was persisted). These are reported as blank/omitted in
-   the appendix, not estimated.
+2. **18 of 124 benchmarked cells have quality but no speedup number at all**
+   (Ctrl-World single_arm multiview caching/ITM, DreamGen single_arm
+   singleview/multiview caching + pruning, DreamGen humanoid singleview pruning,
+   and every DreamDojo caching cell). These are reported as blank/omitted in
+   the appendix, not estimated. `docs/speedup_coverage_gaps.md` has the per-cell
+   audit plus the prepared timing jobs that close them.
+   *(An earlier revision claimed "69 of 127". That was an artifact of
+   `make_speedup_summary.py`: it loaded only 9 of the 14 tuning-insight rules,
+   and keyed its lookup on the collapsed model family so every
+   `ctrlworld_4view_grid` cell was also stamped with the 3-view speedup. Both
+   bugs are fixed — the honest count is 18, and the 4-view-grid cache numbers
+   are now 1.60x/1.56x rather than the 3-view 1.16x/1.11x.)*
 3. **B is a 4-cell, small-N ablation** (1–2 episodes per cell), not a
    full-dataset sweep — appropriate for demonstrating the *direction and
    rough magnitude* of the fine-tuning effect, not a tight confidence

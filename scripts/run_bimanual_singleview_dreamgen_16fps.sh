@@ -106,6 +106,20 @@ PY
   local item_count
   item_count="$(python3 -c "import json; print(len(json.load(open('${tmp_batch_json}'))))")"
 
+  # MAX_EPISODES: cap the batch. Without it a "1 episode" timing run generated all
+  # 40 episodes of the split (40 x 3 chunks = 120 chunks) because this script had
+  # no episode knob at all, unlike its sito/dicache siblings.
+  if [[ -n "${MAX_EPISODES:-}" ]]; then
+    python3 - "${tmp_batch_json}" "${MAX_EPISODES}" <<'PY'
+import json, sys
+from pathlib import Path
+p, n = Path(sys.argv[1]), int(sys.argv[2])
+items = json.loads(p.read_text())
+p.write_text(json.dumps(items[:n], indent=2))
+PY
+    item_count="$(python3 -c "import json; print(len(json.load(open('${tmp_batch_json}'))))")"
+  fi
+
   # Skip already generated unless forced
   if [[ "${FORCE_REGENERATE}" != "1" ]]; then
     local pending

@@ -70,11 +70,12 @@ VIEWS="${VIEWS:-global}"
 
 # --- Dataset paths ---
 SOURCE_ROOT="${SOURCE_ROOT:-${ROOT}/datasets/single_arm/singleview}"
-INPUT_ROOT="${ROOT}/sampling_dataset/dense/single_arm/input/singleview/dreamgen"
+INPUT_ROOT="${INPUT_ROOT:-${ROOT}/sampling_dataset/dense/single_arm/input/singleview/dreamgen}"
 OUTPUT_ROOT="${OUTPUT_ROOT:-${ROOT}/sampling_dataset/dense/single_arm/output/singleview/dreamgen}"
 SPLITS="${SPLITS:-makovian non_makovian}"
 NUM_CHUNKS="${NUM_CHUNKS:-2 3}"
 FORCE_REGENERATE="${FORCE_REGENERATE:-0}"
+MAX_EPISODES="${MAX_EPISODES:-}"
 # Training used the raw composed caption (build_caption) with NO extra prefix and
 # NO prompt refiner. To keep the inference text distribution identical to training:
 #   - PROMPT_REFINE defaults to 0 (refiner rewrites the prompt → distribution shift)
@@ -308,31 +309,29 @@ run_inference() {
   local item_count
   item_count="$(python3 -c "import json; print(len(json.load(open('${batch_json}'))))")"
 
-  # Skip already generated unless forced
-  if [[ "${FORCE_REGENERATE}" != "1" ]]; then
-    local tmp_batch_json
-    tmp_batch_json="$(mktemp --suffix=_dreamgen_static16fps.json)"
-    local pending
-    pending="$(python3 -c "
-import json
+  # Skip already generated unless forced; optionally cap at MAX_EPISODES.
+  local tmp_batch_json
+  tmp_batch_json="$(mktemp --suffix=_dreamgen_static16fps.json)"
+  local pending
+  pending="$(python3 - "${batch_json}" "${tmp_batch_json}" "${FORCE_REGENERATE}" "${MAX_EPISODES}" <<'PY'
+import json, sys
 from pathlib import Path
-items = json.loads(Path('${batch_json}').read_text())
-pending = [x for x in items if not Path(x['output_video']).is_file()]
-Path('${tmp_batch_json}').write_text(json.dumps(pending, indent=2))
+src, dst, force, max_eps = sys.argv[1:5]
+items = json.loads(Path(src).read_text())
+pending = list(items) if force == "1" else [x for x in items if not Path(x["output_video"]).is_file()]
+if max_eps:
+    pending = pending[: int(max_eps)]
+Path(dst).write_text(json.dumps(pending, indent=2))
 print(len(pending))
-")"
-    if [[ "${pending}" -eq 0 ]]; then
-      echo "  [SKIP] ${label}: all ${item_count} episodes done"
-      rm -f "${tmp_batch_json}"
-      return
-    fi
-    echo "  === Running: ${label} (${pending}/${item_count} pending, chunks=${num_chunks}) ==="
-    local run_json="${tmp_batch_json}"
-  else
-    echo "  === Running: ${label} (${item_count} episodes, chunks=${num_chunks}) ==="
-    local run_json="${batch_json}"
-    local tmp_batch_json=""
+PY
+)"
+  if [[ "${pending}" -eq 0 ]]; then
+    echo "  [SKIP] ${label}: all ${item_count} episodes done"
+    rm -f "${tmp_batch_json}"
+    return
   fi
+  echo "  === Running: ${label} (${pending}/${item_count} pending, chunks=${num_chunks}, cap=${MAX_EPISODES:-none}) ==="
+  local run_json="${tmp_batch_json}"
 
   # Build prompt refiner flag
   local pr_flag=""

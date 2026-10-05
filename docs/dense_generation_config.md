@@ -11,7 +11,7 @@ python3 scripts/make_dense_generation_table.py \
   --tex metrics/reports/dense_generation_config.tex
 ```
 
-Cells: 14 | clips probed: 3548 / 3549 on disk | **1 unreadable**: `single_arm/output/singleview/dreamgen/makovian/iter_000090000_static16fps/global/episode_000056.mp4`
+Cells: 12 | clips probed: 3165 / 3166 on disk | **1 unreadable**: `single_arm/output/singleview/dreamgen/makovian/iter_000090000_static16fps/global/episode_000056.mp4`
 
 Frames/duration per clip are **median [min–max]**, not a constant: every clip
 is generated to match its ground-truth episode length, so clip length varies
@@ -21,21 +21,21 @@ within a cell.
 
 ### Ctrl-World
 
-| | DROID-MV<br>(single_arm/multiview) | ALOHA-MV<br>(bimanual/multiview) | ALOHA-MV-grid<br>(bimanual/multiview) | RoboCOIN-MV<br>(humanoid/multiview) | RoboCOIN-MV-grid<br>(humanoid/multiview) |
-|---|---|---|---|---|---|
-| **Source data** | DROID (cadene/droid_1.0.1) | AIST Bimanual (ALOHA) | AIST Bimanual (ALOHA) | RoboCOIN (AIRBOT MMK2) | RoboCOIN (AIRBOT MMK2) |
-| **Generator** | Ctrl-World (SVD img2vid U-Net, action-cond.) | Ctrl-World (SVD img2vid U-Net, action-cond.) | Ctrl-World (4-view 2x2 latent canvas) | Ctrl-World (SVD img2vid U-Net, action-cond.) | Ctrl-World (4-view 2x2 latent canvas) |
-| **Checkpoint** | Ctrl-World/checkpoint-10000.pt (released DROID pretrain) | bimanual_multiview_5fps/checkpoint-280000.pt | bimanual_multiview_4view_grid/checkpoint-110000.pt | humanoid_multiview/checkpoint-200000.pt | humanoid_multiview_4view_grid/checkpoint-140000.pt |
-| **Views / clip** | 3 (3x1 latent strip) | 3 (3x1 latent strip) | 4 (2x2 latent grid) | 3 (3x1 latent strip) | 4 (2x2 latent grid) |
-| **Resolution (per view)** | 320x192 | 320x192 | 320x192 | 320x192 | 320x192 |
-| **Resolution (canvas)** | 960x192 | 960x192 | 1280x192 | 960x192 | 1280x192 |
-| **FPS** | 5 | 5 | 5 | 5 | 5 |
-| **Frames per clip** | 81 [22-434] | 165 [41-497] | 165 [41-497] | 45 [13-157] | 45 [13-157] |
-| **Duration per clip** | 16.20 s [4.40-86.80] | 33.00 s [8.20-99.40] | 33.00 s [8.20-99.40] | 9.00 s [2.60-31.40] | 9.00 s [2.60-31.40] |
-| **Guidance scale** | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 |
-| **Sampling steps** | 50 | 50 | 50 | 50 | 50 |
-| **Seed** | unseeded | unseeded | unseeded | unseeded | unseeded |
-| **Clips on disk** | 257 | 300 | 300 | 248 | 248 |
+| | DROID-MV<br>(single_arm/multiview) | ALOHA-MV-grid<br>(bimanual/multiview) | RoboCOIN-MV-grid<br>(humanoid/multiview) |
+|---|---|---|---|
+| **Source data** | DROID (cadene/droid_1.0.1) | AIST Bimanual (ALOHA) | RoboCOIN (AIRBOT MMK2) |
+| **Generator** | Ctrl-World (SVD img2vid U-Net, action-cond.) | Ctrl-World (4-view 2x2 latent canvas) | Ctrl-World (4-view 2x2 latent canvas) |
+| **Checkpoint** | Ctrl-World/checkpoint-10000.pt (released DROID pretrain) | bimanual_multiview_4view_grid/checkpoint-110000.pt | humanoid_multiview_4view_grid/checkpoint-140000.pt |
+| **Views / clip** | 3 (3x1 latent strip) | 4 (2x2 latent grid) | 4 (2x2 latent grid) |
+| **Resolution (per view)** | 320x192 | 320x192 | 320x192 |
+| **Resolution (canvas)** | 960x192 | 1280x192 | 1280x192 |
+| **FPS** | 5 | 5 | 5 |
+| **Frames per clip** | 81 [22-434] | 165 [41-497] | 45 [13-157] |
+| **Duration per clip** | 16.20 s [4.40-86.80] | 33.00 s [8.20-99.40] | 9.00 s [2.60-31.40] |
+| **Guidance scale** | 1.0 | 1.0 | 1.0 |
+| **Sampling steps** | 50 | 50 | 50 |
+| **Seed** | unseeded | unseeded | unseeded |
+| **Clips on disk** | 257 | 300 | 248 |
 
 ### DreamGen
 
@@ -53,7 +53,7 @@ within a cell.
 | **Guidance scale** | 7 | 7 | 7 | 7 | 7 | 7 |
 | **Sampling steps** | 35 | 35 | 35 | 35 | 35 | 35 |
 | **Seed** | 0 | 0 + segment index | 0 + segment index | 0 | 0 | 0 |
-| **Clips on disk** | 92 | 300 | 248 | 240 | 300 | 260 |
+| **Clips on disk** | 257 | 300 | 248 | 240 | 300 | 260 |
 
 ### DreamDojo
 
@@ -78,11 +78,9 @@ within a cell.
 | Cell | Source data | Generator | Views | Res (per view) | Res (canvas) | FPS | Frames/clip | Duration/clip | Guid. | Steps | Seed | Clips |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | `single_arm/multiview/ctrlworld` | DROID (cadene/droid_1.0.1) | Ctrl-World (SVD img2vid U-Net, action-cond.) | 3 (3x1 latent strip) | 320x192 | 960x192 | 5 | 81 [22–434] | 16.20 s | 1.0 | 50 | unseeded | 257 |
-| `bimanual/multiview/ctrlworld` | AIST Bimanual (ALOHA) | Ctrl-World (SVD img2vid U-Net, action-cond.) | 3 (3x1 latent strip) | 320x192 | 960x192 | 5 | 165 [41–497] | 33.00 s | 1.0 | 50 | unseeded | 300 |
 | `bimanual/multiview/ctrlworld_4view_grid` | AIST Bimanual (ALOHA) | Ctrl-World (4-view 2x2 latent canvas) | 4 (2x2 latent grid) | 320x192 | 1280x192 | 5 | 165 [41–497] | 33.00 s | 1.0 | 50 | unseeded | 300 |
-| `humanoid/multiview/ctrlworld` | RoboCOIN (AIRBOT MMK2) | Ctrl-World (SVD img2vid U-Net, action-cond.) | 3 (3x1 latent strip) | 320x192 | 960x192 | 5 | 45 [13–157] | 9.00 s | 1.0 | 50 | unseeded | 248 |
 | `humanoid/multiview/ctrlworld_4view_grid` | RoboCOIN (AIRBOT MMK2) | Ctrl-World (4-view 2x2 latent canvas) | 4 (2x2 latent grid) | 320x192 | 1280x192 | 5 | 45 [13–157] | 9.00 s | 1.0 | 50 | unseeded | 248 |
-| `single_arm/multiview/dreamgen` | DROID (cadene/droid_1.0.1) | Cosmos-Predict2 14B (GR00T-Dreams-DROID) | 3 (2x2 grid (3 active + blank)) | 384x216 | 768x432 | 10 | 93 [93–93] | 9.30 s | 7 | 35 | 0 | 92 |
+| `single_arm/multiview/dreamgen` | DROID (cadene/droid_1.0.1) | Cosmos-Predict2 14B (GR00T-Dreams-DROID) | 3 (2x2 grid (3 active + blank)) | 384x216 | 768x432 | 10 | 93 [93–93] | 9.30 s | 7 | 35 | 0 | 257 |
 | `bimanual/multiview/dreamgen` | AIST Bimanual (ALOHA) | Cosmos-Predict2 2B (post-trained) | 4 (2x2 grid) | 384x216 | 768x432 | 16 | 535 [135–1602] | 33.44 s | 7 | 35 | 0 + segment index | 300 |
 | `humanoid/multiview/dreamgen` | RoboCOIN (AIRBOT MMK2) | Cosmos-Predict2 2B (post-trained) | 4 (2x2 grid) | 384x216 | 768x432 | 16 | 154 [50–505] | 9.62 s | 7 | 35 | 0 + segment index | 248 |
 | `single_arm/singleview/dreamgen` | RoboChallenge (Traly/RoboChallenge-lerobot) | Cosmos-Predict2 2B (post-trained, static 16fps) | 1 (single view) | 640x480 | 640x480 | 16 | 369 [185–645] | 23.06 s | 7 | 35 | 0 | 240 |

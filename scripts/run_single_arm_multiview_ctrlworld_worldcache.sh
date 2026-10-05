@@ -23,7 +23,7 @@ export XLA_PYTHON_CLIENT_MEM_FRACTION=0.4
 # Model paths
 SVD_MODEL_PATH="./checkpoints/stabilityai/stable-video-diffusion-img2vid"
 CLIP_MODEL_PATH="./checkpoints/openai/clip-vit-base-patch32"
-CKPT_PATH="./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt"
+CKPT_PATH="${CKPT:-./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt}"
 DATASET_META_INFO="./models/Ctrl-World/dataset_meta_info"
 DATASET_EXAMPLE_DIR="./models/Ctrl-World/dataset_example"
 
@@ -33,8 +33,12 @@ WORLDCACHE_RET_RATIO="${WORLDCACHE_RET_RATIO:-0.30}"
 WORLDCACHE_PROBE_DEPTH="${WORLDCACHE_PROBE_DEPTH:-2}"
 WORLDCACHE_MOTION_SENSITIVITY="${WORLDCACHE_MOTION_SENSITIVITY:-2.5}"
 
-OUTPUT_BASE="${PROJECT_ROOT}/sampling_dataset/worldcache/single_arm/output/multiview/ctrlworld"
-INPUT_BASE="${PROJECT_ROOT}/sampling_dataset/worldcache/single_arm/input/multiview/ctrlworld"
+OUTPUT_BASE="${OUTPUT_ROOT:-${PROJECT_ROOT}/sampling_dataset/worldcache/single_arm/output/multiview/ctrlworld}"
+INPUT_BASE="${INPUT_ROOT:-${PROJECT_ROOT}/sampling_dataset/worldcache/single_arm/input/multiview/ctrlworld}"
+
+EXTRA=""
+if [ -n "${NUM_EPISODES:-}" ]; then EXTRA="${EXTRA} --num_episodes ${NUM_EPISODES}"; fi
+if [ -n "${NUM_INFERENCE_STEPS:-}" ]; then EXTRA="${EXTRA} --num_inference_steps ${NUM_INFERENCE_STEPS}"; fi
 
 echo "=========================================================="
 echo "Ctrl-World + WorldCache | Single-Arm Multiview Inference"
@@ -43,12 +47,14 @@ echo "Params: thresh=${WORLDCACHE_REL_L1_THRESH}, ret_ratio=${WORLDCACHE_RET_RAT
 echo "=========================================================="
 
 # Step 1: Prepare dataset
+if [ "${SKIP_PREPARE:-0}" != "1" ]; then
 echo ""
 echo "[Step 1] Preparing dataset (LeRoBot -> Ctrl-World format)..."
 python scripts/prepare_ctrlworld_single_arm_multiview.py \
     --subset "${SUBSET}" \
     --output-dir "${DATASET_EXAMPLE_DIR}" \
     --dataset-base "${PROJECT_ROOT}/datasets/single_arm/multiview"
+fi
 
 # Step 2: Run inference with WorldCache
 if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "makovian" ]; then
@@ -67,7 +73,7 @@ if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "makovian" ]; then
         --worldcache_rel_l1_thresh "${WORLDCACHE_REL_L1_THRESH}" \
         --worldcache_ret_ratio "${WORLDCACHE_RET_RATIO}" \
         --worldcache_probe_depth "${WORLDCACHE_PROBE_DEPTH}" \
-        --worldcache_motion_sensitivity "${WORLDCACHE_MOTION_SENSITIVITY}"
+        --worldcache_motion_sensitivity "${WORLDCACHE_MOTION_SENSITIVITY}" ${EXTRA}
 fi
 
 if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "non_makovian" ]; then
@@ -86,7 +92,7 @@ if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "non_makovian" ]; then
         --worldcache_rel_l1_thresh "${WORLDCACHE_REL_L1_THRESH}" \
         --worldcache_ret_ratio "${WORLDCACHE_RET_RATIO}" \
         --worldcache_probe_depth "${WORLDCACHE_PROBE_DEPTH}" \
-        --worldcache_motion_sensitivity "${WORLDCACHE_MOTION_SENSITIVITY}"
+        --worldcache_motion_sensitivity "${WORLDCACHE_MOTION_SENSITIVITY}" ${EXTRA}
 fi
 
 echo ""

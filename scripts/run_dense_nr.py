@@ -467,6 +467,33 @@ def continuity(paths, smooth, motion, interval_ok, n_active):
     return value, denom, gains, copy_errs
 
 
+def excluded_row(row):
+    """True for manifest rows the benchmark deliberately does NOT score.
+
+    Ctrl-World multiview exists in two renders for bimanual and humanoid: a 3-view one
+    (`model=ctrlworld`: cam_high + 2 wrists) and a 4-view grid (`model=ctrlworld_4view_grid`:
+    adds cam_low / a third exterior). Only the 4-view render is used in the paper, so the
+    3-view rows are 4,365 clips of pure waste (~5.3 h of wall time across the wave).
+
+    Two things this must NOT do:
+
+    * Do not touch `single_arm`. Its Ctrl-World render only EXISTS as `model=ctrlworld`
+      (3 views: exterior_1_left, exterior_2_left, wrist_left) -- there is no 4-view
+      variant, so excluding `model == 'ctrlworld'` globally would silently delete the
+      whole single_arm/MV/ctrlworld cell from the paper grid.
+    * Do not filter this out of manifest.json instead. The shard is `rows[offset::stride]`
+      BY POSITION, so dropping rows renumbers every machine's slice; boxes that had not
+      restarted would partition a different list and some live rows would be owned by
+      NOBODY. Skipping here keeps every index stable -- same reason SKIP-GONE works this
+      way.
+
+    The GT anchor (`gt_ctrlworld`) goes with it: it only exists to pair against the 3-view
+    predictions, and the 4-view render carries its own `gt_ctrlworld_4view_grid`.
+    """
+    return (row.get('embodiment') in ('bimanual', 'humanoid')
+            and row.get('model') in ('ctrlworld', 'gt_ctrlworld'))
+
+
 def record_error(args, row):
     """Persist a failure without letting the failure handler itself kill the worker.
 
@@ -650,6 +677,9 @@ def worker(args):
         # no resharding.
         if not os.path.exists(row['path']):
             print(f'SKIP-GONE {row["relative"]} {row["view"]}', flush=True)
+            continue
+        if excluded_row(row):
+            print(f'SKIP-EXCLUDED {row["relative"]} {row["view"]}', flush=True)
             continue
         started = time.time()
         print(f'START {row["relative"]} {row["view"]}', flush=True)

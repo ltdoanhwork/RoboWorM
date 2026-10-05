@@ -12,7 +12,8 @@
 #
 # Overrideable env: ITER_NAME, CHECKPOINTS_DIR, DIT_PATH, GUIDANCE, FPS,
 #   NUM_CONDITIONAL_FRAMES, MAX_EPISODES, MAX_SEGMENTS, MULTIVIEW_ROOT, SAVE_ROOT,
-#   WORLDCACHE_{NUM_STEPS,REL_L1_THRESH,RET_RATIO,PROBE_DEPTH,MOTION_SENSITIVITY,DYNAMIC_DECAY}
+#   WORLDCACHE_{NUM_STEPS,REL_L1_THRESH,RET_RATIO,PROBE_DEPTH,MOTION_SENSITIVITY,DYNAMIC_DECAY},
+#   EPISODE_IDS (comma-separated trajectory ids; for targeted qualitative/timing runs)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -45,6 +46,7 @@ SAVE_FPS="${SAVE_FPS:-16}"
 GUIDANCE="${GUIDANCE:-7}"
 NUM_CONDITIONAL_FRAMES="${NUM_CONDITIONAL_FRAMES:-5}"
 MAX_EPISODES="${MAX_EPISODES:-}"
+EPISODE_IDS="${EPISODE_IDS:-}"
 MAX_SEGMENTS="${MAX_SEGMENTS:-}"
 SEED="${SEED:-0}"
 ITER_TAG="${ITER_TAG:-${ITER_NAME}}"
@@ -126,6 +128,7 @@ PY_ARGS=(
   "${WORLDCACHE_FLAGS[@]}"
 )
 [[ -n "${MAX_EPISODES}" ]] && PY_ARGS+=(--max-episodes "${MAX_EPISODES}")
+[[ -n "${EPISODE_IDS}" ]] && PY_ARGS+=(--episode-ids "${EPISODE_IDS}")
 [[ -n "${MAX_SEGMENTS}" ]] && PY_ARGS+=(--max-segments "${MAX_SEGMENTS}")
 
 python "${ROOT}/scripts/infer_bimanual_multiview_rollout.py" "${PY_ARGS[@]}"

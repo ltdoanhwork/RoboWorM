@@ -290,12 +290,188 @@ A dead box is relaunched with **its own slot range only** — never someone else
 3. **`TARGET` / `ONLY_IDS` set** (often leaked from tmux) → back to the 51k subset and the
    34,726-clip spec hole. Check the `subset :` banner line every launch.
 4. **Old wrappers.** Do **not** use `run_dense_nr_grid.sh` (defaults `TARGET=300` →
-   `--only-ids`), `run_dense_nr_full_m{0..4}.sh`, `run_dense_nr_full_extra.sh`
-   (`REVERSE=1`, a 2-machine-only trick), or `run_dense_nr_multigpu.sh` (assumes one slot
-   per GPU with uniform `WORKERS`, which is exactly what fails here).
-   **`run_dense_nr_slots.sh` is the only entry point for this wave.**
+   `--only-ids`), `run_dense_nr_full_m{0..4}.sh`, or `run_dense_nr_multigpu.sh` (assumes one
+   slot per GPU with uniform `WORKERS`, which is exactly what fails on mixed hardware).
+   **`run_dense_nr_slots.sh` is the only entry point for a forward slot**;
+   `run_dense_nr_full_extra.sh` is the only entry point for the single reverse walker.
 5. **Promoting the manifest while workers are live** → they repartition mid-flight. The
    promote script refuses; do not `--force`.
+
+---
+
+## 5b. Three failure modes measured during the 2026-09-21 launch
+
+These all happened for real. Expect them.
+
+### (a) `det shell open` kills anything not in tmux — and multi-step commands get truncated
+
+Launching via `setsid` inside `det shell open` looked fine (banner printed, PGID reported,
+`still to score : 52453`) but **all six boxes were dead 2 minutes later with 0-byte logs**.
+Confirmed: `worker song: 0`, `GPU: 0 proc`. Only `tmux` survives — as the skill says.
+
+Worse, a **compound** remote command silently loses its tail. This form:
+
+```bash
+det shell open $ID -- "tmux kill-session -t nrwave; pkill -f run_dense_nr.py; sleep 3;
+                       tmux new-session -d -s nrwave2 '...'; sleep 25; echo worker=..."
+```
+
+returned in 10 s (not 28 s), never ran `tmux new-session`, and left **all 6 boxes at 0
+workers** — the `pkill` landed but the relaunch did not. It took a second round to notice.
+
+**Rule: one action per `det shell open`.** Launch with nothing but the `tmux new-session`,
+then verify in a *separate* call:
+
+```bash
+det shell open $ID -- "tmux new-session -d -s nr$S 'cd $P && MACHINES=6 WORKERS=8 \
+  bash scripts/run_dense_nr_slots.sh $S 1 > $P/logs/nrwave_slot$S.log 2>&1; sleep 99999'"
+sleep 40
+det shell open $ID -- 'echo worker=$(ps -eo stat=,args= | grep run_dense_nr.py \
+  | grep -v grep | grep -vc "^Z")'      # expect 9
+```
+
+Also: if a session with that name **already exists**, `tmux new-session -d` is a no-op and
+the box silently stays down. Always `tmux kill-session` (as its own call) or use a new name.
+
+For a box with no `tmux` (`thanhnv` has none, and no apt candidate), `setsid` as a plain
+background job *does* survive — verified with a tick-probe (1 → 12 ticks written after the
+SSH session closed):
+
+```bash
+det shell open $ID -- "cd $P && setsid bash -c 'MACHINES=6 WORKERS=8 \
+  bash $P/scripts/run_dense_nr_slots.sh 5 1 > $P/logs/nrwave_slot5.log 2>&1; \
+  sleep 99999' </dev/null >/dev/null 2>&1 & sleep 3; echo launched"
+```
+
+### (b) `$HOME` is on the shared FS, so 56 workers race on one CLIP download
+
+`HOME=/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge` — shared by **every** box. On first
+launch all workers raced to fetch `~/.cache/clip/ViT-L-14.pt` (932 MB) and killed each
+other's download:
+
+```
+RuntimeError: Model has been downloaded but the SHA256 checksum does not not match
+```
+
+**19 of 54 workers died** this way (m0 3, m1 2, m2 2, m3 4, m4 1, m5 2, rev 5). The file
+later verified clean (`b8cca3fd…` matches `clip._MODELS`), so it self-heals — but the first
+wave loses a third of its capacity.
+
+**Prevention:** warm the cache once, before launching anything, and verify it:
+
+```bash
+models/dreamgen/.venv/bin/python -c "import clip; clip.load('ViT-L/14', device='cpu')"
+sha256sum ~/.cache/clip/ViT-L-14.pt   # b8cca3fd41ae0c99ba7e8951adf17d267cdb84cd88be6f7c2e0eca1737a03836
+```
+
+### (c) A `RETRY QUOTA` worker is asleep, not dead — do not "fix" it
+
+Symptom: throughput halves and ~11 workers look frozen for 10–15 min. Their logs end with
+
+```
+RETRY QUOTA 3/3 in 900s <id>
+```
+
+That is the intended disk-quota backoff (5/10/15 min), **not** a crash. `df` showed 379 TB
+free and a 5 MB write succeeded at 2.8 GB/s, so this is a **user/group quota** blip, not a
+full filesystem. Left alone for 9 minutes it fully recovered: blocked workers **11 → 1**,
+48 alive, and the reverse walker went 0.61 → 1.33 clips/min.
+
+Diagnose before acting — the check that distinguishes the three cases:
+
+```bash
+# asleep in backoff (leave it):   RETRY QUOTA at the END of the log
+# dead (relaunch the box):        log mtime old AND no RETRY QUOTA at the end
+# healthy:                        log mtime < 5 min
+tail -c 2000 <log> | grep -c 'RETRY QUOTA'
+```
+
+Do **not** `pkill` a quota-blocked worker: it is holding a clip it will finish, and killing
+it is what led to the 0-worker incident in (a).
+
+### (d) The cluster reclaims shells without warning — and that ORPHANS stride slots
+
+At ~05:00 on 2026-09-22, **7 of 11 shells went `TERMINATED / allocation exited
+successfully`** at the same moment (VLAq, S-MajRL, H2R_TEAM, vla, 2× VLA_doanh, thanhnv).
+Not idle-timeout (`idle_timeout: null` on all of them) and not a crash — the worker logs just
+stop mid-SAM2-propagate with no traceback, i.e. SIGKILL from outside.
+
+This is the failure the slot design is most exposed to. A stride slot owns a fixed
+`1/MACHINES` of the manifest and **nobody else ever visits it**, so losing slots 0, 1 and 5
+of a 6-slot wave orphaned **16,069 unscored rows** — silently, because every write is
+idempotent and nothing errors.
+
+The check, and the fix (re-shard the survivors):
+
+```bash
+det shell list | grep -E 'RUNNING|TERMINATED'     # who is actually alive?
+
+# count rows that lost their owner
+# (slots that died) x (rows not yet in results/) -> orphans
+
+# then: stop survivors, clear the lock, relaunch them as a COMPLETE partition
+det shell open $ID -- 'pkill -f run_dense_nr.py'   # one call per box
+rm -f <run>/wave_mode.json
+MACHINES=3 WORKERS=8 bash scripts/run_dense_nr_slots.sh <0..2> 1
+```
+
+Verify the new geometry is exact before trusting it (`W=8 M=3` -> covered 86,767/86,767,
+0 dup, 0 missing).
+
+**Opportunistic boxes did NOT create orphans** — by design. Their slices are a private
+`--only-ids` subset while the forward wave still owns every row, so the 10 that died just
+stopped contributing (they were 19–40% through their slices). That is exactly the tradeoff:
+borrowed capacity is free to vanish, stride slots are not.
+
+### (e) A stray `'` in a shell comment killed every worker on every box
+
+While adding the `libGL` fix to `run_dense_nr.sh`, an edit mangled the comment block into a
+single line ending `...hn image's own newer libs in front where they exist.` The unclosed
+quote made bash fail at line 16:
+
+```
+scripts/run_dense_nr.sh: line 16: unexpected EOF while looking for matching `''
+```
+
+Every worker died instantly on **all** boxes. What made it expensive to find: the launcher
+still printed a perfect banner (`mode`, `workers`, `still to score`, `launched PGID`) because
+it is a *different* script, and the worker logs showed no error — only a clean truncation
+mid-SAM2, indistinguishable from the SIGKILL in (d). Two relaunch rounds were wasted
+blaming tmux before running the worker in the foreground surfaced the real message.
+
+**Never put an apostrophe in a comment in these scripts**, and after editing any `run_*.sh`:
+
+```bash
+bash -n scripts/run_dense_nr.sh && echo OK    # cheap, catches exactly this
+```
+
+Then confirm one worker actually reaches a clip, not just that a PGID was printed.
+
+---
+
+| | |
+|---|---|
+| topology | 6 single-GPU boxes as slots 0–5 (`MACHINES=6 WORKERS=8`) + `vla` GPU 1 as the reverse walker |
+| `wave_mode.json` | `machines=6 workers=8 list=full-manifest` |
+| throughput | **12.3 clips/min** healthy (≈1.8 per forward box + 1.3 reverse); 10.4 while quota-blocked |
+| progress | 36,335 / 86,767 = **41.9%**, ~50.4k left → **≈68 h (2.8 days)** |
+| errors | 42 total = **0.119%**, all `ValueError: Invalid FPS`; 33 are rows pointing at deleted trees (harmless), **9 are genuinely corrupt mp4s** (0 B, 48 B, a truncated 2 MB) |
+| write stubs | **0** — the atomic-write fix holds even under quota pressure |
+
+### Why `vla` is a reverse walker and not slots 4–7
+
+`vla` is shared: **loadavg 181–284 on 32 cores** (someone else's `libero` jobs, 369 python
+procs) and GPU 0 already held 19–47 GB. A stride slot must keep pace or it becomes the
+straggler that defines the wave's end — modelled cost if it runs 3× slow: **32.5 h → 98.6 h**.
+The reverse walker has no such coupling: it is its own backwards queue, so if it is slow it
+simply contributes less (measured 1.3 clips/min ≈ 11% of the wave) and the six forward
+boxes still cover every row.
+
+**This is also why `REVERSE=1` is now exempt from the `wave_mode.json` lock** (see
+`_run_dense_nr_full.sh`): it forces `MACHINES=1` internally, so its mode string could never
+match a wave pinned at `machines=6`, and the guard would have blocked the one mechanism that
+is genuinely safe to add mid-wave. It is exempt but **never pins** the mode — verified
+across all four `(REVERSE, lock-exists)` combinations.
 
 ---
 

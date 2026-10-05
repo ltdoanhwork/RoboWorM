@@ -47,20 +47,16 @@ def build_model(args):
     from cosmos_predict2._src.predict2.inference.video2world import Video2WorldInference
     from cosmos_predict2.cache_runtime import build_cache_runtime_config
 
-    setup_args = ActionConditionedSetupArguments(
-        model="2B/robot/action-cond",
-        config_file="cosmos_predict2/_src/predict2/action/configs/action_conditioned/config.py",
-        checkpoints_dir=args.checkpoints_dir,
-        experiment=args.experiment,
-        num_frames=args.num_frames,
-        dataset_path=args.dataset_path,
-        save_dir=args.save_dir,
-        output_dir=args.output_dir or args.save_dir,
-        num_samples=1,
-        data_split="full",
-        single_base_index=False,
-    )
 
+    # Resolve the LOCAL checkpoint FIRST.
+    #
+    # `ActionConditionedSetupArguments` runs a pydantic `validate_model` hook that
+    # fills `checkpoint_path` from `MODEL_CHECKPOINTS[...]` when it is not given,
+    # and that default is a *property* which eagerly downloads from the gated HF
+    # repo `nvidia/Cosmos-Predict2.5-2B` -> 401 GatedRepoError, aborting before a
+    # single frame is generated even though `--checkpoints-dir` points at a local
+    # finetuned checkpoint we hand to Video2WorldInference anyway. Resolving
+    # locally first and passing the path keeps the validator off the network.
     checkpoints_dir = Path(args.checkpoints_dir)
     last_checkpoint_file = checkpoints_dir / "latest_checkpoint.txt"
     if not last_checkpoint_file.exists():
@@ -78,6 +74,21 @@ def build_model(args):
 
     from examples.action_conditioned import resolve_checkpoint_path
     checkpoint_path = resolve_checkpoint_path(checkpoint_iter_dir)
+
+    setup_args = ActionConditionedSetupArguments(
+        model="2B/robot/action-cond",
+        config_file="cosmos_predict2/_src/predict2/action/configs/action_conditioned/config.py",
+        checkpoint_path=str(checkpoint_path),
+        checkpoints_dir=args.checkpoints_dir,
+        experiment=args.experiment,
+        num_frames=args.num_frames,
+        dataset_path=args.dataset_path,
+        save_dir=args.save_dir,
+        output_dir=args.output_dir or args.save_dir,
+        num_samples=1,
+        data_split="full",
+        single_base_index=False,
+    )
 
     checkpoint = MODEL_CHECKPOINTS[setup_args.model_key]
     experiment = setup_args.experiment or checkpoint.experiment
