@@ -20,7 +20,7 @@ Data:
                results/<model>/<embodiment>.csv  (label = kinescore band,
                run1..run3 + final = median of runs)
   human      : Supabase `labels`, item_id = <videoId>_s<index>
-  mapping    : .main-edit/webpage/labeling/catalog.segment.json (the DEPLOYED
+  mapping    : tmp/20261005_refactor/web/.main-edit/webpage/labeling/catalog.segment.json (the DEPLOYED
                291-video catalog; the copy in this branch's working tree is an
                older 300-prune pool with 8370 segments and will not join)
 
@@ -48,7 +48,7 @@ from sklearn.metrics import cohen_kappa_score, confusion_matrix
 
 REPO = Path(__file__).resolve().parents[1]
 VLM_DIR = REPO / "sampling_dataset/data_for_web/hallucinate_bench/300vid/vlm/results"
-CATALOG = REPO / ".main-edit/webpage/labeling/catalog.segment.json"
+CATALOG = REPO / "tmp/20261005_refactor/web/.main-edit/webpage/labeling/catalog.segment.json"
 HALLU_EXPORT = REPO / "sampling_dataset/data_for_web/hallucinate_final_labels.json"
 OUT_DIR = REPO / "results/ours_vs_vlm_segment"
 

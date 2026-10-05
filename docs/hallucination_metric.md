@@ -1296,7 +1296,7 @@ Pre-existing in this repo (**prior work by others, not created here**):
 |---|---|
 | `scripts/build_hallucination_segment_catalog.py` | September, segment catalog builder. |
 | `scripts/export_hallucinate_results.py` | September, result exporter. |
-| `scripts/export_hallucinate_final_labels.js` | September, label exporter. |
+| `tmp/20261005_refactor/web/scripts/export_hallucinate_final_labels.js` | September, label exporter. |
 | `metrics/hallucination/map_to_dr.py` | September, maps rated web clips → local paths. |
 | `metrics/reports/hallucinate_human_vs_dr.csv` | September, 291 human ratings + PSNR/SSIM/LPIPS. |
 | `metrics/reports/hallucinate_source_map.json` | September, 258/291 resolved clip provenance. |

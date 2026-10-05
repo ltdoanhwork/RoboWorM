@@ -11,7 +11,7 @@ as a side-by-side `view1|view2` overlay to help raters see motion.
 | CoTracker3 keypoints (`keypoints.py` + `point_picker.py`) | **yes** | initialized from `assets/seed_points.json` |
 | PNG `view1/view2/frame_*.png` layout | original only | labeling pipeline decodes mp4 instead |
 
-The labeling builder (`scripts/build_assessment_multiview.py`) reads the exact
+The labeling builder (`tmp/20261005_refactor/web/scripts/build_assessment_multiview.py`, archived) reads the exact
 300 paths from `assets/all_videos.md`, crops the two **static** cameras out of a
 3/4-view strip or 2×2 grid, then writes a **raw** hstack and a **CoTracker**
 hstack at original length. It also exports the 9 examples in

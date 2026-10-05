@@ -708,8 +708,8 @@ bash scripts/run_single_arm_singleview_dreamdojo_itm.sh
 
 After inference, the videos are automatically served by the webpage via symlink:
 ```bash
-# webpage/videos -> ../sampling_dataset (already linked)
-# Videos accessible at: webpage/videos/{sito,itm}/{embodiment}/output/...
+# (archived) tmp/20261005_refactor/web/webpage/videos -> ../sampling_dataset (already linked)
+# Videos accessible at: tmp/20261005_refactor/web/webpage/videos/{sito,itm}/{embodiment}/output/...
 
 # Or explicitly check what's available:
 python scripts/collect_sparse_attention_videos.py --dry-run

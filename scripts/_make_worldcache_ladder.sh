@@ -209,4 +209,4 @@ fi
 
 echo ""
 echo "Done. Scratch: ${SCRATCH}"
-echo "Next: python3 assets/scripts/stage_worldcache_ladder_web.py"
+echo "Next: python3 tmp/20261005_refactor/web/assets_scripts/stage_worldcache_ladder_web.py"

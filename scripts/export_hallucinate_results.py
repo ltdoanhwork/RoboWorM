@@ -3,7 +3,7 @@
 
 Reads the resolved human labels from
 `sampling_dataset/data_for_web/hallucinate_final_labels.json` (produced by
-scripts/export_hallucinate_final_labels.js, which calls the deployed
+tmp/20261005_refactor/web/scripts/export_hallucinate_final_labels.js, which calls the deployed
 VGP.resolveSegments) and the VLM/kinescore predictions from the bucket, then
 writes every number in one place so figures/tables can be built without
 recomputing anything.
@@ -37,7 +37,7 @@ from sklearn.metrics import balanced_accuracy_score, cohen_kappa_score, f1_score
 
 REPO = Path(__file__).resolve().parents[1]
 VLM_DIR = REPO / "sampling_dataset/data_for_web/hallucinate_bench/300vid/vlm/results"
-CATALOG = REPO / ".main-edit/webpage/labeling/catalog.segment.json"
+CATALOG = REPO / "tmp/20261005_refactor/web/.main-edit/webpage/labeling/catalog.segment.json"
 EXPORT = REPO / "sampling_dataset/data_for_web/hallucinate_final_labels.json"
 OUT = REPO / "results/hallucinate_final"
 

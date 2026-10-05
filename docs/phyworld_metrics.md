@@ -130,7 +130,7 @@ embodiments; 1.0 is the violation boundary. Failures stay localized per segment.
 
 Multiview only. Scores live in `sampling_dataset/data_for_web/data_for_web.csv`
 (300 clips, human-labeled). Detector code external; CoTracker overlays for raters
-are in `methods/human_assessment/` + `scripts/build_assessment_multiview.py`.
+are in `methods/human_assessment/` + `tmp/20261005_refactor/web/scripts/build_assessment_multiview.py` (archived).
 
 | PhyWorld | CSV column | Meaning | Better |
 |---|---|---|---|

@@ -42,7 +42,7 @@ from sklearn.metrics import balanced_accuracy_score, cohen_kappa_score, f1_score
 REPO = Path(__file__).resolve().parents[1]
 VLM_DIR = REPO / "sampling_dataset/data_for_web/hallucinate_bench/300vid/vlm/results"
 EXPORT = REPO / "sampling_dataset/data_for_web/hallucinate_final_labels.json"
-CATALOG = REPO / ".main-edit/webpage/labeling/catalog.segment.json"
+CATALOG = REPO / "tmp/20261005_refactor/web/.main-edit/webpage/labeling/catalog.segment.json"
 STRATA = REPO / "sampling_dataset/data_for_web/expert_review_strata.json"
 OUT = REPO / "results/hallucinate_final"
 

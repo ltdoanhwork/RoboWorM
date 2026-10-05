@@ -2,7 +2,7 @@
 """Geometry-consistency human labels vs. machine combined_score.
 
 Pulls the LIVE human labels from the Supabase `labels` table used by the
-labeling site (webpage/labeling), keeps only the geometry-consistency
+labeling site (tmp/20261005_refactor/web/webpage/labeling), keeps only the geometry-consistency
 (multiview, numeric item_id) track, joins them to `combined_score` from
 `sampling_dataset/data_for_web/data_for_web.csv` via the clip metadata
 (`assessment/multiview_static2/clips/<id>/meta.json` -> `source_path`), then
@@ -35,7 +35,7 @@ from scipy import stats
 REPO = Path(__file__).resolve().parents[1]
 CSV_PATH = REPO / "sampling_dataset/data_for_web/data_for_web.csv"
 CLIPS_DIR = REPO / "sampling_dataset/data_for_web/assessment/multiview_static2/clips"
-CONFIG_JS = REPO / "webpage/labeling/config.js"
+CONFIG_JS = REPO / "tmp/20261005_refactor/web/webpage/labeling/config.js"
 OUT_DIR = REPO / "results/geometry_correlation"
 LABEL_CACHE = OUT_DIR / "labels_server.json"
 
