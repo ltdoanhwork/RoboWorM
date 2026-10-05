@@ -221,6 +221,11 @@ exp_logs/*
 exp_imgs/*
 lam_infer_outputs/*
 tmp/*
+# tmp/ is the traceable refactor archive: track only its docs (see tmp/README.md)
+!tmp/README.md
+!tmp/20261005_refactor/
+tmp/20261005_refactor/*
+!tmp/20261005_refactor/*.md
 tmp_2/*
 models/Ctrl-World/dataset_example/*
 webpage/*
