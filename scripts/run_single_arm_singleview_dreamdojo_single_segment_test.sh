@@ -17,7 +17,7 @@ source "${ROOT}/models/DreamDojo/.venv/bin/activate"
 export PYTHONPATH="${ROOT}/models/DreamDojo:${PYTHONPATH:-}"
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-1}"
 
-CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/exp_logs/dreamdojo_logs/dreamdojo/exp_single_arm_sv/single_arm_singleview/checkpoints}"
+CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/finetuned/dreamdojo/dreamdojo/exp_single_arm_sv/single_arm_singleview/checkpoints}"
 EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_480_640_single_arm_sv}"
 NUM_EPISODES="${NUM_EPISODES:-1}"
 SAVE_ROOT="${SAVE_ROOT:-${ROOT}/tmp/dreamdojo}"

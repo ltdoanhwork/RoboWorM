@@ -20,8 +20,8 @@ DREAMGEN_ROOT="${PROJECT_ROOT}/models/dreamgen"
 # --- Environment ---
 source "${DREAMGEN_ROOT}/.venv/bin/activate"
 export PYTHONPATH="${DREAMGEN_ROOT}:${PROJECT_ROOT}:${PYTHONPATH:-}"
-export COSMOS_PREDICT2_ARGS="--checkpoints ${PROJECT_ROOT}/checkpoints"
-export IMAGINAIRE_OUTPUT_ROOT="${PROJECT_ROOT}/exp_logs/dreamgen_logs"
+export COSMOS_PREDICT2_ARGS="--checkpoints ${PROJECT_ROOT}/checkpoints/base"
+export IMAGINAIRE_OUTPUT_ROOT="${PROJECT_ROOT}/checkpoints/finetuned/dreamgen"
 export OMP_NUM_THREADS=8
 
 export TORCH_NCCL_ENABLE_MONITORING=0

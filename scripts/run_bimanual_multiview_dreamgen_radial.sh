@@ -23,7 +23,7 @@ export TMPDIR="${TMPDIR:-${ROOT}/.jitcache/tmp}"
 export MPLCONFIGDIR="${MPLCONFIGDIR:-${ROOT}/.jitcache/mpl}"
 mkdir -p "${ROOT}/.jitcache/triton" "${ROOT}/.jitcache/torchinductor" "${ROOT}/.jitcache/xdg" "${ROOT}/.jitcache/tmp" "${ROOT}/.jitcache/mpl"
 
-CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/exp_logs/dreamgen_logs/posttraining/multiview/bimanual_multiview_seg16/checkpoints_40_per}"
+CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/finetuned/dreamgen/posttraining/multiview/bimanual_multiview_seg16/checkpoints_40_per}"
 if [[ -n "${ITER_NAME:-}" ]]; then
   _LATEST_FNAME="${ITER_NAME%.pt}.pt"
 else

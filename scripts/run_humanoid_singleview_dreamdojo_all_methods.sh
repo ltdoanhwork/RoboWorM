@@ -34,7 +34,7 @@ export PYTHONPATH="${ROOT}/models/DreamDojo:${PYTHONPATH:-}"
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-1}"
 
 # --- Shared inference config (identical across methods) ---
-CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000}"
+CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/base/dreamdojo/2B_GR1_post-train/iter_000050000}"
 EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_480_640_gr1}"
 NUM_FRAMES="${NUM_FRAMES:-49}"
 SAVE_FPS="${SAVE_FPS:-10}"

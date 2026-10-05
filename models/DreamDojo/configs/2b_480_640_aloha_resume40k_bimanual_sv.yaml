@@ -3,7 +3,8 @@ job:
   group: exp_aloha_resume40k
   name: aloha_bimanual_singleview_full
 checkpoint:
-  load_path: /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/exp_logs/dreamdojo_logs/dreamdojo/exp_aloha/aloha_bimanual_singleview/checkpoints/iter_000040000/
+  # Training-only init. NOTE: exp_aloha/aloha_bimanual_singleview no longer exists on disk.
+  load_path: /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/finetuned/dreamdojo/dreamdojo/exp_aloha/aloha_bimanual_singleview/checkpoints/iter_000040000/
   load_training_state: true
   strict_resume: false
 trainer:

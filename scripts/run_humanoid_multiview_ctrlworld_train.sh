@@ -31,13 +31,13 @@ MASTER_PORT="${MASTER_PORT:-29503}"
 DOWN_SAMPLE="${DOWN_SAMPLE:-6}"          # 30fps -> 5fps
 DATASET_NAME="humanoid_multiview"
 
-SVD_MODEL_PATH="${ROOT}/checkpoints/stabilityai/stable-video-diffusion-img2vid"
-CLIP_MODEL_PATH="${ROOT}/checkpoints/openai/clip-vit-base-patch32"
-WARM_CKPT="${WARM_CKPT:-${ROOT}/checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt}"
+SVD_MODEL_PATH="${ROOT}/checkpoints/base/stabilityai/stable-video-diffusion-img2vid"
+CLIP_MODEL_PATH="${ROOT}/checkpoints/base/openai/clip-vit-base-patch32"
+WARM_CKPT="${WARM_CKPT:-${ROOT}/checkpoints/base/ctrl_world/Ctrl-World/checkpoint-10000.pt}"
 
 DATASET_ROOT="${ROOT}/models/Ctrl-World/dataset_example"
 META_INFO="${ROOT}/models/Ctrl-World/dataset_meta_info"
-OUTPUT_DIR="${ROOT}/exp_logs/ctrlworld_logs/${DATASET_NAME}"
+OUTPUT_DIR="${ROOT}/checkpoints/finetuned/ctrlworld/${DATASET_NAME}"
 
 MAX_STEPS="${MAX_STEPS:-200000}"
 BATCH_SIZE="${BATCH_SIZE:-2}"

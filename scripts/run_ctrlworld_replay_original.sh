@@ -19,9 +19,9 @@ export CUDA_VISIBLE_DEVICES=0
 export PYTHONPATH="${CTRL_WORLD_DIR}:${PROJECT_ROOT}:${PYTHONPATH:-}"
 
 # Paths
-SVD_MODEL_PATH="${PROJECT_ROOT}/checkpoints/stabilityai/stable-video-diffusion-img2vid"
-CLIP_MODEL_PATH="${PROJECT_ROOT}/checkpoints/openai/clip-vit-base-patch32"
-CKPT_PATH="${PROJECT_ROOT}/checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt"
+SVD_MODEL_PATH="${PROJECT_ROOT}/checkpoints/base/stabilityai/stable-video-diffusion-img2vid"
+CLIP_MODEL_PATH="${PROJECT_ROOT}/checkpoints/base/openai/clip-vit-base-patch32"
+CKPT_PATH="${PROJECT_ROOT}/checkpoints/base/ctrl_world/Ctrl-World/checkpoint-10000.pt"
 
 # Save to project tmp folder (persists on pfss)
 SAVE_DIR="${PROJECT_ROOT}/tmp/ctrlworld_replay_test"

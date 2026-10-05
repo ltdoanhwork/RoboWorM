@@ -18,7 +18,7 @@
 # Env:
 #   BATCH_JSON     input batch (default: makovian dense batch)
 #   TMP_OUT        output dir (default: ./tmp/multiview_video2world_2b_480p16fps_lvg)
-#   DIT_PATH       DiT .pt (default: checkpoints/nvidia/.../model-480p-16fps.pt)
+#   DIT_PATH       DiT .pt (default: checkpoints/base/nvidia/.../model-480p-16fps.pt)
 #   USE_LVG        1 (default) = video2world_lvg + NUM_CHUNKS; 0 = video2world
 #   NUM_CHUNKS     LVG chunks (default 4)
 #   RESOLUTION, FPS  must match checkpoint (defaults 480, 16)
@@ -41,7 +41,7 @@ else
   TMP_OUT="${TMP_OUT:-${REPO_ROOT}/tmp/multiview_video2world_2b_480p16fps}"
 fi
 
-DIT_PATH="${DIT_PATH:-${REPO_ROOT}/checkpoints/nvidia/Cosmos-Predict2-2B-Video2World/model-480p-16fps.pt}"
+DIT_PATH="${DIT_PATH:-${REPO_ROOT}/checkpoints/base/nvidia/Cosmos-Predict2-2B-Video2World/model-480p-16fps.pt}"
 MODEL_SIZE="${MODEL_SIZE:-2B}"
 NUM_GPUS="${NUM_GPUS:-1}"
 MASTER_PORT="${MASTER_PORT:-12342}"

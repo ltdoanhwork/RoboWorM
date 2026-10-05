@@ -6,7 +6,7 @@
 # global static-view inputs.
 #
 # Base checkpoint:
-#   checkpoints/nvidia/Cosmos-Predict2-2B-Video2World/model-480p-16fps.pt
+#   checkpoints/base/nvidia/Cosmos-Predict2-2B-Video2World/model-480p-16fps.pt
 #
 # Same pipeline as run_single_arm_singleview_dreamgen_static16fps.sh, but:
 #   - DIT_PATH points to the base .pt (no posttraining)
@@ -31,7 +31,7 @@ source "${VENV}/bin/activate"
 export PYTHONPATH="${ROOT}/models/dreamgen:${ROOT}:${PYTHONPATH:-}"
 
 # --- Checkpoint (ORIGINAL base Cosmos-Predict2-2B-Video2World, 480p/16fps) ---
-DIT_PATH="${DIT_PATH:-${ROOT}/checkpoints/nvidia/Cosmos-Predict2-2B-Video2World/model-480p-16fps.pt}"
+DIT_PATH="${DIT_PATH:-${ROOT}/checkpoints/base/nvidia/Cosmos-Predict2-2B-Video2World/model-480p-16fps.pt}"
 
 if [[ ! -f "${DIT_PATH}" ]]; then
   echo "ERROR: Base checkpoint not found at ${DIT_PATH}" >&2

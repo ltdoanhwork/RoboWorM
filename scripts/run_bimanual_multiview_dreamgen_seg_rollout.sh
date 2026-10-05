@@ -37,7 +37,9 @@ export PYTHONPATH="${ROOT}/models/dreamgen:${PYTHONPATH:-}"
 # --- Checkpoint selection ---
 # Pick a checkpoint via ITER_NAME (e.g. ITER_NAME=iter_000050000), otherwise
 # fall back to the latest checkpoint recorded in latest_checkpoint.txt.
-CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/exp_logs/dreamgen_logs/posttraining/multiview/bimanual_multiview_seg/checkpoints_40_per}"
+# BROKEN (2026-10-05 refactor): dreamgen bimanual_multiview_seg (iter_000010000) does not exist on disk (not in checkpoints/
+# nor the HF backup). Set CHECKPOINTS_DIR explicitly to run this script.
+CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/finetuned/dreamgen/posttraining/multiview/bimanual_multiview_seg/checkpoints_40_per}"
 if [[ -n "${ITER_NAME:-}" ]]; then
   # Allow ITER_NAME with or without the .pt suffix.
   _LATEST_FNAME="${ITER_NAME%.pt}.pt"

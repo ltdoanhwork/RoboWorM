@@ -30,7 +30,7 @@ export LD_LIBRARY_PATH="${VENV}/lib/${_PYVER}/site-packages/nvidia/nvjitlink/lib
 source "${VENV}/bin/activate"
 export PYTHONPATH="${ROOT}:${ROOT}/models/dreamgen:${PYTHONPATH:-}"
 
-CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/exp_logs/dreamgen_logs/posttraining/multiview/humanoid_multiview_seg16/checkpoints_40_per}"
+CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/finetuned/dreamgen/posttraining/multiview/humanoid_multiview_seg16/checkpoints_40_per}"
 if [[ -n "${ITER_NAME:-}" ]]; then
   _LATEST_FNAME="${ITER_NAME%.pt}.pt"
 else

@@ -20,9 +20,9 @@ from dataclasses import dataclass
 @dataclass
 class wm_args_bimanual_grid:
     # model paths (overridden by CLI / launch script)
-    svd_model_path = "./checkpoints/stabilityai/stable-video-diffusion-img2vid"
-    clip_model_path = "./checkpoints/openai/clip-vit-base-patch32"
-    ckpt_path = "./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt"
+    svd_model_path = "./checkpoints/base/stabilityai/stable-video-diffusion-img2vid"
+    clip_model_path = "./checkpoints/base/openai/clip-vit-base-patch32"
+    ckpt_path = "./checkpoints/base/ctrl_world/Ctrl-World/checkpoint-10000.pt"
 
     # dataset parameters
     dataset_root_path = "dataset_example"

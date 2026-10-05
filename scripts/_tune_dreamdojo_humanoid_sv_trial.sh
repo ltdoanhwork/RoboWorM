@@ -22,7 +22,7 @@ rm -rf "${SCRATCH}/${TAG}"
 mkdir -p "${SCRATCH}/${TAG}" "${SCRATCH}/logs"
 
 CUDA_VISIBLE_DEVICES="${GPU}" python "${ROOT}/scripts/infer_humanoid_singleview_full_episode.py" \
-  --checkpoints-dir "${ROOT}/checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000" \
+  --checkpoints-dir "${ROOT}/checkpoints/base/dreamdojo/2B_GR1_post-train/iter_000050000" \
   --experiment dreamdojo_2b_480_640_gr1 \
   --dataset-path "${ROOT}/datasets/humanoid/singleview/${SPLIT}" \
   --save-dir "${SCRATCH}/${TAG}" \

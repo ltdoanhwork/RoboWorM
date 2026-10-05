@@ -24,7 +24,7 @@ NUM_WORKERS="${NUM_WORKERS:-8}"
 PRIVATE="${PRIVATE:-0}"
 DRY_RUN="${DRY_RUN:-0}"
 
-LOG_DIR="$REPO_ROOT/exp_logs/hf_upload"
+LOG_DIR="$REPO_ROOT/logs/exp_logs/hf_upload"
 STATE_DIR="$LOG_DIR/state"
 STAGE_BASE="$(dirname "$REPO_ROOT")/.hf_stage"
 mkdir -p "$LOG_DIR" "$STATE_DIR"
@@ -46,9 +46,9 @@ COMMON_EXCLUDES=(
 # 429 retry loop -- those go through scripts/upload_tar_shards_to_hf.sh instead
 # (see JOBS_TAR below).
 JOB_SPECS=(
-  "ckpt_dreamdojo|checkpoints/dreamdojo|vgp_checkpoints_dreamdojo|model"
-  "ckpt_t5|checkpoints/google-t5|vgp_checkpoints_google_t5|model"
-  "ckpt_nvidia|checkpoints/nvidia|vgp_checkpoints_nvidia|model"
+  "ckpt_dreamdojo|checkpoints/base/dreamdojo|vgp_checkpoints_dreamdojo|model"
+  "ckpt_t5|checkpoints/base/google-t5|vgp_checkpoints_google_t5|model"
+  "ckpt_nvidia|checkpoints/base/nvidia|vgp_checkpoints_nvidia|model"
   "explogs|exp_logs|vgp_exp_logs|model"
   "ckpt_own|@stage_ckpt_own|vgp_checkpoints_own|model"
 )

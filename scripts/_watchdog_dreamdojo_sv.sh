@@ -10,7 +10,7 @@
 #
 # There is no cron on this box, so run it detached:
 #   setsid nohup bash scripts/_watchdog_dreamdojo_sv.sh \
-#     > exp_logs/dreamdojo_sparse_sv_multi/watchdog.log 2>&1 < /dev/null & disown
+#     > logs/exp_logs/dreamdojo_sparse_sv_multi/watchdog.log 2>&1 < /dev/null & disown
 #
 # Single-instance (flock). Exits once every job on both GPUs is complete.
 set -uo pipefail
@@ -20,7 +20,7 @@ cd "$ROOT"
 
 unset NUM_SHARDS SHARD_ID NUM_EPISODES SPLITS SAVE_ROOT OUTPUT_ROOT
 
-LOG_DIR="${LOG_DIR:-${ROOT}/exp_logs/dreamdojo_sparse_sv_multi}"
+LOG_DIR="${LOG_DIR:-${ROOT}/logs/exp_logs/dreamdojo_sparse_sv_multi}"
 mkdir -p "${LOG_DIR}"
 
 LOCK="${LOCK:-${LOG_DIR}/watchdog.lock}"

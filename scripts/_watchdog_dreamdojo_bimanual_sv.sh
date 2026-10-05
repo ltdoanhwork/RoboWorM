@@ -8,7 +8,7 @@
 #
 # There is no cron on this box, so run it detached:
 #   setsid nohup bash scripts/_watchdog_dreamdojo_bimanual_sv.sh \
-#     > exp_logs/dreamdojo_sparse_bm_sv/watchdog.log 2>&1 < /dev/null & disown
+#     > logs/exp_logs/dreamdojo_sparse_bm_sv/watchdog.log 2>&1 < /dev/null & disown
 #
 # Single-instance (flock). Exits once every job in both queues is complete.
 set -uo pipefail
@@ -18,7 +18,7 @@ cd "$ROOT"
 
 unset NUM_SHARDS SHARD_ID NUM_EPISODES SPLITS SAVE_ROOT OUTPUT_ROOT
 
-LOG_DIR="${LOG_DIR:-${ROOT}/exp_logs/dreamdojo_sparse_bm_sv}"
+LOG_DIR="${LOG_DIR:-${ROOT}/logs/exp_logs/dreamdojo_sparse_bm_sv}"
 mkdir -p "${LOG_DIR}"
 
 LOCK="${LOG_DIR}/watchdog.lock"

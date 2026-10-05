@@ -2,11 +2,11 @@
 set -euo pipefail
 
 ROOT="/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics"
-CHECKPOINT_DIR="${CHECKPOINT_DIR:-${ROOT}/checkpoints}"
+CHECKPOINT_DIR="${CHECKPOINT_DIR:-${ROOT}/checkpoints/base}"
 DOWNLOAD_SCRIPT="${ROOT}/models/dreamgen/scripts/download_checkpoints.py"
 
 # video2world_gr00t.py currently resolves GR1 to:
-# checkpoints/nvidia/Cosmos-Predict2-14B-Sample-GR00T-Dreams-GR1/model-480p-16fps.pt
+# checkpoints/base/nvidia/Cosmos-Predict2-14B-Sample-GR00T-Dreams-GR1/model-480p-16fps.pt
 MODEL_SIZE="${MODEL_SIZE:-14B}"
 RESOLUTION="${RESOLUTION:-480}"
 FPS="${FPS:-16}"

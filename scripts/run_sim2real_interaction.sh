@@ -3,14 +3,14 @@
 #
 # Mirrors scripts/run_motion_accuracy_gdino.sh: runs from metrics/WorldScore so the
 # vendored sam2 hydra configs resolve, with the third_party paths on PYTHONPATH and
-# the dreamgen venv python. Checkpoints come from checkpoints/worldscore.
+# the dreamgen venv python. Checkpoints come from checkpoints/metrics/worldscore.
 set -euo pipefail
 
 REPO=/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
 PY=$REPO/models/dreamgen/.venv/bin/python
 WS=$REPO/metrics/WorldScore
 TP=$WS/worldscore/benchmark/metrics/third_party
-CKPT=$REPO/checkpoints/worldscore
+CKPT=$REPO/checkpoints/metrics/worldscore
 
 METHOD=${METHOD:-dense}
 SPLIT=${SPLIT:-makovian}

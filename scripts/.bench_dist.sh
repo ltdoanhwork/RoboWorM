@@ -170,9 +170,9 @@ declare -A DD_EXPECT_ITER=(
   [humanoid]="iter_000050000"
 )
 declare -A DD_CKPT_DIR=(
-  [single_arm]="exp_logs/dreamdojo_logs/dreamdojo/exp_single_arm_sv/single_arm_singleview/checkpoints"
-  [bimanual]="exp_logs/dreamdojo_logs/dreamdojo/exp_aloha_resume70k/aloha_bimanual_singleview_full/checkpoints"
-  [humanoid]="checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000"
+  [single_arm]="checkpoints/finetuned/dreamdojo/dreamdojo/exp_single_arm_sv/single_arm_singleview/checkpoints"
+  [bimanual]="checkpoints/finetuned/dreamdojo/dreamdojo/exp_aloha_resume70k/aloha_bimanual_singleview_full/checkpoints"
+  [humanoid]="checkpoints/base/dreamdojo/2B_GR1_post-train/iter_000050000"
 )
 
 verify_dd_ckpt() {  # verify_dd_ckpt <embodiment>

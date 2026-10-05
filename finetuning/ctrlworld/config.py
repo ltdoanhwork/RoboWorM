@@ -69,8 +69,8 @@ class FinetuneConfig:
     skip_existing: bool = True
 
     # Model paths.
-    svd_model_path: str = "checkpoints/stabilityai/stable-video-diffusion-img2vid"
-    clip_model_path: str = "checkpoints/openai/clip-vit-base-patch32"
+    svd_model_path: str = "checkpoints/base/stabilityai/stable-video-diffusion-img2vid"
+    clip_model_path: str = "checkpoints/base/openai/clip-vit-base-patch32"
     init_ckpt_path: str | None = None
     ckpt_path: str | None = None
 

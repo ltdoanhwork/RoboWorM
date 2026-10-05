@@ -191,12 +191,12 @@ export PYTHONPATH="./models/DreamDojo:${PYTHONPATH}"
 ```bash
 python -m models.DreamDojo.examples.action_conditioned \
   -o ./output/action_conditioned/cache_baseline \
-  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train \
+  --checkpoints-dir ./checkpoints/base/dreamdojo/2B_GR1_post-train \
   --experiment dreamdojo_2b_480_640_gr1 \
   --save-dir ./output/dreamdojo_cache/baseline \
   --num-frames 49 \
   --num-samples 65 \
-  --dataset-path ./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot \
+  --dataset-path ./checkpoints/base/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot \
   --data-split test \
   --deterministic-uniform-sampling
 ```
@@ -206,12 +206,12 @@ python -m models.DreamDojo.examples.action_conditioned \
 ```bash
 python -m models.DreamDojo.examples.action_conditioned \
   -o ./output/action_conditioned/cache_dicache \
-  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train \
+  --checkpoints-dir ./checkpoints/base/dreamdojo/2B_GR1_post-train \
   --experiment dreamdojo_2b_480_640_gr1 \
   --save-dir ./output/dreamdojo_cache/dicache \
   --num-frames 49 \
   --num-samples 65 \
-  --dataset-path ./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot \
+  --dataset-path ./checkpoints/base/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot \
   --data-split test \
   --deterministic-uniform-sampling \
   --dicache-enabled \
@@ -226,12 +226,12 @@ python -m models.DreamDojo.examples.action_conditioned \
 ```bash
 python -m models.DreamDojo.examples.action_conditioned \
   -o ./output/action_conditioned/cache_worldcache \
-  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train \
+  --checkpoints-dir ./checkpoints/base/dreamdojo/2B_GR1_post-train \
   --experiment dreamdojo_2b_480_640_gr1 \
   --save-dir ./output/dreamdojo_cache/worldcache \
   --num-frames 49 \
   --num-samples 65 \
-  --dataset-path ./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot \
+  --dataset-path ./checkpoints/base/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot \
   --data-split test \
   --deterministic-uniform-sampling \
   --worldcache-enabled \
@@ -414,12 +414,12 @@ Total inference time: 516.1998 seconds
 export PYTHONPATH="./models/DreamDojo:${PYTHONPATH}"
 python -m models.DreamDojo.examples.action_conditioned \
   -o ./output/action_conditioned/cache_fastercache \
-  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train \
+  --checkpoints-dir ./checkpoints/base/dreamdojo/2B_GR1_post-train \
   --experiment dreamdojo_2b_480_640_gr1 \
   --save-dir ./output/dreamdojo_cache/fastercache \
   --num-frames 49 \
   --num-samples 65 \
-  --dataset-path ./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot \
+  --dataset-path ./checkpoints/base/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot \
   --data-split test \
   --deterministic-uniform-sampling \
   --fastercache-enabled \
@@ -448,9 +448,9 @@ python models/Ctrl-World/scripts/rollout_interact_pi.py \
   --dataset_root_path ./models/Ctrl-World/dataset_example \
   --dataset_meta_info_path ./models/Ctrl-World/dataset_meta_info \
   --dataset_names ./models/Ctrl-World/droid_subset \
-  --svd_model_path ./checkpoints/stabilityai/stable-video-diffusion-img2vid \
-  --clip_model_path ./checkpoints/openai/clip-vit-base-patch32 \
-  --ckpt_path ./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt \
+  --svd_model_path ./checkpoints/base/stabilityai/stable-video-diffusion-img2vid \
+  --clip_model_path ./checkpoints/base/openai/clip-vit-base-patch32 \
+  --ckpt_path ./checkpoints/base/ctrl_world/Ctrl-World/checkpoint-10000.pt \
   --task_type pickplace \
   --use_dicache \
   --dicache_rel_l1_thresh 0.08 \
@@ -465,9 +465,9 @@ python models/Ctrl-World/scripts/rollout_replay_traj.py \
   --dataset_root_path ./models/Ctrl-World/dataset_example \
   --dataset_meta_info_path ./models/Ctrl-World/dataset_meta_info \
   --dataset_names ./models/Ctrl-World/droid_subset \
-  --svd_model_path ./checkpoints/stabilityai/stable-video-diffusion-img2vid \
-  --clip_model_path ./checkpoints/openai/clip-vit-base-patch32 \
-  --ckpt_path ./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt \
+  --svd_model_path ./checkpoints/base/stabilityai/stable-video-diffusion-img2vid \
+  --clip_model_path ./checkpoints/base/openai/clip-vit-base-patch32 \
+  --ckpt_path ./checkpoints/base/ctrl_world/Ctrl-World/checkpoint-10000.pt \
   --use_worldcache \
   --worldcache_rel_l1_thresh 0.03 \
   --worldcache_ret_ratio 0.4 \

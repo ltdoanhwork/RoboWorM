@@ -33,13 +33,13 @@ MASTER_PORT="${MASTER_PORT:-29501}"
 DOWN_SAMPLE="${DOWN_SAMPLE:-1}"
 DATASET_NAME="bimanual_multiview"
 
-SVD_MODEL_PATH="${ROOT}/checkpoints/stabilityai/stable-video-diffusion-img2vid"
-CLIP_MODEL_PATH="${ROOT}/checkpoints/openai/clip-vit-base-patch32"
-CKPT_PATH="${ROOT}/checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt"
+SVD_MODEL_PATH="${ROOT}/checkpoints/base/stabilityai/stable-video-diffusion-img2vid"
+CLIP_MODEL_PATH="${ROOT}/checkpoints/base/openai/clip-vit-base-patch32"
+CKPT_PATH="${ROOT}/checkpoints/base/ctrl_world/Ctrl-World/checkpoint-10000.pt"
 
 DATASET_ROOT="${ROOT}/models/Ctrl-World/dataset_example"
 META_INFO="${ROOT}/models/Ctrl-World/dataset_meta_info"
-OUTPUT_DIR="${ROOT}/exp_logs/ctrlworld_logs/${DATASET_NAME}"
+OUTPUT_DIR="${ROOT}/checkpoints/finetuned/ctrlworld/${DATASET_NAME}"
 
 MAX_STEPS="${MAX_STEPS:-100000}"
 BATCH_SIZE="${BATCH_SIZE:-2}"

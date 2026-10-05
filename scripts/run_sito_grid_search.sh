@@ -15,7 +15,7 @@ source "${ROOT}/models/DreamDojo/.venv/bin/activate"
 export PYTHONPATH="${ROOT}/models/DreamDojo:${PYTHONPATH:-}"
 
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-1}"
-CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000}"
+CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/base/dreamdojo/2B_GR1_post-train/iter_000050000}"
 EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_480_640_gr1}"
 NUM_FRAMES="${NUM_FRAMES:-49}"
 NUM_SAMPLES="${NUM_SAMPLES:-10}"

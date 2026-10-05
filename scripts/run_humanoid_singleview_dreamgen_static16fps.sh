@@ -12,8 +12,8 @@
 # Threshold: episodes ≤ 10s (source @ 20fps) → 2 chunks, longer → 3 chunks
 #
 # Checkpoint:
-#   exp_logs/dreamgen_logs/posttraining/singleview/humanoid_singleview_16fps
-#   default iter_000050000 (override with ITER_NAME=iter_000040000 etc.)
+#   checkpoints/finetuned/dreamgen/posttraining/singleview/humanoid_singleview_16fps
+#   default iter_000090000 = the paper cell (override with ITER_NAME=iter_000120000)
 #
 # Usage:
 #   bash scripts/run_humanoid_singleview_dreamgen_static16fps.sh
@@ -35,8 +35,9 @@ source "${VENV}/bin/activate"
 export PYTHONPATH="${ROOT}/models/dreamgen:${PYTHONPATH:-}"
 
 # --- Checkpoint (posttrained humanoid_singleview_16fps) ---
-CKPT_BASE="${ROOT}/exp_logs/dreamgen_logs/posttraining/singleview/humanoid_singleview_16fps"
-ITER_NAME="${ITER_NAME:-iter_000050000}"
+CKPT_BASE="${ROOT}/checkpoints/finetuned/dreamgen/posttraining/singleview/humanoid_singleview_16fps"
+# Paper cell iter (iter_000050000 is not on disk).
+ITER_NAME="${ITER_NAME:-iter_000090000}"
 DIT_PATH="${DIT_PATH:-${CKPT_BASE}/checkpoints_40_per/model/${ITER_NAME}.pt}"
 
 if [[ ! -f "${DIT_PATH}" ]]; then

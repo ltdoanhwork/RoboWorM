@@ -37,7 +37,7 @@ export TMPDIR="${TMPDIR:-${ROOT}/.jitcache/tmp}"
 export MPLCONFIGDIR="${MPLCONFIGDIR:-${ROOT}/.jitcache/mpl}"
 mkdir -p "${ROOT}/.jitcache/triton" "${ROOT}/.jitcache/torchinductor" "${ROOT}/.jitcache/flashinfer" "${ROOT}/.jitcache/xdg" "${ROOT}/.jitcache/tmp" "${ROOT}/.jitcache/mpl"
 
-CKPT_BASE="${CKPT_BASE:-${ROOT}/exp_logs/dreamgen_logs/posttraining/singleview/bimanual_singleview_16fps}"
+CKPT_BASE="${CKPT_BASE:-${ROOT}/checkpoints/finetuned/dreamgen/posttraining/singleview/bimanual_singleview_16fps}"
 ITER_NAME="${ITER_NAME:-iter_000110000}"
 DIT_PATH="${DIT_PATH:-${CKPT_BASE}/checkpoints_40_per/model/${ITER_NAME}.pt}"
 OUT_ITER="${OUT_ITER:-${ITER_NAME}_bimanual16fps}"

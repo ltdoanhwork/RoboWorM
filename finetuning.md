@@ -18,7 +18,7 @@ LAM inference:
 ```bash
 python finetuning/dreamdojo/lam_project/infer_video.py \
   --config finetuning/dreamdojo/lam_project/config/lam_0.yaml \
-  --ckpt_path checkpoints/dreamdojo/LAM_400k.ckpt \
+  --ckpt_path checkpoints/base/dreamdojo/LAM_400k.ckpt \
   --video_path ./datasets/droid_1.0.1_20chunks/videos/chunk-002/observation.images.exterior_1_left/episode_002000.mp4 \
   --output_dir lam_video_infer \
   --device cuda
@@ -51,12 +51,12 @@ NPROC=2 bash finetuning/dreamdojo/launch.sh dreamdojo_2b_480_640_aloha_resume70k
 
 Configs: `models/DreamDojo/configs/2b_480_640_aloha.yaml`, `2b_480_640_droid_sv.yaml`, `2b_480_640_aloha_resume40k_bimanual_sv.yaml` (resume + full bimanual singleview list), `2b_480_640_aloha_resume70k_bimanual_sv.yaml` (resume 70k→100k)
 
-Checkpoints saved to: `exp_logs/dreamdojo_logs/dreamdojo/exp_<group>/<name>/checkpoints/`
-Video samples logged to: `exp_logs/dreamdojo_logs/dreamdojo/exp_<group>/<name>/video_logs/`
+Checkpoints saved to: `checkpoints/finetuned/dreamdojo/dreamdojo/exp_<group>/<name>/checkpoints/`
+Video samples logged to: `checkpoints/finetuned/dreamdojo/dreamdojo/exp_<group>/<name>/video_logs/`
 
-Resume run above writes to `exp_logs/dreamdojo_logs/dreamdojo/exp_aloha_resume40k/aloha_bimanual_singleview_full/` and loads weights plus trainerizer/trainer/trainer state from `.../checkpoints/iter_000040000/`. If resume errors, edit that YAML and set `checkpoint.load_training_state: false` (weights only).
+Resume run above writes to `checkpoints/finetuned/dreamdojo/dreamdojo/exp_aloha_resume40k/aloha_bimanual_singleview_full/` and loads weights plus trainerizer/trainer/trainer state from `.../checkpoints/iter_000040000/`. If resume errors, edit that YAML and set `checkpoint.load_training_state: false` (weights only).
 
-Resume 70k run writes to `exp_logs/dreamdojo_logs/dreamdojo/exp_aloha_resume70k/aloha_bimanual_singleview_full/` and loads full training state from `.../exp_aloha_resume40k/.../checkpoints/iter_000070000/`.
+Resume 70k run writes to `checkpoints/finetuned/dreamdojo/dreamdojo/exp_aloha_resume70k/aloha_bimanual_singleview_full/` and loads full training state from `.../exp_aloha_resume40k/.../checkpoints/iter_000070000/`.
 
 ### Inference (test on dataset samples)
 
@@ -74,14 +74,14 @@ bash finetuning/dreamdojo/infer.sh \
 bash finetuning/dreamdojo/infer.sh \
   --dataset_path /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/datasets/bimanual/singleview/makovian/close_cardboard_box \
   --episode_idx 0 \
-  --ckpt_path /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/exp_logs/dreamdojo_logs/dreamdojo/exp_aloha/aloha_bimanual_singleview/checkpoints/iter_000010000/model
+  --ckpt_path /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/finetuned/dreamdojo/dreamdojo/exp_aloha/aloha_bimanual_singleview/checkpoints/iter_000010000/model
 
 # 2) Action-conditioned batch infer (num-samples nhiều hơn)
 export PYTHONPATH="./models/DreamDojo:${PYTHONPATH}"
 source ./models/DreamDojo/.venv/bin/activate
 python -m models.DreamDojo.examples.action_conditioned \
   -o ./output/dreamdojo_svg1_eval_finetuned \
-  --checkpoints-dir ./exp_logs/dreamdojo_logs/dreamdojo/exp_aloha/aloha_bimanual_singleview/checkpoints \
+  --checkpoints-dir ./checkpoints/finetuned/dreamdojo/dreamdojo/exp_aloha/aloha_bimanual_singleview/checkpoints \
   --experiment dreamdojo_2b_480_640_aloha \
   --save-dir ./output/dreamdojo_results/results_finetuned_40k \
   --num-frames 97 \
@@ -95,7 +95,7 @@ export PYTHONPATH="./models/DreamDojo:${PYTHONPATH}"
 source ./models/DreamDojo/.venv/bin/activate
 python -m models.DreamDojo.examples.action_conditioned \
   -o ./output/dreamdojo_svg1_eval_finetuned \
-  --checkpoints-dir ./exp_logs/dreamdojo_logs/dreamdojo/exp_aloha_resume40k/aloha_bimanual_singleview_full/checkpoints \
+  --checkpoints-dir ./checkpoints/finetuned/dreamdojo/dreamdojo/exp_aloha_resume40k/aloha_bimanual_singleview_full/checkpoints \
   --experiment dreamdojo_2b_480_640_aloha \
   --save-dir ./output/dreamdojo_results/results_finetuned_resume40k \
   --num-frames 97 \
@@ -109,7 +109,7 @@ export PYTHONPATH="./models/DreamDojo:${PYTHONPATH}"
 source ./models/DreamDojo/.venv/bin/activate
 python -m models.DreamDojo.examples.action_conditioned \
   -o ./output/dreamdojo_droid_sv_eval_finetuned \
-  --checkpoints-dir ./exp_logs/dreamdojo_logs/dreamdojo/exp_droid_sv/droid_singlearm_singleview/checkpoints \
+  --checkpoints-dir ./checkpoints/finetuned/dreamdojo/dreamdojo/exp_droid_sv/droid_singlearm_singleview/checkpoints \
   --experiment dreamdojo_2b_480_640_droid_sv \
   --save-dir ./output/dreamdojo_results/results_droid_finetuned_40k \
   --num-frames 97 \
@@ -195,13 +195,13 @@ NPROC=8 bash finetuning/dreamgen/launch.sh predict2_video2world_training_2b_huma
 NPROC=1 bash finetuning/dreamgen/launch.sh predict2_video2world_training_2b_all_singleview
 ```
 
-Checkpoints saved to: `exp_logs/dreamgen_logs/posttraining/singleview/all_singleview/`
+Checkpoints saved to: `checkpoints/finetuned/dreamgen/posttraining/singleview/all_singleview/`
 
 ### Step 4: Inference
 
 ```bash
 bash finetuning/dreamgen/infer.sh \
-    --ckpt_path exp_logs/dreamgen_logs/posttraining/singleview/all_singleview/checkpoints/model/iter_000005000.pt \
+    --ckpt_path checkpoints/finetuned/dreamgen/posttraining/singleview/all_singleview/checkpoints/model/iter_000005000.pt \
     --input_path /path/to/first_frame.png \
     --prompt "A GR-1 humanoid robot picks up a corn cob and places it on the plate." \
     --save_path output/dreamgen_all_infer.mp4
@@ -241,11 +241,11 @@ CUDA_VISIBLE_DEVICES=0,1 bash scripts/run_humanoid_multiview_dreamgen_dense.sh
 
 source models/DreamDojo/.venv/bin/activate
 hf upload-large-folder doanh25032004/video_gen_physics_real_video /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/datasets  --repo-type dataset
-rm -rf /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/exp_logs/dreamgen_logs/posttraining/multiview/all_multiview/checkpoints_40_per/trainer/iter_00004*
-rm -rf /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/exp_logs/dreamgen_logs/posttraining/multiview/all_multiview/checkpoints_40_per/trainer/iter_00005*
-rm -rf /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/exp_logs/dreamgen_logs/posttraining/multiview/all_multiview/checkpoints_40_per/trainer/iter_00006*
-rm -rf /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/exp_logs/dreamgen_logs/posttraining/multiview/all_multiview/checkpoints_40_per/trainer/iter_00007*
-rm -rf /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/exp_logs/dreamgen_logs/posttraining/multiview/all_multiview/checkpoints_40_per/trainer/iter_00008*
+rm -rf /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/finetuned/dreamgen/posttraining/multiview/all_multiview/checkpoints_40_per/trainer/iter_00004*
+rm -rf /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/finetuned/dreamgen/posttraining/multiview/all_multiview/checkpoints_40_per/trainer/iter_00005*
+rm -rf /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/finetuned/dreamgen/posttraining/multiview/all_multiview/checkpoints_40_per/trainer/iter_00006*
+rm -rf /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/finetuned/dreamgen/posttraining/multiview/all_multiview/checkpoints_40_per/trainer/iter_00007*
+rm -rf /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/finetuned/dreamgen/posttraining/multiview/all_multiview/checkpoints_40_per/trainer/iter_00008*
 
 CUDA_VISIBLE_DEVICES=0,1 bash scripts/run_all_singleview_dreamgen_dense.sh
 
@@ -379,7 +379,7 @@ CUDA_VISIBLE_DEVICES=1 nohup bash scripts/run_single_arm_multiview_dreamgen_sito
 
 
 cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
-CKPT=exp_logs/ctrlworld_logs/bimanual_multiview/checkpoint-120000.pt \
+CKPT=checkpoints/finetuned/ctrlworld/bimanual_multiview/checkpoint-120000.pt \
 CUDA_VISIBLE_DEVICES=0 NUM_EPISODES=3 SPLIT=val GUIDANCE=2.5 \
   bash scripts/run_bimanual_multiview_ctrlworld.sh
 
@@ -395,14 +395,14 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/run_humanoid_singleview_dreamdojo_all_method
 CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_multiview_ctrlworld_sito.sh both
 
 
-CKPT="/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/exp_logs/ctrlworld_logs/bimanual_multiview_5fps/checkpoint-280000.pt" \
+CKPT="/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/finetuned/ctrlworld/bimanual_multiview_5fps/checkpoint-280000.pt" \
 DATASET_NAME=bimanual_multiview_5fps \
 DOWN_SAMPLE=6 \
 SPLIT=all \
 CUDA_VISIBLE_DEVICES=0 \
 bash scripts/run_bimanual_multiview_ctrlworld.sh
 
-CKPT="/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/exp_logs/ctrlworld_logs/humanoid_multiview/checkpoint-150000.pt" \
+CKPT="/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/finetuned/ctrlworld/humanoid_multiview/checkpoint-150000.pt" \
 DATASET_NAME=humanoid_multiview \
 DOWN_SAMPLE=6 \
 SPLIT=all \
@@ -421,50 +421,50 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_multiview_dreamgen_worldcache.s
 CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_multiview_dreamgen_fastercache.sh
 
 # ---- tmux submit: 3 DreamGen chia đều GPU0/1/2, 2 Ctrl-World tuần tự trên GPU3 ----
-# (logs -> exp_logs/tmux_logs/, attach: tmux attach -t <name>)
-tmux new-session -d -s dg_dicache_g0     "CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_multiview_dreamgen_dicache.sh     2>&1 | tee exp_logs/tmux_logs/dg_dicache.log; exec bash"
-tmux new-session -d -s dg_worldcache_g1  "CUDA_VISIBLE_DEVICES=1 bash scripts/run_bimanual_multiview_dreamgen_worldcache.sh  2>&1 | tee exp_logs/tmux_logs/dg_worldcache.log; exec bash"
-tmux new-session -d -s dg_fastercache_g2 "CUDA_VISIBLE_DEVICES=2 bash scripts/run_bimanual_multiview_dreamgen_fastercache.sh 2>&1 | tee exp_logs/tmux_logs/dg_fastercache.log; exec bash"
-tmux new-session -d -s cw_cache_g3       "CUDA_VISIBLE_DEVICES=3 bash scripts/run_bimanual_multiview_ctrlworld_worldcache.sh 2>&1 | tee exp_logs/tmux_logs/cw_worldcache.log && CUDA_VISIBLE_DEVICES=3 bash scripts/run_bimanual_multiview_ctrlworld_dicache.sh 2>&1 | tee exp_logs/tmux_logs/cw_dicache.log; exec bash"
+# (logs -> logs/exp_logs/tmux_logs/, attach: tmux attach -t <name>)
+tmux new-session -d -s dg_dicache_g0     "CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_multiview_dreamgen_dicache.sh     2>&1 | tee logs/exp_logs/tmux_logs/dg_dicache.log; exec bash"
+tmux new-session -d -s dg_worldcache_g1  "CUDA_VISIBLE_DEVICES=1 bash scripts/run_bimanual_multiview_dreamgen_worldcache.sh  2>&1 | tee logs/exp_logs/tmux_logs/dg_worldcache.log; exec bash"
+tmux new-session -d -s dg_fastercache_g2 "CUDA_VISIBLE_DEVICES=2 bash scripts/run_bimanual_multiview_dreamgen_fastercache.sh 2>&1 | tee logs/exp_logs/tmux_logs/dg_fastercache.log; exec bash"
+tmux new-session -d -s cw_cache_g3       "CUDA_VISIBLE_DEVICES=3 bash scripts/run_bimanual_multiview_ctrlworld_worldcache.sh 2>&1 | tee logs/exp_logs/tmux_logs/cw_worldcache.log && CUDA_VISIBLE_DEVICES=3 bash scripts/run_bimanual_multiview_ctrlworld_dicache.sh 2>&1 | tee logs/exp_logs/tmux_logs/cw_dicache.log; exec bash"
 
 # ---- tmux submit: bimanual SINGLEVIEW dreamgen (iter 110k), 3 cache trên GPU0/1/3 ----
-tmux new-session -d -s bsv_dicache_g0     "CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_singleview_dreamgen_dicache.sh     2>&1 | tee exp_logs/tmux_logs/bsv_dicache.log; exec bash"
-tmux new-session -d -s bsv_worldcache_g1  "CUDA_VISIBLE_DEVICES=1 bash scripts/run_bimanual_singleview_dreamgen_worldcache.sh  2>&1 | tee exp_logs/tmux_logs/bsv_worldcache.log; exec bash"
-tmux new-session -d -s bsv_fastercache_g3 "CUDA_VISIBLE_DEVICES=3 bash scripts/run_bimanual_singleview_dreamgen_fastercache.sh 2>&1 | tee exp_logs/tmux_logs/bsv_fastercache.log; exec bash"
+tmux new-session -d -s bsv_dicache_g0     "CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_singleview_dreamgen_dicache.sh     2>&1 | tee logs/exp_logs/tmux_logs/bsv_dicache.log; exec bash"
+tmux new-session -d -s bsv_worldcache_g1  "CUDA_VISIBLE_DEVICES=1 bash scripts/run_bimanual_singleview_dreamgen_worldcache.sh  2>&1 | tee logs/exp_logs/tmux_logs/bsv_worldcache.log; exec bash"
+tmux new-session -d -s bsv_fastercache_g3 "CUDA_VISIBLE_DEVICES=3 bash scripts/run_bimanual_singleview_dreamgen_fastercache.sh 2>&1 | tee logs/exp_logs/tmux_logs/bsv_fastercache.log; exec bash"
 
 # ---- tmux submit: bimanual SINGLEVIEW dreamgen sparse-attn (iter 110k) GPU0/1/2/3 ----
 # (SVG2 uses .venv_svg w/ flashinfer0.3 + workspace .jitcache; set in the script.)
-tmux new-session -d -s sp_svg1_g0   "CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_singleview_dreamgen_svg1.sh   2>&1 | tee exp_logs/tmux_logs/sp_svg1.log; exec bash"
-tmux new-session -d -s sp_svg2_g1   "CUDA_VISIBLE_DEVICES=1 bash scripts/run_bimanual_singleview_dreamgen_svg2.sh   2>&1 | tee exp_logs/tmux_logs/sp_svg2.log; exec bash"
-tmux new-session -d -s sp_radial_g2 "CUDA_VISIBLE_DEVICES=2 bash scripts/run_bimanual_singleview_dreamgen_radial.sh 2>&1 | tee exp_logs/tmux_logs/sp_radial.log; exec bash"
-tmux new-session -d -s sp_pisa_g3   "CUDA_VISIBLE_DEVICES=3 bash scripts/run_bimanual_singleview_dreamgen_pisa.sh   2>&1 | tee exp_logs/tmux_logs/sp_pisa.log; exec bash"
+tmux new-session -d -s sp_svg1_g0   "CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_singleview_dreamgen_svg1.sh   2>&1 | tee logs/exp_logs/tmux_logs/sp_svg1.log; exec bash"
+tmux new-session -d -s sp_svg2_g1   "CUDA_VISIBLE_DEVICES=1 bash scripts/run_bimanual_singleview_dreamgen_svg2.sh   2>&1 | tee logs/exp_logs/tmux_logs/sp_svg2.log; exec bash"
+tmux new-session -d -s sp_radial_g2 "CUDA_VISIBLE_DEVICES=2 bash scripts/run_bimanual_singleview_dreamgen_radial.sh 2>&1 | tee logs/exp_logs/tmux_logs/sp_radial.log; exec bash"
+tmux new-session -d -s sp_pisa_g3   "CUDA_VISIBLE_DEVICES=3 bash scripts/run_bimanual_singleview_dreamgen_pisa.sh   2>&1 | tee logs/exp_logs/tmux_logs/sp_pisa.log; exec bash"
 
 CUDA_VISIBLE_DEVICES=0,3 MAX_EPISODES=5 bash scripts/run_humanoid_multiview_dreamgen_seg16.sh
 
 # ---- tmux submit: single_arm MULTIVIEW dreamgen sparse-attn (14B, droid) GPU0/1/2/3 ----
 # (SVG2 uses .venv_svg w/ flashinfer0.3; set in the script. 14B is heavy ~490s/ep dense.)
-tmux new-session -d -s sam_pisa_g0   "CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_multiview_dreamgen_pisa.sh   2>&1 | tee exp_logs/tmux_logs/sam_pisa.log; exec bash"
-tmux new-session -d -s sam_svg1_g1   "CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_multiview_dreamgen_svg1.sh   2>&1 | tee exp_logs/tmux_logs/sam_svg1.log; exec bash"
-tmux new-session -d -s sam_radial_g2 "CUDA_VISIBLE_DEVICES=2 bash scripts/run_single_arm_multiview_dreamgen_radial.sh 2>&1 | tee exp_logs/tmux_logs/sam_radial.log; exec bash"
-tmux new-session -d -s sam_svg2_g3   "CUDA_VISIBLE_DEVICES=3 bash scripts/run_single_arm_multiview_dreamgen_svg2.sh   2>&1 | tee exp_logs/tmux_logs/sam_svg2.log; exec bash"
+tmux new-session -d -s sam_pisa_g0   "CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_multiview_dreamgen_pisa.sh   2>&1 | tee logs/exp_logs/tmux_logs/sam_pisa.log; exec bash"
+tmux new-session -d -s sam_svg1_g1   "CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_multiview_dreamgen_svg1.sh   2>&1 | tee logs/exp_logs/tmux_logs/sam_svg1.log; exec bash"
+tmux new-session -d -s sam_radial_g2 "CUDA_VISIBLE_DEVICES=2 bash scripts/run_single_arm_multiview_dreamgen_radial.sh 2>&1 | tee logs/exp_logs/tmux_logs/sam_radial.log; exec bash"
+tmux new-session -d -s sam_svg2_g3   "CUDA_VISIBLE_DEVICES=3 bash scripts/run_single_arm_multiview_dreamgen_svg2.sh   2>&1 | tee logs/exp_logs/tmux_logs/sam_svg2.log; exec bash"
 
 # ---- tmux submit: single_arm SINGLEVIEW dreamgen sparse-attn (2B, static16fps/LVG) GPU0/1/2/3 ----
 # (SVG2 uses .venv_svg; PISA/SVG1/Radial use .venv. Tuned: PISA d0.2, SVG1 sp0.15, SVG2 top_p0.7.)
-tmux new-session -d -s sasv_pisa_g0   "CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_singleview_dreamgen_pisa.sh   2>&1 | tee exp_logs/tmux_logs/sasv_pisa.log; exec bash"
-tmux new-session -d -s sasv_svg1_g1   "CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_singleview_dreamgen_svg1.sh   2>&1 | tee exp_logs/tmux_logs/sasv_svg1.log; exec bash"
-tmux new-session -d -s sasv_radial_g2 "CUDA_VISIBLE_DEVICES=2 bash scripts/run_single_arm_singleview_dreamgen_radial.sh 2>&1 | tee exp_logs/tmux_logs/sasv_radial.log; exec bash" -> done
-tmux new-session -d -s sasv_svg2_g3   "CUDA_VISIBLE_DEVICES=3 bash scripts/run_single_arm_singleview_dreamgen_svg2.sh   2>&1 | tee exp_logs/tmux_logs/sasv_svg2.log; exec bash" -> done 
+tmux new-session -d -s sasv_pisa_g0   "CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_singleview_dreamgen_pisa.sh   2>&1 | tee logs/exp_logs/tmux_logs/sasv_pisa.log; exec bash"
+tmux new-session -d -s sasv_svg1_g1   "CUDA_VISIBLE_DEVICES=1 bash scripts/run_single_arm_singleview_dreamgen_svg1.sh   2>&1 | tee logs/exp_logs/tmux_logs/sasv_svg1.log; exec bash"
+tmux new-session -d -s sasv_radial_g2 "CUDA_VISIBLE_DEVICES=2 bash scripts/run_single_arm_singleview_dreamgen_radial.sh 2>&1 | tee logs/exp_logs/tmux_logs/sasv_radial.log; exec bash" -> done
+tmux new-session -d -s sasv_svg2_g3   "CUDA_VISIBLE_DEVICES=3 bash scripts/run_single_arm_singleview_dreamgen_svg2.sh   2>&1 | tee logs/exp_logs/tmux_logs/sasv_svg2.log; exec bash" -> done 
 # ---- tmux submit: bimanual MULTIVIEW dreamgen sparse-attn (iter 120k) GPU0/1/2/3 ----
 # (Radial=decay0.5/start4 for multiview; SVG2 uses .venv_svg/flashinfer0.3.)
-tmux new-session -d -s smv_pisa_g0   "CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_multiview_dreamgen_pisa.sh   2>&1 | tee exp_logs/tmux_logs/smv_pisa.log; exec bash"
-tmux new-session -d -s smv_radial_g1 "CUDA_VISIBLE_DEVICES=1 bash scripts/run_bimanual_multiview_dreamgen_radial.sh 2>&1 | tee exp_logs/tmux_logs/smv_radial.log; exec bash"
-tmux new-session -d -s smv_svg1_g2   "CUDA_VISIBLE_DEVICES=2 bash scripts/run_bimanual_multiview_dreamgen_svg1.sh   2>&1 | tee exp_logs/tmux_logs/smv_svg1.log; exec bash"
-tmux new-session -d -s smv_svg2_g3   "CUDA_VISIBLE_DEVICES=3 bash scripts/run_bimanual_multiview_dreamgen_svg2.sh   2>&1 | tee exp_logs/tmux_logs/smv_svg2.log; exec bash"
+tmux new-session -d -s smv_pisa_g0   "CUDA_VISIBLE_DEVICES=0 bash scripts/run_bimanual_multiview_dreamgen_pisa.sh   2>&1 | tee logs/exp_logs/tmux_logs/smv_pisa.log; exec bash"
+tmux new-session -d -s smv_radial_g1 "CUDA_VISIBLE_DEVICES=1 bash scripts/run_bimanual_multiview_dreamgen_radial.sh 2>&1 | tee logs/exp_logs/tmux_logs/smv_radial.log; exec bash"
+tmux new-session -d -s smv_svg1_g2   "CUDA_VISIBLE_DEVICES=2 bash scripts/run_bimanual_multiview_dreamgen_svg1.sh   2>&1 | tee logs/exp_logs/tmux_logs/smv_svg1.log; exec bash"
+tmux new-session -d -s smv_svg2_g3   "CUDA_VISIBLE_DEVICES=3 bash scripts/run_bimanual_multiview_dreamgen_svg2.sh   2>&1 | tee logs/exp_logs/tmux_logs/smv_svg2.log; exec bash"
 
 # ---- bimanual DreamGen SiTo/ITM (mv + sv) — SEQUENTIAL on 1 GPU (SiTo=1.3x win; ITM=net-negative valid point) ----
 # (single-GPU only; run one at a time so per-segment timing is clean. resumable.)
 tmux new-session -d -s bim_prune "CUDA_VISIBLE_DEVICES=0 bash -c '\
-  bash scripts/run_bimanual_multiview_dreamgen_sito.sh  2>&1 | tee exp_logs/tmux_logs/bim_mv_sito.log && \
-  bash scripts/run_bimanual_multiview_dreamgen_itm.sh   2>&1 | tee exp_logs/tmux_logs/bim_mv_itm.log && \
-  bash scripts/run_bimanual_singleview_dreamgen_sito.sh 2>&1 | tee exp_logs/tmux_logs/bim_sv_sito.log && \
-  bash scripts/run_bimanual_singleview_dreamgen_itm.sh  2>&1 | tee exp_logs/tmux_logs/bim_sv_itm.log'; exec bash"
+  bash scripts/run_bimanual_multiview_dreamgen_sito.sh  2>&1 | tee logs/exp_logs/tmux_logs/bim_mv_sito.log && \
+  bash scripts/run_bimanual_multiview_dreamgen_itm.sh   2>&1 | tee logs/exp_logs/tmux_logs/bim_mv_itm.log && \
+  bash scripts/run_bimanual_singleview_dreamgen_sito.sh 2>&1 | tee logs/exp_logs/tmux_logs/bim_sv_sito.log && \
+  bash scripts/run_bimanual_singleview_dreamgen_itm.sh  2>&1 | tee logs/exp_logs/tmux_logs/bim_sv_itm.log'; exec bash"

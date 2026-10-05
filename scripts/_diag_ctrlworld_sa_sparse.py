@@ -48,9 +48,9 @@ def main():
     # --- build the real UNet just to read head geometry -------------------
     from config import wm_args
     args = wm_args(task_type="replay")
-    args.svd_model_path = os.path.join(ROOT, "checkpoints/stabilityai/stable-video-diffusion-img2vid")
-    args.clip_model_path = os.path.join(ROOT, "checkpoints/openai/clip-vit-base-patch32")
-    ckpt = os.path.join(ROOT, "checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt")
+    args.svd_model_path = os.path.join(ROOT, "checkpoints/base/stabilityai/stable-video-diffusion-img2vid")
+    args.clip_model_path = os.path.join(ROOT, "checkpoints/base/openai/clip-vit-base-patch32")
+    ckpt = os.path.join(ROOT, "checkpoints/base/ctrl_world/Ctrl-World/checkpoint-10000.pt")
     args.ckpt_path = args.val_model_path = ckpt
     args.data_stat_path = os.path.join(ROOT, "models/Ctrl-World/dataset_meta_info/droid_subset/stat.json")
 

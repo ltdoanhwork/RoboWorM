@@ -327,7 +327,9 @@ def main():
     args = parser.parse_args()
 
     # Resolve checkpoint
-    ckpt_base = PROJECT_ROOT / "exp_logs/dreamgen_logs/posttraining/singleview/all_singleview"
+    # BROKEN (2026-10-05 refactor): the combined all_singleview run does not exist on disk
+    # (not in checkpoints/finetuned/ nor the HF backup); pass an explicit checkpoint.
+    ckpt_base = PROJECT_ROOT / "checkpoints/finetuned/dreamgen/posttraining/singleview/all_singleview"
     if args.dit_path:
         dit_path = args.dit_path
     else:

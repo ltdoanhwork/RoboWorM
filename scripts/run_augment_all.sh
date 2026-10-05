@@ -33,7 +33,7 @@
 #   bash scripts/run_augment_all.sh 2          # launch only shard 2 (foreground)
 #   GPUS="0 1 2 3" bash scripts/run_augment_all.sh
 #
-# Logs: exp_logs/augment_runs/<timestamp>/shard{N}.log
+# Logs: logs/exp_logs/augment_runs/<timestamp>/shard{N}.log
 # Progress: bash scripts/run_augment_all.sh --status
 set -u
 
@@ -78,7 +78,7 @@ PY
 fi
 
 STAMP="$(date +%Y%m%d_%H%M%S)"
-LOGDIR="${LOGDIR:-${ROOT}/exp_logs/augment_runs/${STAMP}}"
+LOGDIR="${LOGDIR:-${ROOT}/logs/exp_logs/augment_runs/${STAMP}}"
 mkdir -p "${LOGDIR}"
 
 # Shard definitions. Each is a list of "gpu:script[:arg]" run sequentially.

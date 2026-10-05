@@ -17,7 +17,9 @@ source "${VENV}/bin/activate"
 export PYTHONPATH="${ROOT}/models/DreamDojo:${PYTHONPATH:-}"
 
 # --- Checkpoint ---
-CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/exp_logs/dreamgen_logs/posttraining/singleview/all_singleview/checkpoints_40_per}"
+# BROKEN (2026-10-05 refactor): the combined dreamgen all_singleview run does not exist on disk (not in
+# checkpoints/finetuned/ nor the HF backup). Set CHECKPOINTS_DIR explicitly to run this script.
+CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/finetuned/dreamgen/posttraining/singleview/all_singleview/checkpoints_40_per}"
 EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_480_640_gr1}"
 NUM_FRAMES="${NUM_FRAMES:-49}"
 NUM_EPISODES="${NUM_EPISODES:-}"

@@ -14,8 +14,10 @@ cd "${SCRIPT_DIR}"
 source ./models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/DreamDojo:${PYTHONPATH:-}"
 
-CKPT_DIR="./checkpoints/dreamdojo/2B_GR1_post-train"
-DATASET="./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot"
+CKPT_DIR="./checkpoints/base/dreamdojo/2B_GR1_post-train"
+# BROKEN (2026-10-05 refactor): the GR1_robot dataset under checkpoints/base/dreamdojo/datasets does not exist on disk (not in checkpoints/
+# nor the HF backup). Set DATASET explicitly to run this script.
+DATASET="./checkpoints/base/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot"
 EXPERIMENT="dreamdojo_2b_480_640_gr1"
 OUT_BASE="./output/worldcache_bench"
 NUM_SAMPLES=3    # 3 samples for quick wall-time comparison

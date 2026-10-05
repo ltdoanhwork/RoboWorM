@@ -22,7 +22,7 @@ from transformers import T5EncoderModel, T5TokenizerFast
 
 transformers.logging.set_verbosity_error()
 
-T5_MODEL_DIR = "checkpoints/google-t5/t5-11b"
+T5_MODEL_DIR = "checkpoints/base/google-t5/t5-11b"
 
 
 class CosmosT5TextEncoder(torch.nn.Module):

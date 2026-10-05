@@ -22,7 +22,8 @@ source "${VENV}/bin/activate"
 export PYTHONPATH="${ROOT}/models/dreamgen:${ROOT}:${PYTHONPATH:-}"
 
 # --- Checkpoint ---
-CKPT_BASE="${ROOT}/exp_logs/dreamgen_logs/posttraining/singleview/all_singleview"
+# all_singleview no longer exists; humanoid_singleview_16fps is the paper humanoid SV run.
+CKPT_BASE="${ROOT}/checkpoints/finetuned/dreamgen/posttraining/singleview/humanoid_singleview_16fps"
 ITER_NAME="${ITER_NAME:-iter_000090000}"
 DIT_PATH="${DIT_PATH:-${CKPT_BASE}/checkpoints_40_per/model/${ITER_NAME}.pt}"
 

@@ -64,7 +64,7 @@ step_dreamgen_humanoid_mv() {
   mkdir -p "${task_dir}"
   local src="${ROOT}/datasets/humanoid/multiview/makovian/AIRBOT_MMK2_mobile_car"
   for d in meta videos data; do ln -sfn "${src}/${d}" "${task_dir}/${d}"; done
-  DIT_PATH="${ROOT}/checkpoints/nvidia/Cosmos-Predict2-2B-Video2World/model-480p-16fps.pt" \
+  DIT_PATH="${ROOT}/checkpoints/base/nvidia/Cosmos-Predict2-2B-Video2World/model-480p-16fps.pt" \
   ITER_TAG="base_ckpt" \
   MULTIVIEW_ROOT="${scratch}" \
   SAVE_ROOT="${OUT}/dreamgen_humanoid_mv/base_ckpt/output" \
@@ -79,7 +79,7 @@ step_dreamgen_bimanual_mv() {
   mkdir -p "${task_dir}"
   local src="${ROOT}/datasets/bimanual/multiview/makovian/close_cardboard_box"
   for d in meta videos data; do ln -sfn "${src}/${d}" "${task_dir}/${d}"; done
-  DIT_PATH="${ROOT}/checkpoints/nvidia/Cosmos-Predict2-2B-Video2World/model-480p-16fps.pt" \
+  DIT_PATH="${ROOT}/checkpoints/base/nvidia/Cosmos-Predict2-2B-Video2World/model-480p-16fps.pt" \
   ITER_TAG="base_ckpt" \
   MULTIVIEW_ROOT="${scratch}" \
   SAVE_ROOT="${OUT}/dreamgen_bimanual_mv/base_ckpt/output" \
@@ -87,17 +87,17 @@ step_dreamgen_bimanual_mv() {
     bash scripts/run_bimanual_multiview_dreamgen_full.sh
 }
 
-# --- E) DreamDojo bimanual singleview: base=checkpoints/dreamdojo/2B_pretrain ---
+# --- E) DreamDojo bimanual singleview: base=checkpoints/base/dreamdojo/2B_pretrain ---
 step_dreamdojo_bimanual_sv() {
-  CHECKPOINTS_DIR="${ROOT}/checkpoints/dreamdojo/2B_pretrain" \
+  CHECKPOINTS_DIR="${ROOT}/checkpoints/base/dreamdojo/2B_pretrain" \
   SAVE_ROOT="${OUT}/dreamdojo_bimanual_sv/base_ckpt/output" \
   NUM_EPISODES=2 \
     bash scripts/run_bimanual_singleview_dreamdojo_full_episode.sh
 }
 
-# --- F) DreamDojo single_arm singleview: base=checkpoints/dreamdojo/2B_pretrain ---
+# --- F) DreamDojo single_arm singleview: base=checkpoints/base/dreamdojo/2B_pretrain ---
 step_dreamdojo_single_arm_sv() {
-  CHECKPOINTS_DIR="${ROOT}/checkpoints/dreamdojo/2B_pretrain" \
+  CHECKPOINTS_DIR="${ROOT}/checkpoints/base/dreamdojo/2B_pretrain" \
   SAVE_ROOT="${OUT}/dreamdojo_single_arm_sv/base_ckpt/output" \
   NUM_EPISODES=2 \
     bash scripts/run_single_arm_singleview_dreamdojo_dense.sh

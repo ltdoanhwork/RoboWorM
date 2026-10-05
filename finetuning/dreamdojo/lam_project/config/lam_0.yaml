@@ -30,7 +30,7 @@ data:
   sampling_strategy: dataset
 
 # Pretrained LAM; also restores optimizer/global_step from ckpt unless you override --ckpt_path.
-ckpt_path: ./checkpoints/dreamdojo/LAM_400k.ckpt
+ckpt_path: ./checkpoints/base/dreamdojo/LAM_400k.ckpt
 
 trainer:
   max_epochs: 1000

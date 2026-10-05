@@ -10,7 +10,7 @@ fi
 
 DATASET_ROOT="${DATASET_ROOT:-datasets/humanoid/multiview/non_makovian}"
 PROCESSED_ROOT="${PROCESSED_ROOT:-datasets/processed/ctrl_world_robo_multiview}"
-SVD_MODEL_PATH="${SVD_MODEL_PATH:-checkpoints/stabilityai/stable-video-diffusion-img2vid}"
+SVD_MODEL_PATH="${SVD_MODEL_PATH:-checkpoints/base/stabilityai/stable-video-diffusion-img2vid}"
 MAX_EPISODES_PER_DATASET="${MAX_EPISODES_PER_DATASET:-}"
 LIMIT_RECORDS="${LIMIT_RECORDS:-}"
 ENCODE_BATCH_SIZE="${ENCODE_BATCH_SIZE:-64}"

@@ -28,14 +28,14 @@ export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}
 export XLA_PYTHON_CLIENT_MEM_FRACTION=0.4
 
 # Model paths
-SVD_MODEL_PATH="./checkpoints/stabilityai/stable-video-diffusion-img2vid"
-CLIP_MODEL_PATH="./checkpoints/openai/clip-vit-base-patch32"
-CKPT_PATH="./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt"
+SVD_MODEL_PATH="./checkpoints/base/stabilityai/stable-video-diffusion-img2vid"
+CLIP_MODEL_PATH="./checkpoints/base/openai/clip-vit-base-patch32"
+CKPT_PATH="./checkpoints/base/ctrl_world/Ctrl-World/checkpoint-10000.pt"
 DATASET_META_INFO="./models/Ctrl-World/dataset_meta_info"
 DATASET_EXAMPLE_DIR="./models/Ctrl-World/dataset_example"
 
 # Policy checkpoint
-PI_CKPT="${PI_CKPT:-/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/pi05_droid}"
+PI_CKPT="${PI_CKPT:-/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/base/pi05_droid}"
 POLICY_TYPE="${POLICY_TYPE:-pi05}"
 
 OUTPUT_BASE="${PROJECT_ROOT}/sampling_dataset/dense/single_arm/output/multiview/ctrlworld"

@@ -34,14 +34,16 @@ MASTER_PORT="${MASTER_PORT:-29502}"
 DOWN_SAMPLE=6                 # 30fps -> 5fps (fixed for this variant)
 DATASET_NAME="bimanual_multiview_5fps"
 
-SVD_MODEL_PATH="${ROOT}/checkpoints/stabilityai/stable-video-diffusion-img2vid"
-CLIP_MODEL_PATH="${ROOT}/checkpoints/openai/clip-vit-base-patch32"
+SVD_MODEL_PATH="${ROOT}/checkpoints/base/stabilityai/stable-video-diffusion-img2vid"
+CLIP_MODEL_PATH="${ROOT}/checkpoints/base/openai/clip-vit-base-patch32"
 # Warm-start from the finetuned 30fps checkpoint (14-D action encoder already present)
-WARM_CKPT="${WARM_CKPT:-${ROOT}/exp_logs/ctrlworld_logs/bimanual_multiview/checkpoint-120000.pt}"
+# BROKEN (2026-10-05 refactor): the 30fps bimanual_multiview/checkpoint-120000.pt warm-start does not exist on disk (not in
+# checkpoints/finetuned/ nor the HF backup). Set WARM_CKPT explicitly to run this script.
+WARM_CKPT="${WARM_CKPT:-${ROOT}/checkpoints/finetuned/ctrlworld/bimanual_multiview/checkpoint-120000.pt}"
 
 DATASET_ROOT="${ROOT}/models/Ctrl-World/dataset_example"
 META_INFO="${ROOT}/models/Ctrl-World/dataset_meta_info"
-OUTPUT_DIR="${ROOT}/exp_logs/ctrlworld_logs/${DATASET_NAME}"
+OUTPUT_DIR="${ROOT}/checkpoints/finetuned/ctrlworld/${DATASET_NAME}"
 
 MAX_STEPS="${MAX_STEPS:-50000}"
 BATCH_SIZE="${BATCH_SIZE:-2}"

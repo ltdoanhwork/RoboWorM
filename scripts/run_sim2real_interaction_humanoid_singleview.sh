@@ -16,7 +16,7 @@ REPO=/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen
 PY=$REPO/models/dreamgen/.venv/bin/python
 WS=$REPO/metrics/WorldScore
 TP=$WS/worldscore/benchmark/metrics/third_party
-CKPT=$REPO/checkpoints/worldscore
+CKPT=$REPO/checkpoints/metrics/worldscore
 
 METHOD=${METHOD:-dense}
 SPLIT=${SPLIT:-makovian}
@@ -49,7 +49,7 @@ import json, os, subprocess, sys
 index_path, out_root = sys.argv[1], sys.argv[2]
 extra = sys.argv[3:]
 repo = os.environ["REPO"]
-ckpt = f"{repo}/checkpoints/worldscore"
+ckpt = f"{repo}/checkpoints/metrics/worldscore"
 rows = json.load(open(index_path))
 for r in rows:
     out = os.path.join(out_root, r["episode_id"])

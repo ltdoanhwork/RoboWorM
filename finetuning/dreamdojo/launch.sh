@@ -36,11 +36,11 @@ DREAMDOJO_ROOT="${PROJECT_ROOT}/models/DreamDojo"
 export PYTHONPATH="${DREAMDOJO_ROOT}:${PROJECT_ROOT}:${PYTHONPATH}"
 export OMP_NUM_THREADS=8
 export HF_HOME=/mnt/amlfs-01/shared/shenyuang/cosmos_cache
-export IMAGINAIRE_OUTPUT_ROOT=${PROJECT_ROOT}/exp_logs/dreamdojo_logs
+export IMAGINAIRE_OUTPUT_ROOT=${PROJECT_ROOT}/checkpoints/finetuned/dreamdojo
 # export WANDB_API_KEY=  # Set your key before removing job.wandb_mode=disabled
 
 source ${DREAMDOJO_ROOT}/.venv/bin/activate
-export DREAMDOJO_LAM_CKPT=${PROJECT_ROOT}/checkpoints/dreamdojo/LAM_400k.ckpt
+export DREAMDOJO_LAM_CKPT=${PROJECT_ROOT}/checkpoints/base/dreamdojo/LAM_400k.ckpt
 config_name=$1
 
 cd "${DREAMDOJO_ROOT}"

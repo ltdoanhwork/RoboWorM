@@ -25,7 +25,7 @@ rm -rf "${SCRATCH}/${TAG}"
 mkdir -p "${SCRATCH}/${TAG}" "${SCRATCH}/logs"
 
 CUDA_VISIBLE_DEVICES="${GPU}" python "${ROOT}/scripts/infer_bimanual_singleview_single_segment.py" \
-  --checkpoints-dir "${ROOT}/exp_logs/dreamdojo_logs/dreamdojo/exp_aloha_resume70k/aloha_bimanual_singleview_full/checkpoints" \
+  --checkpoints-dir "${ROOT}/checkpoints/finetuned/dreamdojo/dreamdojo/exp_aloha_resume70k/aloha_bimanual_singleview_full/checkpoints" \
   --experiment dreamdojo_2b_480_640_aloha_resume70k_bimanual_sv \
   --dataset-path "${ROOT}/datasets/bimanual/singleview/${SPLIT}/${TASK}" \
   --save-dir "${SCRATCH}/${TAG}" \

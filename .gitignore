@@ -194,7 +194,9 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
-/checkpoints
+/checkpoints/*
+# the checkpoint index is the only tracked file under checkpoints/
+!/checkpoints/CHECKPOINTS.md
 /output
 /datasets
 /examples/**/checkpoints
@@ -218,6 +220,8 @@ benchmark_results/
 synthetic_traj/*
 sampling_dataset/*
 exp_logs/*
+# non-checkpoint content moved out of exp_logs/ (2026-10-05 refactor)
+logs/exp_logs/
 exp_imgs/*
 lam_infer_outputs/*
 tmp/*

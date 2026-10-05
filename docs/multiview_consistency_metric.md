@@ -314,13 +314,13 @@ On-cluster copy (the only one that exists today):
 /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/thanhnv/VideoWorldModelBenchmark/checkpoint/vggt_omega_1b_512.pt
 ```
 
-Our scripts default to `checkpoints/vggt_omega/vggt_omega_1b_512.pt` (which is
+Our scripts default to `checkpoints/metrics/vggt_omega/vggt_omega_1b_512.pt` (which is
 gitignored via `/checkpoints`). Set it up once:
 
 ```bash
-mkdir -p checkpoints/vggt_omega
+mkdir -p checkpoints/metrics/vggt_omega
 ln -sfn /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/thanhnv/VideoWorldModelBenchmark/checkpoint/vggt_omega_1b_512.pt \
-        checkpoints/vggt_omega/vggt_omega_1b_512.pt
+        checkpoints/metrics/vggt_omega/vggt_omega_1b_512.pt
 ```
 
 Override anywhere with `MVC_CKPT=/path/to/vggt_omega_1b_512.pt`. **No path under
@@ -345,7 +345,7 @@ git fetch --all
 git worktree add --detach external/multiview-consistency origin/thanhnv/multiview-consistency-indep
 (cd external/multiview-consistency && uv sync)        # ~4 min, builds numpy 1.26.4
 
-mkdir -p checkpoints/vggt_omega && ln -sfn <path-to>/vggt_omega_1b_512.pt checkpoints/vggt_omega/
+mkdir -p checkpoints/metrics/vggt_omega && ln -sfn <path-to>/vggt_omega_1b_512.pt checkpoints/metrics/vggt_omega/
 ```
 
 `metrics/multiview_consistency/run.sh` creates the worktree itself if missing.
@@ -372,7 +372,7 @@ of re-extracting (that is what the smoke test below did).
 # all variants, one model-service load, backgrounded in tmux
 CUDA_VISIBLE_DEVICES=0 VARIANTS="dense pisa radial svg1 svg2" \
   bash metrics/multiview_consistency/run.sh --tmux
-# tmux attach -t mvc_<HHMMSS>   |   log: exp_logs/tmux_logs/mvc_<HHMMSS>.log
+# tmux attach -t mvc_<HHMMSS>   |   log: logs/exp_logs/tmux_logs/mvc_<HHMMSS>.log
 
 python metrics/multiview_consistency/aggregate.py \
   --results-root results/multiview_consistency \
@@ -711,7 +711,7 @@ Created outside git tracking:
 | Path | Role |
 |---|---|
 | `external/multiview-consistency/` | git worktree, detached at `8015d97`, plus its `.venv`. |
-| `checkpoints/vggt_omega/vggt_omega_1b_512.pt` | symlink to the shared checkpoint (gitignored). |
+| `checkpoints/metrics/vggt_omega/vggt_omega_1b_512.pt` | symlink to the shared checkpoint (gitignored). |
 | `sampling_dataset/multiview_consistency/frames/` | staged/extracted frames. |
 | `results/multiview_consistency/` | output CSVs + `smoke_summary.json`. |
 

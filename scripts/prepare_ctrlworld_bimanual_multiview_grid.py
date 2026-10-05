@@ -41,7 +41,7 @@ from diffusers.models import AutoencoderKLTemporalDecoder
 
 DATASET_BASE = "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/datasets/bimanual/multiview"
 OUTPUT_BASE = "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/Ctrl-World/dataset_example"
-SVD_PATH = "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/stabilityai/stable-video-diffusion-img2vid"
+SVD_PATH = "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/base/stabilityai/stable-video-diffusion-img2vid"
 
 # 4 views, ROW-MAJOR for the 2x2 grid: [TL, TR, BL, BR].
 # Static cameras on top, dynamic (wrist) cameras on bottom.

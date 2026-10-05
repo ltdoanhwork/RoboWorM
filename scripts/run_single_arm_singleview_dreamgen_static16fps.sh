@@ -30,9 +30,9 @@ source "${VENV}/bin/activate"
 export PYTHONPATH="${ROOT}/models/dreamgen:${ROOT}:${PYTHONPATH:-}"
 
 # --- Checkpoint (from single_arm_static_16fps training) ---
-# Defaults to the v2 run (prompt + 4:3 resolution fixes). Override with e.g.
-#   CKPT_BASE=.../single_arm_static_singleview_16fps_v1_90k  to test the old run.
-CKPT_BASE="${CKPT_BASE:-${ROOT}/exp_logs/dreamgen_logs/posttraining/singleview/single_arm_static_singleview_16fps_v2}"
+# Defaults to the v2 run (prompt + 4:3 resolution fixes). The old v1_90k run is
+# archived under tmp/20261005_refactor/checkpoints_unused/ (see its MANIFEST.md).
+CKPT_BASE="${CKPT_BASE:-${ROOT}/checkpoints/finetuned/dreamgen/posttraining/singleview/single_arm_static_singleview_16fps_v2}"
 CKPT_MODEL_DIR="${CKPT_BASE}/checkpoints_40_per/model"
 
 # Default to the latest checkpoint recorded by the trainer if ITER_NAME unset.
@@ -41,7 +41,7 @@ if [[ -z "${ITER_NAME:-}" ]]; then
   if [[ -f "${latest_file}" ]]; then
     ITER_NAME="$(basename "$(cat "${latest_file}")" .pt)"
   else
-    ITER_NAME="iter_000020000"
+    ITER_NAME="iter_000090000"
   fi
 fi
 

@@ -28,7 +28,7 @@ mkdir -p "${SCRATCH}/${TAG}" "${SCRATCH}/logs"
 
 case "${EMB}" in
   single_arm)
-    CKPT="${ROOT}/exp_logs/dreamdojo_logs/dreamdojo/exp_single_arm_sv/single_arm_singleview/checkpoints"
+    CKPT="${ROOT}/checkpoints/finetuned/dreamdojo/dreamdojo/exp_single_arm_sv/single_arm_singleview/checkpoints"
     EXP="dreamdojo_2b_480_640_single_arm_sv"
     DATASET="${ROOT}/datasets/single_arm/singleview/${SPLIT}"
     python "${ROOT}/scripts/infer_single_arm_singleview_autoregressive.py" \
@@ -44,7 +44,7 @@ case "${EMB}" in
       "$@" > "${SCRATCH}/logs/${TAG}.log" 2>&1
     ;;
   bimanual)
-    CKPT="${ROOT}/exp_logs/dreamdojo_logs/dreamdojo/exp_aloha_resume70k/aloha_bimanual_singleview_full/checkpoints"
+    CKPT="${ROOT}/checkpoints/finetuned/dreamdojo/dreamdojo/exp_aloha_resume70k/aloha_bimanual_singleview_full/checkpoints"
     EXP="dreamdojo_2b_480_640_aloha_resume70k_bimanual_sv"
     paths=""
     for d in $(find "${ROOT}/datasets/bimanual/singleview/${SPLIT}" -maxdepth 1 -mindepth 1 -type d | sort); do

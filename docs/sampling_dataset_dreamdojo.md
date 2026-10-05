@@ -59,7 +59,7 @@ python -m scripts.prepare_batch_input_json_csv \
 # Run inference with batch_input_json
 python -m models.DreamDojo.examples.action_conditioned \
   -o ./output/dreamdojo/cache_worldcache \
-  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train \
+  --checkpoints-dir ./checkpoints/base/dreamdojo/2B_GR1_post-train \
   --experiment dreamdojo_2b_480_640_gr1 \
   --save-dir ./output/dreamdojo_cache/worldcache \
   --num-frames 49 \
@@ -74,7 +74,7 @@ python -m models.DreamDojo.examples.action_conditioned \
 
 python -m models.DreamDojo.examples.action_conditioned \
   -o ./output/action_conditioned/cache_worldcache \
-  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train \
+  --checkpoints-dir ./checkpoints/base/dreamdojo/2B_GR1_post-train \
   --experiment dreamdojo_2b_480_640_gr1 \
   --save-dir ./output/dreamdojo_cache/worldcache \
   --num-frames 49 \

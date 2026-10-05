@@ -4,7 +4,7 @@
 # using the all_singleview post-training checkpoint.
 #
 # Checkpoint dir:
-#   exp_logs/dreamgen_logs/posttraining/singleview/all_singleview/
+#   checkpoints/finetuned/dreamgen/posttraining/singleview/all_singleview/
 #   By default uses checkpoints_40_per/model/iter_000090000.pt (latest)
 #
 # Training config: 2B model, 480p (432×768), 16fps, 93 frames
@@ -41,7 +41,9 @@ source "${VENV}/bin/activate"
 export PYTHONPATH="${ROOT}/models/dreamgen:${PYTHONPATH:-}"
 
 # --- Checkpoint ---
-CKPT_BASE="${ROOT}/exp_logs/dreamgen_logs/posttraining/singleview/all_singleview"
+# BROKEN (2026-10-05 refactor): the combined all_singleview run does not exist on disk (not in
+# checkpoints/finetuned/ nor the HF backup). Set CKPT_BASE/DIT_PATH explicitly to run this script.
+CKPT_BASE="${ROOT}/checkpoints/finetuned/dreamgen/posttraining/singleview/all_singleview"
 ITER_NAME="${ITER_NAME:-iter_000090000}"
 DIT_PATH="${DIT_PATH:-${CKPT_BASE}/checkpoints_40_per/model/${ITER_NAME}.pt}"
 

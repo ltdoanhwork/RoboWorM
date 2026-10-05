@@ -24,7 +24,7 @@ rm -rf "${SCRATCH}/${TAG}"
 mkdir -p "${SCRATCH}/${TAG}" "${SCRATCH}/logs"
 
 CUDA_VISIBLE_DEVICES="${GPU}" python "${ROOT}/scripts/infer_single_arm_singleview_autoregressive.py" \
-  --checkpoints-dir "${ROOT}/exp_logs/dreamdojo_logs/dreamdojo/exp_single_arm_sv/single_arm_singleview/checkpoints" \
+  --checkpoints-dir "${ROOT}/checkpoints/finetuned/dreamdojo/dreamdojo/exp_single_arm_sv/single_arm_singleview/checkpoints" \
   --experiment dreamdojo_2b_480_640_single_arm_sv \
   --dataset-path "${ROOT}/datasets/single_arm/singleview/${SPLIT}" \
   --save-dir "${SCRATCH}/${TAG}" \

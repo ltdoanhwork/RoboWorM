@@ -13,9 +13,9 @@ META_INFO_DIR="${CTRL_WORLD_DATASET}/meta_info"
 MAX_EPISODES=100
 
 # Model paths
-SVD_MODEL="./checkpoints/stabilityai/stable-video-diffusion-img2vid"
-CLIP_MODEL="./checkpoints/openai/clip-vit-base-patch32"
-CTRL_WORLD_CKPT="./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt"
+SVD_MODEL="./checkpoints/base/stabilityai/stable-video-diffusion-img2vid"
+CLIP_MODEL="./checkpoints/base/openai/clip-vit-base-patch32"
+CTRL_WORLD_CKPT="./checkpoints/base/ctrl_world/Ctrl-World/checkpoint-10000.pt"
 
 cd "${PROJECT_ROOT}"
 

@@ -11,7 +11,7 @@ description: Naming conventions for DreamGen vs DreamDojo models, scripts, and d
 |---|---|---|
 | **Code** | `models/dreamgen/` (cosmos_predict2 pipeline) | `models/DreamDojo/` (action-conditioned) |
 | **Training** | `finetuning/dreamgen/` | Separate (exp_aloha_resume70k) |
-| **Logs** | `exp_logs/dreamgen_logs/` | `exp_logs/dreamdojo_logs/` |
+| **Logs** | `checkpoints/finetuned/dreamgen/` | `checkpoints/finetuned/dreamdojo/` |
 | **Venv** | `models/DreamDojo/.venv` (shared) | `models/DreamDojo/.venv` |
 | **Inference module** | `models.dreamgen.examples.video2world` | `models.DreamDojo.examples.action_conditioned` |
 
@@ -19,12 +19,12 @@ description: Naming conventions for DreamGen vs DreamDojo models, scripts, and d
 
 **Use `dreamgen` when:**
 - Script imports from `models.dreamgen.*`
-- Script uses checkpoints from `exp_logs/dreamgen_logs/`
+- Script uses checkpoints from `checkpoints/finetuned/dreamgen/`
 - Script sets `PYTHONPATH` to `models/dreamgen`
 
 **Use `dreamdojo` when:**
 - Script imports from `models.DreamDojo.*`
-- Script uses checkpoints from `exp_logs/dreamdojo_logs/`
+- Script uses checkpoints from `checkpoints/finetuned/dreamdojo/`
 - Script sets `PYTHONPATH` to `models/DreamDojo`
 
 ## Script Name Pattern

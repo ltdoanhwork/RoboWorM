@@ -10,7 +10,7 @@ and is architecture-compatible, for a subset of cells:
   - Ctrl-World bimanual / humanoid multiview: base = the released
     `checkpoint-10000.pt` (DROID pretrain, script's own fallback default).
   - DreamGen bimanual / humanoid multiview (2B): base =
-    `checkpoints/nvidia/Cosmos-Predict2-2B-Video2World/model-480p-16fps.pt`.
+    `checkpoints/base/nvidia/Cosmos-Predict2-2B-Video2World/model-480p-16fps.pt`.
 
 Explicitly out of scope (see scripts/_run_checkpoint_ablation_base.sh header
 and the paper appendix note for why):

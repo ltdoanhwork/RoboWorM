@@ -35,7 +35,7 @@ unset NUM_SHARDS SHARD_ID
 
 METHODS="${METHODS:-worldcache dicache fastercache}"
 GPU="${CUDA_VISIBLE_DEVICES:-0}"
-LOGDIR="${ROOT}/exp_logs/tmux_logs"
+LOGDIR="${ROOT}/logs/exp_logs/tmux_logs"
 mkdir -p "${LOGDIR}"
 STAMP="$(date +%Y%m%d_%H%M%S)"
 

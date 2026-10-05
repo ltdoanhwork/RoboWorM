@@ -90,7 +90,7 @@ def load_jsonl(paths):
 def build():
     # ---- source 1: per-chunk (this pass) ----------------------------------
     chunk = {}
-    for r in load_jsonl([str(ROOT / "exp_logs/timing_pass/dist/*/results.jsonl"),
+    for r in load_jsonl([str(ROOT / "logs/exp_logs/timing_pass/dist/*/results.jsonl"),
                          "/tmp/uniform_timing/results.jsonl"]):
         if str(r.get("status", "")).startswith("suspect") or r.get("status") != "ok":
             continue
@@ -100,7 +100,7 @@ def build():
 
     # ---- source 2: per-episode (earlier today, superseded) ----------------
     episode = {}
-    for r in load_jsonl([str(ROOT / "exp_logs/timing_pass/results_*.jsonl")]):
+    for r in load_jsonl([str(ROOT / "logs/exp_logs/timing_pass/results_*.jsonl")]):
         if r.get("status") != "ok" or not r.get("generation_s"):
             continue
         episode.setdefault((r["cell"], r["method"]), r["generation_s"])

@@ -41,7 +41,7 @@ for m in "${METHODS[@]}"; do
   sleep 20
   while true; do
     done_n=$(grep -lE 'Done! Results saved to' \
-      "${ROOT}"/exp_logs/tmux_logs/cw_bim_grid_4view_${lg}_shard*.log 2>/dev/null | wc -l)
+      "${ROOT}"/logs/exp_logs/tmux_logs/cw_bim_grid_4view_${lg}_shard*.log 2>/dev/null | wc -l)
     [ "$done_n" -ge "$NUM_SHARDS" ] && break
     sleep 60
   done

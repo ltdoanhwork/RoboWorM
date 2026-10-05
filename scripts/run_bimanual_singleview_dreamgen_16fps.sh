@@ -25,8 +25,9 @@ source "${VENV}/bin/activate"
 export PYTHONPATH="${ROOT}/models/dreamgen:${ROOT}:${PYTHONPATH:-}"
 
 # --- Checkpoint (from bimanual_singleview_16fps training) ---
-CKPT_BASE="${ROOT}/exp_logs/dreamgen_logs/posttraining/singleview/bimanual_singleview_16fps"
-ITER_NAME="${ITER_NAME:-iter_000050000}"
+CKPT_BASE="${ROOT}/checkpoints/finetuned/dreamgen/posttraining/singleview/bimanual_singleview_16fps"
+# Paper cell iter (iter_000050000 is not on disk).
+ITER_NAME="${ITER_NAME:-iter_000110000}"
 DIT_PATH="${DIT_PATH:-${CKPT_BASE}/checkpoints_40_per/model/${ITER_NAME}.pt}"
 
 if [[ ! -f "${DIT_PATH}" ]]; then

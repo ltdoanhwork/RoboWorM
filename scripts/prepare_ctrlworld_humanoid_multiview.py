@@ -39,7 +39,7 @@ from diffusers.models import AutoencoderKLTemporalDecoder
 
 DATASET_BASE = "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/datasets/humanoid/multiview"
 OUTPUT_BASE = "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/Ctrl-World/dataset_example"
-SVD_PATH = "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/stabilityai/stable-video-diffusion-img2vid"
+SVD_PATH = "/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/base/stabilityai/stable-video-diffusion-img2vid"
 
 # Canonical 3-view mapping. view 0 = first main-external candidate present in the task.
 MAIN_VIEW_CANDIDATES = ["cam_high_rgb", "cam_head_rgb"]

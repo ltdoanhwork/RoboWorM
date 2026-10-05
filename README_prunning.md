@@ -164,12 +164,12 @@ Base run:
 ```bash
 python -m models.DreamDojo.examples.action_conditioned \
   -o ./output/dreamdojo_eval_2b \
-  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000 \
+  --checkpoints-dir ./checkpoints/base/dreamdojo/2B_GR1_post-train/iter_000050000 \
   --experiment dreamdojo_2b_480_640_gr1 \
   --save-dir ./output/dreamdojo_results/base \
   --num-frames 49 \
   --num-samples 65 \
-  --dataset-path "./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
+  --dataset-path "./checkpoints/base/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
   --data-split test \
   --deterministic-uniform-sampling
 ```
@@ -179,12 +179,12 @@ With SiTo:
 ```bash
 python -m models.DreamDojo.examples.action_conditioned \
   -o ./output/dreamdojo_sito_eval \
-  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000 \
+  --checkpoints-dir ./checkpoints/base/dreamdojo/2B_GR1_post-train/iter_000050000 \
   --experiment dreamdojo_2b_480_640_gr1 \
   --save-dir ./output/dreamdojo_results/sito \
   --num-frames 49 \
   --num-samples 65 \
-  --dataset-path "./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
+  --dataset-path "./checkpoints/base/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
   --data-split test \
   --deterministic-uniform-sampling \
   --use_sito \
@@ -202,9 +202,9 @@ python models/Ctrl-World/scripts/rollout_replay_traj.py \
   --dataset_root_path ./models/Ctrl-World/dataset_example \
   --dataset_meta_info_path ./models/Ctrl-World/dataset_meta_info \
   --dataset_names ./models/Ctrl-World/droid_subset \
-  --svd_model_path ./checkpoints/stabilityai/stable-video-diffusion-img2vid \
-  --clip_model_path ./checkpoints/openai/clip-vit-base-patch32 \
-  --ckpt_path ./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt
+  --svd_model_path ./checkpoints/base/stabilityai/stable-video-diffusion-img2vid \
+  --clip_model_path ./checkpoints/base/openai/clip-vit-base-patch32 \
+  --ckpt_path ./checkpoints/base/ctrl_world/Ctrl-World/checkpoint-10000.pt
 ```
 
 Interactive rollout with SiTo:
@@ -215,9 +215,9 @@ CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-Wor
   --dataset_root_path ./models/Ctrl-World/dataset_example \
   --dataset_meta_info_path ./models/Ctrl-World/dataset_meta_info \
   --dataset_names ./models/Ctrl-World/droid_subset \
-  --svd_model_path ./checkpoints/stabilityai/stable-video-diffusion-img2vid \
-  --clip_model_path ./checkpoints/openai/clip-vit-base-patch32 \
-  --ckpt_path ./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt \
+  --svd_model_path ./checkpoints/base/stabilityai/stable-video-diffusion-img2vid \
+  --clip_model_path ./checkpoints/base/openai/clip-vit-base-patch32 \
+  --ckpt_path ./checkpoints/base/ctrl_world/Ctrl-World/checkpoint-10000.pt \
   --task_type pickplace \
   --use_sito \
   --sito_max_downsample_ratio 4 \
@@ -233,9 +233,9 @@ python models/Ctrl-World/scripts/rollout_replay_traj.py \
   --dataset_root_path ./models/Ctrl-World/dataset_example \
   --dataset_meta_info_path ./models/Ctrl-World/dataset_meta_info \
   --dataset_names ./models/Ctrl-World/droid_subset \
-  --svd_model_path ./checkpoints/stabilityai/stable-video-diffusion-img2vid \
-  --clip_model_path ./checkpoints/openai/clip-vit-base-patch32 \
-  --ckpt_path ./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt \
+  --svd_model_path ./checkpoints/base/stabilityai/stable-video-diffusion-img2vid \
+  --clip_model_path ./checkpoints/base/openai/clip-vit-base-patch32 \
+  --ckpt_path ./checkpoints/base/ctrl_world/Ctrl-World/checkpoint-10000.pt \
   --use_sito \
   --sito_max_downsample_ratio 4
 ```
@@ -310,12 +310,12 @@ python -m models.dreamgen.examples.text2image \
 ```bash
 python -m models.DreamDojo.examples.action_conditioned \
   -o ./output/dreamdojo_itm_eval \
-  --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000 \
+  --checkpoints-dir ./checkpoints/base/dreamdojo/2B_GR1_post-train/iter_000050000 \
   --experiment dreamdojo_2b_480_640_gr1 \
   --save-dir ./output/dreamdojo_results/itm \
   --num-frames 49 \
   --num-samples 65 \
-  --dataset-path "./checkpoints/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
+  --dataset-path "./checkpoints/base/dreamdojo/datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot" \
   --data-split test \
   --deterministic-uniform-sampling \
   --use_itm \
@@ -326,7 +326,7 @@ python -m models.DreamDojo.examples.action_conditioned \
 ```
 CUDA_VISIBLE_DEVICES=0 python -m models.DreamDojo.examples.action_conditioned \
     -o ./output/grid_v3_itm_4layers_10pct_late_makovian \
-    --checkpoints-dir ./checkpoints/dreamdojo/2B_GR1_post-train/iter_000050000 \
+    --checkpoints-dir ./checkpoints/base/dreamdojo/2B_GR1_post-train/iter_000050000 \
     --experiment dreamdojo_2b_480_640_gr1 \
     --save-dir ./tmp_2/grid_search_v2/itm_4layers_10pct_late/makovian \
     --num-frames 49 \
@@ -350,9 +350,9 @@ CUDA_VISIBLE_DEVICES=0 XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 python models/Ctrl-Wor
   --dataset_root_path ./models/Ctrl-World/dataset_example \
   --dataset_meta_info_path ./models/Ctrl-World/dataset_meta_info \
   --dataset_names ./models/Ctrl-World/droid_subset \
-  --svd_model_path ./checkpoints/stabilityai/stable-video-diffusion-img2vid \
-  --clip_model_path ./checkpoints/openai/clip-vit-base-patch32 \
-  --ckpt_path ./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt \
+  --svd_model_path ./checkpoints/base/stabilityai/stable-video-diffusion-img2vid \
+  --clip_model_path ./checkpoints/base/openai/clip-vit-base-patch32 \
+  --ckpt_path ./checkpoints/base/ctrl_world/Ctrl-World/checkpoint-10000.pt \
   --task_type pickplace \
   --use_itm \
   --itm_max_downsample_ratio 4 \
@@ -368,9 +368,9 @@ python models/Ctrl-World/scripts/rollout_replay_traj.py \
   --dataset_root_path ./models/Ctrl-World/dataset_example \
   --dataset_meta_info_path ./models/Ctrl-World/dataset_meta_info \
   --dataset_names ./models/Ctrl-World/droid_subset \
-  --svd_model_path ./checkpoints/stabilityai/stable-video-diffusion-img2vid \
-  --clip_model_path ./checkpoints/openai/clip-vit-base-patch32 \
-  --ckpt_path ./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt \
+  --svd_model_path ./checkpoints/base/stabilityai/stable-video-diffusion-img2vid \
+  --clip_model_path ./checkpoints/base/openai/clip-vit-base-patch32 \
+  --ckpt_path ./checkpoints/base/ctrl_world/Ctrl-World/checkpoint-10000.pt \
   --use_itm \
   --itm_max_downsample_ratio 4
 ```

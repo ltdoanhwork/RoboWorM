@@ -44,7 +44,7 @@ source "${VENV}/bin/activate"
 export PYTHONPATH="${ROOT}/models/dreamgen:${PYTHONPATH:-}"
 
 # --- Checkpoint (seg16 experiment; auto-detect latest from latest_checkpoint.txt) ---
-CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/exp_logs/dreamgen_logs/posttraining/multiview/humanoid_multiview_seg16/checkpoints_40_per}"
+CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/finetuned/dreamgen/posttraining/multiview/humanoid_multiview_seg16/checkpoints_40_per}"
 _LATEST_FILE="${CHECKPOINTS_DIR}/latest_checkpoint.txt"
 if [[ -f "${_LATEST_FILE}" ]]; then
   _LATEST_FNAME="$(cat "${_LATEST_FILE}")"

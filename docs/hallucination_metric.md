@@ -557,7 +557,7 @@ HAL_OUT_ROOT=/tmp/hal_results \
   EMBODIMENTS=single_arm SPLITS=makovian \
   bash metrics/hallucination/run.sh --tmux
 # attach: tmux attach -t hal_<HHMMSS>
-# log:    exp_logs/tmux_logs/hal_<HHMMSS>.log
+# log:    logs/exp_logs/tmux_logs/hal_<HHMMSS>.log
 ```
 
 Full sweep, all ten variants, all three embodiments, both splits:
@@ -1310,7 +1310,7 @@ Created outside git tracking:
 | `/tmp/hal_agg/` | the §6.2 8-clip anchored run + §6.4 broken control. |
 | `/tmp/hal_smoke/` | the §6.3 three-embodiment pred/gt runs. |
 | `/tmp/hal_broken/` | the two corrupted negative-control clips. |
-| `exp_logs/tmux_logs/hal_*.log` | launcher logs. |
+| `logs/exp_logs/tmux_logs/hal_*.log` | launcher logs. |
 
 Upstream, read-only references:
 

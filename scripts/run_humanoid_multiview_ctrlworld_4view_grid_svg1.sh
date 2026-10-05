@@ -14,7 +14,7 @@ cd "${ROOT}"
 
 DATASET_NAME="${DATASET_NAME:-humanoid_multiview_4view_grid}"
 DATASET_DIR="${DATASET_DIR:-${ROOT}/models/Ctrl-World/dataset_example/${DATASET_NAME}}"; export DATASET_DIR
-CKPT="${CKPT:-${ROOT}/exp_logs/ctrlworld_logs/humanoid_multiview_4view_grid/checkpoint-140000.pt}"
+CKPT="${CKPT:-${ROOT}/checkpoints/finetuned/ctrlworld/humanoid_multiview_4view_grid/checkpoint-140000.pt}"
 DOWN_SAMPLE="${DOWN_SAMPLE:-6}"; SPLIT="${SPLIT:-all}"
 OUTPUT_ROOT="${OUTPUT_ROOT:-${ROOT}/sampling_dataset/svg1/humanoid/output/multiview/ctrlworld_4view_grid}"
 INPUT_ROOT="${INPUT_ROOT:-${ROOT}/sampling_dataset/svg1/humanoid/input/multiview/ctrlworld_4view_grid}"
@@ -25,9 +25,9 @@ SVG_SPARSITY="${SVG_SPARSITY:-0.25}"; SVG_NUM_SAMPLED_ROWS="${SVG_NUM_SAMPLED_RO
 
 if [ "${1:-}" = "--launch-shards" ]; then
   NUM_SHARDS="${NUM_SHARDS:-4}"; GPUS="${GPUS:-0,1,2,3}"; IFS=',' read -ra GPU_ARR <<< "${GPUS}"
-  mkdir -p "${ROOT}/exp_logs/tmux_logs"
+  mkdir -p "${ROOT}/logs/exp_logs/tmux_logs"
   for ((i = 0; i < NUM_SHARDS; i++)); do
-    gpu="${GPU_ARR[$((i % ${#GPU_ARR[@]}))]}"; log="${ROOT}/exp_logs/tmux_logs/cw_hum_grid_4view_svg1_shard${i}.log"
+    gpu="${GPU_ARR[$((i % ${#GPU_ARR[@]}))]}"; log="${ROOT}/logs/exp_logs/tmux_logs/cw_hum_grid_4view_svg1_shard${i}.log"
     tmux new-session -d -s "cw_h4svg1_s${i}" \
       "CUDA_VISIBLE_DEVICES=${gpu} NUM_SHARDS=${NUM_SHARDS} SHARD_ID=${i} CKPT='${CKPT}' SPLIT='${SPLIT}' \
        DOWN_SAMPLE='${DOWN_SAMPLE}' OUTPUT_ROOT='${OUTPUT_ROOT}' INPUT_ROOT='${INPUT_ROOT}' \

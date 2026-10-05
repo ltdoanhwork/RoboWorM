@@ -11,7 +11,7 @@ REPO=/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen
 PY=$REPO/models/dreamgen/.venv/bin/python
 WS=$REPO/metrics/WorldScore
 TP=$WS/worldscore/benchmark/metrics/third_party
-CKPT=$REPO/checkpoints/worldscore
+CKPT=$REPO/checkpoints/metrics/worldscore
 
 GT=${GT:-$REPO/datasets/bimanual_dreamgen/videos/makovian__close_cardboard_box__ep000026.mp4}
 DG=${DG:-$REPO/sampling_dataset/dense/bimanual/output/singleview/dreamgen/makovian/iter_000110000_bimanual16fps/close_cardboard_box__episode_000026.mp4}

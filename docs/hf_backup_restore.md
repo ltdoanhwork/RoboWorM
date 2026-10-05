@@ -21,11 +21,11 @@ Scripts that produced it:
 | repo (`doanh25032004/…`) | type | SRC | size | layout |
 |---|---|---|---|---|
 | `video_gen_physics_backup` | model | source tree (code only) | 0.4G | plain files |
-| `vgp_checkpoints_nvidia` | model | `checkpoints/nvidia` | 209G | plain files |
-| `vgp_checkpoints_dreamdojo` | model | `checkpoints/dreamdojo` | 187G | plain files |
-| `vgp_checkpoints_google_t5` | model | `checkpoints/google-t5` | 84G | plain files |
-| `vgp_checkpoints_own` | model | `checkpoints/{ctrl_world,pi05_droid,videophy_2_auto,stabilityai,openai,worldscore,droid,mjcf,meta-llama}` | 73G | plain files |
-| `vgp_exp_logs` | model | `exp_logs` | 291G | plain files |
+| `vgp_checkpoints_nvidia` | model | `checkpoints/base/nvidia` | 209G | plain files |
+| `vgp_checkpoints_dreamdojo` | model | `checkpoints/base/dreamdojo` | 187G | plain files |
+| `vgp_checkpoints_google_t5` | model | `checkpoints/base/google-t5` | 84G | plain files |
+| `vgp_checkpoints_own` | model | `checkpoints/{ctrl_world,pi05_droid,videophy_2_auto,stabilityai,openai,worldscore,droid,mjcf,meta-llama}` (uploaded before the 2026-10-05 re-layout; now `checkpoints/base/*` + `checkpoints/metrics/worldscore`) | 73G | plain files |
+| `vgp_exp_logs` | model | `exp_logs` (uploaded before the re-layout; `*_logs/` now live in `checkpoints/finetuned/`, the rest in `logs/exp_logs/`) | 291G | plain files |
 | `vgp_sampling_dataset_tar` | dataset | `sampling_dataset` | 104G | **tar shards** |
 | `vgp_datasets_tar` | dataset | `datasets` | 125G | **tar shards** |
 | `vgp_models_code_tar` | model | `models` (minus `.venv*`) | 22G | **tar shards** |
@@ -74,12 +74,18 @@ rm -rf _gitignored_extras
 Each repo unpacks into the directory named in the table above.
 
 ```bash
-hf download doanh25032004/vgp_checkpoints_nvidia    --repo-type model   --local-dir checkpoints/nvidia
-hf download doanh25032004/vgp_checkpoints_dreamdojo --repo-type model   --local-dir checkpoints/dreamdojo
-hf download doanh25032004/vgp_checkpoints_google_t5 --repo-type model   --local-dir checkpoints/google-t5
+hf download doanh25032004/vgp_checkpoints_nvidia    --repo-type model   --local-dir checkpoints/base/nvidia
+hf download doanh25032004/vgp_checkpoints_dreamdojo --repo-type model   --local-dir checkpoints/base/dreamdojo
+hf download doanh25032004/vgp_checkpoints_google_t5 --repo-type model   --local-dir checkpoints/base/google-t5
 hf download doanh25032004/vgp_checkpoints_own       --repo-type model   --local-dir checkpoints
 hf download doanh25032004/vgp_exp_logs              --repo-type model   --local-dir exp_logs
 ```
+
+The last two repos were uploaded with the pre-2026-10-05 layout. After downloading
+them, run the re-layout snippet in [checkpoints/CHECKPOINTS.md](../checkpoints/CHECKPOINTS.md#restore-from-huggingface)
+(moves `exp_logs/*_logs` to `checkpoints/finetuned/`, `checkpoints/worldscore` to
+`checkpoints/metrics/`, the rest of `checkpoints/` to `checkpoints/base/`, and leaves
+compat symlinks at the old paths).
 
 `vgp_checkpoints_own` already contains the per-model subdirs (`ctrl_world/`,
 `pi05_droid/`, …), so it targets `checkpoints` directly.
@@ -183,13 +189,13 @@ tokens from the environment over hardcoding them.
    `misc` are stored as ~20G tar shards — a few dozen commits instead.
 3. **`hf upload-large-folder` exits 0 even when files were skipped.** Never trust
    the exit code: `upload_all_to_hf.sh` compares remote vs local file counts and
-   only then writes `exp_logs/hf_upload/state/<job>.done`. Re-running the script
+   only then writes `logs/exp_logs/hf_upload/state/<job>.done`. Re-running the script
    resumes and re-verifies.
 4. **The Hub API applies the repo's own `.gitignore` on upload.** Files matching
    it (e.g. `models/Ctrl-World/dataset_example/*`) get silently dropped — hence
    the `_gitignored_extras/` workaround in §3.1.
 5. Per-file limit is 50GB. The two largest real files here
-   (`checkpoints/google-t5/t5-11b/{pytorch_model.bin,tf_model.h5}`, 42.1G each)
+   (`checkpoints/base/google-t5/t5-11b/{pytorch_model.bin,tf_model.h5}`, 42.1G each)
    fit, but anything bigger must be split.
 6. **This workspace has a disk quota** separate from the filesystem's free space
    (`df` showed 339T free while `split` died with "Disk quota exceeded" after
@@ -216,5 +222,5 @@ JOBS="explogs misc" bash scripts/upload_all_to_hf.sh   # subset
 DRY_RUN=1 bash scripts/upload_all_to_hf.sh             # show plan, upload nothing
 ```
 
-State/logs: `exp_logs/hf_upload/` (`state/<job>.done` markers, `<job>.log`,
+State/logs: `logs/exp_logs/hf_upload/` (`state/<job>.done` markers, `<job>.log`,
 `driver_*.log`). Delete a marker to force that job to run again.

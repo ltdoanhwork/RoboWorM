@@ -3,7 +3,10 @@ job:
   group: exp_aloha_resume70k
   name: aloha_bimanual_singleview_full
 checkpoint:
-  load_path: /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/exp_logs/dreamdojo_logs/dreamdojo/exp_aloha_resume40k/aloha_bimanual_singleview_full/checkpoints/iter_000070000/
+  # Training-only init (inference overrides load_path). exp_aloha_resume40k was archived to
+  # tmp/20261005_refactor/checkpoints_unused/finetuned/dreamdojo/dreamdojo/ on 2026-10-05;
+  # restore it (see tmp/20261005_refactor/MANIFEST.md) before re-running this training.
+  load_path: /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/finetuned/dreamdojo/dreamdojo/exp_aloha_resume40k/aloha_bimanual_singleview_full/checkpoints/iter_000070000/
   load_training_state: true
   strict_resume: false
 trainer:

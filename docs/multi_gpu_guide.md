@@ -31,7 +31,7 @@ PROJ=/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen
 det shell open <ID> -- "
 tmux new-session -d -s myjob '
   cd $PROJ &&
-  bash scripts/run_humanoid_singleview_dreamgen_pisa.sh > $PROJ/exp_logs/tmux_logs/pisa_<ID8>.log 2>&1
+  bash scripts/run_humanoid_singleview_dreamgen_pisa.sh > $PROJ/logs/exp_logs/tmux_logs/pisa_<ID8>.log 2>&1
 '"
 ```
 
@@ -44,8 +44,8 @@ vào 1 lệnh thì phần cuối bị cắt âm thầm (job không chạy mà v�
 
 ```bash
 # shell 1 -> pisa, shell 2 -> svg1, shell 3 -> radial, ...
-det shell open <ID1> -- "tmux new-session -d -s m_pisa 'cd $PROJ && bash scripts/run_humanoid_singleview_dreamgen_pisa.sh > $PROJ/exp_logs/tmux_logs/pisa.log 2>&1'"
-det shell open <ID2> -- "tmux new-session -d -s m_svg1 'cd $PROJ && bash scripts/run_humanoid_singleview_dreamgen_svg1.sh > $PROJ/exp_logs/tmux_logs/svg1.log 2>&1'"
+det shell open <ID1> -- "tmux new-session -d -s m_pisa 'cd $PROJ && bash scripts/run_humanoid_singleview_dreamgen_pisa.sh > $PROJ/logs/exp_logs/tmux_logs/pisa.log 2>&1'"
+det shell open <ID2> -- "tmux new-session -d -s m_svg1 'cd $PROJ && bash scripts/run_humanoid_singleview_dreamgen_svg1.sh > $PROJ/logs/exp_logs/tmux_logs/svg1.log 2>&1'"
 ```
 
 Không cần merge gì — mỗi method ghi vào cây `sampling_dataset/<method>/` riêng.
@@ -60,7 +60,7 @@ det shell open <ID_i> -- "
 tmux new-session -d -s cw_s<i> '
   cd $PROJ &&
   NUM_SHARDS=4 SHARD_ID=<i> bash scripts/run_humanoid_multiview_ctrlworld_worldcache.sh \
-    > $PROJ/exp_logs/tmux_logs/cw_shard<i>.log 2>&1
+    > $PROJ/logs/exp_logs/tmux_logs/cw_shard<i>.log 2>&1
 '"
 ```
 
@@ -96,7 +96,7 @@ Chi tiết: [`docs/dense_nr_10gpu_slots.md`](dense_nr_10gpu_slots.md).
 Log nằm trên FS dùng chung → **đọc trực tiếp, không cần connect lại**:
 
 ```bash
-tail -n 30 exp_logs/tmux_logs/pisa.log
+tail -n 30 logs/exp_logs/tmux_logs/pisa.log
 ```
 
 Còn sống không:

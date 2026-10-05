@@ -14,7 +14,7 @@ Usage:
     python finetuning/dreamdojo/infer_dataset_sample.py \
         --dataset_path datasets/bimanual/singleview/makovian/close_cardboard_box \
         --episode_idx 0 \
-        --ckpt_path exp_logs/dreamdojo_logs/dreamdojo/exp_aloha/aloha_bimanual_singleview/checkpoints/iter_000010000
+        --ckpt_path checkpoints/finetuned/dreamdojo/dreamdojo/exp_aloha/aloha_bimanual_singleview/checkpoints/iter_000010000
 
     # single_arm (RoboChallenge) dataset
     python finetuning/dreamdojo/infer_dataset_sample.py \
@@ -126,7 +126,7 @@ def main():
     parser.add_argument("--embodiment", type=str, default=None,
                         help="Embodiment tag (aloha/droid). Auto-detected if not specified.")
     parser.add_argument("--ckpt_path", type=str,
-                        default=str(PROJECT_ROOT / "checkpoints/dreamdojo/2B_pretrain/iter_000140000"),
+                        default=str(PROJECT_ROOT / "checkpoints/base/dreamdojo/2B_pretrain/iter_000140000"),
                         help="Path to model checkpoint directory")
     parser.add_argument("--experiment_name", type=str, default="dreamdojo_2b_480_640_single_arm_sv",
                         help="Experiment name for config resolution")

@@ -25,7 +25,7 @@ fi
 # most episodes. Clear them defensively.
 unset NUM_SHARDS SHARD_ID NUM_EPISODES SPLITS SAVE_ROOT OUTPUT_ROOT
 
-LOG_DIR="${LOG_DIR:-${ROOT}/exp_logs/dreamdojo_sparse_bm_sv}"
+LOG_DIR="${LOG_DIR:-${ROOT}/logs/exp_logs/dreamdojo_sparse_bm_sv}"
 mkdir -p "${LOG_DIR}"
 
 MAX_ATTEMPTS="${MAX_ATTEMPTS:-6}"

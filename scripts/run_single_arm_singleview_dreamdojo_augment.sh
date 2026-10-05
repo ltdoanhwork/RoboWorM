@@ -34,7 +34,7 @@ SRC_ROOT="${SRC_ROOT:-${ROOT}/datasets/single_arm/singleview}"
 LEROBOT_ROOT="${LEROBOT_ROOT:-${ROOT}/sampling_dataset/augment/_lerobot/single_arm/singleview}"
 
 # --- Inference config (Step 2), same as dense ---
-CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/exp_logs/dreamdojo_logs/dreamdojo/exp_single_arm_sv/single_arm_singleview/checkpoints}"
+CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/finetuned/dreamdojo/dreamdojo/exp_single_arm_sv/single_arm_singleview/checkpoints}"
 EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_480_640_single_arm_sv}"
 NUM_FRAMES="${NUM_FRAMES:-97}"
 SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/augment/single_arm/output/singleview/dreamdojo}"

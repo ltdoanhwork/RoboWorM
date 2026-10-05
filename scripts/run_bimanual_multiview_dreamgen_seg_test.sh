@@ -24,7 +24,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Segmented checkpoint dir (latest_checkpoint.txt -> iter_000010000.pt)
-export CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/exp_logs/dreamgen_logs/posttraining/multiview/bimanual_multiview_seg/checkpoints_40_per}"
+# BROKEN (2026-10-05 refactor): dreamgen bimanual_multiview_seg (iter_000010000) does not exist on disk (not in checkpoints/
+# nor the HF backup). Set CHECKPOINTS_DIR explicitly to run this script.
+export CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/finetuned/dreamgen/posttraining/multiview/bimanual_multiview_seg/checkpoints_40_per}"
 
 # Canonical I/O paths (per sampling-dataset-layout rule). {model} stays
 # "dreamgen"; the segmented 10k checkpoint is distinguished by its iter dir,

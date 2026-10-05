@@ -13,9 +13,11 @@ cd "$ROOT"
 source "${ROOT}/models/DreamDojo/.venv/bin/activate"
 export PYTHONPATH="${ROOT}/models/DreamDojo:${PYTHONPATH:-}"
 
-CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/dreamdojo/2B_DROID_post-train/iter_000100000}"
-EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_320_512_droid}"
-NUM_FRAMES="${NUM_FRAMES:-49}"
+# 2B_DROID_post-train never existed in this repo; mirror run_single_arm_singleview_dreamdojo_dense.sh
+# (ckpt + experiment + num_frames) so the method is comparable to dense.
+CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/finetuned/dreamdojo/dreamdojo/exp_single_arm_sv/single_arm_singleview/checkpoints}"
+EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_480_640_single_arm_sv}"
+NUM_FRAMES="${NUM_FRAMES:-97}"
 SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/itm/single_arm/output/singleview/dreamdojo}"
 
 # ITM parameters

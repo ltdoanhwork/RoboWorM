@@ -23,7 +23,7 @@ source "${DREAMGEN_ROOT}/.venv/bin/activate"
 export PYTHONPATH="${DREAMGEN_ROOT}:${PYTHONPATH}"
 
 # Point constants.py to the local checkpoints dir (contains google-t5/t5-11b)
-export COSMOS_PREDICT2_ARGS="--checkpoints ${PROJECT_ROOT}/checkpoints"
+export COSMOS_PREDICT2_ARGS="--checkpoints ${PROJECT_ROOT}/checkpoints/base"
 
 cd "${DREAMGEN_ROOT}"
 

@@ -22,9 +22,9 @@ from dataclasses import dataclass
 
 @dataclass
 class wm_args_humanoid_grid:
-    svd_model_path = "./checkpoints/stabilityai/stable-video-diffusion-img2vid"
-    clip_model_path = "./checkpoints/openai/clip-vit-base-patch32"
-    ckpt_path = "./checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt"
+    svd_model_path = "./checkpoints/base/stabilityai/stable-video-diffusion-img2vid"
+    clip_model_path = "./checkpoints/base/openai/clip-vit-base-patch32"
+    ckpt_path = "./checkpoints/base/ctrl_world/Ctrl-World/checkpoint-10000.pt"
 
     dataset_root_path = "dataset_example"
     dataset_names = "humanoid_multiview_4view_grid"

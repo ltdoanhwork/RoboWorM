@@ -17,7 +17,7 @@ cd "$ROOT"
 
 SOURCE_BATCH="${SOURCE_BATCH:-${ROOT}/sampling_dataset/humanoid/singleview/input/PhysicalAI-Robotics-GR00T-GR1/dense/batch_input.json}"
 OUT_TAG="${OUT_TAG:-720p_16fps}"
-DIT_PATH="${DIT_PATH:-${ROOT}/checkpoints/nvidia/Cosmos-Predict2-14B-Video2World/model-720p-16fps.pt}"
+DIT_PATH="${DIT_PATH:-${ROOT}/checkpoints/base/nvidia/Cosmos-Predict2-14B-Video2World/model-720p-16fps.pt}"
 
 OUTPUT_VIDEO_ROOT="${OUTPUT_VIDEO_ROOT:-${ROOT}/output/dreamgen_singleview/PhysicalAI-Robotics-GR00T-GR1/${OUT_TAG}}"
 BATCH_OUT="${BATCH_OUT:-${ROOT}/sampling_dataset/humanoid/singleview/input/PhysicalAI-Robotics-GR00T-GR1/${OUT_TAG}/batch_input.json}"

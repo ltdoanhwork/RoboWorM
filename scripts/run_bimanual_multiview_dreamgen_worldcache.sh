@@ -27,7 +27,7 @@ source "${VENV}/bin/activate"
 # Repo root must precede models/dreamgen so `methods.cache_strategy` is importable.
 export PYTHONPATH="${ROOT}:${ROOT}/models/dreamgen:${PYTHONPATH:-}"
 
-CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/exp_logs/dreamgen_logs/posttraining/multiview/bimanual_multiview_seg16/checkpoints_40_per}"
+CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/finetuned/dreamgen/posttraining/multiview/bimanual_multiview_seg16/checkpoints_40_per}"
 if [[ -n "${ITER_NAME:-}" ]]; then
   _LATEST_FNAME="${ITER_NAME%.pt}.pt"
 else

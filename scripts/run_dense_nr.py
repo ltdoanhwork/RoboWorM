@@ -523,7 +523,7 @@ def worker(args):
     from sam2.sam2_image_predictor import SAM2ImagePredictor
     import hydra
     from hydra.core.global_hydra import GlobalHydra
-    ck = ROOT / 'checkpoints/worldscore'
+    ck = ROOT / 'checkpoints/metrics/worldscore'
     tp = 'worldscore/benchmark/metrics/third_party'
     cfg = f'{tp}/groundingdino/config/GroundingDINO_SwinT_OGC.py'
     gd = str(ck / 'groundingdino_swint_ogc.pth')

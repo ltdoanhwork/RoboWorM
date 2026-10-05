@@ -40,14 +40,14 @@ MASTER_PORT="${MASTER_PORT:-29504}"
 DOWN_SAMPLE="${DOWN_SAMPLE:-6}"          # 30fps -> 5fps
 DATASET_NAME="humanoid_multiview_4view_grid"
 
-SVD_MODEL_PATH="${ROOT}/checkpoints/stabilityai/stable-video-diffusion-img2vid"
-CLIP_MODEL_PATH="${ROOT}/checkpoints/openai/clip-vit-base-patch32"
+SVD_MODEL_PATH="${ROOT}/checkpoints/base/stabilityai/stable-video-diffusion-img2vid"
+CLIP_MODEL_PATH="${ROOT}/checkpoints/base/openai/clip-vit-base-patch32"
 # Warm-start from the finetuned 3-view humanoid checkpoint (36-D action encoder present)
-WARM_CKPT="${WARM_CKPT:-${ROOT}/exp_logs/ctrlworld_logs/humanoid_multiview/checkpoint-200000.pt}"
+WARM_CKPT="${WARM_CKPT:-${ROOT}/checkpoints/finetuned/ctrlworld/humanoid_multiview/checkpoint-200000.pt}"
 
 DATASET_ROOT="${ROOT}/models/Ctrl-World/dataset_example"
 META_INFO="${ROOT}/models/Ctrl-World/dataset_meta_info"
-OUTPUT_DIR="${ROOT}/exp_logs/ctrlworld_logs/${DATASET_NAME}"
+OUTPUT_DIR="${ROOT}/checkpoints/finetuned/ctrlworld/${DATASET_NAME}"
 
 MAX_STEPS="${MAX_STEPS:-200000}"
 BATCH_SIZE="${BATCH_SIZE:-2}"

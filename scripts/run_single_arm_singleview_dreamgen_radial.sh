@@ -28,7 +28,7 @@ export LD_LIBRARY_PATH="${VENV}/lib/${_PYVER}/site-packages/nvidia/nvjitlink/lib
 source "${VENV}/bin/activate"
 export PYTHONPATH="${ROOT}:${ROOT}/models/dreamgen:${PYTHONPATH:-}"
 
-CKPT_BASE="${CKPT_BASE:-${ROOT}/exp_logs/dreamgen_logs/posttraining/singleview/single_arm_static_singleview_16fps_v2}"
+CKPT_BASE="${CKPT_BASE:-${ROOT}/checkpoints/finetuned/dreamgen/posttraining/singleview/single_arm_static_singleview_16fps_v2}"
 CKPT_MODEL_DIR="${CKPT_BASE}/checkpoints_40_per/model"
 if [[ -z "${ITER_NAME:-}" ]]; then
   latest_file="${CKPT_BASE}/checkpoints_40_per/latest_checkpoint.txt"

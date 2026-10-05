@@ -27,7 +27,7 @@ export LD_LIBRARY_PATH="${VENV}/lib/${_PYVER}/site-packages/nvidia/nvjitlink/lib
 source "${VENV}/bin/activate"
 export PYTHONPATH="${ROOT}:${ROOT}/models/dreamgen:${PYTHONPATH:-}"
 
-CKPT_BASE="${ROOT}/exp_logs/dreamgen_logs/posttraining/singleview/humanoid_singleview_16fps"
+CKPT_BASE="${ROOT}/checkpoints/finetuned/dreamgen/posttraining/singleview/humanoid_singleview_16fps"
 ITER_NAME="${ITER_NAME:-iter_000090000}"
 DIT_PATH="${DIT_PATH:-${CKPT_BASE}/checkpoints_40_per/model/${ITER_NAME}.pt}"
 if [[ ! -f "${DIT_PATH}" ]]; then echo "ERROR: Checkpoint not found at ${DIT_PATH}" >&2; exit 1; fi

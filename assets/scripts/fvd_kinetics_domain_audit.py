@@ -10,7 +10,7 @@ the same embodiment x camera x regime (see .cursor/skills/fvd-shared-real-pool/S
 Kinetics-400 enters only through the feature extractor -- and it enters much more deeply
 than "pretraining data", which is what this script measures:
 
-    checkpoints/fvd/i3d_torchscript.pt, forward(return_features=True) returns `out20`,
+    checkpoints/metrics/fvd/i3d_torchscript.pt, forward(return_features=True) returns `out20`,
     the output of conv3d_0c_1x1 time-averaged -- i.e. the PRE-SOFTMAX KINETICS-400 CLASS
     LOGITS. (return_features=False would just add the softmax.)
 
@@ -185,7 +185,7 @@ def main():
 
     rep: dict = dict(
         feature_space=dict(
-            checkpoint='checkpoints/fvd/i3d_torchscript.pt',
+            checkpoint='checkpoints/metrics/fvd/i3d_torchscript.pt',
             returns='out20 = conv3d_0c_1x1 time-averaged = pre-softmax Kinetics-400 '
                     'class logits (softmax is applied only when return_features=False)',
             dims=400,

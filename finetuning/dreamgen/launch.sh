@@ -54,10 +54,10 @@ DREAMGEN_ROOT="${PROJECT_ROOT}/models/dreamgen"
 
 export PYTHONPATH="${DREAMGEN_ROOT}:${PROJECT_ROOT}:${PYTHONPATH}"
 export OMP_NUM_THREADS=8
-export IMAGINAIRE_OUTPUT_ROOT="${PROJECT_ROOT}/exp_logs/dreamgen_logs"
+export IMAGINAIRE_OUTPUT_ROOT="${PROJECT_ROOT}/checkpoints/finetuned/dreamgen"
 
 # Point constants.py to local checkpoints dir (contains nvidia/Cosmos-Predict2-*, google-t5/t5-11b, etc.)
-export COSMOS_PREDICT2_ARGS="--checkpoints ${PROJECT_ROOT}/checkpoints"
+export COSMOS_PREDICT2_ARGS="--checkpoints ${PROJECT_ROOT}/checkpoints/base"
 
 source "${DREAMGEN_ROOT}/.venv/bin/activate"
 

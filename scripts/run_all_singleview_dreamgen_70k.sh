@@ -3,7 +3,7 @@
 # Run DreamGen (video2world_lvg) singleview inference on all 3 embodiments using
 # the 70k all_singleview post-training checkpoint.
 #
-# Checkpoint: exp_logs/dreamgen_logs/posttraining/singleview/all_singleview/
+# Checkpoint: checkpoints/finetuned/dreamgen/posttraining/singleview/all_singleview/
 #             checkpoints_40_per/backup_60k_70k/model/iter_000070000.pt
 #
 # Training config: 2B model, 480p (432×768), 16fps, 93 frames
@@ -37,7 +37,9 @@ source "${VENV}/bin/activate"
 export PYTHONPATH="${ROOT}/models/dreamgen:${PYTHONPATH:-}"
 
 # --- Checkpoint ---
-DIT_PATH="${DIT_PATH:-${ROOT}/exp_logs/dreamgen_logs/posttraining/singleview/all_singleview/checkpoints_40_per/backup_60k_70k/model/iter_000070000.pt}"
+# BROKEN (2026-10-05 refactor): the combined all_singleview run (backup_60k_70k) does not exist on disk (not in
+# checkpoints/finetuned/ nor the HF backup). Set DIT_PATH explicitly to run this script.
+DIT_PATH="${DIT_PATH:-${ROOT}/checkpoints/finetuned/dreamgen/posttraining/singleview/all_singleview/checkpoints_40_per/backup_60k_70k/model/iter_000070000.pt}"
 
 # --- Inference settings (match training) ---
 NUM_GPUS="${NUM_GPUS:-4}"

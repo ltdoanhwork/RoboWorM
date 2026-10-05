@@ -12,21 +12,21 @@
 #
 #   # Bimanual singleview post-trained checkpoint
 #   bash finetuning/dreamgen/infer.sh \
-#       --ckpt_path exp_logs/dreamgen_logs/posttraining/singleview/bimanual_singleview/checkpoints/model/iter_000005000.pt \
+#       --ckpt_path checkpoints/finetuned/dreamgen/posttraining/singleview/bimanual_singleview/checkpoints/model/iter_000005000.pt \
 #       --input_path /path/to/first_frame.png \
 #       --prompt "A bimanual robot performing the task: close cardboard box." \
 #       --save_path output/dreamgen_bimanual_infer.mp4
 #
 #   # Single-arm singleview post-trained checkpoint
 #   bash finetuning/dreamgen/infer.sh \
-#       --ckpt_path exp_logs/dreamgen_logs/posttraining/singleview/single_arm_singleview/checkpoints/model/iter_000005000.pt \
+#       --ckpt_path checkpoints/finetuned/dreamgen/posttraining/singleview/single_arm_singleview/checkpoints/model/iter_000005000.pt \
 #       --input_path /path/to/first_frame.png \
 #       --prompt "A robot arm performing a manipulation task." \
 #       --save_path output/dreamgen_single_arm_infer.mp4
 #
 #   # Humanoid GR1 singleview post-trained checkpoint
 #   bash finetuning/dreamgen/infer.sh \
-#       --ckpt_path exp_logs/dreamgen_logs/posttraining/singleview/humanoid_singleview/checkpoints/model/iter_000005000.pt \
+#       --ckpt_path checkpoints/finetuned/dreamgen/posttraining/singleview/humanoid_singleview/checkpoints/model/iter_000005000.pt \
 #       --input_path /path/to/first_frame.png \
 #       --prompt "A GR-1 humanoid robot performing mug robot task." \
 #       --save_path output/dreamgen_humanoid_infer.mp4

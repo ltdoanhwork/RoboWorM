@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # DreamGen dense multiview inference — humanoid (4-view 2×2 grid).
-# Uses the all_multiview fine-tuned 2B checkpoint (checkpoints_40_per, latest iter).
+# Uses the humanoid_multiview_seg16 fine-tuned 2B checkpoint (checkpoints_40_per, latest iter),
+# the same run as run_humanoid_multiview_dreamgen_full.sh (all_multiview no longer exists).
 # Runs both makovian and non_makovian splits across all datasets.
 #
 # IMPORTANT: two-phase design so the 2B model is loaded ONCE.
@@ -33,7 +34,7 @@ source "${VENV}/bin/activate"
 export PYTHONPATH="${ROOT}/models/dreamgen:${PYTHONPATH:-}"
 
 # --- Checkpoint (auto-detect latest from latest_checkpoint.txt) ---
-CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/exp_logs/dreamgen_logs/posttraining/multiview/all_multiview/checkpoints_40_per}"
+CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/finetuned/dreamgen/posttraining/multiview/humanoid_multiview_seg16/checkpoints_40_per}"
 _LATEST_FILE="${CHECKPOINTS_DIR}/latest_checkpoint.txt"
 if [[ -f "${_LATEST_FILE}" ]]; then
   _LATEST_FNAME="$(cat "${_LATEST_FILE}")"

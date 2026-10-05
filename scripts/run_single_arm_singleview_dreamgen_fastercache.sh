@@ -33,7 +33,7 @@ source "${VENV}/bin/activate"
 export PYTHONPATH="${ROOT}:${ROOT}/models/dreamgen:${PYTHONPATH:-}"
 
 # --- Checkpoint (from single_arm_static_16fps training) ---
-CKPT_BASE="${CKPT_BASE:-${ROOT}/exp_logs/dreamgen_logs/posttraining/singleview/single_arm_static_singleview_16fps_v2}"
+CKPT_BASE="${CKPT_BASE:-${ROOT}/checkpoints/finetuned/dreamgen/posttraining/singleview/single_arm_static_singleview_16fps_v2}"
 CKPT_MODEL_DIR="${CKPT_BASE}/checkpoints_40_per/model"
 
 # Default to the latest checkpoint recorded by the trainer if ITER_NAME unset.

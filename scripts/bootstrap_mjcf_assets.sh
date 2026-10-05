@@ -11,15 +11,15 @@
 set -euo pipefail
 
 REPO="${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
-MJCF_ROOT="${MJCF_ROOT:-$REPO/checkpoints/mjcf}"
+MJCF_ROOT="${MJCF_ROOT:-$REPO/checkpoints/base/mjcf}"
 
 # add more as embodiments are registered in metrics/embodied_exec/kinematics.py
 MODELS="${MODELS:-franka_emika_panda aloha}"
 
 # GR1 (humanoid/singleview) is NOT in mujoco_menagerie; robosuite ships it. Fetched into
 # a sibling root so the two upstreams stay separate clones. kinematics.py finds it
-# because MJCF_SEARCH includes checkpoints/mjcf_robosuite.
-RS_ROOT="${RS_ROOT:-$REPO/checkpoints/mjcf_robosuite}"
+# because MJCF_SEARCH includes checkpoints/base/mjcf_robosuite.
+RS_ROOT="${RS_ROOT:-$REPO/checkpoints/base/mjcf_robosuite}"
 RS_ASSETS="robosuite/models/assets"
 RS_PATHS="${RS_PATHS:-$RS_ASSETS/robots/gr1 $RS_ASSETS/grippers}"
 
@@ -72,7 +72,7 @@ echo "[info] robosuite: $(ls -d "$RS_ROOT"/*/ 2>/dev/null | wc -l) model dirs li
 cat <<EOF
 
 [done] MJCF_ROOT=$MJCF_ROOT
-Export it (metrics/embodied_exec/kinematics.py also checks checkpoints/mjcf by default):
+Export it (metrics/embodied_exec/kinematics.py also checks checkpoints/mjcf, a compat symlink to checkpoints/base/mjcf):
   export MJCF_ROOT=$MJCF_ROOT
 Then verify FK against dataset ground truth:
   models/dreamgen/.venv/bin/python -m metrics.embodied_exec.kinematics \\

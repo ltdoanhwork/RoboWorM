@@ -31,7 +31,7 @@ REPO_ID="$HF_USER/$REPO_NAME"
 SHARD_BYTES="${SHARD_BYTES:-$((8 * 1024 * 1024 * 1024))}"
 BIG_FILE_BYTES="${BIG_FILE_BYTES:-$SHARD_BYTES}"
 WORK="${WORK_DIR:-$(dirname "$REPO_ROOT")/.hf_tars}/$REPO_NAME"
-LOG_DIR="$REPO_ROOT/exp_logs/hf_upload"
+LOG_DIR="$REPO_ROOT/logs/exp_logs/hf_upload"
 mkdir -p "$WORK/lists" "$LOG_DIR"
 UPLOADED="$WORK/uploaded.txt"; touch "$UPLOADED"
 

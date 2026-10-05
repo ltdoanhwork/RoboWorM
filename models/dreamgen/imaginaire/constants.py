@@ -47,7 +47,8 @@ class TextEncoderClass(str, enum.Enum):
 
 
 _parser = argparse.ArgumentParser(description=__doc__)
-_parser.add_argument("--checkpoints", default="checkpoints", help="Path to the checkpoints directory")
+# video_gen_physics: base checkpoints live under checkpoints/base/ (see checkpoints/CHECKPOINTS.md)
+_parser.add_argument("--checkpoints", default="checkpoints/base", help="Path to the checkpoints directory")
 _parser.add_argument(
     "--text_encoder",
     default=TextEncoderClass.T5,

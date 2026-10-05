@@ -80,7 +80,7 @@ def recompute_from_log(log: str, model: str):
 
 
 def load_records():
-    paths = [str(ROOT / "exp_logs/timing_pass/dist" / "*" / "results.jsonl"),
+    paths = [str(ROOT / "logs/exp_logs/timing_pass/dist" / "*" / "results.jsonl"),
              "/tmp/uniform_timing/results.jsonl"]
     files = []
     for p in paths:

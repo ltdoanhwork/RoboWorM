@@ -91,7 +91,7 @@ _default_groot_config = LazyDict(
         ),
         checkpoint=dict(
             save_iter=10_000,
-            load_path="/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/dreamdojo/2B_pretrain/iter_000140000/",
+            load_path="/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/base/dreamdojo/2B_pretrain/iter_000140000/",
             load_training_state=False,
             strict_resume=False,
             load_from_object_store=dict(

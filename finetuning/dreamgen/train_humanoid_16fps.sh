@@ -68,7 +68,7 @@ if [[ "${SKIP_T5}" != "1" ]]; then
         echo "=== [Step 2/3] Computing T5-XXL embeddings (${N_T5}/${N_VIDEOS} done) ==="
         source "${VENV}/bin/activate"
         export PYTHONPATH="${DREAMGEN_ROOT}:${PROJECT_ROOT}:${PYTHONPATH:-}"
-        export COSMOS_PREDICT2_ARGS="--checkpoints ${PROJECT_ROOT}/checkpoints"
+        export COSMOS_PREDICT2_ARGS="--checkpoints ${PROJECT_ROOT}/checkpoints/base"
         cd "${DREAMGEN_ROOT}"
         python -m scripts.get_t5_embeddings --dataset_path "${DATASET_DIR}"
         cd "${PROJECT_ROOT}"

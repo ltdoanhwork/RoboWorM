@@ -56,7 +56,7 @@ EDIT_IMAGE_GUIDANCE="${EDIT_IMAGE_GUIDANCE:-1.8}"
 EDIT_VENV="${EDIT_VENV:-${ROOT}/.venv_edit}"
 
 # --- checkpoint (identical default to the dense full rollout) ---
-CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/exp_logs/dreamgen_logs/posttraining/multiview/bimanual_multiview_seg16/checkpoints_40_per}"
+CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/finetuned/dreamgen/posttraining/multiview/bimanual_multiview_seg16/checkpoints_40_per}"
 if [ -n "${ITER_NAME:-}" ]; then
   _LATEST_FNAME="${ITER_NAME%.pt}.pt"
 elif [ -f "${CHECKPOINTS_DIR}/latest_checkpoint.txt" ]; then

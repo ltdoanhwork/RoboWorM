@@ -354,10 +354,10 @@ resolution, not GPU capacity, and both are now verified fixed:
 2. **Gated HF repo, tokenizer.** The next call wanted
    `Cosmos-Predict2.5-2B/tokenizer.pth` (the Wan2.1 VAE) from the same gated repo.
    `checkpoint_db._find_local_hf_repo_path()` already prefers a local mirror at
-   `checkpoints/nvidia/<repo-name>/<filename>`, and the identical file is already
+   `checkpoints/base/nvidia/<repo-name>/<filename>`, and the identical file is already
    on disk three times over — `Cosmos-Predict2-{2B,14B}-Video2World` and
    `...-GR00T-Dreams-GR1` all ship byte-identical copies (507,609,880 B, same
-   head+tail hash). Fix: `checkpoints/nvidia/Cosmos-Predict2.5-2B/tokenizer.pth`
+   head+tail hash). Fix: `checkpoints/base/nvidia/Cosmos-Predict2.5-2B/tokenizer.pth`
    as a symlink to the 2B copy. No download, no duplicated 0.5 GB.
 
 This means the appendix claim that DreamDojo is excluded from the checkpoint

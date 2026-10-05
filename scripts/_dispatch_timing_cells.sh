@@ -27,7 +27,7 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-DIST="${ROOT}/exp_logs/timing_pass/dist"
+DIST="${ROOT}/logs/exp_logs/timing_pass/dist"
 MAX_CHUNKS="${MAX_CHUNKS:-3}"
 WATCH="${WATCH:-0}"
 POLL="${POLL:-60}"

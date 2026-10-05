@@ -39,6 +39,10 @@ def _iter_local_checkpoint_roots() -> list[Path]:
     file_path = Path(__file__).resolve()
     roots.extend(
         [
+            # video_gen_physics: base checkpoints live under checkpoints/base/
+            # (checkpoints/nvidia is kept as a compat symlink).
+            Path.cwd() / "checkpoints" / "base" / "nvidia",
+            file_path.parents[6] / "checkpoints" / "base" / "nvidia",
             Path.cwd() / "checkpoints" / "nvidia",
             file_path.parents[4] / "checkpoints" / "nvidia",
             file_path.parents[5] / "checkpoints" / "nvidia",

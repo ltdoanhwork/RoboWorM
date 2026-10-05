@@ -27,7 +27,7 @@ case "${CONFIG_KEY}" in
   ctrlworld_single_arm_multiview)
     EMBODIMENT=single_arm
     INFER="${ROOT}/scripts/augment/infer_single_arm_multiview_ctrlworld_augment.py"
-    CKPT="${CKPT:-${ROOT}/checkpoints/ctrl_world/Ctrl-World/checkpoint-10000.pt}"
+    CKPT="${CKPT:-${ROOT}/checkpoints/base/ctrl_world/Ctrl-World/checkpoint-10000.pt}"
     # One prepared dir per category; the infer script appends it from --subset.
     DATASET_NAME=""
     CW_CONFIG=""
@@ -35,14 +35,14 @@ case "${CONFIG_KEY}" in
   ctrlworld_bimanual_multiview)
     EMBODIMENT=bimanual
     INFER="${ROOT}/scripts/augment/infer_bimanual_multiview_ctrlworld_augment.py"
-    CKPT="${CKPT:-${ROOT}/exp_logs/ctrlworld_logs/bimanual_multiview_5fps/checkpoint-280000.pt}"
+    CKPT="${CKPT:-${ROOT}/checkpoints/finetuned/ctrlworld/bimanual_multiview_5fps/checkpoint-280000.pt}"
     DATASET_NAME="${DATASET_NAME:-bimanual_multiview_5fps}"
     CW_CONFIG="${CONFIG:-bimanual}"
     ;;
   ctrlworld_humanoid_multiview)
     EMBODIMENT=humanoid
     INFER="${ROOT}/scripts/augment/infer_bimanual_multiview_ctrlworld_augment.py"
-    CKPT="${CKPT:-${ROOT}/exp_logs/ctrlworld_logs/humanoid_multiview/checkpoint-200000.pt}"
+    CKPT="${CKPT:-${ROOT}/checkpoints/finetuned/ctrlworld/humanoid_multiview/checkpoint-200000.pt}"
     DATASET_NAME="${DATASET_NAME:-humanoid_multiview}"
     CW_CONFIG="${CONFIG:-humanoid}"
     ;;
@@ -53,14 +53,14 @@ case "${CONFIG_KEY}" in
     # .cursor/rules/ctrlworld-*-4view-grid-*-insights.mdc).
     EMBODIMENT=bimanual
     INFER="${ROOT}/scripts/augment/infer_bimanual_multiview_ctrlworld_augment.py"
-    CKPT="${CKPT:-${ROOT}/exp_logs/ctrlworld_logs/bimanual_multiview_4view_grid/checkpoint-110000.pt}"
+    CKPT="${CKPT:-${ROOT}/checkpoints/finetuned/ctrlworld/bimanual_multiview_4view_grid/checkpoint-110000.pt}"
     DATASET_NAME="${DATASET_NAME:-bimanual_multiview_4view_grid}"
     CW_CONFIG="${CONFIG:-bimanual_grid}"
     ;;
   ctrlworld_humanoid_multiview_4view_grid)
     EMBODIMENT=humanoid
     INFER="${ROOT}/scripts/augment/infer_bimanual_multiview_ctrlworld_augment.py"
-    CKPT="${CKPT:-${ROOT}/exp_logs/ctrlworld_logs/humanoid_multiview_4view_grid/checkpoint-140000.pt}"
+    CKPT="${CKPT:-${ROOT}/checkpoints/finetuned/ctrlworld/humanoid_multiview_4view_grid/checkpoint-140000.pt}"
     DATASET_NAME="${DATASET_NAME:-humanoid_multiview_4view_grid}"
     CW_CONFIG="${CONFIG:-humanoid_grid}"
     ;;
@@ -85,8 +85,8 @@ DENSE_EXAMPLE_DIR="${DENSE_EXAMPLE_DIR:-${ROOT}/models/Ctrl-World/dataset_exampl
 AUGMENT_EXAMPLE_DIR="${AUGMENT_EXAMPLE_DIR:-${ROOT}/models/Ctrl-World/dataset_example_augment}"
 
 # --- Step 3 (infer) config --------------------------------------------------
-SVD_MODEL_PATH="${ROOT}/checkpoints/stabilityai/stable-video-diffusion-img2vid"
-CLIP_MODEL_PATH="${ROOT}/checkpoints/openai/clip-vit-base-patch32"
+SVD_MODEL_PATH="${ROOT}/checkpoints/base/stabilityai/stable-video-diffusion-img2vid"
+CLIP_MODEL_PATH="${ROOT}/checkpoints/base/openai/clip-vit-base-patch32"
 META_INFO="${ROOT}/models/Ctrl-World/dataset_meta_info"
 DOWN_SAMPLE="${DOWN_SAMPLE:-6}"
 

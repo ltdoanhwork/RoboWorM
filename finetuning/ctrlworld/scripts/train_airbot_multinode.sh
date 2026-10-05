@@ -9,8 +9,8 @@ if [[ -f "${REPO_ROOT}/models/DreamDojo/.venv/bin/activate" ]]; then
 fi
 
 PROCESSED_ROOT="${PROCESSED_ROOT:-datasets/processed/ctrl_world_robo_multiview}"
-SVD_MODEL_PATH="${SVD_MODEL_PATH:-checkpoints/stabilityai/stable-video-diffusion-img2vid}"
-CLIP_MODEL_PATH="${CLIP_MODEL_PATH:-checkpoints/openai/clip-vit-base-patch32}"
+SVD_MODEL_PATH="${SVD_MODEL_PATH:-checkpoints/base/stabilityai/stable-video-diffusion-img2vid}"
+CLIP_MODEL_PATH="${CLIP_MODEL_PATH:-checkpoints/base/openai/clip-vit-base-patch32}"
 OUTPUT_DIR="${OUTPUT_DIR:-${PROCESSED_ROOT}/checkpoints}"
 GPUS_PER_NODE="${GPUS_PER_NODE:-8}"
 NNODES="${NNODES:-1}"
