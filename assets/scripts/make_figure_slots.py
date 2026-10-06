@@ -21,7 +21,7 @@ labelled `contact_sheet.png`.
 IMPORTANT provenance note baked into the manifest: single-view and multi-view are
 DIFFERENT source datasets for single_arm and humanoid, but for bimanual the
 single-view track IS `cam_high` of the same ALOHA multiview episode (symlinked by
-scripts/export_bimanual_singleview_cam_high.py) — not a separate robot.
+scripts/tools/data/export_bimanual_singleview_cam_high.py) — not a separate robot.
 """
 
 from __future__ import annotations

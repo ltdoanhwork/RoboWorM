@@ -429,7 +429,7 @@ def main() -> int:
         "notes": [
             "bimanual singleview exposes the cam_high stream of the SAME ALOHA "
             "episodes as bimanual multiview (symlinked by "
-            "scripts/export_bimanual_singleview_cam_high.py), so those two cells "
+            "scripts/tools/data/export_bimanual_singleview_cam_high.py), so those two cells "
             "share episodes.",
             "single_arm/humanoid singleview come from DIFFERENT corpora than their "
             "multiview counterparts (RoboChallenge vs DROID; GR1 vs RoboCOIN); "
@@ -452,7 +452,7 @@ def main() -> int:
             "why the single_arm multiview cells report 128/129 rather than "
             "130/130, and why the benchmark totals 1,605 not 1,608.",
             "PROVENANCE DISCREPANCY (bimanual): the acquisition manifest in "
-            "scripts/download_bimanual_multiview_dropbox.sh labels "
+            "scripts/tools/data/download_bimanual_multiview_dropbox.sh labels "
             "place_the_chinese_spoons_on_the_cloth as 'makovian', but on disk it "
             "lives under non_makovian/ (3 episodes). This scan is disk-authoritative, "
             "so the tables follow the on-disk placement. Resolve the manifest before "

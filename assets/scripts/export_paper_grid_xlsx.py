@@ -471,7 +471,7 @@ def main():
         # Ctrl-World exists in two multi-view renders and only ONE is wanted per
         # embodiment. single_arm has 3-view only ('Ctrl-World'); bimanual and humanoid are
         # 4-grid ('CW-4view') because their 3-view clips are excluded from scoring
-        # (excluded_row() in scripts/run_dense_nr.py). Their 'Ctrl-World' rows in the CSV
+        # (excluded_row() in scripts/metrics/run_dense_nr.py). Their 'Ctrl-World' rows in the CSV
         # come from records scored BEFORE that exclusion landed, so they are stale and
         # would otherwise print a second, thinner Ctrl-World line.
         cw3 = 'Ctrl-World MV' if args.by_track else 'Ctrl-World'

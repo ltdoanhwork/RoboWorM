@@ -144,7 +144,7 @@
       "documented_in_rule": "ctrlworld-pruning-insights.mdc",
       "justified": true,
       "note": "SiTo parameters (spatio-temporal hold) Chosen config = spatio-temporal prune-once-hold: prune spatial tokens once per episode and keep them compressed through both the spatial AND temporal blocks. keep_ratio=0.9 on the largest stage only (max_downsample_ratio=1) is the quality-leaning point of this method (PSNR ~18.9 on episode_000255). Push ST_KEEP_RATIO lower (e.g. 0.5, max_downsample_ratio=4) f",
-      "script": "scripts/run_single_arm_multiview_ctrlworld_sito.sh"
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_sito.sh"
     },
     {
       "method": "sito",
@@ -158,7 +158,7 @@
       "documented_in_rule": "ctrlworld-pruning-insights.mdc",
       "justified": true,
       "note": "SiTo parameters (spatio-temporal hold) Chosen config = spatio-temporal prune-once-hold: prune spatial tokens once per episode and keep them compressed through both the spatial AND temporal blocks. keep_ratio=0.9 on the largest stage only (max_downsample_ratio=1) is the quality-leaning point of this method (PSNR ~18.9 on episode_000255). Push ST_KEEP_RATIO lower (e.g. 0.5, max_downsample_ratio=4) f",
-      "script": "scripts/run_single_arm_multiview_ctrlworld_sito.sh"
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_sito.sh"
     },
     {
       "method": "sito",
@@ -172,7 +172,7 @@
       "documented_in_rule": "dreamgen-bimanual-pruning-insights.mdc",
       "justified": true,
       "note": "--- SiTo defaults (DreamGen 2B DiT, see dreamgen pruning insights rule): --- prune_ratio 0.30 = quality/speed knee, group_mode temporal, noise 0, start_layer 6, keep_last 2.",
-      "script": "scripts/run_bimanual_singleview_dreamgen_sito.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_sito.sh"
     },
     {
       "method": "sito",
@@ -186,7 +186,7 @@
       "documented_in_rule": null,
       "justified": true,
       "note": "--- SiTo params (seeded from the single_arm singleview optimal: temporal group, start_layer 6, keep_last 2, prune_ratio 0.30 = quality/speed knee) ---",
-      "script": "scripts/run_humanoid_singleview_dreamgen_sito.sh"
+      "script": "scripts/run/dreamgen/run_humanoid_singleview_dreamgen_sito.sh"
     },
     {
       "method": "sito",
@@ -200,7 +200,7 @@
       "documented_in_rule": "dreamgen-singlearm-singleview-pruning-insights.mdc",
       "justified": true,
       "note": "--- SiTo params (tuned optimal for single_arm singleview DreamGen 2B) --- Measured on episode_000000 (makovian, 2 chunks), single GPU, vs dense 227.5s: prune_ratio 0.20 -> 200.5s (1.13x), quality ~ dense prune_ratio 0.30 -> 183.3s (1.24x), quality ~ dense  <-- OPTIMAL (default) prune_ratio 0.40 -> 169.7s (1.34x), quality starts to smear (bg noise late) Self-attention is ~73% of DiT block time on t",
-      "script": "scripts/run_single_arm_singleview_dreamgen_sito.sh"
+      "script": "scripts/run/dreamgen/run_single_arm_singleview_dreamgen_sito.sh"
     },
     {
       "method": "sito",
@@ -214,7 +214,7 @@
       "documented_in_rule": "ctrlworld-bimanual-multiview-4view-grid-pruning-insights.mdc",
       "justified": true,
       "note": "SiTo ST-hold parameters -- TUNED on this bimanual 4-VIEW GRID model (2 val eps, ckpt-110000, single-GPU vs dense 225.7s/ep mean, PSNR 22.12): k0.9/d1 -> 1.02x, PSNR 21.76 (-0.36)  near-best / quality-safe (~no speedup) k0.8/d4 -> 1.08x, PSNR 19.68 (-2.44)  best speedup, lossy   <-- DEFAULT k0.7/d4 -> 1.13x, PSNR 18.72 (-3.40)  drop (corrupt) Bimanual is MUCH more prune-sensitive than humanoid (hum",
-      "script": "scripts/run_bimanual_multiview_ctrlworld_4view_grid_sito.sh"
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid_sito.sh"
     },
     {
       "method": "sito",
@@ -228,7 +228,7 @@
       "documented_in_rule": "ctrlworld-humanoid-multiview-pruning-insights.mdc",
       "justified": true,
       "note": "SiTo spatio-temporal hold parameters (TUNED for humanoid multiview Ctrl-World, ckpt-200000, 2 val episodes; dense = PSNR 21.27 / 117.5s). Sweep: k0.9/d1 -> 21.25 / 1.01x (no speedup) ; k0.8/d4 -> 20.87 / 1.05x ; k0.7/d4 -> 20.49 / 1.26x (main table view smears \u2014 lossy) ; k0.5/d4 -> 17.31 / 1.44x (CORRUPT). SiTo has NO clean fast point here (pruning before the temporal block smears the largest view",
-      "script": "scripts/run_humanoid_multiview_ctrlworld_sito.sh"
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_sito.sh"
     },
     {
       "method": "sito",
@@ -242,7 +242,7 @@
       "documented_in_rule": "ctrlworld-humanoid-multiview-4view-grid-pruning-insights.mdc",
       "justified": true,
       "note": "SiTo ST-hold parameters -- TUNED on the humanoid 4-VIEW GRID model (see .cursor/rules/ctrlworld-humanoid-multiview-4view-grid-pruning-insights.mdc). ST-hold prunes spatial tokens ONCE and holds them compressed through BOTH the spatial and the temporal block, so it shrinks the temporal-attn batch (H*W) too -- the temporal block is 57% of attention. With max_downsample_ratio=4 it prunes all 3 spatia",
-      "script": "scripts/run_humanoid_multiview_ctrlworld_4view_grid_sito.sh"
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_sito.sh"
     },
     {
       "method": "sito",
@@ -256,7 +256,7 @@
       "documented_in_rule": "ctrlworld-pruning-insights.mdc",
       "justified": true,
       "note": "SiTo parameters (spatio-temporal hold) Chosen config = spatio-temporal prune-once-hold: prune spatial tokens once per episode and keep them compressed through both the spatial AND temporal blocks. keep_ratio=0.9 on the largest stage only (max_downsample_ratio=1) is the quality-leaning point of this method (PSNR ~18.9 on episode_000255). Push ST_KEEP_RATIO lower (e.g. 0.5, max_downsample_ratio=4) f",
-      "script": "scripts/run_single_arm_multiview_ctrlworld_sito.sh"
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_sito.sh"
     },
     {
       "method": "itm",
@@ -270,7 +270,7 @@
       "documented_in_rule": "ctrlworld-humanoid-multiview-pruning-insights.mdc",
       "justified": true,
       "note": "ITM spatio-temporal hold parameters (TUNED for humanoid multiview Ctrl-World, ckpt-200000, 2 val episodes; dense = PSNR 21.27 / 117.5s). Sweep: k0.9/d1 -> 21.13 / 1.17x (==dense, quality-safe) ; k0.8/d4 -> 20.91 / 1.25x (object slightly blurred but coherent) \u2014 KNEE ; k0.7/d4 -> 20.20 / 1.29x ; k0.5/d4 -> 18.01 / 1.45x (CORRUPT). ITM ST-hold (similarity_recover) preserves spatial structure BETTER t",
-      "script": "scripts/run_humanoid_multiview_ctrlworld_itm.sh"
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_itm.sh"
     },
     {
       "method": "itm",
@@ -284,7 +284,7 @@
       "documented_in_rule": "ctrlworld-pruning-insights.mdc",
       "justified": true,
       "note": "ITM parameters (spatio-temporal hold) Chosen config = spatio-temporal prune-once-hold (shared with SiTo): prune spatial tokens once per episode and keep them compressed through both the spatial AND temporal blocks. keep_ratio=0.8 across all stages (max_downsample_ratio=4) gives ~1.04x speedup at PSNR ~16.4 on episode_000255. Lower ITM_ST_KEEP_RATIO (e.g. 0.5) for up to ~1.16x at lower quality.",
-      "script": "scripts/run_single_arm_multiview_ctrlworld_itm.sh"
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_itm.sh"
     },
     {
       "method": "itm",
@@ -298,7 +298,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "--- ITM params (\"mid\" quality-preserving; typically net-negative speed on 2B) ---",
-      "script": "scripts/run_humanoid_singleview_dreamgen_itm.sh"
+      "script": "scripts/run/dreamgen/run_humanoid_singleview_dreamgen_itm.sh"
     },
     {
       "method": "itm",
@@ -312,7 +312,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "ITM defaults \u2014 \"mid\" config (quality-preserving) for the 14B 36-block model. The README defaults (start_layer 6, keep_last 2, auto compress 0.35, prune-only phase) corrupt multiview single_arm output into block-noise: merging too many tokens too early destroys spatial structure. Verified on episode_000397: start=24/keep=4/compress=0.15  -> clean (\u2248 dense) start=6 /keep=2/compress=0.35  -> corrupt ",
-      "script": "scripts/run_single_arm_multiview_dreamgen_itm.sh"
+      "script": "scripts/run/dreamgen/run_single_arm_multiview_dreamgen_itm.sh"
     },
     {
       "method": "itm",
@@ -326,7 +326,7 @@
       "documented_in_rule": "dreamgen-singlearm-singleview-pruning-insights.mdc",
       "justified": true,
       "note": "start=11 keep=4 compress=0.20 -> 249.0s (0.91x, SLOWER) quality ~ ok, some late smear start=6  keep=2 compress=0.35 -> 237.3s (0.96x, SLOWER) quality CORRUPTED (block noise) point; for real speedup WITH quality on this model use SiTo (1.24x @ p0.30).",
-      "script": "scripts/run_single_arm_singleview_dreamgen_itm.sh"
+      "script": "scripts/run/dreamgen/run_single_arm_singleview_dreamgen_itm.sh"
     },
     {
       "method": "itm",
@@ -340,7 +340,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "--- ITM params (\"mid\" quality-preserving; typically net-negative speed on 2B) ---",
-      "script": "scripts/run_humanoid_singleview_dreamgen_itm.sh"
+      "script": "scripts/run/dreamgen/run_humanoid_singleview_dreamgen_itm.sh"
     },
     {
       "method": "itm",
@@ -354,7 +354,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "ITM defaults \u2014 \"mid\" config (quality-preserving) for the 14B 36-block model. The README defaults (start_layer 6, keep_last 2, auto compress 0.35, prune-only phase) corrupt multiview single_arm output into block-noise: merging too many tokens too early destroys spatial structure. Verified on episode_000397: start=24/keep=4/compress=0.15  -> clean (\u2248 dense) start=6 /keep=2/compress=0.35  -> corrupt ",
-      "script": "scripts/run_single_arm_multiview_dreamgen_itm.sh"
+      "script": "scripts/run/dreamgen/run_single_arm_multiview_dreamgen_itm.sh"
     },
     {
       "method": "itm",
@@ -368,7 +368,7 @@
       "documented_in_rule": "dreamgen-singlearm-singleview-pruning-insights.mdc",
       "justified": true,
       "note": "start=11 keep=4 compress=0.20 -> 249.0s (0.91x, SLOWER) quality ~ ok, some late smear start=6  keep=2 compress=0.35 -> 237.3s (0.96x, SLOWER) quality CORRUPTED (block noise) point; for real speedup WITH quality on this model use SiTo (1.24x @ p0.30).",
-      "script": "scripts/run_single_arm_singleview_dreamgen_itm.sh"
+      "script": "scripts/run/dreamgen/run_single_arm_singleview_dreamgen_itm.sh"
     },
     {
       "method": "itm",
@@ -382,7 +382,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "ITM defaults \u2014 \"mid\" config (quality-preserving) for the 14B 36-block model. The README defaults (start_layer 6, keep_last 2, auto compress 0.35, prune-only phase) corrupt multiview single_arm output into block-noise: merging too many tokens too early destroys spatial structure. Verified on episode_000397: start=24/keep=4/compress=0.15  -> clean (\u2248 dense) start=6 /keep=2/compress=0.35  -> corrupt ",
-      "script": "scripts/run_single_arm_multiview_dreamgen_itm.sh"
+      "script": "scripts/run/dreamgen/run_single_arm_multiview_dreamgen_itm.sh"
     },
     {
       "method": "itm",
@@ -396,7 +396,7 @@
       "documented_in_rule": "ctrlworld-bimanual-multiview-4view-grid-pruning-insights.mdc",
       "justified": true,
       "note": "ITM ST-hold parameters -- TUNED on this bimanual 4-VIEW GRID model (2 val eps, ckpt-110000, single-GPU vs dense 225.7s/ep mean, PSNR 22.12): k0.9/d1  -> 1.02x, PSNR 21.92 (-0.20)  near-best / quality-safe (~no speedup) k0.85/d4 -> 1.04x, PSNR 20.68 (-1.44)  best-quality knee      <-- DEFAULT k0.7/d4  -> 1.13x, PSNR 18.73 (-3.39)  drop (corrupt) ITM's similarity_recover keeps quality noticeably bet",
-      "script": "scripts/run_bimanual_multiview_ctrlworld_4view_grid_itm.sh"
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid_itm.sh"
     },
     {
       "method": "itm",
@@ -410,7 +410,7 @@
       "documented_in_rule": "ctrlworld-humanoid-multiview-pruning-insights.mdc",
       "justified": true,
       "note": "ITM spatio-temporal hold parameters (TUNED for humanoid multiview Ctrl-World, ckpt-200000, 2 val episodes; dense = PSNR 21.27 / 117.5s). Sweep: k0.9/d1 -> 21.13 / 1.17x (==dense, quality-safe) ; k0.8/d4 -> 20.91 / 1.25x (object slightly blurred but coherent) \u2014 KNEE ; k0.7/d4 -> 20.20 / 1.29x ; k0.5/d4 -> 18.01 / 1.45x (CORRUPT). ITM ST-hold (similarity_recover) preserves spatial structure BETTER t",
-      "script": "scripts/run_humanoid_multiview_ctrlworld_itm.sh"
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_itm.sh"
     },
     {
       "method": "itm",
@@ -424,7 +424,7 @@
       "documented_in_rule": "ctrlworld-humanoid-multiview-4view-grid-pruning-insights.mdc",
       "justified": true,
       "note": "ITM ST-hold parameters -- TUNED on the humanoid 4-VIEW GRID model (see .cursor/rules/ctrlworld-humanoid-multiview-4view-grid-pruning-insights.mdc). ITM ST-hold = SiTo ST-hold + similarity_recover (pruned tokens copy the most SIMILAR kept token, not the nearest index), which preserves appearance better at the same keep ratio. With max_downsample_ratio=4 (all 3 stages) it gives the same ~1.11x as Si",
-      "script": "scripts/run_humanoid_multiview_ctrlworld_4view_grid_itm.sh"
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_itm.sh"
     },
     {
       "method": "itm",
@@ -438,7 +438,7 @@
       "documented_in_rule": "ctrlworld-pruning-insights.mdc",
       "justified": true,
       "note": "ITM parameters (spatio-temporal hold) Chosen config = spatio-temporal prune-once-hold (shared with SiTo): prune spatial tokens once per episode and keep them compressed through both the spatial AND temporal blocks. keep_ratio=0.8 across all stages (max_downsample_ratio=4) gives ~1.04x speedup at PSNR ~16.4 on episode_000255. Lower ITM_ST_KEEP_RATIO (e.g. 0.5) for up to ~1.16x at lower quality.",
-      "script": "scripts/run_single_arm_multiview_ctrlworld_itm.sh"
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_itm.sh"
     },
     {
       "method": "worldcache",
@@ -452,7 +452,7 @@
       "documented_in_rule": "dreamgen-humanoid-singleview-caching-insights.mdc",
       "justified": true,
       "note": "--- WorldCache defaults (TUNED optimal for humanoid singleview 2B) --- Measured on episode_000200 (makovian, 2 chunks) single-GPU vs dense 259.9s. ret_ratio (warm-up fraction that is ALWAYS computed dense) is the real speed bottleneck \u2014 dropping it from 0.5 nearly doubled the speedup: ret 0.5 thresh 0.15 -> 174.8s (1.49x)  quality ~ dense ret 0.3 thresh 0.15 -> 137.8s (1.89x)  quality ~ dense  <--",
-      "script": "scripts/run_humanoid_singleview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_humanoid_singleview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -466,7 +466,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "WorldCache defaults (README_cache.md starting points for 14B / 2B-7B, 28-block).",
-      "script": "scripts/run_single_arm_multiview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_single_arm_multiview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -480,7 +480,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "--- WorldCache defaults (README_cache.md starting points, 28-block) ---",
-      "script": "scripts/run_single_arm_singleview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_single_arm_singleview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -494,7 +494,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "WorldCache parameters",
-      "script": "scripts/run_bimanual_singleview_dreamdojo_worldcache.sh"
+      "script": "scripts/run/dreamdojo/run_bimanual_singleview_dreamdojo_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -508,7 +508,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "WorldCache parameters",
-      "script": "scripts/run_humanoid_singleview_dreamdojo_worldcache.sh"
+      "script": "scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -522,7 +522,7 @@
       "documented_in_rule": "dreamgen-bimanual-multiview-caching-insights.mdc",
       "justified": true,
       "note": "WorldCache parameters. TUNED optimum for bimanual DreamGen multiview (2B seg16): thresh=0.20 / ret=0.2 / probe_depth=2 -> 217s vs dense 338s (~1.56x) at PSNR 13.87 (dense 13.69 -> SLIGHTLY BETTER), clean visuals. Key finding: probe_depth 2 (not 4) is both faster AND higher quality here, and this DiT tolerates thresh 0.20 (like DiCache). Speed ladder: probe4 t0.12=289s(1.17x) -> t0.16=277s -> t0.20",
-      "script": "scripts/run_bimanual_multiview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_multiview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -536,7 +536,7 @@
       "documented_in_rule": "dreamgen-humanoid-multiview-caching-insights.mdc",
       "justified": true,
       "note": "WorldCache parameters. TUNED for humanoid DreamGen multiview (2B seg16), measured on 1 GPU (2 episodes, per-segment gen time; dense=116s/seg): thresh 0.20 / ret 0.2 / probe 2 -> 55.8s/seg (2.08x) at PSNR 12.54 (dense 12.76), visuals ~= dense. probe_depth 2 (not 4) is faster AND higher quality here. Ladder: t0.15=69s(1.67x, PSNR 12.60); t0.20=56s(2.08x). WorldCache is solid but DiCache is faster at",
-      "script": "scripts/run_humanoid_multiview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_humanoid_multiview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -550,7 +550,7 @@
       "documented_in_rule": null,
       "justified": true,
       "note": "WorldCache parameters Defaults tuned for STRONGER skipping (faster, slightly lower fidelity). Raise rel-l1-thresh and lower ret-ratio / motion-sensitivity to skip more steps.",
-      "script": "scripts/run_single_arm_singleview_dreamdojo_worldcache.sh"
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -564,7 +564,7 @@
       "documented_in_rule": "dreamgen-bimanual-singleview-caching-insights.mdc",
       "justified": true,
       "note": "--- WorldCache defaults. TUNED for bimanual singleview 2B (iter 110k): --- thresh 0.20 / ret 0.2 / probe 2 -> 201s vs dense ~263s (~1.31x), clean visuals. thresh 0.15 / ret 0.3 / probe 4 -> 264s (~1.0x, barely triggers). Same knee as bimanual multiview: high thresh + low ret + probe 2 is what makes WorldCache competitive with DiCache on this DiT. decay off.",
-      "script": "scripts/run_bimanual_singleview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -578,7 +578,7 @@
       "documented_in_rule": "dreamgen-humanoid-singleview-caching-insights.mdc",
       "justified": true,
       "note": "--- WorldCache defaults (TUNED optimal for humanoid singleview 2B) --- Measured on episode_000200 (makovian, 2 chunks) single-GPU vs dense 259.9s. ret_ratio (warm-up fraction that is ALWAYS computed dense) is the real speed bottleneck \u2014 dropping it from 0.5 nearly doubled the speedup: ret 0.5 thresh 0.15 -> 174.8s (1.49x)  quality ~ dense ret 0.3 thresh 0.15 -> 137.8s (1.89x)  quality ~ dense  <--",
-      "script": "scripts/run_humanoid_singleview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_humanoid_singleview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -592,7 +592,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "WorldCache defaults (README_cache.md starting points for 14B / 2B-7B, 28-block).",
-      "script": "scripts/run_single_arm_multiview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_single_arm_multiview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -606,7 +606,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "--- WorldCache defaults (README_cache.md starting points, 28-block) ---",
-      "script": "scripts/run_single_arm_singleview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_single_arm_singleview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -620,7 +620,7 @@
       "documented_in_rule": "ctrlworld-bimanual-multiview-4view-grid-caching-insights.mdc",
       "justified": true,
       "note": "WorldCache parameters -- TUNED on the 4-VIEW GRID model (see .cursor/rules/ctrlworld-bimanual-multiview-4view-grid-caching-insights.mdc). thresh=0.04 / ret_ratio=0.0 / probe_depth=1 -> 1.81x at PSNR 21.67 (dense 22.12, -0.45), visually identical to dense on all 4 views. The big levers on the 4-view grid are ret_ratio (0.4 -> 0.0: 1.14x -> 1.51x) and probe_depth (2 -> 1: 1.51x -> 1.81x), NOT the th",
-      "script": "scripts/run_bimanual_multiview_ctrlworld_4view_grid_worldcache.sh"
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -634,7 +634,7 @@
       "documented_in_rule": "ctrlworld-humanoid-multiview-4view-grid-caching-insights.mdc",
       "justified": true,
       "note": "WorldCache parameters -- TUNED on the humanoid 4-VIEW GRID model (see .cursor/rules/ctrlworld-humanoid-multiview-4view-grid-caching-insights.mdc). thresh=0.03 / ret_ratio=0.0 / probe_depth=1 -> 1.62x (2 val eps) / 1.65x (4 val eps) at PSNR -0.03 vs dense, visually identical on all 4 views. Same lesson as the bimanual 4-view grid: ret_ratio (0.4 -> 0.0) and probe_depth (2 -> 1) are the speed levers",
-      "script": "scripts/run_humanoid_multiview_ctrlworld_4view_grid_worldcache.sh"
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -648,7 +648,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "WorldCache parameters",
-      "script": "scripts/run_bimanual_singleview_dreamdojo_worldcache.sh"
+      "script": "scripts/run/dreamdojo/run_bimanual_singleview_dreamdojo_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -662,7 +662,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "WorldCache parameters",
-      "script": "scripts/run_humanoid_singleview_dreamdojo_worldcache.sh"
+      "script": "scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -676,7 +676,7 @@
       "documented_in_rule": null,
       "justified": true,
       "note": "WorldCache parameters Defaults tuned for STRONGER skipping (faster, slightly lower fidelity). Raise rel-l1-thresh and lower ret-ratio / motion-sensitivity to skip more steps.",
-      "script": "scripts/run_single_arm_singleview_dreamdojo_worldcache.sh"
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -690,7 +690,7 @@
       "documented_in_rule": "dreamgen-humanoid-singleview-caching-insights.mdc",
       "justified": true,
       "note": "--- WorldCache defaults (TUNED optimal for humanoid singleview 2B) --- Measured on episode_000200 (makovian, 2 chunks) single-GPU vs dense 259.9s. ret_ratio (warm-up fraction that is ALWAYS computed dense) is the real speed bottleneck \u2014 dropping it from 0.5 nearly doubled the speedup: ret 0.5 thresh 0.15 -> 174.8s (1.49x)  quality ~ dense ret 0.3 thresh 0.15 -> 137.8s (1.89x)  quality ~ dense  <--",
-      "script": "scripts/run_humanoid_singleview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_humanoid_singleview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -704,7 +704,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "WorldCache defaults (README_cache.md starting points for 14B / 2B-7B, 28-block).",
-      "script": "scripts/run_single_arm_multiview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_single_arm_multiview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -718,7 +718,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "--- WorldCache defaults (README_cache.md starting points, 28-block) ---",
-      "script": "scripts/run_single_arm_singleview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_single_arm_singleview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -732,7 +732,7 @@
       "documented_in_rule": "ctrlworld-humanoid-multiview-4view-grid-caching-insights.mdc",
       "justified": true,
       "note": "WorldCache parameters -- TUNED on the humanoid 4-VIEW GRID model (see .cursor/rules/ctrlworld-humanoid-multiview-4view-grid-caching-insights.mdc). thresh=0.03 / ret_ratio=0.0 / probe_depth=1 -> 1.62x (2 val eps) / 1.65x (4 val eps) at PSNR -0.03 vs dense, visually identical on all 4 views. Same lesson as the bimanual 4-view grid: ret_ratio (0.4 -> 0.0) and probe_depth (2 -> 1) are the speed levers",
-      "script": "scripts/run_humanoid_multiview_ctrlworld_4view_grid_worldcache.sh"
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -746,7 +746,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "WorldCache parameters",
-      "script": "scripts/run_bimanual_singleview_dreamdojo_worldcache.sh"
+      "script": "scripts/run/dreamdojo/run_bimanual_singleview_dreamdojo_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -760,7 +760,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "WorldCache parameters",
-      "script": "scripts/run_humanoid_singleview_dreamdojo_worldcache.sh"
+      "script": "scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -774,7 +774,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "WorldCache parameters (speed-focused: higher threshold, earlier start)",
-      "script": "scripts/run_single_arm_multiview_ctrlworld_worldcache.sh"
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -788,7 +788,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "WorldCache defaults (README_cache.md starting points for 14B / 2B-7B, 28-block).",
-      "script": "scripts/run_single_arm_multiview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_single_arm_multiview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -802,7 +802,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "--- WorldCache defaults (README_cache.md starting points, 28-block) ---",
-      "script": "scripts/run_single_arm_singleview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_single_arm_singleview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -816,7 +816,7 @@
       "documented_in_rule": null,
       "justified": true,
       "note": "WorldCache parameters Defaults tuned for STRONGER skipping (faster, slightly lower fidelity). Raise rel-l1-thresh and lower ret-ratio / motion-sensitivity to skip more steps.",
-      "script": "scripts/run_single_arm_singleview_dreamdojo_worldcache.sh"
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -830,7 +830,7 @@
       "documented_in_rule": "dreamgen-humanoid-singleview-caching-insights.mdc",
       "justified": true,
       "note": "--- WorldCache defaults (TUNED optimal for humanoid singleview 2B) --- Measured on episode_000200 (makovian, 2 chunks) single-GPU vs dense 259.9s. ret_ratio (warm-up fraction that is ALWAYS computed dense) is the real speed bottleneck \u2014 dropping it from 0.5 nearly doubled the speedup: ret 0.5 thresh 0.15 -> 174.8s (1.49x)  quality ~ dense ret 0.3 thresh 0.15 -> 137.8s (1.89x)  quality ~ dense  <--",
-      "script": "scripts/run_humanoid_singleview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_humanoid_singleview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -844,7 +844,7 @@
       "documented_in_rule": "dreamgen-bimanual-multiview-caching-insights.mdc",
       "justified": true,
       "note": "WorldCache parameters. TUNED optimum for bimanual DreamGen multiview (2B seg16): thresh=0.20 / ret=0.2 / probe_depth=2 -> 217s vs dense 338s (~1.56x) at PSNR 13.87 (dense 13.69 -> SLIGHTLY BETTER), clean visuals. Key finding: probe_depth 2 (not 4) is both faster AND higher quality here, and this DiT tolerates thresh 0.20 (like DiCache). Speed ladder: probe4 t0.12=289s(1.17x) -> t0.16=277s -> t0.20",
-      "script": "scripts/run_bimanual_multiview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_multiview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -858,7 +858,7 @@
       "documented_in_rule": "dreamgen-bimanual-singleview-caching-insights.mdc",
       "justified": true,
       "note": "--- WorldCache defaults. TUNED for bimanual singleview 2B (iter 110k): --- thresh 0.20 / ret 0.2 / probe 2 -> 201s vs dense ~263s (~1.31x), clean visuals. thresh 0.15 / ret 0.3 / probe 4 -> 264s (~1.0x, barely triggers). Same knee as bimanual multiview: high thresh + low ret + probe 2 is what makes WorldCache competitive with DiCache on this DiT. decay off.",
-      "script": "scripts/run_bimanual_singleview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -872,7 +872,7 @@
       "documented_in_rule": "dreamgen-humanoid-multiview-caching-insights.mdc",
       "justified": true,
       "note": "WorldCache parameters. TUNED for humanoid DreamGen multiview (2B seg16), measured on 1 GPU (2 episodes, per-segment gen time; dense=116s/seg): thresh 0.20 / ret 0.2 / probe 2 -> 55.8s/seg (2.08x) at PSNR 12.54 (dense 12.76), visuals ~= dense. probe_depth 2 (not 4) is faster AND higher quality here. Ladder: t0.15=69s(1.67x, PSNR 12.60); t0.20=56s(2.08x). WorldCache is solid but DiCache is faster at",
-      "script": "scripts/run_humanoid_multiview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_humanoid_multiview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -886,7 +886,7 @@
       "documented_in_rule": "ctrlworld-bimanual-multiview-4view-grid-caching-insights.mdc",
       "justified": true,
       "note": "WorldCache parameters -- TUNED on the 4-VIEW GRID model (see .cursor/rules/ctrlworld-bimanual-multiview-4view-grid-caching-insights.mdc). thresh=0.04 / ret_ratio=0.0 / probe_depth=1 -> 1.81x at PSNR 21.67 (dense 22.12, -0.45), visually identical to dense on all 4 views. The big levers on the 4-view grid are ret_ratio (0.4 -> 0.0: 1.14x -> 1.51x) and probe_depth (2 -> 1: 1.51x -> 1.81x), NOT the th",
-      "script": "scripts/run_bimanual_multiview_ctrlworld_4view_grid_worldcache.sh"
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -900,7 +900,7 @@
       "documented_in_rule": "ctrlworld-humanoid-multiview-4view-grid-caching-insights.mdc",
       "justified": true,
       "note": "WorldCache parameters -- TUNED on the humanoid 4-VIEW GRID model (see .cursor/rules/ctrlworld-humanoid-multiview-4view-grid-caching-insights.mdc). thresh=0.03 / ret_ratio=0.0 / probe_depth=1 -> 1.62x (2 val eps) / 1.65x (4 val eps) at PSNR -0.03 vs dense, visually identical on all 4 views. Same lesson as the bimanual 4-view grid: ret_ratio (0.4 -> 0.0) and probe_depth (2 -> 1) are the speed levers",
-      "script": "scripts/run_humanoid_multiview_ctrlworld_4view_grid_worldcache.sh"
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -914,7 +914,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "WorldCache parameters (speed-focused: higher threshold, earlier start)",
-      "script": "scripts/run_single_arm_multiview_ctrlworld_worldcache.sh"
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -928,7 +928,7 @@
       "documented_in_rule": "dreamgen-humanoid-singleview-caching-insights.mdc",
       "justified": true,
       "note": "--- WorldCache defaults (TUNED optimal for humanoid singleview 2B) --- Measured on episode_000200 (makovian, 2 chunks) single-GPU vs dense 259.9s. ret_ratio (warm-up fraction that is ALWAYS computed dense) is the real speed bottleneck \u2014 dropping it from 0.5 nearly doubled the speedup: ret 0.5 thresh 0.15 -> 174.8s (1.49x)  quality ~ dense ret 0.3 thresh 0.15 -> 137.8s (1.89x)  quality ~ dense  <--",
-      "script": "scripts/run_humanoid_singleview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_humanoid_singleview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -942,7 +942,7 @@
       "documented_in_rule": null,
       "justified": true,
       "note": "WorldCache parameters Defaults tuned for STRONGER skipping (faster, slightly lower fidelity). Raise rel-l1-thresh and lower ret-ratio / motion-sensitivity to skip more steps.",
-      "script": "scripts/run_single_arm_singleview_dreamdojo_worldcache.sh"
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -956,7 +956,7 @@
       "documented_in_rule": "dreamgen-bimanual-multiview-caching-insights.mdc",
       "justified": true,
       "note": "WorldCache parameters. TUNED optimum for bimanual DreamGen multiview (2B seg16): thresh=0.20 / ret=0.2 / probe_depth=2 -> 217s vs dense 338s (~1.56x) at PSNR 13.87 (dense 13.69 -> SLIGHTLY BETTER), clean visuals. Key finding: probe_depth 2 (not 4) is both faster AND higher quality here, and this DiT tolerates thresh 0.20 (like DiCache). Speed ladder: probe4 t0.12=289s(1.17x) -> t0.16=277s -> t0.20",
-      "script": "scripts/run_bimanual_multiview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_multiview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -970,7 +970,7 @@
       "documented_in_rule": "dreamgen-bimanual-singleview-caching-insights.mdc",
       "justified": true,
       "note": "--- WorldCache defaults. TUNED for bimanual singleview 2B (iter 110k): --- thresh 0.20 / ret 0.2 / probe 2 -> 201s vs dense ~263s (~1.31x), clean visuals. thresh 0.15 / ret 0.3 / probe 4 -> 264s (~1.0x, barely triggers). Same knee as bimanual multiview: high thresh + low ret + probe 2 is what makes WorldCache competitive with DiCache on this DiT. decay off.",
-      "script": "scripts/run_bimanual_singleview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -984,7 +984,7 @@
       "documented_in_rule": "dreamgen-humanoid-multiview-caching-insights.mdc",
       "justified": true,
       "note": "WorldCache parameters. TUNED for humanoid DreamGen multiview (2B seg16), measured on 1 GPU (2 episodes, per-segment gen time; dense=116s/seg): thresh 0.20 / ret 0.2 / probe 2 -> 55.8s/seg (2.08x) at PSNR 12.54 (dense 12.76), visuals ~= dense. probe_depth 2 (not 4) is faster AND higher quality here. Ladder: t0.15=69s(1.67x, PSNR 12.60); t0.20=56s(2.08x). WorldCache is solid but DiCache is faster at",
-      "script": "scripts/run_humanoid_multiview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_humanoid_multiview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -998,7 +998,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "WorldCache defaults (README_cache.md starting points for 14B / 2B-7B, 28-block).",
-      "script": "scripts/run_single_arm_multiview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_single_arm_multiview_dreamgen_worldcache.sh"
     },
     {
       "method": "worldcache",
@@ -1012,7 +1012,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "--- WorldCache defaults (README_cache.md starting points, 28-block) ---",
-      "script": "scripts/run_single_arm_singleview_dreamgen_worldcache.sh"
+      "script": "scripts/run/dreamgen/run_single_arm_singleview_dreamgen_worldcache.sh"
     },
     {
       "method": "dicache",
@@ -1026,7 +1026,7 @@
       "documented_in_rule": "ctrlworld-bimanual-multiview-caching-insights.mdc",
       "justified": true,
       "note": "DiCache parameters. TUNED knee for bimanual multiview Ctrl-World: thresh=0.04 / ret_ratio=0.4 -> 1.23x speedup at PSNR 21.01 (dense 22.07, -1.06). DiCache is consistently ~1 PSNR worse than WorldCache at equal speed on this model; at thresh>=0.06 it collapses (PSNR 17.7). thresh<=0.02 => ~1.0x (no trigger). Prefer WorldCache for the quality/speed sweet spot; keep DiCache as a valid benchmark point",
-      "script": "scripts/run_bimanual_multiview_ctrlworld_dicache.sh"
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_dicache.sh"
     },
     {
       "method": "dicache",
@@ -1040,7 +1040,7 @@
       "documented_in_rule": "ctrlworld-humanoid-multiview-caching-insights.mdc",
       "justified": true,
       "note": "DiCache parameters. TUNED for humanoid multiview Ctrl-World (ckpt-200000, 2 val episodes; see .cursor/rules ctrlworld-humanoid-multiview-caching-insights). Dense = PSNR 21.27 / 117.5s. Knee at thresh 0.03: PSNR 21.17 (==dense) 1.11x. Degrades one step earlier than WorldCache: t0.04 -> 20.79 (-0.48), t0.05 -> 19.63 (breaks). DEFAULT t0.03. DiCache is ~worse than WorldCache at equal speed here (same",
-      "script": "scripts/run_humanoid_multiview_ctrlworld_dicache.sh"
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_dicache.sh"
     },
     {
       "method": "dicache",
@@ -1054,7 +1054,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "DiCache parameters (quality-focused: stricter threshold, later start)",
-      "script": "scripts/run_single_arm_multiview_ctrlworld_dicache.sh"
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_dicache.sh"
     },
     {
       "method": "dicache",
@@ -1068,7 +1068,7 @@
       "documented_in_rule": "ctrlworld-bimanual-multiview-4view-grid-caching-insights.mdc",
       "justified": true,
       "note": "DiCache parameters -- TUNED on the 4-VIEW GRID model (see .cursor/rules/ctrlworld-bimanual-multiview-4view-grid-caching-insights.mdc). thresh=0.03 / ret_ratio=0.0 / probe_depth=1 -> 1.72x at PSNR 21.58 (dense 22.12, -0.55), visually identical to dense on all 4 views. Same levers as WorldCache (ret_ratio + probe_depth do the work). DiCache needs the LOWER threshold 0.03: at 0.04 quality drops faste",
-      "script": "scripts/run_bimanual_multiview_ctrlworld_4view_grid_dicache.sh"
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid_dicache.sh"
     },
     {
       "method": "dicache",
@@ -1082,7 +1082,7 @@
       "documented_in_rule": "ctrlworld-humanoid-multiview-4view-grid-caching-insights.mdc",
       "justified": true,
       "note": "DiCache parameters -- TUNED on the humanoid 4-VIEW GRID model (see .cursor/rules/ctrlworld-humanoid-multiview-4view-grid-caching-insights.mdc). thresh=0.03 / ret_ratio=0.0 / probe_depth=1 -> 1.58x (2 val eps) / 1.70x (4 val eps) at PSNR ~= dense (-0.00 / -0.16), visually identical on all 4 views. ret_ratio/probe_depth are the levers here too (the 3-view default 0.03/0.4/3 is BOTH slower than dense",
-      "script": "scripts/run_humanoid_multiview_ctrlworld_4view_grid_dicache.sh"
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_dicache.sh"
     },
     {
       "method": "dicache",
@@ -1096,7 +1096,7 @@
       "documented_in_rule": "ctrlworld-bimanual-multiview-caching-insights.mdc",
       "justified": true,
       "note": "DiCache parameters. TUNED knee for bimanual multiview Ctrl-World: thresh=0.04 / ret_ratio=0.4 -> 1.23x speedup at PSNR 21.01 (dense 22.07, -1.06). DiCache is consistently ~1 PSNR worse than WorldCache at equal speed on this model; at thresh>=0.06 it collapses (PSNR 17.7). thresh<=0.02 => ~1.0x (no trigger). Prefer WorldCache for the quality/speed sweet spot; keep DiCache as a valid benchmark point",
-      "script": "scripts/run_bimanual_multiview_ctrlworld_dicache.sh"
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_dicache.sh"
     },
     {
       "method": "dicache",
@@ -1110,7 +1110,7 @@
       "documented_in_rule": "ctrlworld-bimanual-multiview-4view-grid-caching-insights.mdc",
       "justified": true,
       "note": "DiCache parameters -- TUNED on the 4-VIEW GRID model (see .cursor/rules/ctrlworld-bimanual-multiview-4view-grid-caching-insights.mdc). thresh=0.03 / ret_ratio=0.0 / probe_depth=1 -> 1.72x at PSNR 21.58 (dense 22.12, -0.55), visually identical to dense on all 4 views. Same levers as WorldCache (ret_ratio + probe_depth do the work). DiCache needs the LOWER threshold 0.03: at 0.04 quality drops faste",
-      "script": "scripts/run_bimanual_multiview_ctrlworld_4view_grid_dicache.sh"
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid_dicache.sh"
     },
     {
       "method": "dicache",
@@ -1124,7 +1124,7 @@
       "documented_in_rule": "ctrlworld-humanoid-multiview-caching-insights.mdc",
       "justified": true,
       "note": "DiCache parameters. TUNED for humanoid multiview Ctrl-World (ckpt-200000, 2 val episodes; see .cursor/rules ctrlworld-humanoid-multiview-caching-insights). Dense = PSNR 21.27 / 117.5s. Knee at thresh 0.03: PSNR 21.17 (==dense) 1.11x. Degrades one step earlier than WorldCache: t0.04 -> 20.79 (-0.48), t0.05 -> 19.63 (breaks). DEFAULT t0.03. DiCache is ~worse than WorldCache at equal speed here (same",
-      "script": "scripts/run_humanoid_multiview_ctrlworld_dicache.sh"
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_dicache.sh"
     },
     {
       "method": "dicache",
@@ -1138,7 +1138,7 @@
       "documented_in_rule": "ctrlworld-humanoid-multiview-4view-grid-caching-insights.mdc",
       "justified": true,
       "note": "DiCache parameters -- TUNED on the humanoid 4-VIEW GRID model (see .cursor/rules/ctrlworld-humanoid-multiview-4view-grid-caching-insights.mdc). thresh=0.03 / ret_ratio=0.0 / probe_depth=1 -> 1.58x (2 val eps) / 1.70x (4 val eps) at PSNR ~= dense (-0.00 / -0.16), visually identical on all 4 views. ret_ratio/probe_depth are the levers here too (the 3-view default 0.03/0.4/3 is BOTH slower than dense",
-      "script": "scripts/run_humanoid_multiview_ctrlworld_4view_grid_dicache.sh"
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_dicache.sh"
     },
     {
       "method": "dicache",
@@ -1152,7 +1152,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "DiCache parameters (quality-focused: stricter threshold, later start)",
-      "script": "scripts/run_single_arm_multiview_ctrlworld_dicache.sh"
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_dicache.sh"
     },
     {
       "method": "dicache",
@@ -1166,7 +1166,7 @@
       "documented_in_rule": "dreamgen-bimanual-multiview-caching-insights.mdc",
       "justified": true,
       "note": "DiCache parameters. TUNED optimum for bimanual DreamGen multiview (2B seg16): thresh=0.20 / ret=0.2 -> 204s vs dense 338s (~1.66x total, ~2.2x on generation) at PSNR 13.94 (dense 13.69 -> actually SLIGHTLY BETTER) + clean visuals. DiCache is remarkably robust here: quality stays >= dense from thresh 0.08 up to 0.20. This is the clear winner among the 3 cache methods on this model.",
-      "script": "scripts/run_bimanual_multiview_dreamgen_dicache.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_multiview_dreamgen_dicache.sh"
     },
     {
       "method": "dicache",
@@ -1180,7 +1180,7 @@
       "documented_in_rule": "dreamgen-bimanual-singleview-caching-insights.mdc",
       "justified": true,
       "note": "--- DiCache defaults. TUNED for bimanual singleview 2B (iter 110k): --- thresh 0.20 -> 199s vs dense ~263s (~1.32x), clean visuals = BEST. thresh 0.15 -> 206s (1.28x), also clean. Same 2B/28-block DiT tolerates high thresh like bimanual multiview. FasterCache is net-negative here (see that script); DiCache/WorldCache are the real speedups.",
-      "script": "scripts/run_bimanual_singleview_dreamgen_dicache.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_dicache.sh"
     },
     {
       "method": "dicache",
@@ -1194,7 +1194,7 @@
       "documented_in_rule": "dreamgen-humanoid-multiview-caching-insights.mdc",
       "justified": true,
       "note": "DiCache parameters. TUNED optimum for humanoid DreamGen multiview (2B seg16), measured on 1 GPU (2 episodes, per-segment generation time; dense=116s/seg): thresh 0.20 / ret 0.2 / probe 2 -> 50.8s/seg (2.28x) at PSNR 12.73 (dense 12.76) with visuals == dense -> THE WINNER (best of the 3 cache methods). Ladder: t0.10=145s(0.80x, probe overhead > savings, SLOWER); t0.15=54s(2.14x); t0.20=51s(2.28x) K",
-      "script": "scripts/run_humanoid_multiview_dreamgen_dicache.sh"
+      "script": "scripts/run/dreamgen/run_humanoid_multiview_dreamgen_dicache.sh"
     },
     {
       "method": "dicache",
@@ -1208,7 +1208,7 @@
       "documented_in_rule": "dreamgen-humanoid-singleview-caching-insights.mdc",
       "justified": true,
       "note": "--- DiCache defaults (TUNED optimal for humanoid singleview 2B) --- Measured on episode_000200 (makovian, 2 chunks) single-GPU vs dense 259.9s: thresh 0.08 -> 178.0s (1.46x)  quality ~ dense thresh 0.15 -> 133.5s (1.95x)  quality ~ dense  <-- OPTIMAL (default, knee) thresh 0.20 -> 126.9s (2.05x)  crate/bg corrupt (too aggressive)",
-      "script": "scripts/run_humanoid_singleview_dreamgen_dicache.sh"
+      "script": "scripts/run/dreamgen/run_humanoid_singleview_dreamgen_dicache.sh"
     },
     {
       "method": "dicache",
@@ -1222,7 +1222,7 @@
       "documented_in_rule": "ctrlworld-bimanual-multiview-caching-insights.mdc",
       "justified": true,
       "note": "DiCache parameters. TUNED knee for bimanual multiview Ctrl-World: thresh=0.04 / ret_ratio=0.4 -> 1.23x speedup at PSNR 21.01 (dense 22.07, -1.06). DiCache is consistently ~1 PSNR worse than WorldCache at equal speed on this model; at thresh>=0.06 it collapses (PSNR 17.7). thresh<=0.02 => ~1.0x (no trigger). Prefer WorldCache for the quality/speed sweet spot; keep DiCache as a valid benchmark point",
-      "script": "scripts/run_bimanual_multiview_ctrlworld_dicache.sh"
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_dicache.sh"
     },
     {
       "method": "dicache",
@@ -1236,7 +1236,7 @@
       "documented_in_rule": "ctrlworld-humanoid-multiview-caching-insights.mdc",
       "justified": true,
       "note": "DiCache parameters. TUNED for humanoid multiview Ctrl-World (ckpt-200000, 2 val episodes; see .cursor/rules ctrlworld-humanoid-multiview-caching-insights). Dense = PSNR 21.27 / 117.5s. Knee at thresh 0.03: PSNR 21.17 (==dense) 1.11x. Degrades one step earlier than WorldCache: t0.04 -> 20.79 (-0.48), t0.05 -> 19.63 (breaks). DEFAULT t0.03. DiCache is ~worse than WorldCache at equal speed here (same",
-      "script": "scripts/run_humanoid_multiview_ctrlworld_dicache.sh"
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_dicache.sh"
     },
     {
       "method": "dicache",
@@ -1250,7 +1250,7 @@
       "documented_in_rule": "ctrlworld-bimanual-multiview-4view-grid-caching-insights.mdc",
       "justified": true,
       "note": "DiCache parameters -- TUNED on the 4-VIEW GRID model (see .cursor/rules/ctrlworld-bimanual-multiview-4view-grid-caching-insights.mdc). thresh=0.03 / ret_ratio=0.0 / probe_depth=1 -> 1.72x at PSNR 21.58 (dense 22.12, -0.55), visually identical to dense on all 4 views. Same levers as WorldCache (ret_ratio + probe_depth do the work). DiCache needs the LOWER threshold 0.03: at 0.04 quality drops faste",
-      "script": "scripts/run_bimanual_multiview_ctrlworld_4view_grid_dicache.sh"
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid_dicache.sh"
     },
     {
       "method": "dicache",
@@ -1264,7 +1264,7 @@
       "documented_in_rule": "ctrlworld-humanoid-multiview-4view-grid-caching-insights.mdc",
       "justified": true,
       "note": "DiCache parameters -- TUNED on the humanoid 4-VIEW GRID model (see .cursor/rules/ctrlworld-humanoid-multiview-4view-grid-caching-insights.mdc). thresh=0.03 / ret_ratio=0.0 / probe_depth=1 -> 1.58x (2 val eps) / 1.70x (4 val eps) at PSNR ~= dense (-0.00 / -0.16), visually identical on all 4 views. ret_ratio/probe_depth are the levers here too (the 3-view default 0.03/0.4/3 is BOTH slower than dense",
-      "script": "scripts/run_humanoid_multiview_ctrlworld_4view_grid_dicache.sh"
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_dicache.sh"
     },
     {
       "method": "dicache",
@@ -1278,7 +1278,7 @@
       "documented_in_rule": null,
       "justified": false,
       "note": "DiCache parameters (quality-focused: stricter threshold, later start)",
-      "script": "scripts/run_single_arm_multiview_ctrlworld_dicache.sh"
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_dicache.sh"
     },
     {
       "method": "fastercache",
@@ -1292,7 +1292,7 @@
       "documented_in_rule": null,
       "justified": true,
       "note": "FasterCache parameters Defaults tuned for FASTER inference (more aggressive caching). Lower start-step caches sooner; larger intervals skip more full forwards.",
-      "script": "scripts/run_single_arm_singleview_dreamdojo_fastercache.sh"
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_fastercache.sh"
     },
     {
       "method": "fastercache",
@@ -1306,7 +1306,7 @@
       "documented_in_rule": "dreamgen-bimanual-multiview-caching-insights.mdc",
       "justified": true,
       "note": "FasterCache parameters. TUNED for bimanual DreamGen multiview (2B seg16): There is NO useful operating point on this model (net-negative benchmark point). The model-level FFT-delta skip corrupts quality whenever it's aggressive enough to save time, and gentle configs pay more overhead than they save: default m5/b3      -> ~307s, PSNR 12.89 (rainbow/blur CORRUPT) m3/b2              -> 333s,  PSNR 1",
-      "script": "scripts/run_bimanual_multiview_dreamgen_fastercache.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_multiview_dreamgen_fastercache.sh"
     },
     {
       "method": "fastercache",
@@ -1320,7 +1320,7 @@
       "documented_in_rule": "dreamgen-bimanual-singleview-caching-insights.mdc",
       "justified": true,
       "note": "--- FasterCache defaults. TUNED for bimanual singleview 2B (iter 110k): --- NET-NEGATIVE on this model (valid benchmark point): m5/b3 -> 293s (0.90x, slower) + rainbow/blur CORRUPT visuals m2/b2 -> 345s (0.76x, much slower) but CLEAN visuals Default = the CLEAN point (m2/b2) so output is interpretable, not corrupt. Accept no speedup; use DiCache/WorldCache (thresh 0.20, ~1.3x) for real gains. Kept",
-      "script": "scripts/run_bimanual_singleview_dreamgen_fastercache.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_fastercache.sh"
     },
     {
       "method": "fastercache",
@@ -1334,7 +1334,7 @@
       "documented_in_rule": "dreamgen-humanoid-multiview-caching-insights.mdc",
       "justified": true,
       "note": "FasterCache parameters. TUNED for humanoid DreamGen multiview (2B seg16), measured on 1 GPU (2 episodes, per-segment gen time; dense=116s/seg): model_interval 5 / block_interval 5 -> 100.2s/seg (1.16x) at PSNR 12.81 (dense 12.76) LPIPS 0.451, visuals == dense -> BEST clean point (DEFAULT). Ladder: m2/b2=125.7s(0.92x SLOWER, delta-FFT computed too often); m3/b3=111s (1.05x); m5/b5=100s(1.16x) KNEE.",
-      "script": "scripts/run_humanoid_multiview_dreamgen_fastercache.sh"
+      "script": "scripts/run/dreamgen/run_humanoid_multiview_dreamgen_fastercache.sh"
     },
     {
       "method": "fastercache",
@@ -1348,7 +1348,7 @@
       "documented_in_rule": null,
       "justified": true,
       "note": "FasterCache parameters Defaults tuned for FASTER inference (more aggressive caching). Lower start-step caches sooner; larger intervals skip more full forwards.",
-      "script": "scripts/run_single_arm_singleview_dreamdojo_fastercache.sh"
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_fastercache.sh"
     },
     {
       "method": "fastercache",
@@ -1362,7 +1362,7 @@
       "documented_in_rule": "dreamgen-bimanual-multiview-caching-insights.mdc",
       "justified": true,
       "note": "FasterCache parameters. TUNED for bimanual DreamGen multiview (2B seg16): There is NO useful operating point on this model (net-negative benchmark point). The model-level FFT-delta skip corrupts quality whenever it's aggressive enough to save time, and gentle configs pay more overhead than they save: default m5/b3      -> ~307s, PSNR 12.89 (rainbow/blur CORRUPT) m3/b2              -> 333s,  PSNR 1",
-      "script": "scripts/run_bimanual_multiview_dreamgen_fastercache.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_multiview_dreamgen_fastercache.sh"
     },
     {
       "method": "fastercache",
@@ -1376,7 +1376,7 @@
       "documented_in_rule": "dreamgen-bimanual-singleview-caching-insights.mdc",
       "justified": true,
       "note": "--- FasterCache defaults. TUNED for bimanual singleview 2B (iter 110k): --- NET-NEGATIVE on this model (valid benchmark point): m5/b3 -> 293s (0.90x, slower) + rainbow/blur CORRUPT visuals m2/b2 -> 345s (0.76x, much slower) but CLEAN visuals Default = the CLEAN point (m2/b2) so output is interpretable, not corrupt. Accept no speedup; use DiCache/WorldCache (thresh 0.20, ~1.3x) for real gains. Kept",
-      "script": "scripts/run_bimanual_singleview_dreamgen_fastercache.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_fastercache.sh"
     },
     {
       "method": "fastercache",
@@ -1390,7 +1390,7 @@
       "documented_in_rule": null,
       "justified": true,
       "note": "FasterCache parameters Defaults tuned for FASTER inference (more aggressive caching). Lower start-step caches sooner; larger intervals skip more full forwards.",
-      "script": "scripts/run_single_arm_singleview_dreamdojo_fastercache.sh"
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_fastercache.sh"
     },
     {
       "method": "pisa",
@@ -1404,7 +1404,7 @@
       "documented_in_rule": "ctrlworld-single-arm-multiview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "PISA -- TUNED (see ctrlworld-single-arm-multiview-sparse-attention-insights). d0.2/s0 is CORRUPT here (PSNR 17.6, last frame melts to noise); d0.5/start2 is the least-bad quality point (PSNR 20.95, still 0.95x = slower than dense \u2014 sparse-attn is net-negative on this short-seq SVD UNet, a valid benchmark point).",
-      "script": "scripts/run_single_arm_multiview_ctrlworld_pisa.sh"
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_pisa.sh"
     },
     {
       "method": "pisa",
@@ -1418,7 +1418,7 @@
       "documented_in_rule": "dreamgen-bimanual-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "--- PISA parameters. TUNED for bimanual singleview 2B (iter 110k): --- density 0.1 / start_layer 0 -> 230s vs dense ~263s (~1.14x), clean-ish (mild motion blur, no corruption). density 0.2 (default) = 275s (~1.0x, no speedup). PISA is weak here (spatial-attn sparsity has little to attack on this 2B DiT); use DiCache/WorldCache (~1.3x) for real gains. This is the faster knee.",
-      "script": "scripts/run_bimanual_singleview_dreamgen_pisa.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_pisa.sh"
     },
     {
       "method": "pisa",
@@ -1432,7 +1432,7 @@
       "documented_in_rule": "dreamgen-bimanual-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "--- PISA parameters. TUNED for bimanual singleview 2B (iter 110k): --- density 0.1 / start_layer 0 -> 230s vs dense ~263s (~1.14x), clean-ish (mild motion blur, no corruption). density 0.2 (default) = 275s (~1.0x, no speedup). PISA is weak here (spatial-attn sparsity has little to attack on this 2B DiT); use DiCache/WorldCache (~1.3x) for real gains. This is the faster knee.",
-      "script": "scripts/run_bimanual_singleview_dreamgen_pisa.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_pisa.sh"
     },
     {
       "method": "svg1",
@@ -1446,7 +1446,7 @@
       "documented_in_rule": "dreamgen-bimanual-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "--- SVG1 parameters. MEASURED on bimanual singleview 2B (iter 110k): --- SVG1 is NET-NEGATIVE here: default (sparsity 0.25) = 341s, aggressive (sparsity 0.5, start 1) = 324s, both SLOWER than dense ~263s though visually clean. Spatial-attn sparsity has little to attack on this 2B DiT and its overhead dominates. Kept runnable as a benchmark point; use DiCache/WorldCache (~1.3x) for real speedup. De",
-      "script": "scripts/run_bimanual_singleview_dreamgen_svg1.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1460,7 +1460,7 @@
       "documented_in_rule": "dreamgen-humanoid-multiview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG1 parameters (seeded from README humanoid singleview defaults; re-tune per model).",
-      "script": "scripts/run_humanoid_multiview_dreamgen_svg1.sh"
+      "script": "scripts/run/dreamgen/run_humanoid_multiview_dreamgen_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1474,7 +1474,7 @@
       "documented_in_rule": "dreamgen-humanoid-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "--- SVG1 parameters ---",
-      "script": "scripts/run_humanoid_singleview_dreamgen_svg1.sh"
+      "script": "scripts/run/dreamgen/run_humanoid_singleview_dreamgen_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1488,7 +1488,7 @@
       "documented_in_rule": "dreamgen-single-arm-multiview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "",
-      "script": "scripts/run_single_arm_multiview_dreamgen_svg1.sh"
+      "script": "scripts/run/dreamgen/run_single_arm_multiview_dreamgen_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1502,7 +1502,7 @@
       "documented_in_rule": "dreamdojo-bimanual-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG1 parameters (tuned; see dreamdojo-bimanual-singleview-sparse-attention-insights) sparsity 0.25 / start 2 / profile cached: 402.00s vs dense 390.08s = 0.97x (SLOWER) at PSNR 17.99 / SSIM 0.691 (already below dense 18.44 / 0.710). SVG1 never beats dense here (same S=4800 flex_attention overhead as humanoid / single_arm). BREAK POINT is sparsity <= 0.05: PSNR 14.21, SSIM 0.529, last-frame DESTROY",
-      "script": "scripts/run_bimanual_singleview_dreamdojo_svg1.sh"
+      "script": "scripts/run/dreamdojo/run_bimanual_singleview_dreamdojo_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1516,7 +1516,7 @@
       "documented_in_rule": "dreamdojo-humanoid-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG1 parameters (tuned defaults; see dreamdojo-humanoid-singleview-sparse-attention rule)",
-      "script": "scripts/run_humanoid_singleview_dreamdojo_svg1.sh"
+      "script": "scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1530,7 +1530,7 @@
       "documented_in_rule": "dreamdojo-single-arm-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG1 parameters (tuned; see dreamdojo-single-arm-singleview-sparse-attention-insights) sparsity 0.25 is the quality-leaning point among SVG1 configs: 158.51s vs dense 144.80s = 0.91x (SLOWER) at PSNR 25.85 / SSIM 0.898 (already below dense 27.57 / 0.920). SVG1 never beats dense here (same kernel-bound S=4800 story as humanoid). BREAK POINT is sparsity <= 0.05: PSNR 23.43, last-frame visibly smeare",
-      "script": "scripts/run_single_arm_singleview_dreamdojo_svg1.sh"
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1544,7 +1544,7 @@
       "documented_in_rule": "dreamgen-single-arm-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "",
-      "script": "scripts/run_single_arm_singleview_dreamgen_svg1.sh"
+      "script": "scripts/run/dreamgen/run_single_arm_singleview_dreamgen_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1558,7 +1558,7 @@
       "documented_in_rule": "ctrlworld-bimanual-multiview-4view-grid-sparse-attention-insights.mdc",
       "justified": true,
       "note": "",
-      "script": "scripts/run_bimanual_multiview_ctrlworld_4view_grid_svg1.sh"
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1572,7 +1572,7 @@
       "documented_in_rule": null,
       "justified": true,
       "note": "SVG1 parameters -- TUNED per model (see the 4view-grid sparse-attention rule).",
-      "script": "scripts/run_humanoid_multiview_ctrlworld_svg1.sh"
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1586,7 +1586,7 @@
       "documented_in_rule": "ctrlworld-humanoid-multiview-4view-grid-sparse-attention-insights.mdc",
       "justified": true,
       "note": "",
-      "script": "scripts/run_humanoid_multiview_ctrlworld_4view_grid_svg1.sh"
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1600,7 +1600,7 @@
       "documented_in_rule": "ctrlworld-single-arm-multiview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG1 -- TUNED (see ctrlworld-single-arm-multiview-sparse-attention-insights).",
-      "script": "scripts/run_single_arm_multiview_ctrlworld_svg1.sh"
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1614,7 +1614,7 @@
       "documented_in_rule": "dreamgen-bimanual-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "--- SVG1 parameters. MEASURED on bimanual singleview 2B (iter 110k): --- SVG1 is NET-NEGATIVE here: default (sparsity 0.25) = 341s, aggressive (sparsity 0.5, start 1) = 324s, both SLOWER than dense ~263s though visually clean. Spatial-attn sparsity has little to attack on this 2B DiT and its overhead dominates. Kept runnable as a benchmark point; use DiCache/WorldCache (~1.3x) for real speedup. De",
-      "script": "scripts/run_bimanual_singleview_dreamgen_svg1.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1628,7 +1628,7 @@
       "documented_in_rule": "dreamgen-humanoid-multiview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG1 parameters (seeded from README humanoid singleview defaults; re-tune per model).",
-      "script": "scripts/run_humanoid_multiview_dreamgen_svg1.sh"
+      "script": "scripts/run/dreamgen/run_humanoid_multiview_dreamgen_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1642,7 +1642,7 @@
       "documented_in_rule": "dreamgen-humanoid-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "--- SVG1 parameters ---",
-      "script": "scripts/run_humanoid_singleview_dreamgen_svg1.sh"
+      "script": "scripts/run/dreamgen/run_humanoid_singleview_dreamgen_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1656,7 +1656,7 @@
       "documented_in_rule": "dreamgen-single-arm-multiview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "",
-      "script": "scripts/run_single_arm_multiview_dreamgen_svg1.sh"
+      "script": "scripts/run/dreamgen/run_single_arm_multiview_dreamgen_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1670,7 +1670,7 @@
       "documented_in_rule": null,
       "justified": true,
       "note": "SVG1 parameters -- TUNED per model (see the 4view-grid sparse-attention rule).",
-      "script": "scripts/run_humanoid_multiview_ctrlworld_svg1.sh"
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1684,7 +1684,7 @@
       "documented_in_rule": "dreamgen-single-arm-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "",
-      "script": "scripts/run_single_arm_singleview_dreamgen_svg1.sh"
+      "script": "scripts/run/dreamgen/run_single_arm_singleview_dreamgen_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1698,7 +1698,7 @@
       "documented_in_rule": "ctrlworld-bimanual-multiview-4view-grid-sparse-attention-insights.mdc",
       "justified": true,
       "note": "",
-      "script": "scripts/run_bimanual_multiview_ctrlworld_4view_grid_svg1.sh"
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1712,7 +1712,7 @@
       "documented_in_rule": null,
       "justified": true,
       "note": "SVG1 parameters -- TUNED per model (see the 4view-grid sparse-attention rule).",
-      "script": "scripts/run_humanoid_multiview_ctrlworld_svg1.sh"
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1726,7 +1726,7 @@
       "documented_in_rule": "ctrlworld-humanoid-multiview-4view-grid-sparse-attention-insights.mdc",
       "justified": true,
       "note": "",
-      "script": "scripts/run_humanoid_multiview_ctrlworld_4view_grid_svg1.sh"
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1740,7 +1740,7 @@
       "documented_in_rule": "ctrlworld-single-arm-multiview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG1 -- TUNED (see ctrlworld-single-arm-multiview-sparse-attention-insights).",
-      "script": "scripts/run_single_arm_multiview_ctrlworld_svg1.sh"
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1754,7 +1754,7 @@
       "documented_in_rule": "dreamdojo-bimanual-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG1 parameters (tuned; see dreamdojo-bimanual-singleview-sparse-attention-insights) sparsity 0.25 / start 2 / profile cached: 402.00s vs dense 390.08s = 0.97x (SLOWER) at PSNR 17.99 / SSIM 0.691 (already below dense 18.44 / 0.710). SVG1 never beats dense here (same S=4800 flex_attention overhead as humanoid / single_arm). BREAK POINT is sparsity <= 0.05: PSNR 14.21, SSIM 0.529, last-frame DESTROY",
-      "script": "scripts/run_bimanual_singleview_dreamdojo_svg1.sh"
+      "script": "scripts/run/dreamdojo/run_bimanual_singleview_dreamdojo_svg1.sh"
     },
     {
       "method": "svg1",
@@ -1768,7 +1768,7 @@
       "documented_in_rule": "dreamdojo-single-arm-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG1 parameters (tuned; see dreamdojo-single-arm-singleview-sparse-attention-insights) sparsity 0.25 is the quality-leaning point among SVG1 configs: 158.51s vs dense 144.80s = 0.91x (SLOWER) at PSNR 25.85 / SSIM 0.898 (already below dense 27.57 / 0.920). SVG1 never beats dense here (same kernel-bound S=4800 story as humanoid). BREAK POINT is sparsity <= 0.05: PSNR 23.43, last-frame visibly smeare",
-      "script": "scripts/run_single_arm_singleview_dreamdojo_svg1.sh"
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_svg1.sh"
     },
     {
       "method": "svg2",
@@ -1782,7 +1782,7 @@
       "documented_in_rule": "dreamdojo-bimanual-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG2 parameters (tuned; see dreamdojo-bimanual-singleview-sparse-attention-insights) top_p 0.6 keeps quality (PSNR 18.86 / SSIM 0.712 vs dense 18.44 / 0.710) but costs 567.92s vs 390.08s = 0.69x. SVG2 cannot win: block-sparse kernel at S=4800 is slower than dense flash even before kmeans overhead. BREAK POINT is top_p <= 0.3: SSIM 0.671, LPIPS 0.305 -> 0.388, last-frame smear.",
-      "script": "scripts/run_bimanual_singleview_dreamdojo_svg2.sh"
+      "script": "scripts/run/dreamdojo/run_bimanual_singleview_dreamdojo_svg2.sh"
     },
     {
       "method": "svg2",
@@ -1796,7 +1796,7 @@
       "documented_in_rule": "dreamdojo-humanoid-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG2 parameters (tuned defaults; see dreamdojo-humanoid-singleview-sparse-attention rule)",
-      "script": "scripts/run_humanoid_singleview_dreamdojo_svg2.sh"
+      "script": "scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_svg2.sh"
     },
     {
       "method": "svg2",
@@ -1810,7 +1810,7 @@
       "documented_in_rule": "dreamdojo-single-arm-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG2 parameters (tuned; see dreamdojo-single-arm-singleview-sparse-attention-insights) top_p 0.6 keeps the least-bad quality (PSNR 25.70 / SSIM 0.886 vs dense 27.57 / 0.920) but costs 210.04s vs 144.80s = 0.69x. SVG2 cannot win: block-sparse kernel at S=4800 is slower than dense flash even before kmeans overhead. BREAK POINT is top_p <= 0.3: PSNR 23.08, LPIPS 0.150 -> 0.300, still 0.77x.",
-      "script": "scripts/run_single_arm_singleview_dreamdojo_svg2.sh"
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_svg2.sh"
     },
     {
       "method": "svg2",
@@ -1824,7 +1824,7 @@
       "documented_in_rule": "dreamdojo-bimanual-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG2 parameters (tuned; see dreamdojo-bimanual-singleview-sparse-attention-insights) top_p 0.6 keeps quality (PSNR 18.86 / SSIM 0.712 vs dense 18.44 / 0.710) but costs 567.92s vs 390.08s = 0.69x. SVG2 cannot win: block-sparse kernel at S=4800 is slower than dense flash even before kmeans overhead. BREAK POINT is top_p <= 0.3: SSIM 0.671, LPIPS 0.305 -> 0.388, last-frame smear.",
-      "script": "scripts/run_bimanual_singleview_dreamdojo_svg2.sh"
+      "script": "scripts/run/dreamdojo/run_bimanual_singleview_dreamdojo_svg2.sh"
     },
     {
       "method": "svg2",
@@ -1838,7 +1838,7 @@
       "documented_in_rule": "dreamdojo-humanoid-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG2 parameters (tuned defaults; see dreamdojo-humanoid-singleview-sparse-attention rule)",
-      "script": "scripts/run_humanoid_singleview_dreamdojo_svg2.sh"
+      "script": "scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_svg2.sh"
     },
     {
       "method": "svg2",
@@ -1852,7 +1852,7 @@
       "documented_in_rule": "dreamdojo-single-arm-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG2 parameters (tuned; see dreamdojo-single-arm-singleview-sparse-attention-insights) top_p 0.6 keeps the least-bad quality (PSNR 25.70 / SSIM 0.886 vs dense 27.57 / 0.920) but costs 210.04s vs 144.80s = 0.69x. SVG2 cannot win: block-sparse kernel at S=4800 is slower than dense flash even before kmeans overhead. BREAK POINT is top_p <= 0.3: PSNR 23.08, LPIPS 0.150 -> 0.300, still 0.77x.",
-      "script": "scripts/run_single_arm_singleview_dreamdojo_svg2.sh"
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_svg2.sh"
     },
     {
       "method": "svg2",
@@ -1866,7 +1866,7 @@
       "documented_in_rule": "dreamdojo-bimanual-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG2 parameters (tuned; see dreamdojo-bimanual-singleview-sparse-attention-insights) top_p 0.6 keeps quality (PSNR 18.86 / SSIM 0.712 vs dense 18.44 / 0.710) but costs 567.92s vs 390.08s = 0.69x. SVG2 cannot win: block-sparse kernel at S=4800 is slower than dense flash even before kmeans overhead. BREAK POINT is top_p <= 0.3: SSIM 0.671, LPIPS 0.305 -> 0.388, last-frame smear.",
-      "script": "scripts/run_bimanual_singleview_dreamdojo_svg2.sh"
+      "script": "scripts/run/dreamdojo/run_bimanual_singleview_dreamdojo_svg2.sh"
     },
     {
       "method": "svg2",
@@ -1880,7 +1880,7 @@
       "documented_in_rule": "dreamdojo-humanoid-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG2 parameters (tuned defaults; see dreamdojo-humanoid-singleview-sparse-attention rule)",
-      "script": "scripts/run_humanoid_singleview_dreamdojo_svg2.sh"
+      "script": "scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_svg2.sh"
     },
     {
       "method": "svg2",
@@ -1894,7 +1894,7 @@
       "documented_in_rule": "dreamdojo-single-arm-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG2 parameters (tuned; see dreamdojo-single-arm-singleview-sparse-attention-insights) top_p 0.6 keeps the least-bad quality (PSNR 25.70 / SSIM 0.886 vs dense 27.57 / 0.920) but costs 210.04s vs 144.80s = 0.69x. SVG2 cannot win: block-sparse kernel at S=4800 is slower than dense flash even before kmeans overhead. BREAK POINT is top_p <= 0.3: PSNR 23.08, LPIPS 0.150 -> 0.300, still 0.77x.",
-      "script": "scripts/run_single_arm_singleview_dreamdojo_svg2.sh"
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_svg2.sh"
     },
     {
       "method": "svg2",
@@ -1908,7 +1908,7 @@
       "documented_in_rule": "dreamgen-bimanual-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "--- SVG2 parameters. FIXED + measured on bimanual singleview 2B (iter 110k): --- SVG2 now RUNS (was OOM with flashinfer 0.2.5). Warm-cache ~314s vs dense ~263s (~0.84x, net-NEGATIVE) but visually clean. The k-means cluster+permute+block- sparse overhead exceeds attention saved on this small 2B DiT. Valid benchmark point; use DiCache/WorldCache (~1.3x) for real speedup.",
-      "script": "scripts/run_bimanual_singleview_dreamgen_svg2.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_svg2.sh"
     },
     {
       "method": "svg2",
@@ -1922,7 +1922,7 @@
       "documented_in_rule": "ctrlworld-bimanual-multiview-4view-grid-sparse-attention-insights.mdc",
       "justified": true,
       "note": "",
-      "script": "scripts/run_bimanual_multiview_ctrlworld_4view_grid_svg2.sh"
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid_svg2.sh"
     },
     {
       "method": "svg2",
@@ -1936,7 +1936,7 @@
       "documented_in_rule": null,
       "justified": true,
       "note": "SVG2 parameters -- TUNED per model (see the 4view-grid sparse-attention rule).",
-      "script": "scripts/run_humanoid_multiview_ctrlworld_svg2.sh"
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_svg2.sh"
     },
     {
       "method": "svg2",
@@ -1950,7 +1950,7 @@
       "documented_in_rule": "ctrlworld-humanoid-multiview-4view-grid-sparse-attention-insights.mdc",
       "justified": true,
       "note": "",
-      "script": "scripts/run_humanoid_multiview_ctrlworld_4view_grid_svg2.sh"
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_svg2.sh"
     },
     {
       "method": "svg2",
@@ -1964,7 +1964,7 @@
       "documented_in_rule": "ctrlworld-single-arm-multiview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG2 -- TUNED (see ctrlworld-single-arm-multiview-sparse-attention-insights).",
-      "script": "scripts/run_single_arm_multiview_ctrlworld_svg2.sh"
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_svg2.sh"
     },
     {
       "method": "svg2",
@@ -1978,7 +1978,7 @@
       "documented_in_rule": "dreamdojo-bimanual-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG2 parameters (tuned; see dreamdojo-bimanual-singleview-sparse-attention-insights) top_p 0.6 keeps quality (PSNR 18.86 / SSIM 0.712 vs dense 18.44 / 0.710) but costs 567.92s vs 390.08s = 0.69x. SVG2 cannot win: block-sparse kernel at S=4800 is slower than dense flash even before kmeans overhead. BREAK POINT is top_p <= 0.3: SSIM 0.671, LPIPS 0.305 -> 0.388, last-frame smear.",
-      "script": "scripts/run_bimanual_singleview_dreamdojo_svg2.sh"
+      "script": "scripts/run/dreamdojo/run_bimanual_singleview_dreamdojo_svg2.sh"
     },
     {
       "method": "svg2",
@@ -1992,7 +1992,7 @@
       "documented_in_rule": "dreamdojo-humanoid-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG2 parameters (tuned defaults; see dreamdojo-humanoid-singleview-sparse-attention rule)",
-      "script": "scripts/run_humanoid_singleview_dreamdojo_svg2.sh"
+      "script": "scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_svg2.sh"
     },
     {
       "method": "svg2",
@@ -2006,7 +2006,7 @@
       "documented_in_rule": "dreamdojo-single-arm-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG2 parameters (tuned; see dreamdojo-single-arm-singleview-sparse-attention-insights) top_p 0.6 keeps the least-bad quality (PSNR 25.70 / SSIM 0.886 vs dense 27.57 / 0.920) but costs 210.04s vs 144.80s = 0.69x. SVG2 cannot win: block-sparse kernel at S=4800 is slower than dense flash even before kmeans overhead. BREAK POINT is top_p <= 0.3: PSNR 23.08, LPIPS 0.150 -> 0.300, still 0.77x.",
-      "script": "scripts/run_single_arm_singleview_dreamdojo_svg2.sh"
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_svg2.sh"
     },
     {
       "method": "svg2",
@@ -2020,7 +2020,7 @@
       "documented_in_rule": "dreamdojo-bimanual-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG2 parameters (tuned; see dreamdojo-bimanual-singleview-sparse-attention-insights) top_p 0.6 keeps quality (PSNR 18.86 / SSIM 0.712 vs dense 18.44 / 0.710) but costs 567.92s vs 390.08s = 0.69x. SVG2 cannot win: block-sparse kernel at S=4800 is slower than dense flash even before kmeans overhead. BREAK POINT is top_p <= 0.3: SSIM 0.671, LPIPS 0.305 -> 0.388, last-frame smear.",
-      "script": "scripts/run_bimanual_singleview_dreamdojo_svg2.sh"
+      "script": "scripts/run/dreamdojo/run_bimanual_singleview_dreamdojo_svg2.sh"
     },
     {
       "method": "svg2",
@@ -2034,7 +2034,7 @@
       "documented_in_rule": "dreamdojo-humanoid-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG2 parameters (tuned defaults; see dreamdojo-humanoid-singleview-sparse-attention rule)",
-      "script": "scripts/run_humanoid_singleview_dreamdojo_svg2.sh"
+      "script": "scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_svg2.sh"
     },
     {
       "method": "svg2",
@@ -2048,7 +2048,7 @@
       "documented_in_rule": "dreamdojo-single-arm-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG2 parameters (tuned; see dreamdojo-single-arm-singleview-sparse-attention-insights) top_p 0.6 keeps the least-bad quality (PSNR 25.70 / SSIM 0.886 vs dense 27.57 / 0.920) but costs 210.04s vs 144.80s = 0.69x. SVG2 cannot win: block-sparse kernel at S=4800 is slower than dense flash even before kmeans overhead. BREAK POINT is top_p <= 0.3: PSNR 23.08, LPIPS 0.150 -> 0.300, still 0.77x.",
-      "script": "scripts/run_single_arm_singleview_dreamdojo_svg2.sh"
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_svg2.sh"
     },
     {
       "method": "svg2",
@@ -2062,7 +2062,7 @@
       "documented_in_rule": "dreamgen-bimanual-multiview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "SVG2 parameters (seeded from singleview; sweep via env). Tuned on bimanual multiview: top_p_kmeans 0.6 (min_kc 0.15) -> 1.40x at PSNR 12.81 / SSIM 0.536 (== dense). The old 0.9 default kept ~90% of key blocks (near-dense) -> only 1.35x for the same quality; 0.6 and 0.7 are equal quality, 0.6 slightly faster. Keep centroids at q32/k64 -> fewer centroids corrupt output.",
-      "script": "scripts/run_bimanual_multiview_dreamgen_svg2.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_multiview_dreamgen_svg2.sh"
     },
     {
       "method": "svg2",
@@ -2076,7 +2076,7 @@
       "documented_in_rule": "dreamgen-bimanual-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "--- SVG2 parameters. FIXED + measured on bimanual singleview 2B (iter 110k): --- SVG2 now RUNS (was OOM with flashinfer 0.2.5). Warm-cache ~314s vs dense ~263s (~0.84x, net-NEGATIVE) but visually clean. The k-means cluster+permute+block- sparse overhead exceeds attention saved on this small 2B DiT. Valid benchmark point; use DiCache/WorldCache (~1.3x) for real speedup.",
-      "script": "scripts/run_bimanual_singleview_dreamgen_svg2.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_svg2.sh"
     },
     {
       "method": "radial",
@@ -2090,7 +2090,7 @@
       "documented_in_rule": "dreamdojo-bimanual-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "Radial parameters (tuned; see dreamdojo-bimanual-singleview-sparse-attention-insights) start 2 / hunyuan / decay 0.5 -> 380.74s vs dense 390.08s (1.02x) at PSNR 18.45 / SSIM 0.709 (== dense 18.44 / 0.710). decay 1.0 is quality-safe but 1.00x (no speedup). BREAK POINT is decay <= 0.25: PSNR 17.76, SSIM 0.686, last-frame box/tape warp.",
-      "script": "scripts/run_bimanual_singleview_dreamdojo_radial.sh"
+      "script": "scripts/run/dreamdojo/run_bimanual_singleview_dreamdojo_radial.sh"
     },
     {
       "method": "radial",
@@ -2104,7 +2104,7 @@
       "documented_in_rule": "dreamdojo-single-arm-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "Radial parameters (tuned; see dreamdojo-single-arm-singleview-sparse-attention-insights)",
-      "script": "scripts/run_single_arm_singleview_dreamdojo_radial.sh"
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_radial.sh"
     },
     {
       "method": "radial",
@@ -2118,7 +2118,7 @@
       "documented_in_rule": "dreamgen-bimanual-multiview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "Tuned on bimanual multiview: start 8 / wan -> 1.41x at PSNR 12.11 / SSIM 0.456, the least-lossy Radial point. start4/hunyuan is faster (1.59x) but SSIM 0.436 and visibly distorts the wrist views; start4/wan is worst (PSNR 11.81). Radial is the weakest-quality sparse method here -> kept as a valid benchmark point.",
-      "script": "scripts/run_bimanual_multiview_dreamgen_radial.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_multiview_dreamgen_radial.sh"
     },
     {
       "method": "radial",
@@ -2132,7 +2132,7 @@
       "documented_in_rule": "dreamgen-bimanual-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "--- Radial parameters. TUNED for bimanual singleview 2B (iter 110k): --- decay 0.2 / start_layer 1 -> 239s vs dense ~263s (~1.10x) but MILD distortion (center arms/objects slightly warped). decay 1.0 (default) = 276s (~1.0x, clean, no speedup). Radial is weak here; DiCache/WorldCache (~1.3x) are better. This is the faster-but-slightly-lossy knee.",
-      "script": "scripts/run_bimanual_singleview_dreamgen_radial.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_radial.sh"
     },
     {
       "method": "radial",
@@ -2146,7 +2146,7 @@
       "documented_in_rule": "dreamgen-bimanual-multiview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "Tuned on bimanual multiview: start 8 / wan -> 1.41x at PSNR 12.11 / SSIM 0.456, the least-lossy Radial point. start4/hunyuan is faster (1.59x) but SSIM 0.436 and visibly distorts the wrist views; start4/wan is worst (PSNR 11.81). Radial is the weakest-quality sparse method here -> kept as a valid benchmark point.",
-      "script": "scripts/run_bimanual_multiview_dreamgen_radial.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_multiview_dreamgen_radial.sh"
     },
     {
       "method": "radial",
@@ -2160,7 +2160,7 @@
       "documented_in_rule": "ctrlworld-bimanual-multiview-4view-grid-sparse-attention-insights.mdc",
       "justified": true,
       "note": "",
-      "script": "scripts/run_bimanual_multiview_ctrlworld_4view_grid_radial.sh"
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid_radial.sh"
     },
     {
       "method": "radial",
@@ -2174,7 +2174,7 @@
       "documented_in_rule": "ctrlworld-humanoid-multiview-4view-grid-sparse-attention-insights.mdc",
       "justified": true,
       "note": "",
-      "script": "scripts/run_humanoid_multiview_ctrlworld_4view_grid_radial.sh"
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_radial.sh"
     },
     {
       "method": "radial",
@@ -2188,7 +2188,7 @@
       "documented_in_rule": "dreamdojo-bimanual-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "Radial parameters (tuned; see dreamdojo-bimanual-singleview-sparse-attention-insights) start 2 / hunyuan / decay 0.5 -> 380.74s vs dense 390.08s (1.02x) at PSNR 18.45 / SSIM 0.709 (== dense 18.44 / 0.710). decay 1.0 is quality-safe but 1.00x (no speedup). BREAK POINT is decay <= 0.25: PSNR 17.76, SSIM 0.686, last-frame box/tape warp.",
-      "script": "scripts/run_bimanual_singleview_dreamdojo_radial.sh"
+      "script": "scripts/run/dreamdojo/run_bimanual_singleview_dreamdojo_radial.sh"
     },
     {
       "method": "radial",
@@ -2202,7 +2202,7 @@
       "documented_in_rule": "dreamdojo-humanoid-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "Radial parameters (tuned defaults; see dreamdojo-humanoid-singleview-sparse-attention rule)",
-      "script": "scripts/run_humanoid_singleview_dreamdojo_radial.sh"
+      "script": "scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_radial.sh"
     },
     {
       "method": "radial",
@@ -2216,7 +2216,7 @@
       "documented_in_rule": "dreamdojo-single-arm-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "Radial parameters (tuned; see dreamdojo-single-arm-singleview-sparse-attention-insights)",
-      "script": "scripts/run_single_arm_singleview_dreamdojo_radial.sh"
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_radial.sh"
     },
     {
       "method": "radial",
@@ -2230,7 +2230,7 @@
       "documented_in_rule": "dreamgen-bimanual-multiview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "Tuned on bimanual multiview: start 8 / wan -> 1.41x at PSNR 12.11 / SSIM 0.456, the least-lossy Radial point. start4/hunyuan is faster (1.59x) but SSIM 0.436 and visibly distorts the wrist views; start4/wan is worst (PSNR 11.81). Radial is the weakest-quality sparse method here -> kept as a valid benchmark point.",
-      "script": "scripts/run_bimanual_multiview_dreamgen_radial.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_multiview_dreamgen_radial.sh"
     },
     {
       "method": "radial",
@@ -2244,7 +2244,7 @@
       "documented_in_rule": "dreamgen-bimanual-singleview-sparse-attention-insights.mdc",
       "justified": true,
       "note": "--- Radial parameters. TUNED for bimanual singleview 2B (iter 110k): --- decay 0.2 / start_layer 1 -> 239s vs dense ~263s (~1.10x) but MILD distortion (center arms/objects slightly warped). decay 1.0 (default) = 276s (~1.0x, clean, no speedup). Radial is weak here; DiCache/WorldCache (~1.3x) are better. This is the faster-but-slightly-lossy knee.",
-      "script": "scripts/run_bimanual_singleview_dreamgen_radial.sh"
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_radial.sh"
     }
   ],
   "n_divergences": 151,
@@ -2272,7 +2272,7 @@
         "downsample": "4",
         "variant": "ST-hold"
       },
-      "script": "scripts/run_bimanual_multiview_ctrlworld_4view_grid_sito.sh",
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid_sito.sh",
       "raw_env": {
         "SITO_ST_KEEP_RATIO": "0.8",
         "SITO_MAX_DOWNSAMPLE_RATIO": "4"
@@ -2297,7 +2297,7 @@
         "downsample": "4",
         "variant": "ST-hold"
       },
-      "script": "scripts/run_humanoid_multiview_ctrlworld_sito.sh",
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_sito.sh",
       "raw_env": {
         "SITO_ST_KEEP_RATIO": "0.8",
         "SITO_MAX_DOWNSAMPLE_RATIO": "4"
@@ -2322,7 +2322,7 @@
         "downsample": "4",
         "variant": "ST-hold"
       },
-      "script": "scripts/run_humanoid_multiview_ctrlworld_4view_grid_sito.sh",
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_sito.sh",
       "raw_env": {
         "SITO_ST_KEEP_RATIO": "0.8",
         "SITO_MAX_DOWNSAMPLE_RATIO": "4"
@@ -2347,7 +2347,7 @@
         "keep_ratio": "0.9",
         "variant": "ST-hold"
       },
-      "script": "scripts/run_single_arm_multiview_ctrlworld_sito.sh",
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_sito.sh",
       "raw_env": {
         "SITO_MAX_DOWNSAMPLE_RATIO": "1",
         "SITO_ST_KEEP_RATIO": "0.9"
@@ -2372,7 +2372,7 @@
         "keep_last_dense": "2",
         "variant": "per-attn."
       },
-      "script": "scripts/run_humanoid_singleview_dreamdojo_sito.sh",
+      "script": "scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_sito.sh",
       "raw_env": {
         "SITO_START_LAYER_IDX": "4",
         "SITO_KEEP_LAST_N_DENSE": "2"
@@ -2397,7 +2397,7 @@
         "keep_last_dense": "2",
         "variant": "per-attn."
       },
-      "script": "scripts/run_single_arm_singleview_dreamdojo_sito.sh",
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_sito.sh",
       "raw_env": {
         "SITO_START_LAYER_IDX": "4",
         "SITO_KEEP_LAST_N_DENSE": "2"
@@ -2425,7 +2425,7 @@
         "noise_alpha": "0.0",
         "variant": "per-attn."
       },
-      "script": "scripts/run_bimanual_multiview_dreamgen_sito.sh",
+      "script": "scripts/run/dreamgen/run_bimanual_multiview_dreamgen_sito.sh",
       "raw_env": {
         "SITO_PRUNE_RATIO": "0.20",
         "SITO_START_LAYER_IDX": "6",
@@ -2456,7 +2456,7 @@
         "noise_alpha": "0.0",
         "variant": "per-attn."
       },
-      "script": "scripts/run_bimanual_singleview_dreamgen_sito.sh",
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_sito.sh",
       "raw_env": {
         "SITO_PRUNE_RATIO": "0.30",
         "SITO_START_LAYER_IDX": "6",
@@ -2487,7 +2487,7 @@
         "noise_alpha": "0.0",
         "variant": "per-attn."
       },
-      "script": "scripts/run_humanoid_multiview_dreamgen_sito.sh",
+      "script": "scripts/run/dreamgen/run_humanoid_multiview_dreamgen_sito.sh",
       "raw_env": {
         "SITO_PRUNE_RATIO": "0.20",
         "SITO_START_LAYER_IDX": "6",
@@ -2518,7 +2518,7 @@
         "noise_alpha": "0",
         "variant": "per-attn."
       },
-      "script": "scripts/run_humanoid_singleview_dreamgen_sito.sh",
+      "script": "scripts/run/dreamgen/run_humanoid_singleview_dreamgen_sito.sh",
       "raw_env": {
         "SITO_START_LAYER_IDX": "6",
         "SITO_KEEP_LAST_N_DENSE": "2",
@@ -2549,7 +2549,7 @@
         "noise_alpha": "0",
         "variant": "per-attn."
       },
-      "script": "scripts/run_single_arm_multiview_dreamgen_sito.sh",
+      "script": "scripts/run/dreamgen/run_single_arm_multiview_dreamgen_sito.sh",
       "raw_env": {
         "SITO_START_LAYER_IDX": "6",
         "SITO_KEEP_LAST_N_DENSE": "2",
@@ -2580,7 +2580,7 @@
         "noise_alpha": "0",
         "variant": "per-attn."
       },
-      "script": "scripts/run_single_arm_singleview_dreamgen_sito.sh",
+      "script": "scripts/run/dreamgen/run_single_arm_singleview_dreamgen_sito.sh",
       "raw_env": {
         "SITO_START_LAYER_IDX": "6",
         "SITO_KEEP_LAST_N_DENSE": "2",
@@ -2608,7 +2608,7 @@
         "downsample": "4",
         "variant": "ST-hold"
       },
-      "script": "scripts/run_bimanual_multiview_ctrlworld_4view_grid_itm.sh",
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid_itm.sh",
       "raw_env": {
         "ITM_ST_KEEP_RATIO": "0.85",
         "ITM_MAX_DOWNSAMPLE_RATIO": "4"
@@ -2633,7 +2633,7 @@
         "downsample": "4",
         "variant": "ST-hold"
       },
-      "script": "scripts/run_humanoid_multiview_ctrlworld_itm.sh",
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_itm.sh",
       "raw_env": {
         "ITM_ST_KEEP_RATIO": "0.8",
         "ITM_MAX_DOWNSAMPLE_RATIO": "4"
@@ -2658,7 +2658,7 @@
         "downsample": "4",
         "variant": "ST-hold"
       },
-      "script": "scripts/run_humanoid_multiview_ctrlworld_4view_grid_itm.sh",
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_itm.sh",
       "raw_env": {
         "ITM_ST_KEEP_RATIO": "0.85",
         "ITM_MAX_DOWNSAMPLE_RATIO": "4"
@@ -2683,7 +2683,7 @@
         "keep_ratio": "0.8",
         "variant": "ST-hold"
       },
-      "script": "scripts/run_single_arm_multiview_ctrlworld_itm.sh",
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_itm.sh",
       "raw_env": {
         "ITM_MAX_DOWNSAMPLE_RATIO": "4",
         "ITM_ST_KEEP_RATIO": "0.8"
@@ -2710,7 +2710,7 @@
         "merge_from_step": "2",
         "variant": "per-attn."
       },
-      "script": "scripts/run_humanoid_singleview_dreamdojo_itm.sh",
+      "script": "scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_itm.sh",
       "raw_env": {
         "ITM_START_LAYER_IDX": "4",
         "ITM_KEEP_LAST_N_DENSE": "2",
@@ -2739,7 +2739,7 @@
         "merge_from_step": "2",
         "variant": "per-attn."
       },
-      "script": "scripts/run_single_arm_singleview_dreamdojo_itm.sh",
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_itm.sh",
       "raw_env": {
         "ITM_START_LAYER_IDX": "4",
         "ITM_KEEP_LAST_N_DENSE": "2",
@@ -2769,7 +2769,7 @@
         "merge_from_step": "2",
         "variant": "per-attn."
       },
-      "script": "scripts/run_bimanual_multiview_dreamgen_itm.sh",
+      "script": "scripts/run/dreamgen/run_bimanual_multiview_dreamgen_itm.sh",
       "raw_env": {
         "ITM_COMPRESS_RATIO": "0.20",
         "ITM_START_LAYER_IDX": "11",
@@ -2800,7 +2800,7 @@
         "merge_from_step": "2",
         "variant": "per-attn."
       },
-      "script": "scripts/run_bimanual_singleview_dreamgen_itm.sh",
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_itm.sh",
       "raw_env": {
         "ITM_COMPRESS_RATIO": "0.20",
         "ITM_START_LAYER_IDX": "11",
@@ -2831,7 +2831,7 @@
         "merge_from_step": "2",
         "variant": "per-attn."
       },
-      "script": "scripts/run_humanoid_multiview_dreamgen_itm.sh",
+      "script": "scripts/run/dreamgen/run_humanoid_multiview_dreamgen_itm.sh",
       "raw_env": {
         "ITM_COMPRESS_RATIO": "0.20",
         "ITM_START_LAYER_IDX": "11",
@@ -2862,7 +2862,7 @@
         "compress_ratio": "0.2",
         "variant": "per-attn."
       },
-      "script": "scripts/run_humanoid_singleview_dreamgen_itm.sh",
+      "script": "scripts/run/dreamgen/run_humanoid_singleview_dreamgen_itm.sh",
       "raw_env": {
         "ITM_START_LAYER_IDX": "11",
         "ITM_KEEP_LAST_N_DENSE": "4",
@@ -2893,7 +2893,7 @@
         "compress_ratio": "0.2",
         "variant": "per-attn."
       },
-      "script": "scripts/run_single_arm_multiview_dreamgen_itm.sh",
+      "script": "scripts/run/dreamgen/run_single_arm_multiview_dreamgen_itm.sh",
       "raw_env": {
         "ITM_START_LAYER_IDX": "14",
         "ITM_KEEP_LAST_N_DENSE": "4",
@@ -2924,7 +2924,7 @@
         "compress_ratio": "0.2",
         "variant": "per-attn."
       },
-      "script": "scripts/run_single_arm_singleview_dreamgen_itm.sh",
+      "script": "scripts/run/dreamgen/run_single_arm_singleview_dreamgen_itm.sh",
       "raw_env": {
         "ITM_START_LAYER_IDX": "11",
         "ITM_KEEP_LAST_N_DENSE": "4",
@@ -2953,7 +2953,7 @@
         "probe": "2",
         "motion_sens": "2.5"
       },
-      "script": "scripts/run_bimanual_multiview_ctrlworld_worldcache.sh",
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_worldcache.sh",
       "raw_env": {
         "WORLDCACHE_REL_L1_THRESH": "0.04",
         "WORLDCACHE_RET_RATIO": "0.4",
@@ -2981,7 +2981,7 @@
         "probe": "1",
         "motion_sens": "2.5"
       },
-      "script": "scripts/run_bimanual_multiview_ctrlworld_4view_grid_worldcache.sh",
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid_worldcache.sh",
       "raw_env": {
         "WORLDCACHE_REL_L1_THRESH": "0.04",
         "WORLDCACHE_RET_RATIO": "0.0",
@@ -3009,7 +3009,7 @@
         "probe": "2",
         "motion_sens": "2.5"
       },
-      "script": "scripts/run_humanoid_multiview_ctrlworld_worldcache.sh",
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_worldcache.sh",
       "raw_env": {
         "WORLDCACHE_REL_L1_THRESH": "0.04",
         "WORLDCACHE_RET_RATIO": "0.4",
@@ -3037,7 +3037,7 @@
         "probe": "1",
         "motion_sens": "2.5"
       },
-      "script": "scripts/run_humanoid_multiview_ctrlworld_4view_grid_worldcache.sh",
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_worldcache.sh",
       "raw_env": {
         "WORLDCACHE_REL_L1_THRESH": "0.03",
         "WORLDCACHE_RET_RATIO": "0.0",
@@ -3065,7 +3065,7 @@
         "probe": "2",
         "motion_sens": "2.5"
       },
-      "script": "scripts/run_single_arm_multiview_ctrlworld_worldcache.sh",
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_worldcache.sh",
       "raw_env": {
         "WORLDCACHE_REL_L1_THRESH": "0.08",
         "WORLDCACHE_RET_RATIO": "0.30",
@@ -3094,7 +3094,7 @@
         "probe": "4",
         "motion_sens": "5.0"
       },
-      "script": "scripts/run_bimanual_singleview_dreamdojo_worldcache.sh",
+      "script": "scripts/run/dreamdojo/run_bimanual_singleview_dreamdojo_worldcache.sh",
       "raw_env": {
         "WORLDCACHE_NUM_STEPS": "35",
         "WORLDCACHE_REL_L1_THRESH": "0.03",
@@ -3124,7 +3124,7 @@
         "probe": "4",
         "motion_sens": "5.0"
       },
-      "script": "scripts/run_humanoid_singleview_dreamdojo_worldcache.sh",
+      "script": "scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_worldcache.sh",
       "raw_env": {
         "WORLDCACHE_NUM_STEPS": "35",
         "WORLDCACHE_REL_L1_THRESH": "0.03",
@@ -3154,7 +3154,7 @@
         "probe": "4",
         "motion_sens": "2.0"
       },
-      "script": "scripts/run_single_arm_singleview_dreamdojo_worldcache.sh",
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_worldcache.sh",
       "raw_env": {
         "WORLDCACHE_NUM_STEPS": "35",
         "WORLDCACHE_REL_L1_THRESH": "0.15",
@@ -3185,7 +3185,7 @@
         "motion_sens": "5.0",
         "dyn_decay": "0"
       },
-      "script": "scripts/run_bimanual_multiview_dreamgen_worldcache.sh",
+      "script": "scripts/run/dreamgen/run_bimanual_multiview_dreamgen_worldcache.sh",
       "raw_env": {
         "WORLDCACHE_NUM_STEPS": "35",
         "WORLDCACHE_REL_L1_THRESH": "0.20",
@@ -3217,7 +3217,7 @@
         "motion_sens": "4.0",
         "dyn_decay": "0"
       },
-      "script": "scripts/run_bimanual_singleview_dreamgen_worldcache.sh",
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_worldcache.sh",
       "raw_env": {
         "WORLDCACHE_NUM_STEPS": "35",
         "WORLDCACHE_REL_L1_THRESH": "0.20",
@@ -3249,7 +3249,7 @@
         "motion_sens": "5.0",
         "dyn_decay": "0"
       },
-      "script": "scripts/run_humanoid_multiview_dreamgen_worldcache.sh",
+      "script": "scripts/run/dreamgen/run_humanoid_multiview_dreamgen_worldcache.sh",
       "raw_env": {
         "WORLDCACHE_NUM_STEPS": "35",
         "WORLDCACHE_REL_L1_THRESH": "0.20",
@@ -3281,7 +3281,7 @@
         "motion_sens": "4.0",
         "dyn_decay": "1"
       },
-      "script": "scripts/run_humanoid_singleview_dreamgen_worldcache.sh",
+      "script": "scripts/run/dreamgen/run_humanoid_singleview_dreamgen_worldcache.sh",
       "raw_env": {
         "WORLDCACHE_NUM_STEPS": "35",
         "WORLDCACHE_REL_L1_THRESH": "0.15",
@@ -3313,7 +3313,7 @@
         "motion_sens": "4.0",
         "dyn_decay": "1"
       },
-      "script": "scripts/run_single_arm_multiview_dreamgen_worldcache.sh",
+      "script": "scripts/run/dreamgen/run_single_arm_multiview_dreamgen_worldcache.sh",
       "raw_env": {
         "WORLDCACHE_NUM_STEPS": "35",
         "WORLDCACHE_REL_L1_THRESH": "0.08",
@@ -3345,7 +3345,7 @@
         "motion_sens": "4.0",
         "dyn_decay": "1"
       },
-      "script": "scripts/run_single_arm_singleview_dreamgen_worldcache.sh",
+      "script": "scripts/run/dreamgen/run_single_arm_singleview_dreamgen_worldcache.sh",
       "raw_env": {
         "WORLDCACHE_NUM_STEPS": "35",
         "WORLDCACHE_REL_L1_THRESH": "0.08",
@@ -3374,7 +3374,7 @@
         "ret_ratio": "0.4",
         "probe": "3"
       },
-      "script": "scripts/run_bimanual_multiview_ctrlworld_dicache.sh",
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_dicache.sh",
       "raw_env": {
         "DICACHE_REL_L1_THRESH": "0.04",
         "DICACHE_RET_RATIO": "0.4",
@@ -3400,7 +3400,7 @@
         "ret_ratio": "0.0",
         "probe": "1"
       },
-      "script": "scripts/run_bimanual_multiview_ctrlworld_4view_grid_dicache.sh",
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid_dicache.sh",
       "raw_env": {
         "DICACHE_REL_L1_THRESH": "0.03",
         "DICACHE_RET_RATIO": "0.0",
@@ -3426,7 +3426,7 @@
         "ret_ratio": "0.4",
         "probe": "3"
       },
-      "script": "scripts/run_humanoid_multiview_ctrlworld_dicache.sh",
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_dicache.sh",
       "raw_env": {
         "DICACHE_REL_L1_THRESH": "0.03",
         "DICACHE_RET_RATIO": "0.4",
@@ -3452,7 +3452,7 @@
         "ret_ratio": "0.0",
         "probe": "1"
       },
-      "script": "scripts/run_humanoid_multiview_ctrlworld_4view_grid_dicache.sh",
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_dicache.sh",
       "raw_env": {
         "DICACHE_REL_L1_THRESH": "0.03",
         "DICACHE_RET_RATIO": "0.0",
@@ -3478,7 +3478,7 @@
         "ret_ratio": "0.3",
         "probe": "3"
       },
-      "script": "scripts/run_single_arm_multiview_ctrlworld_dicache.sh",
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_dicache.sh",
       "raw_env": {
         "DICACHE_REL_L1_THRESH": "0.06",
         "DICACHE_RET_RATIO": "0.3",
@@ -3505,7 +3505,7 @@
         "ret_ratio": "0.2",
         "probe": "2"
       },
-      "script": "scripts/run_bimanual_singleview_dreamdojo_dicache.sh",
+      "script": "scripts/run/dreamdojo/run_bimanual_singleview_dreamdojo_dicache.sh",
       "raw_env": {
         "DICACHE_NUM_STEPS": "35",
         "DICACHE_REL_L1_THRESH": "0.08",
@@ -3533,7 +3533,7 @@
         "ret_ratio": "0.2",
         "probe": "2"
       },
-      "script": "scripts/run_humanoid_singleview_dreamdojo_dicache.sh",
+      "script": "scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_dicache.sh",
       "raw_env": {
         "DICACHE_NUM_STEPS": "35",
         "DICACHE_REL_L1_THRESH": "0.08",
@@ -3561,7 +3561,7 @@
         "ret_ratio": "0.2",
         "probe": "2"
       },
-      "script": "scripts/run_single_arm_singleview_dreamdojo_dicache.sh",
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_dicache.sh",
       "raw_env": {
         "DICACHE_NUM_STEPS": "35",
         "DICACHE_REL_L1_THRESH": "0.08",
@@ -3589,7 +3589,7 @@
         "ret_ratio": "0.2",
         "probe": "2"
       },
-      "script": "scripts/run_bimanual_multiview_dreamgen_dicache.sh",
+      "script": "scripts/run/dreamgen/run_bimanual_multiview_dreamgen_dicache.sh",
       "raw_env": {
         "DICACHE_NUM_STEPS": "35",
         "DICACHE_REL_L1_THRESH": "0.20",
@@ -3617,7 +3617,7 @@
         "ret_ratio": "0.2",
         "probe": "2"
       },
-      "script": "scripts/run_bimanual_singleview_dreamgen_dicache.sh",
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_dicache.sh",
       "raw_env": {
         "DICACHE_NUM_STEPS": "35",
         "DICACHE_REL_L1_THRESH": "0.20",
@@ -3645,7 +3645,7 @@
         "ret_ratio": "0.2",
         "probe": "2"
       },
-      "script": "scripts/run_humanoid_multiview_dreamgen_dicache.sh",
+      "script": "scripts/run/dreamgen/run_humanoid_multiview_dreamgen_dicache.sh",
       "raw_env": {
         "DICACHE_NUM_STEPS": "35",
         "DICACHE_REL_L1_THRESH": "0.20",
@@ -3673,7 +3673,7 @@
         "ret_ratio": "0.2",
         "probe": "2"
       },
-      "script": "scripts/run_humanoid_singleview_dreamgen_dicache.sh",
+      "script": "scripts/run/dreamgen/run_humanoid_singleview_dreamgen_dicache.sh",
       "raw_env": {
         "DICACHE_NUM_STEPS": "35",
         "DICACHE_REL_L1_THRESH": "0.15",
@@ -3701,7 +3701,7 @@
         "ret_ratio": "0.2",
         "probe": "2"
       },
-      "script": "scripts/run_single_arm_multiview_dreamgen_dicache.sh",
+      "script": "scripts/run/dreamgen/run_single_arm_multiview_dreamgen_dicache.sh",
       "raw_env": {
         "DICACHE_NUM_STEPS": "35",
         "DICACHE_REL_L1_THRESH": "0.08",
@@ -3729,7 +3729,7 @@
         "ret_ratio": "0.2",
         "probe": "2"
       },
-      "script": "scripts/run_single_arm_singleview_dreamgen_dicache.sh",
+      "script": "scripts/run/dreamgen/run_single_arm_singleview_dreamgen_dicache.sh",
       "raw_env": {
         "DICACHE_NUM_STEPS": "35",
         "DICACHE_REL_L1_THRESH": "0.08",
@@ -3756,7 +3756,7 @@
         "model_interval": "5",
         "block_interval": "3"
       },
-      "script": "scripts/run_bimanual_multiview_ctrlworld_fastercache.sh",
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_fastercache.sh",
       "raw_env": {
         "FASTERCACHE_START_STEP": "0",
         "FASTERCACHE_MODEL_INTERVAL": "5",
@@ -3782,7 +3782,7 @@
         "model_interval": "5",
         "block_interval": "3"
       },
-      "script": "scripts/run_bimanual_multiview_ctrlworld_4view_grid_fastercache.sh",
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid_fastercache.sh",
       "raw_env": {
         "FASTERCACHE_START_STEP": "0",
         "FASTERCACHE_MODEL_INTERVAL": "5",
@@ -3808,7 +3808,7 @@
         "model_interval": "5",
         "block_interval": "3"
       },
-      "script": "scripts/run_single_arm_multiview_ctrlworld_fastercache.sh",
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_fastercache.sh",
       "raw_env": {
         "FASTERCACHE_START_STEP": "0",
         "FASTERCACHE_MODEL_INTERVAL": "5",
@@ -3834,7 +3834,7 @@
         "model_interval": "5",
         "block_interval": "3"
       },
-      "script": "scripts/run_bimanual_singleview_dreamdojo_fastercache.sh",
+      "script": "scripts/run/dreamdojo/run_bimanual_singleview_dreamdojo_fastercache.sh",
       "raw_env": {
         "FASTERCACHE_START_STEP": "0",
         "FASTERCACHE_MODEL_INTERVAL": "5",
@@ -3860,7 +3860,7 @@
         "model_interval": "5",
         "block_interval": "3"
       },
-      "script": "scripts/run_humanoid_singleview_dreamdojo_fastercache.sh",
+      "script": "scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_fastercache.sh",
       "raw_env": {
         "FASTERCACHE_START_STEP": "0",
         "FASTERCACHE_MODEL_INTERVAL": "5",
@@ -3886,7 +3886,7 @@
         "model_interval": "7",
         "block_interval": "4"
       },
-      "script": "scripts/run_single_arm_singleview_dreamdojo_fastercache.sh",
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_fastercache.sh",
       "raw_env": {
         "FASTERCACHE_START_STEP": "3",
         "FASTERCACHE_MODEL_INTERVAL": "7",
@@ -3912,7 +3912,7 @@
         "model_interval": "2",
         "block_interval": "2"
       },
-      "script": "scripts/run_bimanual_multiview_dreamgen_fastercache.sh",
+      "script": "scripts/run/dreamgen/run_bimanual_multiview_dreamgen_fastercache.sh",
       "raw_env": {
         "FASTERCACHE_START_STEP": "0",
         "FASTERCACHE_MODEL_INTERVAL": "2",
@@ -3938,7 +3938,7 @@
         "model_interval": "2",
         "block_interval": "2"
       },
-      "script": "scripts/run_bimanual_singleview_dreamgen_fastercache.sh",
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_fastercache.sh",
       "raw_env": {
         "FASTERCACHE_START_STEP": "0",
         "FASTERCACHE_MODEL_INTERVAL": "2",
@@ -3964,7 +3964,7 @@
         "model_interval": "5",
         "block_interval": "5"
       },
-      "script": "scripts/run_humanoid_multiview_dreamgen_fastercache.sh",
+      "script": "scripts/run/dreamgen/run_humanoid_multiview_dreamgen_fastercache.sh",
       "raw_env": {
         "FASTERCACHE_START_STEP": "0",
         "FASTERCACHE_MODEL_INTERVAL": "5",
@@ -3990,7 +3990,7 @@
         "model_interval": "5",
         "block_interval": "3"
       },
-      "script": "scripts/run_humanoid_singleview_dreamgen_fastercache.sh",
+      "script": "scripts/run/dreamgen/run_humanoid_singleview_dreamgen_fastercache.sh",
       "raw_env": {
         "FASTERCACHE_START_STEP": "0",
         "FASTERCACHE_MODEL_INTERVAL": "5",
@@ -4016,7 +4016,7 @@
         "model_interval": "5",
         "block_interval": "3"
       },
-      "script": "scripts/run_single_arm_multiview_dreamgen_fastercache.sh",
+      "script": "scripts/run/dreamgen/run_single_arm_multiview_dreamgen_fastercache.sh",
       "raw_env": {
         "FASTERCACHE_START_STEP": "0",
         "FASTERCACHE_MODEL_INTERVAL": "5",
@@ -4042,7 +4042,7 @@
         "model_interval": "5",
         "block_interval": "3"
       },
-      "script": "scripts/run_single_arm_singleview_dreamgen_fastercache.sh",
+      "script": "scripts/run/dreamgen/run_single_arm_singleview_dreamgen_fastercache.sh",
       "raw_env": {
         "FASTERCACHE_START_STEP": "0",
         "FASTERCACHE_MODEL_INTERVAL": "5",
@@ -4068,7 +4068,7 @@
         "block": "64",
         "start_layer": "2"
       },
-      "script": "scripts/run_bimanual_multiview_ctrlworld_4view_grid_pisa.sh",
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid_pisa.sh",
       "raw_env": {
         "PISA_DENSITY": "0.2",
         "PISA_BLOCK_SIZE": "64",
@@ -4094,7 +4094,7 @@
         "block": "64",
         "start_layer": "2"
       },
-      "script": "scripts/run_humanoid_multiview_ctrlworld_pisa.sh",
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_pisa.sh",
       "raw_env": {
         "PISA_DENSITY": "0.2",
         "PISA_BLOCK_SIZE": "64",
@@ -4120,7 +4120,7 @@
         "block": "64",
         "start_layer": "2"
       },
-      "script": "scripts/run_humanoid_multiview_ctrlworld_4view_grid_pisa.sh",
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_pisa.sh",
       "raw_env": {
         "PISA_DENSITY": "0.2",
         "PISA_BLOCK_SIZE": "64",
@@ -4146,7 +4146,7 @@
         "block": "64",
         "start_layer": "2"
       },
-      "script": "scripts/run_single_arm_multiview_ctrlworld_pisa.sh",
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_pisa.sh",
       "raw_env": {
         "PISA_DENSITY": "0.5",
         "PISA_BLOCK_SIZE": "64",
@@ -4172,7 +4172,7 @@
         "block": "64",
         "start_layer": "2"
       },
-      "script": "scripts/run_bimanual_singleview_dreamdojo_pisa.sh",
+      "script": "scripts/run/dreamdojo/run_bimanual_singleview_dreamdojo_pisa.sh",
       "raw_env": {
         "PISA_DENSITY": "0.2",
         "PISA_BLOCK_SIZE": "64",
@@ -4198,7 +4198,7 @@
         "block": "64",
         "start_layer": "2"
       },
-      "script": "scripts/run_humanoid_singleview_dreamdojo_pisa.sh",
+      "script": "scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_pisa.sh",
       "raw_env": {
         "PISA_DENSITY": "0.2",
         "PISA_BLOCK_SIZE": "64",
@@ -4224,7 +4224,7 @@
         "block": "64",
         "start_layer": "2"
       },
-      "script": "scripts/run_single_arm_singleview_dreamdojo_pisa.sh",
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_pisa.sh",
       "raw_env": {
         "PISA_DENSITY": "0.2",
         "PISA_BLOCK_SIZE": "64",
@@ -4250,7 +4250,7 @@
         "block": "64",
         "start_layer": "2"
       },
-      "script": "scripts/run_bimanual_multiview_dreamgen_pisa.sh",
+      "script": "scripts/run/dreamgen/run_bimanual_multiview_dreamgen_pisa.sh",
       "raw_env": {
         "PISA_DENSITY": "0.2",
         "PISA_BLOCK_SIZE": "64",
@@ -4276,7 +4276,7 @@
         "block": "64",
         "start_layer": "0"
       },
-      "script": "scripts/run_bimanual_singleview_dreamgen_pisa.sh",
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_pisa.sh",
       "raw_env": {
         "PISA_DENSITY": "0.1",
         "PISA_BLOCK_SIZE": "64",
@@ -4303,7 +4303,7 @@
         "start_layer": "2",
         "use_bias": "0"
       },
-      "script": "scripts/run_humanoid_multiview_dreamgen_pisa.sh",
+      "script": "scripts/run/dreamgen/run_humanoid_multiview_dreamgen_pisa.sh",
       "raw_env": {
         "PISA_DENSITY": "0.2",
         "PISA_BLOCK_SIZE": "64",
@@ -4330,7 +4330,7 @@
         "block": "64",
         "start_layer": "2"
       },
-      "script": "scripts/run_humanoid_singleview_dreamgen_pisa.sh",
+      "script": "scripts/run/dreamgen/run_humanoid_singleview_dreamgen_pisa.sh",
       "raw_env": {
         "PISA_DENSITY": "0.2",
         "PISA_BLOCK_SIZE": "64",
@@ -4356,7 +4356,7 @@
         "block": "64",
         "start_layer": "2"
       },
-      "script": "scripts/run_single_arm_multiview_dreamgen_pisa.sh",
+      "script": "scripts/run/dreamgen/run_single_arm_multiview_dreamgen_pisa.sh",
       "raw_env": {
         "PISA_DENSITY": "0.2",
         "PISA_BLOCK_SIZE": "64",
@@ -4382,7 +4382,7 @@
         "block": "64",
         "start_layer": "2"
       },
-      "script": "scripts/run_single_arm_singleview_dreamgen_pisa.sh",
+      "script": "scripts/run/dreamgen/run_single_arm_singleview_dreamgen_pisa.sh",
       "raw_env": {
         "PISA_DENSITY": "0.2",
         "PISA_BLOCK_SIZE": "64",
@@ -4408,7 +4408,7 @@
         "rows": "32",
         "start_layer": "2"
       },
-      "script": "scripts/run_bimanual_multiview_ctrlworld_4view_grid_svg1.sh",
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid_svg1.sh",
       "raw_env": {
         "SVG_SPARSITY": "0.25",
         "SVG_NUM_SAMPLED_ROWS": "32",
@@ -4434,7 +4434,7 @@
         "rows": "32",
         "start_layer": "2"
       },
-      "script": "scripts/run_humanoid_multiview_ctrlworld_svg1.sh",
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_svg1.sh",
       "raw_env": {
         "SVG_SPARSITY": "0.15",
         "SVG_NUM_SAMPLED_ROWS": "32",
@@ -4460,7 +4460,7 @@
         "rows": "32",
         "start_layer": "2"
       },
-      "script": "scripts/run_humanoid_multiview_ctrlworld_4view_grid_svg1.sh",
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_svg1.sh",
       "raw_env": {
         "SVG_SPARSITY": "0.25",
         "SVG_NUM_SAMPLED_ROWS": "32",
@@ -4486,7 +4486,7 @@
         "rows": "32",
         "start_layer": "2"
       },
-      "script": "scripts/run_single_arm_multiview_ctrlworld_svg1.sh",
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_svg1.sh",
       "raw_env": {
         "SVG_SPARSITY": "0.25",
         "SVG_NUM_SAMPLED_ROWS": "32",
@@ -4515,7 +4515,7 @@
         "mse_max_row": "1200",
         "profile_every": "999999"
       },
-      "script": "scripts/run_bimanual_singleview_dreamdojo_svg1.sh",
+      "script": "scripts/run/dreamdojo/run_bimanual_singleview_dreamdojo_svg1.sh",
       "raw_env": {
         "SVG_START_LAYER_IDX": "2",
         "SVG_DENSE_STEP_FRAC": "0.05",
@@ -4547,7 +4547,7 @@
         "mse_max_row": "1200",
         "profile_every": "999999"
       },
-      "script": "scripts/run_humanoid_singleview_dreamdojo_svg1.sh",
+      "script": "scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_svg1.sh",
       "raw_env": {
         "SVG_START_LAYER_IDX": "4",
         "SVG_DENSE_STEP_FRAC": "0.05",
@@ -4579,7 +4579,7 @@
         "mse_max_row": "1200",
         "profile_every": "999999"
       },
-      "script": "scripts/run_single_arm_singleview_dreamdojo_svg1.sh",
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_svg1.sh",
       "raw_env": {
         "SVG_START_LAYER_IDX": "2",
         "SVG_DENSE_STEP_FRAC": "0.05",
@@ -4610,7 +4610,7 @@
         "rows": "16",
         "mse_max_row": "3000"
       },
-      "script": "scripts/run_bimanual_multiview_dreamgen_svg1.sh",
+      "script": "scripts/run/dreamgen/run_bimanual_multiview_dreamgen_svg1.sh",
       "raw_env": {
         "SVG_START_LAYER_IDX": "4",
         "SVG_DENSE_STEP_FRAC": "0.05",
@@ -4640,7 +4640,7 @@
         "rows": "64",
         "mse_max_row": "3000"
       },
-      "script": "scripts/run_bimanual_singleview_dreamgen_svg1.sh",
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_svg1.sh",
       "raw_env": {
         "SVG_START_LAYER_IDX": "4",
         "SVG_DENSE_STEP_FRAC": "0.1",
@@ -4670,7 +4670,7 @@
         "rows": "64",
         "mse_max_row": "3000"
       },
-      "script": "scripts/run_humanoid_multiview_dreamgen_svg1.sh",
+      "script": "scripts/run/dreamgen/run_humanoid_multiview_dreamgen_svg1.sh",
       "raw_env": {
         "SVG_START_LAYER_IDX": "4",
         "SVG_DENSE_STEP_FRAC": "0.1",
@@ -4700,7 +4700,7 @@
         "rows": "64",
         "mse_max_row": "3000"
       },
-      "script": "scripts/run_humanoid_singleview_dreamgen_svg1.sh",
+      "script": "scripts/run/dreamgen/run_humanoid_singleview_dreamgen_svg1.sh",
       "raw_env": {
         "SVG_START_LAYER_IDX": "4",
         "SVG_DENSE_STEP_FRAC": "0.1",
@@ -4730,7 +4730,7 @@
         "rows": "64",
         "mse_max_row": "3000"
       },
-      "script": "scripts/run_single_arm_multiview_dreamgen_svg1.sh",
+      "script": "scripts/run/dreamgen/run_single_arm_multiview_dreamgen_svg1.sh",
       "raw_env": {
         "SVG_START_LAYER_IDX": "4",
         "SVG_DENSE_STEP_FRAC": "0.1",
@@ -4760,7 +4760,7 @@
         "rows": "16",
         "mse_max_row": "1500"
       },
-      "script": "scripts/run_single_arm_singleview_dreamgen_svg1.sh",
+      "script": "scripts/run/dreamgen/run_single_arm_singleview_dreamgen_svg1.sh",
       "raw_env": {
         "SVG_START_LAYER_IDX": "4",
         "SVG_DENSE_STEP_FRAC": "0.05",
@@ -4789,7 +4789,7 @@
         "k_centroids": "64",
         "start_layer": "2"
       },
-      "script": "scripts/run_bimanual_multiview_ctrlworld_4view_grid_svg2.sh",
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid_svg2.sh",
       "raw_env": {
         "SVG_NUM_Q_CENTROIDS": "32",
         "SVG_TOP_P_KMEANS": "0.7",
@@ -4817,7 +4817,7 @@
         "top_p": "0.7",
         "start_layer": "2"
       },
-      "script": "scripts/run_humanoid_multiview_ctrlworld_svg2.sh",
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_svg2.sh",
       "raw_env": {
         "SVG_NUM_Q_CENTROIDS": "32",
         "SVG_NUM_K_CENTROIDS": "64",
@@ -4845,7 +4845,7 @@
         "k_centroids": "64",
         "start_layer": "2"
       },
-      "script": "scripts/run_humanoid_multiview_ctrlworld_4view_grid_svg2.sh",
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_svg2.sh",
       "raw_env": {
         "SVG_NUM_Q_CENTROIDS": "32",
         "SVG_TOP_P_KMEANS": "0.7",
@@ -4873,7 +4873,7 @@
         "top_p": "0.7",
         "start_layer": "2"
       },
-      "script": "scripts/run_single_arm_multiview_ctrlworld_svg2.sh",
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_svg2.sh",
       "raw_env": {
         "SVG_NUM_Q_CENTROIDS": "32",
         "SVG_NUM_K_CENTROIDS": "64",
@@ -4905,7 +4905,7 @@
         "kmeans_init": "8",
         "kmeans_step": "2"
       },
-      "script": "scripts/run_bimanual_singleview_dreamdojo_svg2.sh",
+      "script": "scripts/run/dreamdojo/run_bimanual_singleview_dreamdojo_svg2.sh",
       "raw_env": {
         "SVG_START_LAYER_IDX": "4",
         "SVG_DENSE_STEP_FRAC": "0.05",
@@ -4941,7 +4941,7 @@
         "kmeans_init": "8",
         "kmeans_step": "2"
       },
-      "script": "scripts/run_humanoid_singleview_dreamdojo_svg2.sh",
+      "script": "scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_svg2.sh",
       "raw_env": {
         "SVG_START_LAYER_IDX": "4",
         "SVG_DENSE_STEP_FRAC": "0.05",
@@ -4977,7 +4977,7 @@
         "kmeans_init": "8",
         "kmeans_step": "2"
       },
-      "script": "scripts/run_single_arm_singleview_dreamdojo_svg2.sh",
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_svg2.sh",
       "raw_env": {
         "SVG_START_LAYER_IDX": "4",
         "SVG_DENSE_STEP_FRAC": "0.05",
@@ -5013,7 +5013,7 @@
         "kmeans_init": "10",
         "kmeans_step": "1"
       },
-      "script": "scripts/run_bimanual_multiview_dreamgen_svg2.sh",
+      "script": "scripts/run/dreamgen/run_bimanual_multiview_dreamgen_svg2.sh",
       "raw_env": {
         "SVG_START_LAYER_IDX": "1",
         "SVG_DENSE_STEP_FRAC": "0.3",
@@ -5049,7 +5049,7 @@
         "kmeans_init": "10",
         "kmeans_step": "1"
       },
-      "script": "scripts/run_bimanual_singleview_dreamgen_svg2.sh",
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_svg2.sh",
       "raw_env": {
         "SVG_START_LAYER_IDX": "1",
         "SVG_DENSE_STEP_FRAC": "0.3",
@@ -5085,7 +5085,7 @@
         "kmeans_init": "10",
         "kmeans_step": "1"
       },
-      "script": "scripts/run_humanoid_multiview_dreamgen_svg2.sh",
+      "script": "scripts/run/dreamgen/run_humanoid_multiview_dreamgen_svg2.sh",
       "raw_env": {
         "SVG_START_LAYER_IDX": "1",
         "SVG_DENSE_STEP_FRAC": "0.3",
@@ -5121,7 +5121,7 @@
         "kmeans_init": "10",
         "kmeans_step": "1"
       },
-      "script": "scripts/run_humanoid_singleview_dreamgen_svg2.sh",
+      "script": "scripts/run/dreamgen/run_humanoid_singleview_dreamgen_svg2.sh",
       "raw_env": {
         "SVG_START_LAYER_IDX": "1",
         "SVG_DENSE_STEP_FRAC": "0.3",
@@ -5157,7 +5157,7 @@
         "kmeans_init": "10",
         "kmeans_step": "1"
       },
-      "script": "scripts/run_single_arm_multiview_dreamgen_svg2.sh",
+      "script": "scripts/run/dreamgen/run_single_arm_multiview_dreamgen_svg2.sh",
       "raw_env": {
         "SVG_START_LAYER_IDX": "1",
         "SVG_DENSE_STEP_FRAC": "0.3",
@@ -5193,7 +5193,7 @@
         "kmeans_init": "10",
         "kmeans_step": "1"
       },
-      "script": "scripts/run_single_arm_singleview_dreamgen_svg2.sh",
+      "script": "scripts/run/dreamgen/run_single_arm_singleview_dreamgen_svg2.sh",
       "raw_env": {
         "SVG_START_LAYER_IDX": "1",
         "SVG_DENSE_STEP_FRAC": "0.3",
@@ -5225,7 +5225,7 @@
         "block": "64",
         "mask": "hunyuan"
       },
-      "script": "scripts/run_bimanual_multiview_ctrlworld_4view_grid_radial.sh",
+      "script": "scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid_radial.sh",
       "raw_env": {
         "RADIAL_DECAY": "1.0",
         "RADIAL_FIRST_LAYERS_FP": "2",
@@ -5253,7 +5253,7 @@
         "start_layer": "4",
         "mask": "hunyuan"
       },
-      "script": "scripts/run_humanoid_multiview_ctrlworld_radial.sh",
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_radial.sh",
       "raw_env": {
         "RADIAL_DECAY": "1.0",
         "RADIAL_BLOCK_SIZE": "64",
@@ -5281,7 +5281,7 @@
         "block": "64",
         "mask": "hunyuan"
       },
-      "script": "scripts/run_humanoid_multiview_ctrlworld_4view_grid_radial.sh",
+      "script": "scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_radial.sh",
       "raw_env": {
         "RADIAL_DECAY": "1.0",
         "RADIAL_FIRST_LAYERS_FP": "2",
@@ -5309,7 +5309,7 @@
         "start_layer": "4",
         "mask": "hunyuan"
       },
-      "script": "scripts/run_single_arm_multiview_ctrlworld_radial.sh",
+      "script": "scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_radial.sh",
       "raw_env": {
         "RADIAL_DECAY": "1.0",
         "RADIAL_BLOCK_SIZE": "64",
@@ -5337,7 +5337,7 @@
         "start_layer": "2",
         "mask": "hunyuan"
       },
-      "script": "scripts/run_bimanual_singleview_dreamdojo_radial.sh",
+      "script": "scripts/run/dreamdojo/run_bimanual_singleview_dreamdojo_radial.sh",
       "raw_env": {
         "RADIAL_DECAY_FACTOR": "0.5",
         "RADIAL_BLOCK_SIZE": "64",
@@ -5365,7 +5365,7 @@
         "start_layer": "2",
         "mask": "hunyuan"
       },
-      "script": "scripts/run_humanoid_singleview_dreamdojo_radial.sh",
+      "script": "scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_radial.sh",
       "raw_env": {
         "RADIAL_DECAY_FACTOR": "1.0",
         "RADIAL_BLOCK_SIZE": "64",
@@ -5393,7 +5393,7 @@
         "start_layer": "2",
         "mask": "hunyuan"
       },
-      "script": "scripts/run_single_arm_singleview_dreamdojo_radial.sh",
+      "script": "scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_radial.sh",
       "raw_env": {
         "RADIAL_DECAY_FACTOR": "0.5",
         "RADIAL_BLOCK_SIZE": "64",
@@ -5421,7 +5421,7 @@
         "start_layer": "8",
         "mask": "wan"
       },
-      "script": "scripts/run_bimanual_multiview_dreamgen_radial.sh",
+      "script": "scripts/run/dreamgen/run_bimanual_multiview_dreamgen_radial.sh",
       "raw_env": {
         "RADIAL_DECAY_FACTOR": "0.5",
         "RADIAL_BLOCK_SIZE": "64",
@@ -5449,7 +5449,7 @@
         "start_layer": "1",
         "mask": "hunyuan"
       },
-      "script": "scripts/run_bimanual_singleview_dreamgen_radial.sh",
+      "script": "scripts/run/dreamgen/run_bimanual_singleview_dreamgen_radial.sh",
       "raw_env": {
         "RADIAL_DECAY_FACTOR": "0.2",
         "RADIAL_BLOCK_SIZE": "64",
@@ -5477,7 +5477,7 @@
         "start_layer": "4",
         "mask": "hunyuan"
       },
-      "script": "scripts/run_humanoid_multiview_dreamgen_radial.sh",
+      "script": "scripts/run/dreamgen/run_humanoid_multiview_dreamgen_radial.sh",
       "raw_env": {
         "RADIAL_DECAY_FACTOR": "1.0",
         "RADIAL_BLOCK_SIZE": "64",
@@ -5505,7 +5505,7 @@
         "start_layer": "4",
         "mask": "hunyuan"
       },
-      "script": "scripts/run_humanoid_singleview_dreamgen_radial.sh",
+      "script": "scripts/run/dreamgen/run_humanoid_singleview_dreamgen_radial.sh",
       "raw_env": {
         "RADIAL_DECAY_FACTOR": "1.0",
         "RADIAL_BLOCK_SIZE": "64",
@@ -5533,7 +5533,7 @@
         "start_layer": "4",
         "mask": "hunyuan"
       },
-      "script": "scripts/run_single_arm_multiview_dreamgen_radial.sh",
+      "script": "scripts/run/dreamgen/run_single_arm_multiview_dreamgen_radial.sh",
       "raw_env": {
         "RADIAL_DECAY_FACTOR": "1.0",
         "RADIAL_BLOCK_SIZE": "64",
@@ -5561,7 +5561,7 @@
         "start_layer": "4",
         "mask": "hunyuan"
       },
-      "script": "scripts/run_single_arm_singleview_dreamgen_radial.sh",
+      "script": "scripts/run/dreamgen/run_single_arm_singleview_dreamgen_radial.sh",
       "raw_env": {
         "RADIAL_DECAY_FACTOR": "1.0",
         "RADIAL_BLOCK_SIZE": "64",

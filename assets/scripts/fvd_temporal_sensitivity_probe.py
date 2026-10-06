@@ -50,7 +50,7 @@ import numpy as np                                                       # noqa:
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / 'assets' / 'scripts'))
-sys.path.insert(0, str(REPO / 'scripts'))
+sys.path.insert(0, str(REPO / 'scripts' / 'metrics'))
 
 from export_dr_grid_xlsx import model_label                              # noqa: E402
 from export_dr_grid_xlsx_vs_real import ref_identity                     # noqa: E402

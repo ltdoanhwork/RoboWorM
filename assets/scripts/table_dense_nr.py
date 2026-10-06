@@ -83,7 +83,7 @@ MAX_LENGTH_MISMATCH = 0.10
 # row still needs a printed caveat. Bar is |rho| >= 0.35 vs `actor_motion_raw`.
 #
 # Re-measured 2026-09-20 on the full run (26,241 records) with a 400x bootstrap CI,
-# per mount AND per method-class, via `scripts/_check_confound_mounts.py`. The original
+# per mount AND per method-class, via `scripts/metrics/_check_confound_mounts.py`. The original
 # entries came from a ~1.5k head-heavy sample and MISSED the wrist mount entirely:
 #
 #   col                        head            static          wrist
@@ -144,7 +144,7 @@ ACCEL_CAVEATS = {
         'AMC is usable here. But for the blur-like methods (sito 0.758x, itm 0.741x, '
         'svg2 0.932x sharpness vs dense) a small POSITIVE AMC delta (<= ~+0.5) must not '
         'be read as "better than dense" - report it next to the sharpness ratio from '
-        'scripts/_exp_accel_character.py.',
+        'scripts/metrics/_exp_accel_character.py.',
 }
 
 # Columns where a POSITIVE accel-vs-dense delta cannot be an improvement, because the
@@ -192,7 +192,7 @@ PAIRED_ONLY = {
         '(83/83 pairs verified), so the bias cancels exactly. Report paired deltas only. '
         'The E2 single-shuffle control that originally dropped this column was itself '
         'confounded by that bias; the double-centered matrix control '
-        '(scripts/_exp_text_matrix.py) shows CLIPScore does discriminate. '
+        '(scripts/metrics/_exp_text_matrix.py) shows CLIPScore does discriminate. '
         'See docs/dense_nr_experiments.md E2.',
 }
 
@@ -209,7 +209,7 @@ COLUMNS = [
     # Restored 2026-09-16 as a PAIRED-ONLY column. The E2 single-shuffle control read
     # as "saturated" only because CLIPScore carries a per-caption style/length bias
     # (~7 points) that swamps image-text agreement (~2). The clip-by-prompt matrix
-    # control (`scripts/_exp_text_matrix.py`) removes that bias by double-centering and
+    # control (`scripts/metrics/_exp_text_matrix.py`) removes that bias by double-centering and
     # finds real discrimination on every embodiment (centered diagonal +1.40/+2.53/+1.64,
     # all CIs excluding 0; retrieval top-1 37.5% vs 6.2% chance). In the paired table the
     # bias cancels *exactly* -- pred and its own GT are scored against the same prompt in

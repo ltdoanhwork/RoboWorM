@@ -3,7 +3,7 @@
 model family (Ctrl-World / DreamGen / DreamDojo), one polygon per
 acceleration method, summarizing speed vs. fidelity retention vs. dense.
 
-Reads the master table produced by scripts/make_speedup_summary.py
+Reads the master table produced by scripts/tables/make_speedup_summary.py
 (metrics/reports/speedup_summary_full.csv) and rolls it up to one
 (method, model_family) point per axis:
 

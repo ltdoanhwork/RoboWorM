@@ -186,7 +186,7 @@ Notes:
   corpus whose on-disk frame rate disagrees with the rate the dataloader
   reports, both of which the appendix discloses rather than silently fixes.
 - `make_timing_pass_table.py` consumes the JSONL written by
-  `scripts/_bench_uniform_timing.sh`, which must run on an idle GPU; it refuses
+  `scripts/tools/tune/_bench_uniform_timing.sh`, which must run on an idle GPU; it refuses
   to start if another process is resident, since a contended measurement
   describes the contention.
 - `fig_accel_taxonomy.pdf` is hand-drawn and is **not** generated. The `\input`

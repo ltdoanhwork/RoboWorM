@@ -33,7 +33,7 @@ _LAZY = {
     "get_metric_class": "metrics.registry",
     "register": "metrics.registry",
     "available": "metrics.registry",
-    # legacy function API (kept for scripts/compute_dr_metrics.py & co.)
+    # legacy function API (kept for scripts/metrics/compute_dr_metrics.py & co.)
     "calculate_psnr": "metrics.video_metrics",
     "get_video_ssim": "metrics.video_metrics",
     "calculate_lpips": "metrics.video_metrics",

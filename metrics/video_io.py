@@ -1,7 +1,7 @@
 """Frame decoding shared by every in-process metric.
 
 All loaders return uint8 RGB (T, H, W, 3). Decoding uses ``imageio.v3`` -- the
-same reader ``scripts/_score_vs_dense.py`` uses -- so frames are bit-identical to
+same reader ``scripts/metrics/_score_vs_dense.py`` uses -- so frames are bit-identical to
 what the published numbers were computed on.
 """
 from __future__ import annotations

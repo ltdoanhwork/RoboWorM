@@ -90,13 +90,13 @@ not merely present.
 
 ```bash
 # motion_accuracy — our GroundingDINO+SAM2 version (raw grid)
-CUDA_VISIBLE_DEVICES=0 bash scripts/run_motion_accuracy_gdino.sh
+CUDA_VISIBLE_DEVICES=0 bash scripts/metrics/run_motion_accuracy_gdino.sh
 
 # motion_accuracy on the MATCHED grid (GT resampled to each model's res+fps) <- correct protocol
-CUDA_VISIBLE_DEVICES=0 bash scripts/run_motion_accuracy_matched.sh
+CUDA_VISIBLE_DEVICES=0 bash scripts/metrics/run_motion_accuracy_matched.sh
 
 # motion_magnitude + motion_smoothness on the matched grid
-CUDA_VISIBLE_DEVICES=0 SMOOTH_STRIDE=8 bash scripts/run_motion_mag_smooth_matched.sh
+CUDA_VISIBLE_DEVICES=0 SMOOTH_STRIDE=8 bash scripts/metrics/run_motion_mag_smooth_matched.sh
 ```
 
 ## ⚠️ Protocol that matters: always match the grid

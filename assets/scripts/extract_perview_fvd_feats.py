@@ -11,9 +11,9 @@ real-vs-real to 0.3x the floor -- i.e. one distribution, safe to pool.
 Protocol: .cursor/skills/fvd-shared-real-pool/SKILL.md
 
 One output .npz per manifest row, so the job is resumable and shardable across machines
-exactly like scripts/compute_dr_metrics.py:
+exactly like scripts/metrics/compute_dr_metrics.py:
 
-    MACHINES=6 bash scripts/_perview_wave_fg.sh <machine 0..5>
+    MACHINES=6 bash scripts/metrics/_perview_wave_fg.sh <machine 0..5>
 
 Each .npz holds float16 features (feature values are O(1) logits; fp16 costs ~0.1% of the
 FVD value and halves the 1.1M-window footprint) plus the keys needed to pool later.
@@ -35,7 +35,7 @@ import numpy as np                                                       # noqa:
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / 'assets' / 'scripts'))
-sys.path.insert(0, str(REPO / 'scripts'))
+sys.path.insert(0, str(REPO / 'scripts' / 'metrics'))
 
 from export_dr_grid_xlsx import METHOD_LABEL, model_label                # noqa: E402
 from export_dr_grid_xlsx_vs_real import ref_identity                     # noqa: E402

@@ -40,7 +40,7 @@ def _load(name, rel):
 
 
 T = _load('table_dense_nr', 'assets/scripts/table_dense_nr.py')
-NR = _load('run_dense_nr', 'scripts/run_dense_nr.py')
+NR = _load('run_dense_nr', 'scripts/metrics/run_dense_nr.py')
 
 # Directional columns get a poor/good contrast. Actor Activity deliberately does NOT:
 # it is descriptive, so the report shows a magnitude ladder and says so.

@@ -97,7 +97,7 @@ video — see the findings below for why that flattens `subjective_quality` on o
 ## Run
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 STRIDE=10 bash scripts/run_quality_control_probe.sh
+CUDA_VISIBLE_DEVICES=0 STRIDE=10 bash scripts/metrics/run_quality_control_probe.sh
 # -> <OUT>/quality_control_summary.json  (+ quality_control_perframe.json)
 ```
 

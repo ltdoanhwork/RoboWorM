@@ -10,7 +10,7 @@ Two figures, one per family, both built from measurements already in the repo:
       reference-free family. Source: the staged ladder
       `sampling_dataset/data_for_web/qualitative/worldcache_quality_ladder/`
       (`tmp/20261005_refactor/web/assets_scripts/stage_worldcache_ladder_web.py`), whose `info.json` carries the
-      fidelity numbers measured by `scripts/_score_vs_dense.py`.
+      fidelity numbers measured by `scripts/metrics/_score_vs_dense.py`.
 
   fig_ref_intuition_fvd   -- FVD against the number of 16-frame windows, per dense
       multi-view cell, from `metrics/reports/fvd_sample_size_probe.json`

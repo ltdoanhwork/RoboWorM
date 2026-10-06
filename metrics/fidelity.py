@@ -11,7 +11,7 @@ averaging, which is numerically the same mean.
 
 piq conventions worth knowing before comparing against other papers:
   * PSNR: ``10 log10(1 / (MSE + 1e-8))`` -> bit-identical frames give ~80 dB,
-    not inf (``scripts/_score_vs_dense.py`` uses skimage, which gives inf; the
+    not inf (``scripts/metrics/_score_vs_dense.py`` uses skimage, which gives inf; the
     two agree on every non-identical frame).
   * SSIM: 11x11 Gaussian (sigma 1.5), and **downsamples** by
     ``max(1, round(min(H, W) / 256))`` first (the original Wang et al. recipe);

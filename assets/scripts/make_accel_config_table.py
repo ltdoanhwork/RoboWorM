@@ -174,7 +174,7 @@ def load_cells(run: Path):
     that exists only for bimanual/humanoid) are POOLED into one Ctrl-World line, matching
     FAMILY_OF in table_paper_main.py. Note the 3-view records only exist for single_arm in
     this wave -- the bimanual/humanoid 3-view renders are deliberately excluded from
-    scoring (see excluded_row() in scripts/run_dense_nr.py), so those lines are 4-grid only.
+    scoring (see excluded_row() in scripts/metrics/run_dense_nr.py), so those lines are 4-grid only.
     """
     sys.path.insert(0, str(REPO / 'assets/scripts'))
     import table_dense_nr as T

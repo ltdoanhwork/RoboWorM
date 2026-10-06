@@ -2,7 +2,7 @@
 
 WHY THIS FILE EXISTS
 --------------------
-The DreamGen rollout harness (``scripts/infer_bimanual_multiview_rollout.py``) emits
+The DreamGen rollout harness (``scripts/infer/infer_bimanual_multiview_rollout.py``) emits
 PSNR/SSIM/LPIPS and **nothing about cache behaviour** for any backend. So on this
 backbone "the run produced a plausible video" and "the gate never fired and the cache
 did nothing" are the same observable. BSC worked around this with its own

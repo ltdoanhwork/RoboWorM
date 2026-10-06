@@ -17,13 +17,13 @@
     "distinct_source_episodes": 1305
   },
   "notes": [
-    "bimanual singleview exposes the cam_high stream of the SAME ALOHA episodes as bimanual multiview (symlinked by scripts/export_bimanual_singleview_cam_high.py), so those two cells share episodes.",
+    "bimanual singleview exposes the cam_high stream of the SAME ALOHA episodes as bimanual multiview (symlinked by scripts/tools/data/export_bimanual_singleview_cam_high.py), so those two cells share episodes.",
     "single_arm/humanoid singleview come from DIFFERENT corpora than their multiview counterparts (RoboChallenge vs DROID; GR1 vs RoboCOIN); episode-index collisions between them are coincidental and are NOT collapsed when counting distinct trajectories.",
     "episode_instances counts (episode x camera-track) evaluation conditions; distinct_source_episodes counts unique source trajectories.",
     "humanoid multiview spans two camera rigs (cam_front/cam_head vs cam_high/cam_third_view). The union of view names is 6, but each episode carries 4 synchronised views; views_per_episode reports the latter.",
     "frames_selected sums meta/episodes.jsonl length over selected episodes; it is NOT info.json total_frames, which describes the upstream pool.",
     "episodes_selected EXCLUDES episodes that keep their parquet but lack a required view video (3 DROID single_arm multiview episodes: 2 in makovian, 1 in non_makovian). Preparation drops them, so they produce no rollout; see episodes_incomplete_views per cell. This is why the single_arm multiview cells report 128/129 rather than 130/130, and why the benchmark totals 1,605 not 1,608.",
-    "PROVENANCE DISCREPANCY (bimanual): the acquisition manifest in scripts/download_bimanual_multiview_dropbox.sh labels place_the_chinese_spoons_on_the_cloth as 'makovian', but on disk it lives under non_makovian/ (3 episodes). This scan is disk-authoritative, so the tables follow the on-disk placement. Resolve the manifest before release.",
+    "PROVENANCE DISCREPANCY (bimanual): the acquisition manifest in scripts/tools/data/download_bimanual_multiview_dropbox.sh labels place_the_chinese_spoons_on_the_cloth as 'makovian', but on disk it lives under non_makovian/ (3 episodes). This scan is disk-authoritative, so the tables follow the on-disk placement. Resolve the manifest before release.",
     "PROVENANCE GAP (humanoid multiview): the makovian/non_makovian assignment for the 6 RoboCOIN task dirs is materialised as a directory partition but no script or manifest in-tree records the rule.",
     "datasets/bimanual/multiview/non_makovian/ contains download residue ('gr00t?rlkey=...', 'wget-log'). It carries no meta/ dir so it is not counted as a task, but it should be cleaned before release."
   ],

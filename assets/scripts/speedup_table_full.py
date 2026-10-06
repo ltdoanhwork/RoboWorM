@@ -32,7 +32,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "scripts"))
+sys.path.insert(0, str(ROOT / "scripts" / "tables"))
 
 METHODS = ["worldcache", "dicache", "fastercache", "sito", "itm",
            "pisa", "radial", "svg1", "svg2"]
@@ -112,10 +112,10 @@ def build():
         # dies on our argv. Execute just its SPEEDUP_LOOKUP construction: read the
         # file and exec the prefix up to the first `def `/`@dataclass`, which is
         # exactly the _add(...) block.
-        src_txt = (ROOT / "scripts/make_speedup_summary.py").read_text()
+        src_txt = (ROOT / "scripts/tables/make_speedup_summary.py").read_text()
         cut = min((i for i in (src_txt.find("\n@dataclass"), src_txt.find("\ndef parse_cell"))
                    if i > 0), default=len(src_txt))
-        ns: dict = {"__file__": str(ROOT / "scripts/make_speedup_summary.py"),
+        ns: dict = {"__file__": str(ROOT / "scripts/tables/make_speedup_summary.py"),
                     "__name__": "_mss_lookup"}
         exec(compile(src_txt[:cut], "make_speedup_summary.py", "exec"), ns)
         note = ns.get("SPEEDUP_LOOKUP", {})

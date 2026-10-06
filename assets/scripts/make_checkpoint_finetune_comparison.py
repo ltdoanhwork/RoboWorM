@@ -12,7 +12,7 @@ and is architecture-compatible, for a subset of cells:
   - DreamGen bimanual / humanoid multiview (2B): base =
     `checkpoints/base/nvidia/Cosmos-Predict2-2B-Video2World/model-480p-16fps.pt`.
 
-Explicitly out of scope (see scripts/_run_checkpoint_ablation_base.sh header
+Explicitly out of scope (see scripts/run/_run_checkpoint_ablation_base.sh header
 and the paper appendix note for why):
   - Ctrl-World / DreamGen single_arm multiview: dense itself already runs
     the un-finetuned base checkpoint here, so there is nothing to compare.

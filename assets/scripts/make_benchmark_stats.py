@@ -38,7 +38,7 @@ SOURCE = {
     ("single_arm", "singleview"): "RoboChallenge (Traly/RoboChallenge-lerobot)",
     ("bimanual", "multiview"): "AIST Bimanual Manipulation (ALOHA)",
     # singleview is NOT a separate source: it is cam_high of the multiview
-    # episodes (scripts/export_bimanual_singleview_cam_high.py symlinks them)
+    # episodes (scripts/tools/data/export_bimanual_singleview_cam_high.py symlinks them)
     ("bimanual", "singleview"): "AIST Bimanual Manipulation (ALOHA)",
     ("humanoid", "singleview"): "NVIDIA PhysicalAI-Robotics-GR00T-Teleop-GR1",
     ("humanoid", "multiview"): "RoboCOIN (AIRBOT MMK2)",

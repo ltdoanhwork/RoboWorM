@@ -71,7 +71,7 @@ MEAN_TOL = 5e-4
 
 # Display name, access class. `qwen_plus` is the closed 3.6-Plus endpoint and
 # `qwen_35b` the open-weight 35B-A3B; both appear in
-# scripts/compare_ours_vs_vlm_correlation.py as `qwen_close` / `qwen_open`.
+# scripts/tables/compare_ours_vs_vlm_correlation.py as `qwen_close` / `qwen_open`.
 JUDGES = [
     ("gemini_flash", "Gemini 3.6 Flash", "closed"),
     ("qwen_plus", "Qwen 3.6 Plus", "closed"),
@@ -185,7 +185,7 @@ REFERENCE = {
         "resolution": "two agreeing raters, else the geometry arbiter's full "
                       "300-clip pass",
         "n_clips_scored": 189,
-        "source_in_repo": "scripts/compare_ours_vs_vlm_correlation.py",
+        "source_in_repo": "scripts/tables/compare_ours_vs_vlm_correlation.py",
     },
     "embodied_physics": {
         "protocol": "Mode B -- 16-frame segments of 291 videos, blind catalog, "

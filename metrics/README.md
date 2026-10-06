@@ -11,13 +11,13 @@ aggregated and saved the same way from Python or from one CLI
 |---|---|---|---|---|
 | **KIVA** | embodiment hallucination (kinescore rigidity / jerk violation rate, excess over real-video anchor) | `kiva/` (vendored `quang/hallucination-official` @5225ce7) | `kiva` (alias `hallucination`) | ↓ |
 | **RIGIS** | cross-view rigid-geometry consistency (VGGT-Omega) | `rigis/` (vendored `thanhnv/multiview-consistency-indep` @8015d97) | `rigis` (alias `multiview_consistency`) | ↑ |
-| **Visual Integrity** | CLIP-IQA+ (pyiqa `clipiqa+`), reported as the per-clip **p10** over frames | `quality/quality_control_probe.py` (`IQA`), p10 in `scripts/compute_phyworld.py::score_qual` | — (probe) | ↑ |
+| **Visual Integrity** | CLIP-IQA+ (pyiqa `clipiqa+`), reported as the per-clip **p10** over frames | `quality/quality_control_probe.py` (`IQA`), p10 in `scripts/metrics/compute_phyworld.py::score_qual` | — (probe) | ↑ |
 | **Text Alignment** | CLIPScore, torchmetrics `clip-vit-base-patch16`, 0–100 | `clip_score.py` | `clip_score` | ↑ |
 | **FVD** | I3D (StyleGAN-V torchscript), non-overlapping 16-frame windows @ 5 fps, shared per-camera real pool (multi-view) | `fvd.py` | `fvd` | ↓ |
-| **PSNR / SSIM / LPIPS vs dense** | fidelity of an accelerated rollout to the **dense** rollout of the same episode (PhyFid-DR) | `fidelity.py` (piq), DR pass `scripts/compute_dr_metrics.py` | `psnr` `ssim` `lpips` `fidelity` | ↑ ↑ ↓ |
+| **PSNR / SSIM / LPIPS vs dense** | fidelity of an accelerated rollout to the **dense** rollout of the same episode (PhyFid-DR) | `fidelity.py` (piq), DR pass `scripts/metrics/compute_dr_metrics.py` | `psnr` `ssim` `lpips` `fidelity` | ↑ ↑ ↓ |
 | **MS** (RQ3 baseline) | motion smoothness, VFIMamba odd-from-even interpolation | `dynamics/motion_mag_smooth_probe.py` | — (probe) | ↑ |
 | **MAS-style actor activity** | ego-compensated arm∪object flow (GroundingDINO → SAM2 → SEA-RAFT), RBench MAS analogue | `dynamics/motion_accuracy_gdino.py` | — (probe) | ↑ |
-| **PhyWorld NR** | PhyQual-NR / PhyDyn-NR no-reference scoring of every method incl. dense | `phyworld/` (+ `scripts/run_dense_nr.py`) | — (pipeline) | ↑ |
+| **PhyWorld NR** | PhyQual-NR / PhyDyn-NR no-reference scoring of every method incl. dense | `phyworld/` (+ `scripts/metrics/run_dense_nr.py`) | — (pipeline) | ↑ |
 
 Registered metrics run through `metrics.evaluate`; the probes/pipelines marked
 "—" keep their own launchers (`scripts/run_*`), documented in
@@ -166,7 +166,7 @@ class MeanAbsDiff(FrameMetric):
   length (e.g. 185 vs 164 frames); the truncation is reported per sample via
   `n_frames_pred / n_frames_ref / n_frames`. Use `--opt fidelity.frame_align="error"`
   to refuse mismatches instead.
-* piq vs skimage (used by `scripts/_score_vs_dense.py`): identical frames give
+* piq vs skimage (used by `scripts/metrics/_score_vs_dense.py`): identical frames give
   ~80 dB in piq vs `inf` in skimage; piq SSIM downsamples by
   `round(min(H,W)/256)` first. Do not mix the two in one table.
 * **No implicit resizing.** pred/ref resolution mismatch raises.
@@ -199,7 +199,7 @@ class MeanAbsDiff(FrameMetric):
   (2026-10-05 parity test, 12/12 segments identical).
 * **FVD is a set statistic** (one number per cell, effective n = 1): no CI, no
   per-cell claim, < 64 windows per side -> NaN. `fvd.py` is the single implementation
-  behind `scripts/compute_dr_metrics.py` (dr-v1, native fps, own GT) and the
+  behind `scripts/metrics/compute_dr_metrics.py` (dr-v1, native fps, own GT) and the
   shared-pool scripts in `assets/scripts/` (via the `fvd_pool_common.py` shim);
   the refactor reproduced their I3D features exactly (max abs diff 0.0).
 

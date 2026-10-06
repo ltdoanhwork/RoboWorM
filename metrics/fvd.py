@@ -2,7 +2,7 @@
 
 This is the single implementation of the FVD pieces the paper uses (App. B:
 "FVD, I3D, 16 frames @ 5 fps, shared real pool"). It was extracted from
-``scripts/compute_dr_metrics.py`` (per-clip I3D features + Frechet aggregation,
+``scripts/metrics/compute_dr_metrics.py`` (per-clip I3D features + Frechet aggregation,
 protocol ``dr-v1``) and ``assets/scripts/fvd_pool_common.py`` (mosaic geometry,
 fps decimation, episode identity, moments for the shared per-camera pool). Both
 of those files are now thin shims over this module, so their CLIs and outputs are

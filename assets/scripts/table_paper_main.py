@@ -68,7 +68,7 @@ METHOD_ORDER = ['dicache', 'worldcache', 'fastercache',
 METHOD_DISPLAY = {'dicache': 'DiCache', 'worldcache': 'WorldCache',
                   'fastercache': 'FasterCache', 'pisa': 'PISA', 'radial': 'Radial',
                   'svg1': 'SVG1', 'svg2': 'SVG2', 'sito': 'SiTo', 'itm': 'ITM'}
-# Pooled per-method speedup from scripts/make_speedup_summary.py. Kept as a separate
+# Pooled per-method speedup from scripts/tables/make_speedup_summary.py. Kept as a separate
 # join (not recomputed) so this table cannot drift from the timing report.
 SPEEDUP_CSV = Path('metrics/reports/speedup_summary_by_method.csv')
 
