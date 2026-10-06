@@ -1,5 +1,5 @@
 """
-AUGMENT copy of scripts/infer_bimanual_multiview_rollout.py — do NOT use for the
+AUGMENT copy of scripts/infer/infer_bimanual_multiview_rollout.py — do NOT use for the
 dense/acceleration benchmark (that one must stay untouched so runs stay comparable).
 
 Adds the three augment branches for DreamGen multiview:

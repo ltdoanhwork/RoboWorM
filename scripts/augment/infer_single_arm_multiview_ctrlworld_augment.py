@@ -1,5 +1,5 @@
 """
-AUGMENT copy of scripts/infer_single_arm_multiview_ctrlworld.py — do NOT use for the
+AUGMENT copy of scripts/infer/infer_single_arm_multiview_ctrlworld.py — do NOT use for the
 dense/acceleration benchmark (that one must stay untouched so runs stay comparable).
 
 Identical replay logic, plus `--no-gt`: an augmented (recolored) scene has no ground

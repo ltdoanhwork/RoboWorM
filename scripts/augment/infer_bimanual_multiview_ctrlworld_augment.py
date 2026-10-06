@@ -1,5 +1,5 @@
 """
-AUGMENT copy of scripts/infer_bimanual_multiview_ctrlworld.py — do NOT use for the
+AUGMENT copy of scripts/infer/infer_bimanual_multiview_ctrlworld.py — do NOT use for the
 dense/acceleration benchmark (that one must stay untouched so runs stay comparable).
 
 Identical replay logic, plus `--no-gt`: an augmented (recolored) scene has no
@@ -551,7 +551,7 @@ def _import_pruning_module(backend, module_name):
 def _enable_backend(agent, args, num_inference_steps):
     """Enable the (single, validated) acceleration backend on agent.model.unet.
 
-    Mirrors scripts/infer_single_arm_multiview_ctrlworld.py so bimanual/multiview
+    Mirrors scripts/infer/infer_single_arm_multiview_ctrlworld.py so bimanual/multiview
     supports the exact same WorldCache / DiCache / FasterCache / SiTo / ITM flags
     (same CrtlWorld UNet). Returns a possibly-adjusted guidance_scale.
     """

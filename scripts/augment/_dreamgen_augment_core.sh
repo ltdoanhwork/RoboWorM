@@ -2,7 +2,7 @@
 # Shared body for the DreamGen AUGMENT run scripts (batch-json configs).
 #
 # NOT meant to be run directly — the wrappers
-#   scripts/run_{single_arm,bimanual}_{singleview,multiview}_dreamgen_augment.sh
+#   scripts/run/dreamgen/run_{single_arm,bimanual}_{singleview,multiview}_dreamgen_augment.sh
 # set CONFIG_KEY and source this. bimanual MULTIVIEW is NOT handled here: that
 # config uses the segment-rollout script, which reads the manifest itself, so it
 # has its own standalone runner.

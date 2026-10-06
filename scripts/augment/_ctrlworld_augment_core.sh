@@ -1,7 +1,7 @@
 #!/bin/bash
 # Shared body for the three Ctrl-World multiview AUGMENT run scripts.
 #
-# NOT meant to be run directly — `scripts/run_{single_arm,bimanual,humanoid}_
+# NOT meant to be run directly — `scripts/run/ctrlworld/run_{single_arm,bimanual,humanoid}_
 # multiview_ctrlworld_augment.sh` set CONFIG_KEY (+ optionally SUBSET) and source
 # this. Keeping one body avoids the three wrappers drifting apart, since the only
 # real differences are the checkpoint, the prepared dataset dir and which infer

@@ -1,5 +1,5 @@
 """
-AUGMENT copy of scripts/infer_single_arm_singleview_autoregressive.py — do NOT use
+AUGMENT copy of scripts/infer/infer_single_arm_singleview_autoregressive.py — do NOT use
 for the dense/acceleration benchmark (that one must stay untouched).
 
 Adds `--no-gt` (augmented scene has no ground truth: skip GT artifacts + reference
