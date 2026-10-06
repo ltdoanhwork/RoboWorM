@@ -277,3 +277,11 @@ assets/paper/*.out
 # local chromium loader shim for headless screenshots (symlinks into miniforge pkgs)
 .chromium-libs/
 docs/paper/*.pdf
+
+# 2026-10-05 refactor (Phase 7): local-only state
+logs/
+nohup.out
+.venv_edit/
+.jitcache/
+.codegraph/
+.DS_Store
