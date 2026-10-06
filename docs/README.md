@@ -13,6 +13,7 @@ Process notes, run hand-offs and analysis write-ups from development are archive
 | [training/](training/README.md) | Table C1 training-input mapping (source → prepare → launcher → checkpoint) and the training commands per model family |
 | [inference/](inference/README.md) | dense launchers for the 12 cells, the 9 acceleration methods and their knobs, speedup measurement |
 | [inference/dense_generation_config.md](inference/dense_generation_config.md) | per-cell generation settings (steps, guidance, chunking, fps, resolution) |
+| [acceleration/](acceleration/README.md) | the 9 acceleration methods: papers, code hooks per model family, flags and knobs, pitfalls, the full (cell × method) launcher / config / env / output matrix ([acceleration/configs.md](acceleration/configs.md)), speedup protocol |
 | [metrics/](metrics/README.md) | what each paper metric measures, its source, code entrypoint and command; setup guides [metrics/kiva.md](metrics/kiva.md), [metrics/rigis.md](metrics/rigis.md) |
 | [reproduce/](reproduce/README.md) | paper table / figure → producer script → output file, and a suggested regeneration order |
 | [paper/](paper/) | the paper PDF (`RoboWM_ICLR2027_check.pdf`) |

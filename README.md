@@ -165,6 +165,7 @@ discover episodes automatically, and write to `sampling_dataset/<method>/...`. E
 accelerated launcher is identical to the dense launcher of its cell except for the
 method flags. The full table of 12 dense launchers and the method knobs is in
 [docs/inference/README.md](docs/inference/README.md).
+Per-method details and the full (cell × method) config matrix: [docs/acceleration/](docs/acceleration/README.md).
 
 ```bash
 # DreamGen
