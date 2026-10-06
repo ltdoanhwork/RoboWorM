@@ -13,11 +13,15 @@ samples (multiview episode dirs with view1/ view2/).
 
 Examples::
 
-    PY=models/dreamgen/.venv/bin/python     # has piq + torchmetrics + CLIP
+    PY=models/dreamgen/.venv/bin/python     # has piq + pyiqa + torchmetrics + CLIP
 
-    # fidelity + CLIP on one cell
+    # Visual Integrity + Text Alignment on one cell (paper analysis protocol)
     $PY -m metrics.evaluate --pred-root sampling_dataset/dense/single_arm/output/singleview/dreamgen/makovian \\
-        --metrics fidelity clip_score --out results/metrics/dense_single_arm_mk
+        --metrics visual_integrity text_alignment --ref-template '' --out results/metrics/dense_single_arm_mk
+
+    # PSNR/SSIM/LPIPS of an accelerated cell against the dense rollout of the same episode
+    $PY -m metrics.evaluate --pred-root sampling_dataset/pisa/<cell> --ref-root sampling_dataset/dense/<cell> \\
+        --ref-template '{name}' --metrics fidelity --out <out>
 
     # KIVA (kinescore hallucination) with the GT anchor in the same call
     $PY -m metrics.evaluate --pred-root <dir> --metrics kiva \\
@@ -136,6 +140,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--metrics", nargs="+", required=True, help=f"any of: {' '.join(available())}")
     ap.add_argument("--opt", action="append", default=[], metavar="METRIC.KEY=VALUE",
                     help="per-metric constructor kwarg, e.g. kiva.embodiment=bimanual")
+    ap.add_argument("--meta", action="append", default=[], metavar="KEY=VALUE",
+                    help="set Sample.meta on every sample, e.g. layout=grid view_index=2 n_views=4 "
+                         "embodiment=bimanual view=cam_high (reference-free metrics read these)")
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--out", required=True)
     ap.add_argument("--fail-fast", action="store_true")
@@ -146,6 +153,17 @@ def main(argv: list[str] | None = None) -> int:
     if not samples:
         print(f"no samples matched {args.pred_glob!r} under {args.pred_root}", file=sys.stderr)
         return 1
+    meta = {}
+    for it in args.meta:
+        if "=" not in it:
+            raise SystemExit(f"--meta expects KEY=VALUE, got {it!r}")
+        k, v = it.split("=", 1)
+        try:
+            meta[k] = json.loads(v)
+        except json.JSONDecodeError:
+            meta[k] = v
+    for s in samples:
+        s.meta.update(meta)
     n_ref = sum(s.ref is not None for s in samples)
     n_txt = sum(bool(s.text) for s in samples)
     print(f"[evaluate] {len(samples)} samples ({n_ref} with ref, {n_txt} with prompt)")

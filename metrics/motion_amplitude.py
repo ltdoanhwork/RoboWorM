@@ -1,50 +1,130 @@
-"""motion_accuracy probe v2 — embodiment-aware.
+"""Motion Amplitude Score (MAS): subject-localised optical-flow magnitude.
 
-Difference from v1 (motion_accuracy_probe.py): instead of seeding SAM2 with ONE
-hand-drawn box around the object, we use **GroundingDINO** to auto-detect BOTH the
-manipulated object AND the robot embodiment (arms/grippers) from the prompt, seed a
-SAM2 track for each, and take the **foreground = union(object, arms)**.
+Source metric
+    RBench "Motion Amplitude Score" -- Y. Deng, Z. Pan, H. Zhang, X. Li, R. Hu,
+    Y. Ding, Y. Zou, Y. Zeng, D. Zhou, "Rethinking Video Generation Model for the
+    Embodied World", ICML 2026. Measures how much the *subject* (robot + manipulated
+    object) moves, rather than the whole frame.
 
-Rationale: WorldScore's motion_accuracy = max(|flow| over object) - max(|flow| over
-background) assumes "background = static scene". In a fixed-camera robot clip the
-robot arms live in the background and move fast, breaking that assumption. Here the
-arms are moved INTO the foreground, so background is (ideally) just the static table.
+Use in the paper
+    RQ3 baseline (Sec. 4.2): MAS is compared against KIVA and found to track only
+    surface motion. It is descriptive (the co-located reference defines the correct
+    amount of motion), so it carries no higher/lower-is-better claim.
 
-We report several variants so we can see which behaves sensibly:
-  - ws_fg_vs_bg      = mean_t( max(fg) - max(bg) )          # WorldScore form, fg=arm+obj
-  - ws_obj_vs_bg     = mean_t( max(obj) - max(bg) )         # original object-only
-  - med_fg_vs_bg     = mean_t( median(fg) - median(bg) )    # outlier-robust
-  - obj/arm/bg per-frame flow (median & max) for inspection
+Our implementation (closed-world adaptation, as stored by the dense-NR wave)
+    1. GroundingDINO (Liu et al., ECCV 2024) detects the embodiment (fixed phrases per
+       embodiment, :data:`EMBODIMENT_PHRASES`) on the most confident of four seed frames,
+       and the task objects (task clause) on that frame.
+    2. SAM 2.1 (Ravi et al., ICLR 2025) propagates one mask per detection through the
+       clip; subject = union(arm, object) masks, dilated 10 px.
+    3. SEA-RAFT (Wang et al., ECCV 2024) flow between consecutive analysis frames, in
+       px per *source* frame.
+    4. Per pair, a statistic that depends on the camera mount (:func:`camera_mount`):
+       static camera -> p95 of subject flow; head camera -> p95 of subject flow after
+       removing the background-median (ego) translation, only if background >= 5 % of
+       the frame; wrist camera -> whole-frame median flow (the camera rides the arm).
+    5. ``motion_amplitude`` = mean over valid pairs; ``motion_amplitude_active_rate`` =
+       fraction of valid pairs >= 1 px / source frame. A clip is N/A when no robot is
+       detected or fewer than half the pairs are valid / tracked.
+    RBench tracks points with CoTracker; we use flow inside a tracked mask instead.
 
-Prompt drives grounding: object phrases come from the task text; embodiment phrases
-are a fixed robot set. Everything is knowable from the sample's prompt + embodiment.
+Backends from ``metrics/WorldScore`` third_party (see metrics/third_party.py).
+Registered as ``motion_amplitude``.
 """
 import os
-import sys
 import json
-import argparse
 import shutil
+import tempfile
+from typing import Any
 
 import cv2
 import numpy as np
 import torch
-import torch.nn.functional as F
 from PIL import Image
 
-# vendored deps (added to sys.path by launcher)
-from sam2.build_sam import build_sam2_video_predictor, build_sam2
-from sam2.sam2_image_predictor import SAM2ImagePredictor
-import hydra
-from hydra.core.global_hydra import GlobalHydra
+from .base import ReferenceFreeFrameMetric
+from .third_party import (GDINO_CFG, GDINO_CKPT, SAM2_CFG, SAM2_CKPT, SeaRaftFlow,
+                          add_paths, write_frames)
 
-import groundingdino.datasets.transforms as T
-from groundingdino.models import build_model
-from groundingdino.util.slconfig import SLConfig
-from groundingdino.util.utils import clean_state_dict, get_phrases_from_posmap
+#: GroundingDINO phrases for the embodiment part of the subject mask
+EMBODIMENT_PHRASES = {
+    "single_arm": ["robot arm", "gripper"],
+    "bimanual": ["robot arm", "gripper"],
+    "humanoid": ["robot", "hand", "arm"],
+}
+ACTIVE_PX = 1.0           # px/source-frame: a pair at or above this is "active"
+# Head-camera ego estimate needs enough background pixels (lowered 10 -> 5 after the
+# E4 audit: changes the head median by 0.00% on a fixed clip set, recovers 6% of clips).
+MIN_BG_COV_PCT = 5.0
+MIN_VALID_PAIR_FRAC = 0.5
+STATISTIC = {"static": "subject_p95_uncorrected", "head": "subject_p95_ego_translation",
+             "wrist": "frame_median"}
 
-from core.raft import RAFT
-from core.utils.utils import load_ckpt
-from core.parser import parse_args
+
+def camera_mount(embodiment: str, view: str) -> str:
+    """static cameras need no ego compensation; head/wrist cameras move."""
+    v = view.lower()
+    if "wrist" in v:
+        return "wrist"
+    if embodiment == "humanoid" and v in ("cam_high", "cam_high_rgb", "cam_head_rgb",
+                                          "singleview", "grid_top_left"):
+        return "head"
+    return "static"
+
+
+def actor_pair_motion(per_frame, mount, interval):
+    """Per-pair actor motion in px/source-frame, keyed by pair index; plus median diagnostic.
+
+    Static: p95 of uncorrected subject flow. Subject median is ~0 because static robot
+    body and objects dominate the mask; ego subtraction there removes deformable-object
+    motion. Head: p95 of ego-compensated subject flow where background >= MIN_BG_COV_PCT.
+    Wrist: whole-frame median flow, since the camera rides the end effector and masks
+    often fill the frame.
+    """
+    motion, median = {}, {}
+    for p in per_frame:
+        k = p["pair"]
+        if mount == "static":
+            motion[k], median[k] = p["fg_flow_p95"], p["fg_flow_med"]
+        elif mount == "wrist":
+            motion[k] = median[k] = p["frame_flow_med"]
+        elif p["bg_cov_pct"] >= MIN_BG_COV_PCT:
+            motion[k], median[k] = p["fg_flow_ego_p95"], p["fg_flow_ego_med"]
+    return ({k: v / interval for k, v in motion.items()},
+            {k: v / interval for k, v in median.items()})
+
+
+def summarize(actor: dict, mount: str, interval: int, n_pairs_possible: int,
+              source_fps: float) -> tuple[dict, dict, int, bool]:
+    """Probe output -> MAS fields (the ``actor_motion_*`` record keys of the NR wave).
+
+    Returns ``(fields, motion, n_active, motion_ok)``; ``motion`` / ``n_active`` feed
+    the activity weighting of the wave's continuity column.
+    """
+    per_frame = actor.get("per_frame", [])
+    robot = bool(actor["n_arm_dets"])
+    motion, median = actor_pair_motion(per_frame, mount, interval)
+    # `per_frame` is ALREADY filtered by the probe (pairs with empty fg/bg or a failed
+    # ego fit are skipped), so tracking loss is measured against the pairs that exist.
+    n_pairs_possible = max(int(n_pairs_possible), 1)
+    tracked_frac = len(per_frame) / n_pairs_possible
+    motion_ok = bool(robot and per_frame
+                     and len(motion) >= MIN_VALID_PAIR_FRAC * len(per_frame)
+                     and tracked_frac >= MIN_VALID_PAIR_FRAC)
+    values = np.array(list(motion.values()), dtype=float)
+    n_active = int((values >= ACTIVE_PX).sum()) if motion_ok else 0
+    fields = {
+        "actor_motion_raw": float(values.mean()) if motion_ok else None,
+        "actor_motion_median_raw": float(np.mean(list(median.values()))) if motion_ok else None,
+        "actor_motion_active_rate": float(np.mean(values >= ACTIVE_PX)) if motion_ok else None,
+        "actor_motion_px_per_second": float(values.mean() * source_fps) if motion_ok else None,
+        "actor_motion_statistic": STATISTIC[mount],
+        "actor_seed_frame": actor.get("seed_frame"),
+        "actor_motion_valid_pair_frac": (len(motion) / len(per_frame)) if per_frame else 0.0,
+        "actor_tracked_pair_frac": tracked_frac,
+        "actor_n_active_pairs": n_active if motion_ok else None,
+    }
+    return fields, motion, n_active, motion_ok
 
 
 # --------------------------------------------------------------------------- #
@@ -70,12 +150,21 @@ def decode_video_to_frames(video_path, out_dir, max_frames=None, stride=1):
 # GroundingDINO
 # --------------------------------------------------------------------------- #
 class Grounder:
-    def __init__(self, cfg, ckpt, device):
-        a = SLConfig.fromfile(cfg)
+    """GroundingDINO (Swin-T OGC) open-vocabulary box detector."""
+
+    def __init__(self, cfg=GDINO_CFG, ckpt=GDINO_CKPT, device="cuda"):
+        add_paths()
+        import groundingdino.datasets.transforms as T
+        from groundingdino.models import build_model
+        from groundingdino.util.slconfig import SLConfig
+        from groundingdino.util.utils import clean_state_dict, get_phrases_from_posmap
+
+        self._phrases = get_phrases_from_posmap
+        a = SLConfig.fromfile(str(cfg))
         a.device = device
         a.bert_base_uncased_path = None
         m = build_model(a)
-        sd = torch.load(ckpt, map_location="cpu")
+        sd = torch.load(str(ckpt), map_location="cpu")
         m.load_state_dict(clean_state_dict(sd["model"]), strict=False)
         m.eval().to(device)
         self.model = m
@@ -103,7 +192,7 @@ class Grounder:
         tok = self.model.tokenizer(cap)
         dets = []
         for lg, bx in zip(logits, boxes):
-            phrase = get_phrases_from_posmap(lg > txt_thr, tok, self.model.tokenizer)
+            phrase = self._phrases(lg > txt_thr, tok, self.model.tokenizer)
             cx, cy, w, h = bx.tolist()
             xyxy = [(cx - w / 2) * W, (cy - h / 2) * H, (cx + w / 2) * W, (cy + h / 2) * H]
             dets.append({"phrase": phrase, "conf": float(lg.max()), "xyxy": xyxy})
@@ -233,31 +322,9 @@ def propagate_multi(video_predictor, frames_dir, seed_masks_by_id, score_thresh=
 
 
 # --------------------------------------------------------------------------- #
-# SEA-RAFT
+# SEA-RAFT (shared implementation in metrics/third_party.py)
 # --------------------------------------------------------------------------- #
-class Flow:
-    def __init__(self, cfg, ckpt, device):
-        args = parse_args(argparse.Namespace(cfg=cfg, path=ckpt))
-        model = RAFT(args)
-        load_ckpt(model, ckpt)
-        model.to(device).eval()
-        self.model, self.args, self.device = model, args, device
-
-    def _img(self, f):
-        im = cv2.cvtColor(cv2.imread(f), cv2.COLOR_BGR2RGB)
-        return torch.tensor(im, dtype=torch.float32).permute(2, 0, 1)[None].to(self.device)
-
-    def compute(self, f1, f2):
-        with torch.no_grad():
-            i1, i2 = self._img(f1), self._img(f2)
-            s = self.args.scale
-            i1 = F.interpolate(i1, scale_factor=2 ** s, mode="bilinear", align_corners=False)
-            i2 = F.interpolate(i2, scale_factor=2 ** s, mode="bilinear", align_corners=False)
-            with torch.amp.autocast(device_type="cuda"):
-                out = self.model(i1, i2, iters=self.args.iters, test_mode=True)
-            fl = out["flow"][-1]
-            fl = F.interpolate(fl, scale_factor=0.5 ** s, mode="bilinear", align_corners=False) * (0.5 ** s)
-            return fl.detach().cpu().numpy().squeeze().transpose(1, 2, 0)
+Flow = SeaRaftFlow
 
 
 def mask_resize(m, hw):
@@ -352,8 +419,8 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
     per_frame = []
     for i, (f1, f2) in enumerate(zip(frames[:-1], frames[1:])):
         # `stride` decodes every Nth source frame. Convert displacement over that
-        # interval back to px/source-frame so ActorMotion stays comparable to the
-        # stride-1 KineticBudget and its documented units.
+        # interval back to px/source-frame so MAS stays comparable to the
+        # stride-1 frame flow and its documented units.
         fl = flow.compute(f1, f2) / float(max(1, stride))
         mag = np.sqrt(fl[..., 0] ** 2 + fl[..., 1] ** 2)
         mh = mag.shape
@@ -394,21 +461,9 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
             "bg_ego_dy": float(ego[1]),
         }
         if compute_flicker:
-            from metrics.dynamics.actor_flicker import residual_variants
-            next_fg = union([masks_by_id[j][i + 1] for j in ids])
-            if next_fg.shape != mh:
-                next_fg = mask_resize(next_fg, mh)
-            forward = fl * max(1, stride)
-            backward = flow.compute(f2, f1)
-            # All E3 candidate normalizations in one pass: the optical flow and SAM2
-            # masks are what cost GPU time, the variants are numpy on arrays that
-            # already exist. Storing them all makes the choice of statistic a
-            # post-hoc, zero-GPU decision (same principle as the E4 gate).
-            variants, count = residual_variants(cv2.imread(f1), cv2.imread(f2),
-                                                forward, backward, fg, next_fg)
-            e["actor_flicker_raw"] = variants["raw"]
-            e["flicker_valid_pixels"] = count
-            e["flicker_variants"] = variants
+            raise NotImplementedError(
+                "actor flicker was an experimental NR column, not a paper metric; it was "
+                "archived to tmp/20261005_refactor/misc/metrics/dynamics/actor_flicker.py")
         per_frame.append(e)
         if i % max(1, len(frames) // 6) == 0:
             overlay(f1, [(obj_m, (0, 200, 0)), (arm_m, (255, 0, 0))],
@@ -416,19 +471,6 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
 
     def mean(key):
         return float(np.mean([p[key] for p in per_frame])) if per_frame else float("nan")
-
-    variant_keys = (per_frame[0].get("flicker_variants") or {}) if per_frame else {}
-    flicker_variants = None
-    if variant_keys:
-        flicker_variants = {}
-        for k in variant_keys:
-            # Clip-level mean over the pairs where the candidate is defined.
-            # `unexplained` is already a ratio of sums within a pair, so averaging
-            # pair values here is a mean of per-pair pooled statistics, not of
-            # per-pixel ratios.
-            vals = [p["flicker_variants"][k] for p in per_frame
-                    if (p.get("flicker_variants") or {}).get(k) is not None]
-            flicker_variants[k] = float(np.mean(vals)) if vals else None
 
     result = {
         "tag": tag, "video": video, "num_frames": n, "num_pairs": len(per_frame),
@@ -444,13 +486,13 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
         "mean_obj_flow_med": mean("obj_flow_med"),
         "mean_arm_flow_med": mean("arm_flow_med"),
         "mean_bg_flow_med": mean("bg_flow_med"),
-        # ActorMotion (PhyWorld): subject-only kinetic budget, arm∪object mask.
+        # Subject-only motion (MAS-style), arm∪object mask.
         # Remove robust background flow vector first; keep uncorrected value for audit.
         "mean_fg_flow_med": mean("fg_flow_ego_med"),
         "mean_fg_flow_p95": mean("fg_flow_ego_p95"),
         "mean_fg_flow_med_uncorrected": mean("fg_flow_med"),
         # Fraction of subject frame-pairs with non-trivial residual movement.
-        # Paired with ActorMotion(raw): detects one-frame spikes that inflate a mean.
+        # Paired with the mean: detects one-frame spikes that inflate a mean.
         "actor_motion_active_rate": float(np.mean([
             p["fg_flow_ego_med"] >= actor_motion_active_threshold for p in per_frame
         ])) if per_frame else float("nan"),
@@ -459,13 +501,8 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
         "mean_bg_ego_dy": mean("bg_ego_dy"),
         "mean_fg_cov_pct": mean("fg_cov_pct"),
         "per_frame": per_frame,
-        "actor_flicker_raw": float(np.mean([p["actor_flicker_raw"] for p in per_frame
-            if p.get("actor_flicker_raw") is not None])) if any(
-            p.get("actor_flicker_raw") is not None for p in per_frame) else None,
-        # Clip-level mean of every E3 candidate over the pairs where it is defined.
-        "actor_flicker_variants": flicker_variants,
     }
-    with open(os.path.join(out_dir, f"{tag}_motion_accuracy_gdino.json"), "w") as f:
+    with open(os.path.join(out_dir, f"{tag}_motion_amplitude.json"), "w") as f:
         json.dump(result, f, indent=2)
     print(f"[{tag}] ws_fg_vs_bg={result['ws_fg_vs_bg']:.3f} ws_obj_vs_bg={result['ws_obj_vs_bg']:.3f} "
           f"med_fg_vs_bg={result['med_fg_vs_bg']:.4f} | obj_med={result['mean_obj_flow_med']:.3f} "
@@ -477,49 +514,87 @@ def probe(video, tag, out_dir, grounder, img_pred, vid_pred, flow,
     return result
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--gt", required=True)
-    ap.add_argument("--pred", required=True)
-    ap.add_argument("--out", required=True)
-    ap.add_argument("--sam2_cfg", default="configs/sam2.1/sam2.1_hiera_b+.yaml")
-    ap.add_argument("--sam2_ckpt", required=True)
-    ap.add_argument("--raft_cfg", required=True)
-    ap.add_argument("--raft_ckpt", required=True)
-    ap.add_argument("--gdino_cfg", required=True)
-    ap.add_argument("--gdino_ckpt", required=True)
-    ap.add_argument("--object_prompt", default="cardboard box . box .")
-    ap.add_argument("--embodiment_prompt", default="robot arm . robot gripper .")
-    ap.add_argument("--max_frames", type=int, default=None)
-    ap.add_argument("--stride", type=int, default=1)
-    args = ap.parse_args()
-
-    os.makedirs(args.out, exist_ok=True)
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+def build_sam2_predictors(device="cuda", cfg=SAM2_CFG, ckpt=SAM2_CKPT):
+    """SAM 2.1 image predictor (seed masks) + video predictor (propagation)."""
+    add_paths()
+    import hydra
+    from hydra.core.global_hydra import GlobalHydra
+    from sam2.build_sam import build_sam2, build_sam2_video_predictor
+    from sam2.sam2_image_predictor import SAM2ImagePredictor
 
     GlobalHydra.instance().clear()
     hydra.initialize_config_module("sam2", version_base="1.2")
-    img_model = build_sam2(args.sam2_cfg, args.sam2_ckpt, device=device, apply_postprocessing=False)
-    img_pred = SAM2ImagePredictor(img_model)
-    vid_pred = build_sam2_video_predictor(args.sam2_cfg, args.sam2_ckpt, device=device, apply_postprocessing=False)
-    flow = Flow(args.raft_cfg, args.raft_ckpt, device)
-    grounder = Grounder(args.gdino_cfg, args.gdino_ckpt, device)
-
-    results = {}
-    for tag, path in [("gt", args.gt), ("pred", args.pred)]:
-        results[tag] = probe(path, tag, args.out, grounder, img_pred, vid_pred, flow,
-                             args.object_prompt, args.embodiment_prompt, device,
-                             max_frames=args.max_frames, stride=args.stride)
-    with open(os.path.join(args.out, "summary_gdino.json"), "w") as f:
-        json.dump({k: {kk: vv for kk, vv in v.items() if kk != "per_frame"}
-                   for k, v in results.items()}, f, indent=2)
-    print("\n=== SUMMARY (embodiment-aware) ===")
-    for tag in ("gt", "pred"):
-        r = results[tag]
-        print(f"{tag:5s}: ws_fg_vs_bg={r['ws_fg_vs_bg']:+.3f}  ws_obj_vs_bg={r['ws_obj_vs_bg']:+.3f}  "
-              f"med_fg_vs_bg={r['med_fg_vs_bg']:+.4f}  (obj_med={r['mean_obj_flow_med']:.3f} "
-              f"arm_med={r['mean_arm_flow_med']:.3f} bg_med={r['mean_bg_flow_med']:.3f})")
+    img = SAM2ImagePredictor(build_sam2(cfg, str(ckpt), device=device, apply_postprocessing=False))
+    vid = build_sam2_video_predictor(cfg, str(ckpt), device=device, apply_postprocessing=False)
+    return img, vid
 
 
-if __name__ == "__main__":
-    main()
+class MotionAmplitude(ReferenceFreeFrameMetric):
+    """Registry wrapper: one clip -> MAS on the paper analysis frames.
+
+    Needs the task text (object grounding; ``"object ."`` if empty) and, from
+    ``sample.meta`` or the constructor, ``embodiment`` and ``view`` (camera mount).
+    ``source_interval`` (default: from the analysis protocol) converts px per analysis
+    pair to px per source frame.
+    """
+
+    name = "motion_amplitude"
+    higher_is_better = {"motion_amplitude": True, "motion_amplitude_active_rate": True}
+
+    def __init__(self, device: str = "cuda", embodiment: str = "single_arm",
+                 view: str = "singleview", frame_stride: int = 1, **config: Any) -> None:
+        super().__init__(device=device, embodiment=embodiment, view=view,
+                         frame_stride=frame_stride, **config)
+        self.embodiment, self.view = embodiment, view
+        self._models = None
+
+    def setup(self) -> None:
+        flow = SeaRaftFlow(device=self.device)
+        flow.a.scale = 0                     # as in the dense-NR wave
+        img, vid = build_sam2_predictors(self.device)
+        self._models = (Grounder(device=self.device), img, vid, flow)
+
+    def compute(self, sample) -> dict:
+        from pathlib import Path
+
+        from .video_io import nr_analysis_frames
+
+        m = sample.meta or {}
+        emb = m.get("embodiment", self.embodiment)
+        mount = camera_mount(emb, m.get("view", self.view))
+        if isinstance(sample.pred, np.ndarray):
+            frames, interval, fps = sample.pred, int(m.get("source_interval", 1)), float(m.get("source_fps", 5.0))
+        else:
+            frames, info = nr_analysis_frames(sample.pred, m.get("layout", "single"),
+                                              int(m.get("view_index", 0)), int(m.get("n_views", 1)))
+            interval, fps = info["source_interval"], info["source_fps"]
+        from .text_alignment import task_clause
+
+        grounder, img, vid, flow = self._models
+        tmp = Path(tempfile.mkdtemp(prefix="motion_amplitude_"))
+        try:
+            video = tmp / "analysis.mp4"
+            w = cv2.VideoWriter(str(video), cv2.VideoWriter_fourcc(*"mp4v"), fps / interval,
+                                (frames.shape[2], frames.shape[1]))
+            for fr in frames[::self.frame_stride]:
+                w.write(fr[:, :, ::-1])
+            w.release()
+            actor = probe(str(video), "pred", str(tmp), grounder, img, vid, flow,
+                          task_clause(sample.text) or "object .",
+                          " . ".join(EMBODIMENT_PHRASES[emb]) + " .", self.device, stride=1)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+        fields, _, _, ok = summarize(actor, mount, interval, len(frames) - 1, fps)
+        nan = float("nan")
+        return {"motion_amplitude": fields["actor_motion_raw"] if ok else nan,
+                "motion_amplitude_active_rate": fields["actor_motion_active_rate"] if ok else nan,
+                "motion_amplitude_px_per_second": fields["actor_motion_px_per_second"] if ok else nan,
+                "n_arm_dets": float(actor["n_arm_dets"]), "n_frames": float(len(frames))}
+
+    def score_frames(self, pred, ref, text):  # pragma: no cover - compute() is overridden
+        raise NotImplementedError
+
+
+__all__ = ["EMBODIMENT_PHRASES", "ACTIVE_PX", "MIN_BG_COV_PCT", "MIN_VALID_PAIR_FRAC",
+           "camera_mount", "actor_pair_motion", "summarize", "Grounder", "Flow",
+           "build_sam2_predictors", "probe", "MotionAmplitude"]

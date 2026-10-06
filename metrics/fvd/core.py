@@ -1,12 +1,17 @@
-"""FVD: Frechet distance between I3D feature distributions of two video sets.
+"""FVD core: I3D window features, fps decimation, mosaic split, Frechet distance.
 
-This is the single implementation of the FVD pieces the paper uses (App. B:
-"FVD, I3D, 16 frames @ 5 fps, shared real pool"). It was extracted from
-``scripts/metrics/compute_dr_metrics.py`` (per-clip I3D features + Frechet aggregation,
-protocol ``dr-v1``) and ``assets/scripts/fvd_pool_common.py`` (mosaic geometry,
-fps decimation, episode identity, moments for the shared per-camera pool). Both
-of those files are now thin shims over this module, so their CLIs and outputs are
-unchanged.
+Source metric
+    Frechet Video Distance -- T. Unterthiner, S. van Steenkiste, K. Kurach,
+    R. Marinier, M. Michalski, S. Gelly, "Towards Accurate Generative Models of
+    Video: A New Metric & Challenges", arXiv:1812.01717, 2018. Frechet distance
+    between Gaussians fitted to I3D (Kinetics-400) features of real and generated
+    clips. Lower is better.
+
+This is the single implementation of the FVD pieces the paper uses (App. B.3.3).
+``scripts/metrics/compute_dr_metrics.py`` (per-configuration DR pass) and the
+shared-pool scripts in ``assets/scripts/`` (via the ``fvd_pool_common.py`` shim)
+import from here. The shared real-pool bookkeeping lives in ``metrics/fvd/pool.py``;
+setup and protocol are documented in ``metrics/fvd/README.md``.
 
 Protocol constants:
   * I3D = the StyleGAN-V torchscript export (``i3d_torchscript.pt``), 400-d
@@ -39,7 +44,7 @@ from typing import Any, Sequence
 
 import numpy as np
 
-from .base import REPO_ROOT, BaseMetric, MetricResult, Sample
+from ..base import REPO_ROOT, BaseMetric, MetricResult, Sample
 
 # --------------------------------------------------------------------------- #
 # protocol constants
@@ -269,7 +274,11 @@ def moments(x):
 def frechet_from_moments(mx, cx, my, cy) -> float:
     from scipy import linalg
 
-    covmean, _ = linalg.sqrtm(np.asarray(cx).dot(cy), disp=False)
+    # `disp=` is deprecated in SciPy >= 1.14 and removed in 1.18; without it older
+    # SciPy returns the matrix alone, newer may return a tuple -- accept both.
+    covmean = linalg.sqrtm(np.asarray(cx).dot(cy))
+    if isinstance(covmean, tuple):
+        covmean = covmean[0]
     if np.iscomplexobj(covmean):
         covmean = covmean.real
     return float(((mx - my) ** 2).sum() + np.trace(cx) + np.trace(cy)

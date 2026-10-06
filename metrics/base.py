@@ -5,11 +5,14 @@ Three layers::
     BaseMetric      (ABC)  sample -> {key: float};  evaluate() -> MetricResult
     ├── FrameMetric        in-process, decodes frames, scores (pred[, ref][, text])
     │   ├── PSNR / SSIM / LPIPS              metrics/fidelity.py
-    │   └── CLIPScore                        metrics/clip_score.py
-    ├── FVD                set-level I3D Frechet distance  metrics/fvd.py
+    │   ├── MotionSmoothness / MotionAmplitude  metrics/motion_{smoothness,amplitude}.py
+    │   └── ReferenceFreeFrameMetric   paper analysis frames (5 fps, 256x192, JPEG)
+    │       ├── VisualIntegrity (CLIP-IQA+)   metrics/visual_integrity.py
+    │       └── TextAlignment   (CLIPScore)   metrics/text_alignment.py
+    ├── FVD                set-level I3D Frechet distance  metrics/fvd/
     └── ExternalMetric     batch-only, shells out to a launcher in its own env
-        ├── MultiviewConsistency  (rigis)    metrics/rigis/metric.py
-        └── Hallucination         (kiva)     metrics/kiva/metric.py
+        ├── RIGIS                            metrics/rigis/metric.py
+        └── KIVA                             metrics/kiva/metric.py
 
 Why two subclasses: the reference metrics need ``piq``/``torchmetrics`` (the
 ``models/dreamgen/.venv``), while VGGT-Omega runs in a ``uv`` project and kinescore
@@ -256,6 +259,54 @@ class FrameMetric(BaseMetric):
                 .to(self.device).permute(0, 3, 1, 2).float().div_(255.0).clamp_(0, 1)
                 for a in arrays
             )
+
+
+class ReferenceFreeFrameMetric(FrameMetric):
+    """Per-frame reference-free metric scored on the paper's analysis frames.
+
+    ``protocol="paper"`` (default) reproduces the published numbers: a video file is
+    decoded with :func:`metrics.video_io.nr_analysis_frames` (5 fps, conditioning frame
+    dropped, camera tile from ``sample.meta`` ``layout`` / ``view_index`` / ``n_views``,
+    256x192), every ``frame_stride``-th frame (default 5) is kept, and each kept frame
+    goes through the same JPEG round trip the original pipeline had. An in-memory
+    array is taken to be analysis frames already (stride + JPEG still apply).
+
+    ``protocol="raw"`` scores the frames exactly as decoded (stride default 1, no JPEG):
+    use it for generic clips that are not benchmark rollouts.
+    """
+
+    def __init__(self, device: str = "cuda", protocol: str = "paper",
+                 frame_stride: int | None = None, jpeg: bool | None = None,
+                 **config: Any) -> None:
+        if protocol not in ("paper", "raw"):
+            raise ValueError(f"protocol must be 'paper' or 'raw', got {protocol!r}")
+        paper = protocol == "paper"
+        frame_stride = int(frame_stride or (5 if paper else 1))
+        jpeg = paper if jpeg is None else bool(jpeg)
+        super().__init__(device=device, protocol=protocol, frame_stride=frame_stride,
+                         jpeg=jpeg, **config)
+        self.protocol, self.frame_stride, self.jpeg = protocol, max(1, frame_stride), jpeg
+
+    def compute(self, sample: Sample) -> dict[str, float]:
+        if self.protocol == "paper" and not isinstance(sample.pred, np.ndarray) \
+                and Path(sample.pred).is_file():
+            from .video_io import nr_analysis_frames
+
+            m = sample.meta or {}
+            frames, _ = nr_analysis_frames(sample.pred, m.get("layout", "single"),
+                                           int(m.get("view_index", 0)), int(m.get("n_views", 1)))
+            out = self.score_frames(frames, None, sample.text)
+            return {**out, "n_frames_pred": float(len(frames)), "n_frames": float(len(frames))}
+        return super().compute(sample)
+
+    def pil_frames(self, frames: np.ndarray) -> list:
+        """The frames that are actually scored, as PIL RGB images."""
+        from PIL import Image
+
+        from .video_io import jpeg_roundtrip
+
+        sel = frames[::self.frame_stride]
+        return [jpeg_roundtrip(f) if self.jpeg else Image.fromarray(f) for f in sel]
 
 
 class ExternalMetric(BaseMetric):

@@ -98,7 +98,7 @@ def test_requires_ref_and_text():
     with pytest.raises(ValueError, match="reference"):
         build_metric("psnr", device="cpu")(Sample("x", _video()))
     with pytest.raises(ValueError, match="text"):
-        get_metric_class("clip_score")(device="cpu").validate(Sample("x", _video()))
+        get_metric_class("text_alignment")(device="cpu").validate(Sample("x", _video()))
 
 
 def test_reference_free_metric_ignores_ref():
@@ -147,12 +147,15 @@ def test_safe_id_and_collisions():
 
 
 def test_registry_lazy_and_complete():
-    assert {"psnr", "ssim", "lpips", "fidelity", "clip_score", "fvd",
-            "rigis", "kiva"} <= set(available())
+    assert {"kiva", "rigis", "visual_integrity", "text_alignment", "fvd", "psnr", "ssim",
+            "lpips", "fidelity", "motion_smoothness", "motion_amplitude"} == set(available())
     # pre-refactor names stay valid aliases
     assert get_metric_class("hallucination") is get_metric_class("kiva")
     assert get_metric_class("hal") is get_metric_class("kiva")
     assert get_metric_class("multiview_consistency") is get_metric_class("rigis")
+    assert get_metric_class("clip_score") is get_metric_class("text_alignment")
+    from metrics.text_alignment import CLIPScore, TextAlignment
+    assert CLIPScore is TextAlignment
     h = build_metric("hallucination", embodiment="bimanual", score_ref=True)
     assert h.name == "kiva"
     assert h.requires_ref and "rigidity_rate_excess" in h.higher_is_better
@@ -206,6 +209,98 @@ def test_fvd_window_stream_matches_batch():
     assert len(batch) == len(st.feats) == 2                    # trailing 8 frames dropped
     np.testing.assert_allclose(np.asarray(batch), np.asarray(st.feats), rtol=1e-6)
     assert calls[0] == (1, 3, 16, fvd.I3D_SIZE, fvd.I3D_SIZE)
+
+
+def test_fvd_shared_pool_dedup_and_floor():
+    from metrics.fvd import SharedRealPool, budgeted, ref_identity
+    from metrics.fvd.pool import mean_over_common_cameras
+
+    a = "/r/sampling_dataset/dense/bimanual/output/x/gt_all_views.mp4"
+    b = "/r/sampling_dataset/pisa/bimanual/output/x/gt_all_views.mp4"
+    assert ref_identity(a) == ref_identity(b) == "bimanual/output/x/gt_all_views.mp4"
+    rng = np.random.default_rng(0)
+    pool = SharedRealPool(min_windows=8)
+    key = ("bimanual", "cam0", "makovian")
+    assert pool.add_real(key, ref_identity(a), rng.normal(size=(40, 4)))
+    assert not pool.add_real(key, ref_identity(b), rng.normal(size=(40, 4)))   # same video
+    for i in range(6):
+        pool.add_real(key, f"ep{i}", rng.normal(size=(40, 4)))
+    pool.add_pred(("cell", "dense", "cam0"), rng.normal(size=(80, 4)) + 2.0)
+    v = pool.fvd(("cell", "dense", "cam0"), key)
+    assert v is not None and v > 10                                       # ~16 = 4 * 2^2
+    assert pool.floor(key) is not None and pool.floor(key) < v
+    x = np.arange(100)[:, None]
+    np.testing.assert_array_equal(budgeted(x, 10, "s"), budgeted(x, 10, "s"))   # deterministic
+    agg = mean_over_common_cameras({("e", "A", "c0"): 1.0, ("e", "A", "c1"): 3.0,
+                                    ("e", "B", "c0"): 5.0})
+    assert agg == {("e", "A"): 1.0, ("e", "B"): 5.0}                      # only c0 is common
+
+
+# --------------------------------------------------------------------------- #
+def test_task_clause_and_text_conditioning():
+    from metrics.text_alignment import task_clause, text_conditioned
+
+    p = ("A 2x2 grid video of a robot performing the task: put the cup on the coaster. "
+         "The video shows four camera views.")
+    assert task_clause(p) == "put the cup on the coaster"
+    assert task_clause("pick up the apple.") == "pick up the apple"
+    assert task_clause(None) == ""
+    assert text_conditioned("dreamgen") and text_conditioned("gt_ctrlworld")
+    assert not text_conditioned("dreamdojo") and not text_conditioned("gt_dreamdojo")
+
+
+def test_visual_integrity_is_p10_x100():
+    from metrics.visual_integrity import visual_integrity
+
+    s = np.linspace(0.2, 0.8, 11)                       # p10 = 0.26
+    assert math.isclose(visual_integrity(s), 26.0, rel_tol=1e-9)
+    assert visual_integrity([1.3, 1.4]) == 100.0       # clamped to [0, 1] before x100
+
+
+def test_reference_free_protocol_selects_frames(tmp_path):
+    """paper protocol: drop cond frame, 5 fps, 256x192, every 5th frame, JPEG round trip."""
+    import cv2
+
+    from metrics.base import ReferenceFreeFrameMetric
+    from metrics.video_io import nr_analysis_frames
+
+    p = tmp_path / "clip.mp4"
+    w = cv2.VideoWriter(str(p), cv2.VideoWriter_fourcc(*"mp4v"), 10.0, (640, 192))
+    for i in range(41):
+        w.write(np.full((192, 640, 3), i * 5, np.uint8))
+    w.release()
+    frames, info = nr_analysis_frames(p, layout="strip", view_index=1, n_views=2)
+    assert info["source_interval"] == 2 and info["sampled_source_frames"][:3] == [1, 3, 5]
+    assert frames.shape == (20, 192, 256, 3)
+
+    class _Count(ReferenceFreeFrameMetric):
+        name = "count"
+        higher_is_better = {"n": True}
+
+        def score_frames(self, pred, ref, text):
+            ims = self.pil_frames(pred)
+            return {"n": float(len(ims)), "w": float(ims[0].size[0])}
+
+    r = _Count(device="cpu")(Sample("x", p, meta={"layout": "strip", "view_index": 1, "n_views": 2}))
+    assert r["n"] == 4 and r["w"] == 256 and r["n_frames"] == 20          # 20 frames, stride 5
+    raw = _Count(device="cpu", protocol="raw")(Sample("x", p))
+    assert raw["n"] == 41 and raw["w"] == 640
+
+
+def test_mas_summary_gates():
+    from metrics.motion_amplitude import camera_mount, summarize
+
+    assert camera_mount("humanoid", "cam_head_rgb") == "head"
+    assert camera_mount("bimanual", "cam_left_wrist") == "wrist"
+    assert camera_mount("single_arm", "exterior_1_left") == "static"
+    pf = [dict(pair=i, fg_flow_p95=2.0 * i, fg_flow_med=0.1, frame_flow_med=1.0,
+               bg_cov_pct=50.0, fg_flow_ego_p95=1.0, fg_flow_ego_med=0.5) for i in range(4)]
+    f, motion, n_active, ok = summarize({"per_frame": pf, "n_arm_dets": 1, "seed_frame": 0},
+                                        "static", 2, 4, 10.0)
+    assert ok and f["actor_motion_raw"] == 1.5 and n_active == 3     # p95 / interval = 0,1,2,3
+    assert f["actor_motion_active_rate"] == 0.75 and f["actor_motion_px_per_second"] == 15.0
+    f, *_ , ok = summarize({"per_frame": pf, "n_arm_dets": 0}, "static", 2, 4, 10.0)
+    assert not ok and f["actor_motion_raw"] is None                       # no robot -> N/A
 
 
 # --------------------------------------------------------------------------- #

@@ -1,8 +1,11 @@
 """Name -> metric class, resolved lazily.
 
-Each metric pulls a different heavy stack (piq, torchmetrics+CLIP, or nothing
-but a subprocess), so classes are imported only when built: listing or
-building the kiva (hallucination) metric never imports torch.
+Each metric pulls a different heavy stack (piq, pyiqa, torchmetrics+CLIP, WorldScore
+third_party, or nothing but a subprocess), so classes are imported only when built:
+listing or building the kiva metric never imports torch.
+
+Registry names follow the paper (App. B); the source paper of each metric is in
+``metrics/README.md``.
 """
 from __future__ import annotations
 
@@ -12,21 +15,33 @@ from typing import Any
 from .base import BaseMetric
 
 _REGISTRY: dict[str, str | type[BaseMetric]] = {
+    # ours
+    "kiva": "metrics.kiva.metric:Hallucination",
+    "rigis": "metrics.rigis.metric:MultiviewConsistency",
+    # reference-free (adapted)
+    "visual_integrity": "metrics.visual_integrity:VisualIntegrity",
+    "text_alignment": "metrics.text_alignment:TextAlignment",
+    # distributional
+    "fvd": "metrics.fvd:FVD",
+    # reference-based, vs the dense rollout
     "psnr": "metrics.fidelity:PSNR",
     "ssim": "metrics.fidelity:SSIM",
     "lpips": "metrics.fidelity:LPIPS",
     "fidelity": "metrics.fidelity:Fidelity",
-    "clip_score": "metrics.clip_score:CLIPScore",
-    "fvd": "metrics.fvd:FVD",
-    "rigis": "metrics.rigis.metric:MultiviewConsistency",
-    "kiva": "metrics.kiva.metric:Hallucination",
+    # RQ3 baselines
+    "motion_smoothness": "metrics.motion_smoothness:MotionSmoothness",
+    "motion_amplitude": "metrics.motion_amplitude:MotionAmplitude",
 }
 
-# Pre-refactor names stay valid: ``multiview_consistency`` -> rigis, ``hallucination`` -> kiva.
-ALIASES = {"clip": "clip_score",
-           "multiview_consistency": "rigis", "mvc": "rigis", "multiview": "rigis",
-           "hallucination": "kiva", "hal": "kiva", "kinescore": "kiva",
-           "i3d_fvd": "fvd"}
+#: deprecated / pre-refactor names -> registry name
+ALIASES = {
+    "clip_score": "text_alignment", "clip": "text_alignment", "clipscore": "text_alignment",
+    "clip_iqa": "visual_integrity", "clipiqa+": "visual_integrity",
+    "multiview_consistency": "rigis", "mvc": "rigis", "multiview": "rigis",
+    "hallucination": "kiva", "hal": "kiva", "kinescore": "kiva",
+    "i3d_fvd": "fvd",
+    "ms": "motion_smoothness", "mas": "motion_amplitude",
+}
 
 
 def register(name: str, cls: type[BaseMetric] | None = None):
