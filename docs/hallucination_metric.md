@@ -1293,8 +1293,8 @@ Pre-existing in this repo (**prior work by others, not created here**):
 
 | Path | Role |
 |---|---|
-| `scripts/build_hallucination_segment_catalog.py` | September, segment catalog builder. |
-| `scripts/export_hallucinate_results.py` | September, result exporter. |
+| `scripts/metrics/build_hallucination_segment_catalog.py` | September, segment catalog builder. |
+| `scripts/metrics/export_hallucinate_results.py` | September, result exporter. |
 | `tmp/20261005_refactor/web/scripts/export_hallucinate_final_labels.js` | September, label exporter. |
 | `metrics/kiva/map_to_dr.py` | September, maps rated web clips → local paths. |
 | `metrics/reports/hallucinate_human_vs_dr.csv` | September, 291 human ratings + PSNR/SSIM/LPIPS. |

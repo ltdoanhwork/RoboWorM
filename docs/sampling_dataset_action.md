@@ -8,7 +8,7 @@ Run video generation conditioned on robot action sequences with the
 
 The model expects `action[:, :6]` = 6D EE wrist **delta** (pre-divided by 20 in
 JSON; inference re-multiplies by 20) and `continuous_gripper_state` ∈ `[0, 1]`.
-`scripts/extract_actions_for_eval.py` auto-detects the source format from each
+`scripts/metrics/extract_actions_for_eval.py` auto-detects the source format from each
 dataset's `meta/modality.json`:
 
 | Dataset            | Action layout | Source channel used        | Quality |
@@ -31,7 +31,7 @@ export NUM_GPUS=1
 ### EgoDex_Eval
 
 ```bash
-python scripts/extract_actions_for_eval.py \
+python scripts/metrics/extract_actions_for_eval.py \
   --dataset_path ./datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/EgoDex_Eval \
   --save_path ./sampling_dataset/PhysicalAI-Robotics-GR00T-Teleop-GR1/EgoDex_Eval/actions \
   --output_json ./sampling_dataset/PhysicalAI-Robotics-GR00T-Teleop-GR1/EgoDex_Eval/batch_input_action.json \
@@ -41,7 +41,7 @@ python scripts/extract_actions_for_eval.py \
 ### DreamDojo-HV_Eval
 
 ```bash
-python scripts/extract_actions_for_eval.py \
+python scripts/metrics/extract_actions_for_eval.py \
   --dataset_path ./datasets/PhysicalAI-Robotics-GR00T-Teleop-GR1/DreamDojo-HV_Eval \
   --save_path ./sampling_dataset/PhysicalAI-Robotics-GR00T-Teleop-GR1/DreamDojo-HV_Eval/actions \
   --output_json ./sampling_dataset/PhysicalAI-Robotics-GR00T-Teleop-GR1/DreamDojo-HV_Eval/batch_input_action.json \
@@ -59,7 +59,7 @@ OUT_ROOT=./output/action_gen/In-lab_Eval
 
 for task_dir in "$IN_LAB_ROOT"/gr1_unified.*_robot; do
   task=$(basename "$task_dir")
-  python scripts/extract_actions_for_eval.py \
+  python scripts/metrics/extract_actions_for_eval.py \
     --dataset_path "$task_dir" \
     --save_path "$SAVE_ROOT/$task/actions" \
     --output_json "$SAVE_ROOT/$task/batch_input_action.json" \

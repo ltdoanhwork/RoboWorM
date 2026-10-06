@@ -158,7 +158,7 @@ exactly (all per-method deltas `+0`, total 29,343 episodes) is already staged.
 
 ```bash
 cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
-models/dreamgen/.venv/bin/python scripts/nr_promote_manifest.py \
+models/dreamgen/.venv/bin/python scripts/metrics/nr_promote_manifest.py \
   --from metrics/WorldScore/results/_manifest_rebuild \
   --to   metrics/WorldScore/results/dense_nr_full
 ```
@@ -199,25 +199,25 @@ skip most episodes. Always unset them.
 
 ```bash
 # box A  (80GB single GPU)
-MACHINES=28 WORKERS=2 bash scripts/run_dense_nr_slots.sh  0 4
+MACHINES=28 WORKERS=2 bash scripts/metrics/run_dense_nr_slots.sh  0 4
 
 # box B
-MACHINES=28 WORKERS=2 bash scripts/run_dense_nr_slots.sh  4 4
+MACHINES=28 WORKERS=2 bash scripts/metrics/run_dense_nr_slots.sh  4 4
 
 # box C
-MACHINES=28 WORKERS=2 bash scripts/run_dense_nr_slots.sh  8 4
+MACHINES=28 WORKERS=2 bash scripts/metrics/run_dense_nr_slots.sh  8 4
 
 # box D
-MACHINES=28 WORKERS=2 bash scripts/run_dense_nr_slots.sh 12 4
+MACHINES=28 WORKERS=2 bash scripts/metrics/run_dense_nr_slots.sh 12 4
 
 # box E
-MACHINES=28 WORKERS=2 bash scripts/run_dense_nr_slots.sh 16 4
+MACHINES=28 WORKERS=2 bash scripts/metrics/run_dense_nr_slots.sh 16 4
 
 # box F
-MACHINES=28 WORKERS=2 bash scripts/run_dense_nr_slots.sh 20 4
+MACHINES=28 WORKERS=2 bash scripts/metrics/run_dense_nr_slots.sh 20 4
 
 # box G  (4 GPUs -- one slot each, so 2 workers per GPU)
-MACHINES=28 WORKERS=2 bash scripts/run_dense_nr_slots.sh 24 4 0,1,2,3
+MACHINES=28 WORKERS=2 bash scripts/metrics/run_dense_nr_slots.sh 24 4 0,1,2,3
 ```
 
 The script prints a per-GPU VRAM check and a box-wide core check before launching, and
@@ -248,13 +248,13 @@ After all boxes are up, on any box:
 cat metrics/WorldScore/results/dense_nr_full/wave_mode.json
 # expect exactly: machines=28 workers=2 list=full-manifest
 
-MACHINES=28 bash scripts/dense_nr_status.sh
+MACHINES=28 bash scripts/metrics/dense_nr_status.sh
 ```
 
 Then confirm the manifest matches the episode spec:
 
 ```bash
-models/dreamgen/.venv/bin/python scripts/nr_distribution_audit.py \
+models/dreamgen/.venv/bin/python scripts/metrics/nr_distribution_audit.py \
   --run metrics/WorldScore/results/dense_nr_full --with-gt
 ```
 
@@ -265,7 +265,7 @@ Every per-method delta must be `+0` and the episode total `29343`.
 ## 4. Monitoring
 
 ```bash
-MACHINES=28 bash scripts/dense_nr_status.sh
+MACHINES=28 bash scripts/metrics/dense_nr_status.sh
 ```
 
 Health signals and what they mean:
@@ -293,7 +293,7 @@ A dead box is relaunched with **its own slot range only** — never someone else
    `--only-ids`), `run_dense_nr_full_m{0..4}.sh`, or `run_dense_nr_multigpu.sh` (assumes one
    slot per GPU with uniform `WORKERS`, which is exactly what fails on mixed hardware).
    **`run_dense_nr_slots.sh` is the only entry point for a forward slot**;
-   `run_dense_nr_full_extra.sh` is the only entry point for the single reverse walker.
+   `run_dense_nr_full.sh extra` is the only entry point for the single reverse walker.
 5. **Promoting the manifest while workers are live** → they repartition mid-flight. The
    promote script refuses; do not `--force`.
 
@@ -324,7 +324,7 @@ then verify in a *separate* call:
 
 ```bash
 det shell open $ID -- "tmux new-session -d -s nr$S 'cd $P && MACHINES=6 WORKERS=8 \
-  bash scripts/run_dense_nr_slots.sh $S 1 > $P/logs/nrwave_slot$S.log 2>&1; sleep 99999'"
+  bash scripts/metrics/run_dense_nr_slots.sh $S 1 > $P/logs/nrwave_slot$S.log 2>&1; sleep 99999'"
 sleep 40
 det shell open $ID -- 'echo worker=$(ps -eo stat=,args= | grep run_dense_nr.py \
   | grep -v grep | grep -vc "^Z")'      # expect 9
@@ -339,7 +339,7 @@ SSH session closed):
 
 ```bash
 det shell open $ID -- "cd $P && setsid bash -c 'MACHINES=6 WORKERS=8 \
-  bash $P/scripts/run_dense_nr_slots.sh 5 1 > $P/logs/nrwave_slot5.log 2>&1; \
+  bash $P/scripts/metrics/run_dense_nr_slots.sh 5 1 > $P/logs/nrwave_slot5.log 2>&1; \
   sleep 99999' </dev/null >/dev/null 2>&1 & sleep 3; echo launched"
 ```
 
@@ -412,7 +412,7 @@ det shell list | grep -E 'RUNNING|TERMINATED'     # who is actually alive?
 # then: stop survivors, clear the lock, relaunch them as a COMPLETE partition
 det shell open $ID -- 'pkill -f run_dense_nr.py'   # one call per box
 rm -f <run>/wave_mode.json
-MACHINES=3 WORKERS=8 bash scripts/run_dense_nr_slots.sh <0..2> 1
+MACHINES=3 WORKERS=8 bash scripts/metrics/run_dense_nr_slots.sh <0..2> 1
 ```
 
 Verify the new geometry is exact before trusting it (`W=8 M=3` -> covered 86,767/86,767,
@@ -430,7 +430,7 @@ single line ending `...hn image's own newer libs in front where they exist.` The
 quote made bash fail at line 16:
 
 ```
-scripts/run_dense_nr.sh: line 16: unexpected EOF while looking for matching `''
+scripts/metrics/run_dense_nr.sh: line 16: unexpected EOF while looking for matching `''
 ```
 
 Every worker died instantly on **all** boxes. What made it expensive to find: the launcher
@@ -442,7 +442,7 @@ blaming tmux before running the worker in the foreground surfaced the real messa
 **Never put an apostrophe in a comment in these scripts**, and after editing any `run_*.sh`:
 
 ```bash
-bash -n scripts/run_dense_nr.sh && echo OK    # cheap, catches exactly this
+bash -n scripts/metrics/run_dense_nr.sh && echo OK    # cheap, catches exactly this
 ```
 
 Then confirm one worker actually reaches a clip, not just that a PGID was printed.

@@ -42,7 +42,7 @@ for DATASET in ${DATASETS}; do
         case "${DATASET}" in
             bimanual)            echo "  → Run: python finetuning/dreamgen/scripts/prepare_bimanual_dreamgen.py" ;;
             single_arm)          echo "  → Run: python finetuning/dreamgen/scripts/prepare_single_arm_dreamgen.py" ;;
-            humanoid)            echo "  → Run: bash scripts/run_caption_humanoid_singleview.sh" ;;
+            humanoid)            echo "  → Run: bash scripts/tools/data/run_caption_humanoid_singleview.sh" ;;
             humanoid_multiview)  echo "  → Run: python finetuning/dreamgen/scripts/prepare_humanoid_multiview_dreamgen.py" ;;
             bimanual_multiview)  echo "  → Run: python finetuning/dreamgen/scripts/prepare_bimanual_multiview_dreamgen.py" ;;
             single_arm_16fps)    echo "  → Run: python finetuning/dreamgen/scripts/prepare_single_arm_dreamgen_16fps.py" ;;

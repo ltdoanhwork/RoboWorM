@@ -105,7 +105,7 @@ ratio (see `tmp/20261005_refactor/misc/metrics/phyworld/tables/wave0.md` (archiv
 static clip — expected, not a bug).
 
 Also available (appendix / older trial): GT-ref `flow_epe` via
-`scripts/compute_physics_metrics_ctrlworld.py` — not the main speedup table.
+`scripts/metrics/compute_physics_metrics_ctrlworld.py` — not the main speedup table.
 
 ---
 

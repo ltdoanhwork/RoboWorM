@@ -105,7 +105,7 @@ Measured camera keys, not assumed:
 The singleview tracks are **not** "1 of the N multiview cameras" in general:
 
 - `bimanual/singleview` **is** derived — it is `cam_high` of the same episodes
-  (`scripts/export_bimanual_singleview_cam_high.py` symlinks them), so the two
+  (`scripts/tools/data/export_bimanual_singleview_cam_high.py` symlinks them), so the two
   bimanual tracks share episodes and prompts.
 - `single_arm/singleview` and `humanoid/singleview` are **different source
   datasets** from their multiview counterparts (RoboChallenge vs DROID; GR00T

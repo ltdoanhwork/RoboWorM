@@ -31,7 +31,7 @@ PROJ=/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen
 det shell open <ID> -- "
 tmux new-session -d -s myjob '
   cd $PROJ &&
-  bash scripts/run_humanoid_singleview_dreamgen_pisa.sh > $PROJ/logs/exp_logs/tmux_logs/pisa_<ID8>.log 2>&1
+  bash scripts/run/dreamgen/run_humanoid_singleview_dreamgen_pisa.sh > $PROJ/logs/exp_logs/tmux_logs/pisa_<ID8>.log 2>&1
 '"
 ```
 
@@ -44,8 +44,8 @@ vào 1 lệnh thì phần cuối bị cắt âm thầm (job không chạy mà v�
 
 ```bash
 # shell 1 -> pisa, shell 2 -> svg1, shell 3 -> radial, ...
-det shell open <ID1> -- "tmux new-session -d -s m_pisa 'cd $PROJ && bash scripts/run_humanoid_singleview_dreamgen_pisa.sh > $PROJ/logs/exp_logs/tmux_logs/pisa.log 2>&1'"
-det shell open <ID2> -- "tmux new-session -d -s m_svg1 'cd $PROJ && bash scripts/run_humanoid_singleview_dreamgen_svg1.sh > $PROJ/logs/exp_logs/tmux_logs/svg1.log 2>&1'"
+det shell open <ID1> -- "tmux new-session -d -s m_pisa 'cd $PROJ && bash scripts/run/dreamgen/run_humanoid_singleview_dreamgen_pisa.sh > $PROJ/logs/exp_logs/tmux_logs/pisa.log 2>&1'"
+det shell open <ID2> -- "tmux new-session -d -s m_svg1 'cd $PROJ && bash scripts/run/dreamgen/run_humanoid_singleview_dreamgen_svg1.sh > $PROJ/logs/exp_logs/tmux_logs/svg1.log 2>&1'"
 ```
 
 Không cần merge gì — mỗi method ghi vào cây `sampling_dataset/<method>/` riêng.
@@ -59,7 +59,7 @@ Không cần merge gì — mỗi method ghi vào cây `sampling_dataset/<method>
 det shell open <ID_i> -- "
 tmux new-session -d -s cw_s<i> '
   cd $PROJ &&
-  NUM_SHARDS=4 SHARD_ID=<i> bash scripts/run_humanoid_multiview_ctrlworld_worldcache.sh \
+  NUM_SHARDS=4 SHARD_ID=<i> bash scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_worldcache.sh \
     > $PROJ/logs/exp_logs/tmux_logs/cw_shard<i>.log 2>&1
 '"
 ```
@@ -67,14 +67,14 @@ tmux new-session -d -s cw_s<i> '
 Xong **tất cả** shard mới merge (chạy ở đâu cũng được, 1 lần):
 
 ```bash
-python scripts/merge_ctrlworld_shard_summaries.py \
+python scripts/tools/ops/merge_ctrlworld_shard_summaries.py \
   --output-root sampling_dataset/worldcache/humanoid/output/multiview/ctrlworld
 ```
 
 ### Cách C — để script tự phát việc (timing pass)
 
 ```bash
-WATCH=1 bash scripts/_dispatch_timing_cells.sh
+WATCH=1 bash scripts/tools/tune/_dispatch_timing_cells.sh
 ```
 
 Nó tự tìm shell `VLA_doanh` RUNNING có GPU rảnh, giao 1 cell/shell, tự tránh
@@ -85,8 +85,8 @@ trùng, và nhận thêm shell mới khi shell cũ chết.
 Mỗi shell nhận 1 dải slot, **`MACHINES` và `WORKERS` phải giống nhau ở mọi shell**:
 
 ```bash
-MACHINES=28 WORKERS=2 bash scripts/run_dense_nr_slots.sh 0 4    # shell 1
-MACHINES=28 WORKERS=2 bash scripts/run_dense_nr_slots.sh 4 4    # shell 2
+MACHINES=28 WORKERS=2 bash scripts/metrics/run_dense_nr_slots.sh 0 4    # shell 1
+MACHINES=28 WORKERS=2 bash scripts/metrics/run_dense_nr_slots.sh 4 4    # shell 2
 ```
 
 Chi tiết: [`docs/dense_nr_10gpu_slots.md`](dense_nr_10gpu_slots.md).

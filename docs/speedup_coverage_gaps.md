@@ -9,7 +9,7 @@ inflate ~15-20% under GPU contention, measured).
 
 The paper does **not** wait for the full uniform pass. Reason: the single A100 on
 this host is at 100% / 79 GB from the in-flight job, and
-`scripts/_bench_uniform_timing.sh` refuses to start on a contended card by design
+`scripts/tools/tune/_bench_uniform_timing.sh` refuses to start on a contended card by design
 (that refusal is what makes the measured ratios trustworthy). Blocking the paper
 on ~8.3 GPU-hours that cannot be scheduled would buy nothing the marking does not
 already give.
@@ -25,7 +25,7 @@ undifferentiated number**:
 
 Where this is enforced:
 
-- `scripts/make_speedup_summary.py` — tags each row (`timing_provenance` column in
+- `scripts/tables/make_speedup_summary.py` — tags each row (`timing_provenance` column in
   `metrics/reports/speedup_summary_full.csv`), emits `‡`/`†` in
   `metrics/reports/speedup_summary_appendix.tex`, and carries per-method counts
   (`n_cells_uniform_pass` / `n_cells_tuning_notes` / `n_cells_persisted`) into
@@ -150,7 +150,7 @@ x 2 cells. Fixing needs a scoring pass over existing mp4s (no re-generation).
 
 ---
 
-## 3. Fixed: `scripts/make_speedup_summary.py` was mis-reporting
+## 3. Fixed: `scripts/tables/make_speedup_summary.py` was mis-reporting
 
 Two real bugs, both fixed (regenerated CSV/TeX committed):
 
@@ -181,7 +181,7 @@ benchmark — the honest number is **18 of 124**.
 
 ---
 
-## 4. The job to run — `scripts/_bench_uniform_timing.sh`
+## 4. The job to run — `scripts/tools/tune/_bench_uniform_timing.sh`
 
 A uniform timing harness already exists and is the right tool; this task
 **extended it with the missing config pins** rather than adding a parallel one
@@ -189,10 +189,10 @@ A uniform timing harness already exists and is the right tool; this task
 found — one harness, one protocol).
 
 ```bash
-bash scripts/_bench_uniform_timing.sh --estimate              # cost only, no GPU
-bash scripts/_bench_uniform_timing.sh --all --gpu 0           # full pass
-bash scripts/_bench_uniform_timing.sh --cell dreamdojo_humanoid_sv --gpu 0
-EPS_PER_CATEGORY=1 bash scripts/_bench_uniform_timing.sh --all --gpu 0   # half the cost
+bash scripts/tools/tune/_bench_uniform_timing.sh --estimate              # cost only, no GPU
+bash scripts/tools/tune/_bench_uniform_timing.sh --all --gpu 0           # full pass
+bash scripts/tools/tune/_bench_uniform_timing.sh --cell dreamdojo_humanoid_sv --gpu 0
+EPS_PER_CATEGORY=1 bash scripts/tools/tune/_bench_uniform_timing.sh --all --gpu 0   # half the cost
 python3 assets/scripts/make_timing_pass_table.py --results /tmp/uniform_timing/results.jsonl
 ```
 
@@ -228,7 +228,7 @@ is the only plausible win and has never been timed):
 
 ```bash
 for c in dreamdojo_humanoid_sv dreamdojo_single_arm_sv dreamdojo_bimanual_sv; do
-  bash scripts/_bench_uniform_timing.sh --cell "$c" --gpu 0
+  bash scripts/tools/tune/_bench_uniform_timing.sh --cell "$c" --gpu 0
 done
 ```
 

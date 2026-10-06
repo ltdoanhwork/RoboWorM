@@ -97,7 +97,7 @@ where `method` in `{dense, sito, itm, dicache, worldcache, fastercache, pisa,
 radial, svg1, svg2}`. For every prediction we have a **paired ground-truth video**
 (`full_gt.mp4`, per-view GT). We currently compute only **PSNR / SSIM / LPIPS**
 inline (via `piq`) in the infer scripts, e.g. `compute_metrics()` in
-[scripts/infer_single_arm_multiview_ctrlworld.py](../../scripts/infer_single_arm_multiview_ctrlworld.py),
+[scripts/infer/infer_single_arm_multiview_ctrlworld.py](../../scripts/infer/infer_single_arm_multiview_ctrlworld.py),
 with standalone helpers in [metrics/video_metrics.py](../../metrics/video_metrics.py).
 Results are written to per-episode `metrics.json` + `all_summary.json`.
 
@@ -167,7 +167,7 @@ Recommended: a **standalone offline metrics pass** rather than re-running infere
 since predictions already exist on disk.
 
 - **Where it hooks in.** Mirror the existing `compute_metrics()` contract in
-  [scripts/infer_single_arm_multiview_ctrlworld.py](../../scripts/infer_single_arm_multiview_ctrlworld.py)
+  [scripts/infer/infer_single_arm_multiview_ctrlworld.py](../../scripts/infer/infer_single_arm_multiview_ctrlworld.py)
   and extend [metrics/video_metrics.py](../../metrics/video_metrics.py) with new
   functions (e.g. `flow_error_vs_gt`, `motion_smoothness`, `object_motion_error`).
   A new script (e.g. `scripts/compute_physics_metrics.py`) would walk
@@ -293,7 +293,7 @@ Empirical finding while probing `motion_accuracy` on a paired sample
 The formula-normalize above still mixed in clip-length / temporal-alignment error and
 *over*-penalized DreamDojo. The **correct, validated** fix is to **resample GT to each
 prediction's own (resolution, fps)** and score each model against *its own matched GT*
-(`scripts/run_motion_accuracy_matched.sh`; full numbers in the sample REPORT **Part 4**):
+(`scripts/metrics/run_motion_accuracy_matched.sh`; full numbers in the sample REPORT **Part 4**):
 
 | pair (matched grid) | matched-GT fg flow | pred fg flow | **pred/GT ratio** | verdict |
 |---|---|---|---|---|
@@ -311,7 +311,7 @@ prediction grid, report foreground flow ratio (or |log-ratio|) vs matched GT.**
 ### 8.2 Full dynamics trio on the matched grid (magnitude + smoothness)
 
 Extending the matched-grid protocol to the other two WorldScore dynamics metrics
-(`scripts/run_motion_mag_smooth_matched.sh`; sample REPORT **Part 5**):
+(`scripts/metrics/run_motion_mag_smooth_matched.sh`; sample REPORT **Part 5**):
 
 | metric | DreamGen (768×432@16) | DreamDojo (640×480@10) | who's closer to GT |
 |---|---|---|---|
@@ -337,7 +337,7 @@ torch 2.6 (flashinfer/cosmos requirement) we vendored a **pure-PyTorch `mamba_ss
 
 Ran the three non-dynamics aspects on the same paired sample
 (`close_cardboard_box · episode_000026`, GT vs DreamGen vs DreamDojo) with
-`metrics/quality/quality_control_probe.py` / `scripts/run_quality_control_probe.sh`, stride 10.
+`metrics/quality/quality_control_probe.py` / `scripts/metrics/run_quality_control_probe.sh`, stride 10.
 Implementations mirror WorldScore's own class mapping in `helpers/evaluator.py`:
 
 | aspect | metric | model actually used by WorldScore | raw range |
@@ -497,6 +497,6 @@ cosmos-predict2/DreamGen. Verified after install: torch 2.6.0+cu124, numpy 1.26.
 transformers 4.51.3, flashinfer all intact.
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 STRIDE=10 bash scripts/run_quality_control_probe.sh
+CUDA_VISIBLE_DEVICES=0 STRIDE=10 bash scripts/metrics/run_quality_control_probe.sh
 # -> metrics/motion_probe_out/close_cardboard_box__ep000026_quality/quality_control_summary.json
 ```

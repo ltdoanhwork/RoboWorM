@@ -616,7 +616,7 @@ Run:
 CUDA_VISIBLE_DEVICES=0 CATEGORY=makovian MAX_EPISODES=1 \
   SITO_GROUP_MODE=temporal SITO_PRUNE_RATIO=0.3 SITO_NOISE_ALPHA=0 \
   SITO_START_LAYER_IDX=6 SITO_KEEP_LAST_N_DENSE=2 \
-  bash scripts/run_single_arm_multiview_dreamgen_sito.sh
+  bash scripts/run/dreamgen/run_single_arm_multiview_dreamgen_sito.sh
 ```
 
 > Note: the v1 `per_frame` mode remains the default and is still not recommended

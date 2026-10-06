@@ -22,5 +22,5 @@ tree as it was before any move.
 ## Other contents
 
 - `tmp/wc_ladder/` is scratch output from the WorldCache break-point ladder
-  (`scripts/_make_worldcache_ladder.sh`, humanoid single/multiview rungs). It is not part of the refactor, and it is safe to
+  (`scripts/tools/tune/_make_worldcache_ladder.sh`, humanoid single/multiview rungs). It is not part of the refactor, and it is safe to
   delete once the numbers in `.cursor/rules/dreamgen-humanoid-singleview-caching-insights.mdc` are no longer needed.

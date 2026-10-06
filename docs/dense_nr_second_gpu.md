@@ -27,7 +27,7 @@ The two queues converge in the middle and stop. Expect to roughly halve the ETA.
 ```bash
 cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
 
-setsid bash -c 'CUDA_VISIBLE_DEVICES=0 exec bash scripts/run_dense_nr.sh \
+setsid bash -c 'CUDA_VISIBLE_DEVICES=0 exec bash scripts/metrics/run_dense_nr.sh \
     --out results/dense_nr_v3_div30 \
     --workers 5 --reverse --reuse-manifest' \
   > results/dense_nr_v3_div30.queue.rev.log 2>&1 < /dev/null &
@@ -110,13 +110,13 @@ nvidia-smi --query-gpu=memory.used,utilization.gpu --format=csv,noheader
 - Do not run `plot_dense_nr.py` or `table_dense_nr.py`. The **owner's** forward
   queue runs the plot hook when it finishes; your `--reverse` queue deliberately
   skips it so the two cannot race on `figures/` and `coverage.json`.
-- Do not edit `scripts/run_dense_nr.py`, `metrics/dynamics/*`, or anything the
+- Do not edit `scripts/metrics/run_dense_nr.py`, `metrics/dynamics/*`, or anything the
   workers import. Both machines are executing this code live; a mid-run edit
   changes the protocol for later clips and silently mixes two protocols in one
   results dir.
 - Do not delete or rewrite `manifest.json`, `results/`, or `errors/`.
 - Do not use `models/DreamDojo/.venv` or `models/Ctrl-World/.venv`.
-  `scripts/run_dense_nr.sh` already selects `models/dreamgen/.venv` and the
+  `scripts/metrics/run_dense_nr.sh` already selects `models/dreamgen/.venv` and the
   vendored `PYTHONPATH` — always go through the `.sh`, never call the `.py` bare.
 
 ## Report back

@@ -5,7 +5,7 @@ clips in `sampling_dataset/dense/`; sampler settings come from the run
 config / canonical run script (`cfg_src` in the JSON). Regenerate with:
 
 ```bash
-python3 scripts/make_dense_generation_table.py \
+python3 scripts/tables/make_dense_generation_table.py \
   --md docs/dense_generation_config.md \
   --json metrics/reports/dense_generation_config.json \
   --tex metrics/reports/dense_generation_config.tex

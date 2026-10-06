@@ -8,7 +8,7 @@ Benchmarking training-free acceleration strategies (Cache, Sparse Attention, Tok
 
 export PATH="$HOME/VLA/doanh:$PATH"
 gsutil -m cp -r gs://openpi-assets/checkpoints/pi05_droid/* /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/checkpoints/base/pi05_droid
-CUDA_VISIBLE_DEVICES=0 bash scripts/run_single_arm_multiview_ctrlworld_pi.sh both
+CUDA_VISIBLE_DEVICES=0 bash scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_pi.sh both
 ## Ctrl world
 
 export CUDA_VISIBLE_DEVICES=0 
@@ -164,7 +164,7 @@ torchrun -m models.dreamgen.examples.video2world \
 
 # 14B Video2World 720p-16fps: ghi ra thư mục riêng (mặc định `720p_16fps/`), không đè `dense/`
 # (script tự clone batch_input.json và đổi `output_video`)
-bash ./scripts/run_humanoid_gr1_video2world_720p16fps.sh
+bash archived:run_humanoid_gr1_video2world_720p16fps.sh
 # Tuỳ chọn: OUT_TAG=my_run để tách từng lần chạy
 
 
@@ -266,7 +266,7 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
 Radial is not supported in the default `DreamDojo/.venv`. It requires a separate env with `flashinfer`.
 
 cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
-bash ./scripts/bootstrap_radial_env.sh
+bash ./scripts/tools/ops/bootstrap_radial_env.sh
 
 source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/dreamgen"
@@ -321,7 +321,7 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
 Do not install `cuvs-cu12` into `DreamDojo/.venv`. That env currently uses a Torch CUDA 12.8 stack, and `cuvs-cu12` upgrades parts of the CUDA userspace to 12.9, which breaks `torch` import with `libcusparse.so.12` / `libnvJitLink.so.12` symbol errors.
 
 cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
-bash ./scripts/bootstrap_svg_env.sh
+bash ./scripts/tools/ops/bootstrap_svg_env.sh
 
 source /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/models/DreamDojo/.venv/bin/activate
 export PYTHONPATH="./models/dreamgen"
@@ -476,7 +476,7 @@ Dense = default action-conditioned diffusion (no `--use_svg` / SiTo). Outputs de
 
 ```bash
 cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
-bash ./scripts/run_humanoid_singleview_dreamdojo_dense.sh
+bash ./scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_dense.sh
 # Tuỳ chọn: CHECKPOINTS_DIR=... SAVE_ROOT=/abs/path/to/out/root CUDA_VISIBLE_DEVICES=0 bash ...
 ```
 
@@ -672,36 +672,36 @@ These scripts run inference with sparse attention methods and save results to `s
 
 ```bash
 # DreamDojo + SiTo (2B, action-conditioned)
-bash scripts/run_humanoid_singleview_dreamdojo_sito.sh
+bash scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_sito.sh
 
 # DreamDojo + ITM (2B, action-conditioned)
-bash scripts/run_humanoid_singleview_dreamdojo_itm.sh
+bash scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_itm.sh
 
 # DreamGen + SiTo (14B, video2world)
-bash scripts/run_humanoid_singleview_dreamgen_sito.sh
+bash scripts/run/dreamgen/run_humanoid_singleview_dreamgen_sito.sh
 
 # DreamGen + ITM (14B, video2world)
-bash scripts/run_humanoid_singleview_dreamgen_itm.sh
+bash scripts/run/dreamgen/run_humanoid_singleview_dreamgen_itm.sh
 ```
 
 ### Ctrl-World + SiTo / ITM (Single-Arm Multiview)
 
 ```bash
 # Ctrl-World + SiTo
-bash scripts/run_single_arm_multiview_ctrlworld_sito.sh [makovian|non_makovian|both]
+bash scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_sito.sh [makovian|non_makovian|both]
 
 # Ctrl-World + ITM
-bash scripts/run_single_arm_multiview_ctrlworld_itm.sh [makovian|non_makovian|both]
+bash scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld_itm.sh [makovian|non_makovian|both]
 ```
 
 ### Single-Arm Singleview (DreamDojo)
 
 ```bash
 # DreamDojo + SiTo
-bash scripts/run_single_arm_singleview_dreamdojo_sito.sh
+bash scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_sito.sh
 
 # DreamDojo + ITM
-bash scripts/run_single_arm_singleview_dreamdojo_itm.sh
+bash scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_itm.sh
 ```
 
 ### Collecting Videos for Webpage
@@ -766,6 +766,6 @@ torchrun -m models.dreamgen.examples.video2world_gr00t \
 TMP_OUT=/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/tmp \
 NUM_GPUS=1 \
 BATCH_JSON=./sampling_dataset/dense/single_arm/input/multiview/dreamgen/makovian/batch_input.json \
-bash scripts/run_single_arm_multiview_video2world_2b_tmp.sh
+bash archived:run_single_arm_multiview_video2world_2b_tmp.sh
 
 Successfully saved prompt file to: /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/sampling_dataset/humanoid/multiview/non_makovian/dreamgen/Airbot_MMK2_Airbot_MMK2_storage_mango_pomegranate/episode_000002.txt

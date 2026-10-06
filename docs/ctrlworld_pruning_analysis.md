@@ -142,7 +142,7 @@ cost documented above.
 
 ```bash
 # dense baseline (25 steps)
-python scripts/infer_single_arm_multiview_ctrlworld.py ... --num_inference_steps 25
+python scripts/infer/infer_single_arm_multiview_ctrlworld.py ... --num_inference_steps 25
 
 # SiTo per-attn, quality-preserving cache-once (break-even speed)
 ... --use_sito --sito_max_downsample_ratio 1 --sito_plan_recompute_every 999999 \

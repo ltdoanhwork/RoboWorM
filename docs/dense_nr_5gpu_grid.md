@@ -33,7 +33,7 @@ So the 2 new boxes would do **zero** new work. Every box must be restarted with
 `MACHINES=5`. Nothing already scored is lost — results are per-id files and a worker
 skips ids that exist.
 
-`scripts/run_dense_nr_full_extra.sh` (the reverse walker) is also no longer the answer:
+`scripts/metrics/run_dense_nr_full.sh extra` (the reverse walker) is also no longer the answer:
 it was the 2-machine trick and `run_dense_nr.py` rejects `--reverse` with `--machines > 1`.
 
 ## WARNING 2 — the paper table does NOT need the whole manifest
@@ -58,7 +58,7 @@ it and a later full wave simply resumes.
 Stop the old process group on each box that is currently running:
 
 ```bash
-bash scripts/dense_nr_status.sh          # prints the PGID per machine
+bash scripts/metrics/dense_nr_status.sh          # prints the PGID per machine
 kill -- -<PGID>
 ```
 
@@ -66,11 +66,11 @@ Then, one box per index (`0`, `1`, `2`, `3`, `4` — **never the same index twic
 
 ```bash
 cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
-bash scripts/run_dense_nr_grid.sh 0      # box 0
-bash scripts/run_dense_nr_grid.sh 1      # box 1
-bash scripts/run_dense_nr_grid.sh 2      # box 2
-bash scripts/run_dense_nr_grid.sh 3      # box 3
-bash scripts/run_dense_nr_grid.sh 4      # box 4
+bash scripts/metrics/run_dense_nr_grid.sh 0      # box 0
+bash scripts/metrics/run_dense_nr_grid.sh 1      # box 1
+bash scripts/metrics/run_dense_nr_grid.sh 2      # box 2
+bash scripts/metrics/run_dense_nr_grid.sh 3      # box 3
+bash scripts/metrics/run_dense_nr_grid.sh 4      # box 4
 ```
 
 Env knobs: `GPU=1` if the free card is not 0, `WORKERS=6` if the card is shared,
@@ -85,7 +85,7 @@ what the others are walking.
 Monitor from any box:
 
 ```bash
-bash scripts/dense_nr_status.sh
+bash scripts/metrics/dense_nr_status.sh
 ```
 
 ## The table
@@ -118,7 +118,7 @@ motion, which is a baseline offset, not quality).
 ## Coverage / what is structurally missing
 
 ```bash
-models/dreamgen/.venv/bin/python scripts/nr_table_coverage.py \
+models/dreamgen/.venv/bin/python scripts/metrics/nr_table_coverage.py \
   --run metrics/WorldScore/results/dense_nr_full --target 300
 ```
 

@@ -16,5 +16,5 @@ https://aistairc.github.io/aist_bimanip_site/
 # Single Arm
 
 ```bash
-python ./scripts/download_droid_dataset.py
+python ./scripts/tools/data/download_droid_dataset.py
 ```

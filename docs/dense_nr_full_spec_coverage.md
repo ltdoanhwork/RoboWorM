@@ -16,7 +16,7 @@ directions:
 So the old manifest could never satisfy the spec: it lacked rows the spec requires and
 padded the count with rows that no longer exist.
 
-`scripts/nr_distribution_audit.py` is the check. It collapses view-clips back to episodes
+`scripts/metrics/nr_distribution_audit.py` is the check. It collapses view-clips back to episodes
 (via `pair_key` minus the trailing view segment) and diffs against the spec table, which
 is why the drift is visible at all — the manifest is in **view-clips** (86,767) while the
 spec is in **episodes** (29,343), and one 4-view ctrlworld episode is 4 rows.
@@ -58,7 +58,7 @@ Of the 34,532 spec view-clips the running wave omits:
 
 ### Cause 1 (33,941): `cell()` omits `view_type`, and the cap counts view-clips
 
-`scripts/nr_table_coverage.py` keys its budget on `(embodiment, model, split)`. The spec
+`scripts/metrics/nr_table_coverage.py` keys its budget on `(embodiment, model, split)`. The spec
 distribution is one row per `(embodiment, view, model)`. The missing **view** dimension
 merges the MV and SV branches of the same model into ONE 300-clip budget — and because MV
 episodes are 3–4 clips each while SV episodes are 1, MV consumes it:
@@ -257,7 +257,7 @@ silently stop forming a partition — some rows get scored twice, others never.
 
 Clip `id` is `sha256(method:relative:view)[:20]`, a pure **content** hash, so it does not
 depend on manifest order: **all 32,273 already-scored results survive the swap** (measured
-orphans: 0). Only the in-flight position breaks. Hence `scripts/nr_promote_manifest.py`
+orphans: 0). Only the in-flight position breaks. Hence `scripts/metrics/nr_promote_manifest.py`
 refuses while any `worker_*.log` has been touched in the last 10 minutes.
 
 ## Runbook
@@ -272,7 +272,7 @@ partitioning: some rows owned by nobody, others twice, and **nothing errors** be
 write is idempotent.
 
 So with **4 single-GPU boxes + 1 four-GPU box**: `MACHINES=8`, indices 0–3 on the single
-boxes, 4–7 on the big box (one per GPU). `scripts/run_dense_nr_multigpu.sh` does that.
+boxes, 4–7 on the big box (one per GPU). `scripts/metrics/run_dense_nr_multigpu.sh` does that.
 
 **Measured: 8 workers/GPU is safe on a 32-core box even with 4 GPUs.** Per worker on this
 workload: **~0.93 core**, ~3.0 GB RSS; with 8 workers the GPU sits at **99–100% util** using
@@ -299,17 +299,17 @@ pkill -f 'run_dense_nr.py'      # on EACH box
 
 ```bash
 NEW=metrics/WorldScore/results/_manifest_rebuild
-models/dreamgen/.venv/bin/python scripts/run_dense_nr.py --out $NEW --inventory-only \
+models/dreamgen/.venv/bin/python scripts/metrics/run_dense_nr.py --out $NEW --inventory-only \
   --methods dense dicache worldcache fastercache pisa radial svg1 svg2 sito itm
 
-models/dreamgen/.venv/bin/python scripts/nr_distribution_audit.py --run $NEW --with-gt
+models/dreamgen/.venv/bin/python scripts/metrics/nr_distribution_audit.py --run $NEW --with-gt
 # every `delta` column MUST read +0 and TOTAL 29343 before you promote
 ```
 
 **3. Promote** (refuses if any worker is alive):
 
 ```bash
-models/dreamgen/.venv/bin/python scripts/nr_promote_manifest.py \
+models/dreamgen/.venv/bin/python scripts/metrics/nr_promote_manifest.py \
   --from metrics/WorldScore/results/_manifest_rebuild \
   --to   metrics/WorldScore/results/dense_nr_full
 ```
@@ -319,13 +319,13 @@ Count `MACHINES` in **GPUs**, not boxes:
 
 ```bash
 # 4 single-GPU boxes -- one index each
-MACHINES=8 bash scripts/run_dense_nr_grid.sh 0
-MACHINES=8 bash scripts/run_dense_nr_grid.sh 1
-MACHINES=8 bash scripts/run_dense_nr_grid.sh 2
-MACHINES=8 bash scripts/run_dense_nr_grid.sh 3
+MACHINES=8 bash scripts/metrics/run_dense_nr_grid.sh 0
+MACHINES=8 bash scripts/metrics/run_dense_nr_grid.sh 1
+MACHINES=8 bash scripts/metrics/run_dense_nr_grid.sh 2
+MACHINES=8 bash scripts/metrics/run_dense_nr_grid.sh 3
 
 # the 4-GPU box -- four consecutive indices, one per GPU
-MACHINES=8 bash scripts/run_dense_nr_multigpu.sh 4 4
+MACHINES=8 bash scripts/metrics/run_dense_nr_multigpu.sh 4 4
 ```
 
 Two boxes on the same index is the silent failure: both do identical work and 1/N of the
@@ -333,8 +333,8 @@ manifest is never scored. Every write is idempotent, so **nothing errors to tell
 Verify with:
 
 ```bash
-bash scripts/dense_nr_status.sh
-models/dreamgen/.venv/bin/python scripts/nr_shard_probe.py \
+bash scripts/metrics/dense_nr_status.sh
+models/dreamgen/.venv/bin/python scripts/metrics/nr_shard_probe.py \
   --run metrics/WorldScore/results/dense_nr_full
 ```
 

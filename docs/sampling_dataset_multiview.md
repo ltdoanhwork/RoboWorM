@@ -73,10 +73,10 @@ torchrun --nproc_per_node=2 --master_port=12341 \
 
 
 # Chạy tất cả 6 Airbot (5 episodes mỗi bộ, FPS=10)
-NUM_GPUS=1 MAX_EPISODES=0 bash scripts/run_multiview_airbot_all.sh
+NUM_GPUS=1 MAX_EPISODES=0 bash archived:run_multiview_airbot_all.sh
 
 # Hoặc override
-MAX_EPISODES=3 FPS=8 bash scripts/run_multiview_airbot_all.sh
+MAX_EPISODES=3 FPS=8 bash archived:run_multiview_airbot_all.sh
 
 
 # Single-arm (datasets/single_arm/multiview)
@@ -87,24 +87,24 @@ Full-batch prep + DreamGen (`2×2` grid: `exterior_1_left`, `exterior_2_left`, `
 source models/dreamgen/.venv/bin/activate
 export PYTHONPATH=$PYTHONPATH:$(pwd)/models/dreamgen
 
-NUM_GPUS=2 bash scripts/run_single_arm_multiview_dreamgen_all.sh
+NUM_GPUS=2 bash scripts/run/dreamgen/run_single_arm_multiview_dreamgen_all.sh
 ```
 
 One branch only (`makovian` or `non_makovian`):
 
 ```bash
 DATASET_PATH=datasets/single_arm/multiview/makovian NUM_GPUS=2 \
-  bash scripts/run_single_arm_multiview_dreamgen_batch.sh
+  bash scripts/run/dreamgen/run_single_arm_multiview_dreamgen_batch.sh
 ```
 
-Pipeline chính (`scripts/run_single_arm_multiview_dreamgen_batch.sh`) gọi **`examples.video2world_gr00t`** và checkpoint **`Cosmos-Predict2-14B-Sample-GR00T-Dreams-DROID`** (resolve từ `CHECKPOINTS_DIR` trong `imaginaire/constants.py`). Để baseline **Video2World 2B** (không GR00T), ghi **`tmp/`** — script mặc định **`USE_LVG=1`** + **`NUM_CHUNKS=4`** (`examples.video2world_lvg`, 480p/16fps khớp `model-480p-16fps.pt`; xem `--resolution` / `--fps` trong `video2world_lvg.py`):
+Pipeline chính (`scripts/run/dreamgen/run_single_arm_multiview_dreamgen_batch.sh`) gọi **`examples.video2world_gr00t`** và checkpoint **`Cosmos-Predict2-14B-Sample-GR00T-Dreams-DROID`** (resolve từ `CHECKPOINTS_DIR` trong `imaginaire/constants.py`). Để baseline **Video2World 2B** (không GR00T), ghi **`tmp/`** — script mặc định **`USE_LVG=1`** + **`NUM_CHUNKS=4`** (`examples.video2world_lvg`, 480p/16fps khớp `model-480p-16fps.pt`; xem `--resolution` / `--fps` trong `video2world_lvg.py`):
 
 ```bash
 TMP_OUT=./tmp NUM_GPUS=2 \
   BATCH_JSON=./sampling_dataset/dense/single_arm/input/multiview/dreamgen/makovian/batch_input.json \
-  bash scripts/run_single_arm_multiview_video2world_2b_tmp.sh
+  bash archived:run_single_arm_multiview_video2world_2b_tmp.sh
 ```
-NUM_CHUNKS=3 NUM_GPUS=1 bash scripts/run_single_arm_multiview_video2world_2b_tmp.sh
+NUM_CHUNKS=3 NUM_GPUS=1 bash archived:run_single_arm_multiview_video2world_2b_tmp.sh
 Một clip ngắn (không nối chunk): `USE_LVG=0`. Ghi đè checkpoint: `DIT_PATH=...`. Đây là **`video2world_lvg` / `video2world`**, không phải `video2world_gr00t`.
 
 
@@ -113,7 +113,7 @@ Một clip ngắn (không nối chunk): `USE_LVG=0`. Ghi đè checkpoint: `DIT_P
 ```bash
 USE_LVG=1 NUM_CHUNKS=3 NUM_GPUS=1 \
   DATASET_PATH=datasets/single_arm/multiview/makovian \
-  bash scripts/run_single_arm_multiview_dreamgen_batch.sh
+  bash scripts/run/dreamgen/run_single_arm_multiview_dreamgen_batch.sh
 ```
 
 `NUM_CHUNKS` càng lớn → clip càng dài (tốn GPU/time hơn). `--fps` trên bản **không**-LVG chỉ đổi tốc độ phát khi encode MP4; bản LVG hiện encode nội bộ **16 fps**.
@@ -125,7 +125,7 @@ USE_LVG=1 NUM_CHUNKS=3 NUM_GPUS=1 \
 ```bash
 MAX_EPISODES=50 MIN_EPISODE_INDEX=1000 NUM_GPUS=2 \
   DATASET_PATH=datasets/single_arm/multiview/makovian \
-  bash scripts/run_single_arm_multiview_dreamgen_batch.sh
+  bash scripts/run/dreamgen/run_single_arm_multiview_dreamgen_batch.sh
 ```
 
 Output mặc định: `sampling_dataset/dense/single_arm/input/multiview/dreamgen/<category>/` (grid PNG + `batch_input.json`) và `sampling_dataset/dense/single_arm/output/multiview/dreamgen/<category>/` (mp4). Thư mục `dense/` là tuyến video chuẩn (full steps); sau này có thể thêm các tuyến khác (vd. video tăng tốc / sparse) cạnh `dense/` — xem skill `sampling-dataset-structure`.
@@ -143,14 +143,14 @@ Generated videos default to `sampling_dataset/bimanual/output/multiview/dreamgen
 Prepare only (3 static+dynamic slots: high, low, left wrist + black quadrant):
 
 ```bash
-python scripts/prepare_bimanual_multiview_dreamgen_batch.py \
+python scripts/prepare/prepare_bimanual_multiview_dreamgen_batch.py \
   --dataset_path datasets/bimanual/multiview/makovian/close_toolbox
 ```
 
 Four live views (high, low, left wrist, right wrist):
 
 ```bash
-python scripts/prepare_bimanual_multiview_dreamgen_batch.py \
+python scripts/prepare/prepare_bimanual_multiview_dreamgen_batch.py \
   --dataset_path /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics/datasets/bimanual/multiview/non_makovian/fold_bath_towel \
   --four_views
 ```
@@ -162,39 +162,39 @@ source models/DreamDojo/.venv/bin/activate
 export PYTHONPATH=$PYTHONPATH:$(pwd)/models/dreamgen
 
 DATASET_PATH=datasets/bimanual/multiview/makovian/close_toolbox \
-  bash scripts/run_bimanual_multiview_dreamgen_batch.sh
+  bash archived:run_bimanual_multiview_dreamgen_batch.sh
 ```
 ```bash
 source models/dreamgen/.venv/bin/activate
 export PYTHONPATH=$PYTHONPATH:$(pwd)/models/dreamgen
 
 DATASET_PATH=datasets/bimanual/multiview/non_makovian/fold_bath_towel \
-  bash scripts/run_bimanual_multiview_dreamgen_batch.sh
+  bash archived:run_bimanual_multiview_dreamgen_batch.sh
 ```
 ### Tự động toàn bộ task
 
-Script [scripts/run_bimanual_multiview_dreamgen_all.sh](scripts/run_bimanual_multiview_dreamgen_all.sh) lần lượt xử lý **mọi thư mục task** có `meta/episodes.jsonl` dưới `datasets/bimanual/multiview/makovian/*` và `.../non_makovian/*` (thứ tự tên thư mục). Mỗi task: (1) tạo lưới + `batch_input.json` dưới `sampling_dataset/bimanual/input/multiview/dreamgen/<category>/<task>/`, (2) chạy DreamGen lên batch đó.
+Script `archived:run_bimanual_multiview_dreamgen_all.sh` lần lượt xử lý **mọi thư mục task** có `meta/episodes.jsonl` dưới `datasets/bimanual/multiview/makovian/*` và `.../non_makovian/*` (thứ tự tên thư mục). Mỗi task: (1) tạo lưới + `batch_input.json` dưới `sampling_dataset/bimanual/input/multiview/dreamgen/<category>/<task>/`, (2) chạy DreamGen lên batch đó.
 
 Từ root repo (đã có venv trong script):
 
 ```bash
 # Cả makovian + non_makovian, infer toàn episode, 2 GPU
-NUM_GPUS=2 bash scripts/run_bimanual_multiview_dreamgen_all.sh
+NUM_GPUS=2 bash archived:run_bimanual_multiview_dreamgen_all.sh
 
 # Chỉ một nhánh
-CATEGORY=makovian NUM_GPUS=2 bash scripts/run_bimanual_multiview_dreamgen_all.sh
+CATEGORY=makovian NUM_GPUS=2 bash archived:run_bimanual_multiview_dreamgen_all.sh
 
 # Bốn ô camera (không ô đen)
-FOUR_VIEWS=1 NUM_GPUS=2 bash scripts/run_bimanual_multiview_dreamgen_all.sh
+FOUR_VIEWS=1 NUM_GPUS=2 bash archived:run_bimanual_multiview_dreamgen_all.sh
 
 # Chỉ chuẩn bị batch + PNG (ffmpeg), không cần GPU — chạy infer sau
-PREPARE_ONLY=1 bash scripts/run_bimanual_multiview_dreamgen_all.sh
+PREPARE_ONLY=1 bash archived:run_bimanual_multiview_dreamgen_all.sh
 
 # Batch đã có sẵn: chỉ infer
-SKIP_PREPARE=1 NUM_GPUS=2 bash scripts/run_bimanual_multiview_dreamgen_all.sh
+SKIP_PREPARE=1 NUM_GPUS=2 bash archived:run_bimanual_multiview_dreamgen_all.sh
 
 # Giới hạn episode mỗi task (test nhanh)
-MAX_EPISODES=3 NUM_GPUS=1 bash scripts/run_bimanual_multiview_dreamgen_all.sh
+MAX_EPISODES=3 NUM_GPUS=1 bash archived:run_bimanual_multiview_dreamgen_all.sh
 ```
 
 Biến môi trường khác: `MULTIVIEW_ROOT`, `INPUT_DIR`, `OUTPUT_DIR_ROOT` (ghi đè thư mục video ra), `DYNAMIC_WRIST`, `MODEL_SIZE`, `MASTER_PORT`, `FPS`.

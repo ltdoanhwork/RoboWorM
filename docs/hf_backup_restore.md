@@ -8,9 +8,9 @@ Scripts that produced it:
 
 | script | purpose |
 |---|---|
-| `scripts/upload_source_to_hf.sh` | source tree only (git-tracked + untracked-not-ignored) |
-| `scripts/upload_all_to_hf.sh` | driver for every large tree; resumable, verifies remote vs local |
-| `scripts/upload_tar_shards_to_hf.sh` | packs a many-small-file tree into tar shards, then uploads |
+| `scripts/tools/hf/upload_source_to_hf.sh` | source tree only (git-tracked + untracked-not-ignored) |
+| `scripts/tools/hf/upload_all_to_hf.sh` | driver for every large tree; resumable, verifies remote vs local |
+| `scripts/tools/hf/upload_tar_shards_to_hf.sh` | packs a many-small-file tree into tar shards, then uploads |
 
 ---
 
@@ -169,7 +169,7 @@ placeholders instead of keys. Files affected:
 
 | file | placeholder |
 |---|---|
-| `scripts/upload_sampling_to_hf.sh` | `HF_TOKEN_REDACTED` |
+| `scripts/tools/hf/upload_sampling_to_hf.sh` | `HF_TOKEN_REDACTED` |
 | `models/dreamgen/script_cache.md` | `HF_TOKEN_REDACTED` |
 | `models/dreamgen/bash-running-script/Finetuning-bash-dreamgen/{debug,realworld_training,cosmos-predict-training,robocasa_100_training}.sh` | `SECRET_REDACTED` (wandb API key) |
 
@@ -215,11 +215,11 @@ tokens from the environment over hardcoding them.
 ```bash
 export HF_TOKEN=<write token>
 
-bash scripts/upload_source_to_hf.sh      # source only
-bash scripts/upload_all_to_hf.sh         # everything (skips jobs already done)
+bash scripts/tools/hf/upload_source_to_hf.sh      # source only
+bash scripts/tools/hf/upload_all_to_hf.sh         # everything (skips jobs already done)
 
-JOBS="explogs misc" bash scripts/upload_all_to_hf.sh   # subset
-DRY_RUN=1 bash scripts/upload_all_to_hf.sh             # show plan, upload nothing
+JOBS="explogs misc" bash scripts/tools/hf/upload_all_to_hf.sh   # subset
+DRY_RUN=1 bash scripts/tools/hf/upload_all_to_hf.sh             # show plan, upload nothing
 ```
 
 State/logs: `logs/exp_logs/hf_upload/` (`state/<job>.done` markers, `<job>.log`,

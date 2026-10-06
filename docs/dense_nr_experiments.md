@@ -10,7 +10,7 @@ Second-GPU capacity: [dense_nr_second_gpu.md](dense_nr_second_gpu.md).
 
 ## Ground rules (violating these invalidates the result)
 
-1. **Never edit `scripts/run_dense_nr.py`, `metrics/dynamics/*`, or anything the
+1. **Never edit `scripts/metrics/run_dense_nr.py`, `metrics/dynamics/*`, or anything the
    workers import while the main run is live.** Workers load the code once; a
    mid-run edit silently mixes two protocols in one results dir. Wait for E1, or
    work on a **copy** of the run dir.
@@ -89,7 +89,7 @@ report; do not publish it.
 ## E2 — Does TextAlignment measure anything? — **RESOLVED 2026-09-16: KEPT (paired only); the earlier DROP was WRONG**
 
 > **Final result (this supersedes the drop below).** The single-shuffle control was
-> itself confounded. The deciding test — `scripts/_exp_text_matrix.py`, an N×N
+> itself confounded. The deciding test — `scripts/metrics/_exp_text_matrix.py`, an N×N
 > clip-by-prompt matrix per embodiment, **double-centered** to remove each caption's
 > bias and each clip's bias — says CLIPScore **does** discriminate:
 >
@@ -138,13 +138,13 @@ report; do not publish it.
 > and retrieval ranks are archived at
 > `tmp/20261005_refactor/misc/worldscore_results/_experiments/e2_text_matrix.json`:
 > ```bash
-> bash scripts/_exp_text_matrix.sh --out /tmp/e2_matrix --n 16 --device cuda
+> bash scripts/metrics/_exp_text_matrix.sh --out /tmp/e2_matrix --n 16 --device cuda
 > ```
 
 <details>
 <summary>Superseded: the original single-shuffle DROP decision (kept for the record)</summary>
 
-> **Result.** n=100, `scripts/_exp_text_shuffle.py`: matched 24.781 vs shuffled
+> **Result.** n=100, `scripts/metrics/_exp_text_shuffle.py`: matched 24.781 vs shuffled
 > 24.766, paired delta **+0.088 [−1.043, +0.930]**. Both pre-registered drop
 > conditions met (gap < 1.0 AND CI includes 0) → interpretation (b).
 > TextAlignment is **removed from the paper** (enforced by the `DROPPED` dict in
@@ -199,11 +199,11 @@ move.
 > mismatched instruction changes the caption's *style and length* as well as its
 > content, and CLIPScore's per-caption bias (≈7 points) is larger than the image-text
 > agreement it is meant to probe (≈2). Use the double-centered matrix
-> (`scripts/_exp_text_matrix.py`) or a same-caption paired comparison instead. The
+> (`scripts/metrics/_exp_text_matrix.py`) or a same-caption paired comparison instead. The
 > single-shuffle numbers below are retained only to document how the wrong conclusion
 > was reached.
 
-**Run.** Write `scripts/_exp_text_shuffle.py`. Score each clip twice: with its own
+**Run.** Write `scripts/metrics/_exp_text_shuffle.py`. Score each clip twice: with its own
 `text_condition_prompt` and with a prompt sampled from a different task in the same
 embodiment. **Do not call `score_qual`** — it also runs GroundingDINO (`det.rate`) on
 every frame, which is the expensive part and is irrelevant here. Call only
@@ -212,7 +212,7 @@ that feeds `task_lock` (`task_lock_score` in `metrics/phyworld/scoring.py` is on
 0–100 clamp, so comparing raw CLIPScore is equivalent) — and reuse `task_text` from
 `run_dense_nr.py` so prompts are preprocessed identically. Frames can be re-extracted
 with `prepare()`. Use ~80 clips spread over models. Always go through
-`scripts/run_dense_nr.sh` for the venv and vendored `PYTHONPATH`, or import the same
+`scripts/metrics/run_dense_nr.sh` for the venv and vendored `PYTHONPATH`, or import the same
 way it does.
 
 **Gotcha that would silently invalidate this experiment.** `score_qual` calls
@@ -297,7 +297,7 @@ explicitly in the schema. Report the number either way.
 > ### New insight 2 — the post-hoc "winner" was noise, and the criterion is under-powered
 >
 > A zero-GPU search over 7 more candidates built from the stored diagnostics
-> (`scripts/_exp_e3_posthoc.py`) produced one full pass: `ratio_med` =
+> (`archived:_exp_e3_posthoc.py`) produced one full pass: `ratio_med` =
 > median(r/max(copy, 0.01)) — rho −0.128/+0.079/+0.191, GT better 69.6%, spread
 > 1.85×. Two checks killed it:
 >
@@ -383,11 +383,11 @@ explicitly in the schema. Report the number either way.
 > ### Reproduce
 >
 > ```bash
-> python scripts/_exp_e3_build_manifest.py --pairs-per-mount 10   # selection sample
-> bash scripts/run_dense_nr.sh --out /tmp/e3_flicker/run --workers 3 --reuse-manifest
-> python scripts/_exp_e3_verdict.py       # C1 / C2 / power check
-> python scripts/_exp_e3_posthoc.py       # zero-GPU search over stored diagnostics
-> python scripts/test_actor_flicker.py    # unit tests incl. the flow-error confound
+> python archived:_exp_e3_build_manifest.py --pairs-per-mount 10   # selection sample
+> bash scripts/metrics/run_dense_nr.sh --out /tmp/e3_flicker/run --workers 3 --reuse-manifest
+> python archived:_exp_e3_verdict.py       # C1 / C2 / power check
+> python archived:_exp_e3_posthoc.py       # zero-GPU search over stored diagnostics
+> python archived:test_actor_flicker.py    # unit tests incl. the flow-error confound
 > ```
 >
 > The unit test now reproduces the confound synthetically and is worth keeping: with
@@ -419,14 +419,14 @@ explicitly in the schema. Report the number either way.
 > DOWN ("improves") for all four synthetic degradations — frame duplication (−0.004),
 > temporal smoothing, spatial blur (−0.005) and 8× blocking (−0.002). A metric that
 > improves under every artifact cannot be renormalised into correctness, because the
-> artifact itself suppresses the residual it measures. `scripts/_exp_accel_sanity.py`
+> artifact itself suppresses the residual it measures. `scripts/metrics/_exp_accel_sanity.py`
 > now also flattens `actor_flicker_variants`, so re-running it re-tests **every** new
 > candidate against the artifact sign in one pass:
 >
 > ```bash
-> python scripts/_exp_accel_sanity.py --build --n 8 --out /tmp/accel_sanity
-> bash scripts/run_dense_nr.sh --out /tmp/accel_sanity --workers 2 --reuse-manifest
-> python scripts/_exp_accel_sanity.py --report --out /tmp/accel_sanity
+> python scripts/metrics/_exp_accel_sanity.py --build --n 8 --out /tmp/accel_sanity
+> bash scripts/metrics/run_dense_nr.sh --out /tmp/accel_sanity --workers 2 --reuse-manifest
+> python scripts/metrics/_exp_accel_sanity.py --report --out /tmp/accel_sanity
 > ```
 >
 > **Earlier pre-check (kept — it is what motivated the per-pixel design):**
@@ -562,7 +562,7 @@ head ActorActivity is gate-sensitive and that must be stated as a limitation.
 > parameterise by method tree, and `row_for` already namespaces the record `id` by
 > method while keeping `pair_key` **method-free** (which is what pairs an accel clip
 > to its dense counterpart). What was missing is the *sampler*, now
-> `scripts/_exp_e5_build_manifest.py`: it restricts candidates to clips whose dense
+> `scripts/metrics/_exp_e5_build_manifest.py`: it restricts candidates to clips whose dense
 > counterpart **already has a scored result**, samples 30 per
 > (method, embodiment, mount) with `spread_sample` over (task, split), and emits
 > **only** the method rows — GT is not re-emitted because the accel trees ship
@@ -618,8 +618,8 @@ head ActorActivity is gate-sensitive and that must be stated as a limitation.
 > flag aggregates the dense reference run:
 >
 > ```bash
-> python scripts/_exp_e5_build_manifest.py            # writes results/accel_nr_v1/manifest.json
-> bash scripts/run_dense_nr.sh --out metrics/WorldScore/results/accel_nr_v1 \
+> python scripts/metrics/_exp_e5_build_manifest.py            # writes results/accel_nr_v1/manifest.json
+> bash scripts/metrics/run_dense_nr.sh --out metrics/WorldScore/results/accel_nr_v1 \
 >      --workers 5 --reuse-manifest
 > python assets/scripts/table_dense_nr.py --run metrics/WorldScore/results/accel_nr_v1 \
 >      --also metrics/WorldScore/results/dense_nr_v3_div30
@@ -667,7 +667,7 @@ GT 32.53 [31.04, 33.60] vs pred 31.66 [29.71, 33.11], while paired resolves at
 
 **Prerequisite.** ~~`dense` must be scored for exactly the episode+views sampled for
 each method~~ — **DONE**, see the status block above: `inventory()`/`_pred_rows()`
-already take a method tree, and `scripts/_exp_e5_build_manifest.py` restricts the
+already take a method tree, and `scripts/metrics/_exp_e5_build_manifest.py` restricts the
 sample to episode+views that already have a dense result.
 
 **Pass criterion.** Every method row in **T3** (`table3_accel_vs_dense.csv`) reports n,

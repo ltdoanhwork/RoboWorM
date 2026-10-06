@@ -25,7 +25,7 @@ in its worker logs; it now leaves no stubs). Machines 1 and 2 are still on the o
 every stub left in `results/` belongs to their hosts. On each of those boxes:
 
 ```bash
-bash scripts/dense_nr_status.sh --resume   # or: bash scripts/run_dense_nr_full_m<k>.sh
+bash scripts/metrics/dense_nr_status.sh --resume   # or: bash scripts/run_dense_nr_full_m<k>.sh
 ```
 
 Requeue anything already lost (safe, idempotent — deletes only the error record, so the
@@ -94,17 +94,17 @@ Two hygiene bugs fixed while auditing:
 
 | Machine | Command |
 |---|---|
-| A100 #1 | `bash scripts/run_dense_nr_full_m0.sh` |
-| A100 #2 | `bash scripts/run_dense_nr_full_m1.sh` |
-| A100 #3 | `bash scripts/run_dense_nr_full_m2.sh` |
-| **A100 #4+ (added later)** | **`bash scripts/run_dense_nr_full_extra.sh`** |
+| A100 #1 | `bash scripts/metrics/run_dense_nr_full.sh 0` |
+| A100 #2 | `bash scripts/metrics/run_dense_nr_full.sh 1` |
+| A100 #3 | `bash scripts/metrics/run_dense_nr_full.sh 2` |
+| **A100 #4+ (added later)** | **`bash scripts/metrics/run_dense_nr_full.sh extra`** |
 
 Run from the repo root. Nothing else to set; the run dir, manifest and the already-scored
 records are in place. If a box's free card is not GPU 0, or the card is shared:
 
 ```bash
-GPU=1 bash scripts/run_dense_nr_full_m1.sh      # different card
-WORKERS=6 bash scripts/run_dense_nr_full_m1.sh  # leave headroom on a shared card
+GPU=1 bash scripts/metrics/run_dense_nr_full.sh 1      # different card
+WORKERS=6 bash scripts/metrics/run_dense_nr_full.sh 1  # leave headroom on a shared card
 ```
 
 **The one rule: never run the same index twice.** The split is index-based, so two
@@ -113,7 +113,7 @@ idempotent, *nothing will error to tell you*. One index per machine, exactly onc
 
 ### Adding a GPU to an already-running wave
 
-Use `run_dense_nr_full_extra.sh`, **not** a 4th stride index. With 3 machines × 8 workers
+Use `run_dense_nr_full.sh extra`, **not** a 4th stride index. With 3 machines × 8 workers
 the split is `rows[k*8 + s :: 24]`, so every offset 0–23 is taken; a 4th index would
 duplicate an existing one. Re-sharding to `--machines 4` would mean restarting all three
 running boxes, and the partition would be wrong until they all came back.
@@ -217,8 +217,8 @@ survived the first two kills, 0 errors). But somebody has to notice and relaunch
 Use the status/resume helper for that:
 
 ```bash
-bash scripts/dense_nr_status.sh            # report only
-MACHINE=1 bash scripts/dense_nr_status.sh --resume   # relaunch this machine if it died
+bash scripts/metrics/dense_nr_status.sh            # report only
+MACHINE=1 bash scripts/metrics/dense_nr_status.sh --resume   # relaunch this machine if it died
 ```
 
 It also catches a quieter failure mode: a worker that hits a **non-OOM** exception does
@@ -230,7 +230,7 @@ get the missing shards moving again. Run it a few times a day, or from cron.
 ## Monitor
 
 ```bash
-bash scripts/dense_nr_status.sh                # everything below, in one command
+bash scripts/metrics/dense_nr_status.sh                # everything below, in one command
 ```
 
 Or by hand:
@@ -283,7 +283,7 @@ inventory. The wrappers always pass an absolute path; keep it that way if you ed
 CPU-only, ~90s. Pass an absolute `--out`:
 
 ```bash
-CUDA_VISIBLE_DEVICES= bash scripts/run_dense_nr.sh \
+CUDA_VISIBLE_DEVICES= bash scripts/metrics/run_dense_nr.sh \
   --out "$PWD/metrics/WorldScore/results/dense_nr_full" --inventory-only \
   --methods dense dicache worldcache fastercache pisa radial svg1 svg2 sito itm
 ```

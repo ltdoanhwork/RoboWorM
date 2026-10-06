@@ -21,7 +21,7 @@ Current remaining: **145 valid episodes**.
 
 ## Execution
 
-`scripts/jobs_fill_missing.sh` runs `WAVE=all` sequentially:
+`archived:jobs_fill_missing.sh` runs `WAVE=all` sequentially:
 
 1. WAVE 1: single-arm SV, `NUM_CHUNKS="4 6 7"`; dense → SiTo → ITM → PISA → Radial → SVG1 → SVG2.
 2. WAVE 2: bimanual FasterCache, `NUM_CHUNKS="3 5 6 18"`.
@@ -30,7 +30,7 @@ Resume command:
 
 ```bash
 cd /pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/VLA/doanh/video_world/video_gen_physics
-CUDA_VISIBLE_DEVICES=0 WAVE=all DRY_RUN=0 bash scripts/jobs_fill_missing.sh
+CUDA_VISIBLE_DEVICES=0 WAVE=all DRY_RUN=0 bash archived:jobs_fill_missing.sh
 ```
 
 ## Incident notes

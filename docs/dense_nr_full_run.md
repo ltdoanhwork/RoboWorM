@@ -16,7 +16,7 @@ Existing inference jobs are preserved. GPU utilization depends on decode,
 detection, tracking, and flow stages and cannot be guaranteed at 100% continuously.
 
 ```bash
-bash scripts/run_dense_nr.sh --workers 3
+bash scripts/metrics/run_dense_nr.sh --workers 3
 tail -f results/dense_nr_v1/worker_0.log
 ```
 
@@ -75,7 +75,7 @@ syntax, and diff whitespace checks passed.
 After workers exit, the queue invokes:
 
 ```bash
-models/dreamgen/.venv/bin/python scripts/plot_dense_nr.py --run results/dense_nr_v1
+models/dreamgen/.venv/bin/python scripts/tables/plot_dense_nr.py --run results/dense_nr_v1
 ```
 
 The same command can produce interim figures while workers run. Exports include
@@ -124,9 +124,9 @@ manifest ahead of predictions, scored with the identical protocol.
 
 ```bash
 # smoke validation (paired GT/pred episodes + every group)
-bash scripts/run_dense_nr.sh --out results/dense_nr_v3_smoke --workers 3 --smoke-paired-episodes 4
+bash scripts/metrics/run_dense_nr.sh --out results/dense_nr_v3_smoke --workers 3 --smoke-paired-episodes 4
 # full run
-bash scripts/run_dense_nr.sh --out results/dense_nr_v3 --workers 3
+bash scripts/metrics/run_dense_nr.sh --out results/dense_nr_v3 --workers 3
 ```
 
 ## v3.1 (2026-09-15) — code review + div30 job audit
@@ -136,7 +136,7 @@ whole-frame median, task-clause-only CLIPScore, best-of-four arm seed frame with
 bidirectional SAM2 propagation). The diversity run
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 bash scripts/run_dense_nr.sh --out results/dense_nr_v3_div30 \
+CUDA_VISIBLE_DEVICES=0 bash scripts/metrics/run_dense_nr.sh --out results/dense_nr_v3_div30 \
   --workers 3 --smoke-paired-episodes 10 --smoke-per-group 30
 ```
 
@@ -459,7 +459,7 @@ sampling budget for the thin cells before claiming anything per-embodiment.
 > **"E2 reversed"** below. The measurement below is correct; the inference from it
 > was not.
 
-`scripts/_exp_text_shuffle.py` (+ `_exp_text_shuffle.sh` for the venv/PYTHONPATH).
+`scripts/metrics/_exp_text_shuffle.py` (+ `_exp_text_shuffle.sh` for the venv/PYTHONPATH).
 Each clip scored twice on the SAME analysis frames: once with its own instruction,
 once with an instruction from a **different task in the same embodiment**.
 Calls `iqa.frame_scores()[2]` directly — never `score_qual` — so no GroundingDINO
@@ -672,7 +672,7 @@ same number for both arms; it does not reliably *prefer the wrong prompt*. The h
 pool mixes long imperative teleop instructions (→ ~20) with short descriptive captions
 (→ ~31), so the shuffle was largely comparing registers.
 
-Deciding test: `scripts/_exp_text_matrix.py` (+ `.sh`) — an N×N clip-by-prompt matrix
+Deciding test: `scripts/metrics/_exp_text_matrix.py` (+ `.sh`) — an N×N clip-by-prompt matrix
 per embodiment, **double-centered** (subtract row and column means) so each caption's
 bias and each clip's bias vanish, plus a bias-free retrieval rank of the true prompt.
 
@@ -714,7 +714,7 @@ Before scoring 9 accel trees, the metrics must be shown to move the RIGHT WAY on
 accel-style degradation. Otherwise we repeat the VisualIntegrity mistake at scale:
 a metric that *rewards* the artifact would rank a lossy fast method above dense.
 
-`scripts/_exp_accel_sanity.py` synthesises 4 artifacts from 10 real dense pred clips
+`scripts/metrics/_exp_accel_sanity.py` synthesises 4 artifacts from 10 real dense pred clips
 (4 models × 3 mounts) and scores them with the **unmodified** scorer via
 `--reuse-manifest` (no second metric implementation). A degraded clip is
 definitionally worse, so a "high is better" metric MUST drop.
@@ -757,7 +757,7 @@ is exactly the trap this experiment exists to catch.
 4. **globalSSIM (the v2 metric) is rewarded by 3 of 4 artifacts** (all resolved), a
    strong retroactive justification for replacing it with AMC in v3.
 
-### Which artifact do the REAL methods have? (`scripts/_exp_accel_character.py`)
+### Which artifact do the REAL methods have? (`scripts/metrics/_exp_accel_character.py`)
 
 Paired pixel-space measurement, 24 clips per method, no GPU:
 
@@ -817,7 +817,7 @@ artifact AMC is blind to.
    frame reuse (−39.3), and its blur blind-spot is quantified as non-significant at
    real severity. Caveat to print: on SiTo/ITM/SVG2 a *small* positive AMC delta
    (≲ +0.5) must not be read as "better than dense".
-2. **Report AMC together with a sharpness ratio.** `scripts/_exp_accel_character.py`
+2. **Report AMC together with a sharpness ratio.** `scripts/metrics/_exp_accel_character.py`
    already computes it cheaply (no GPU) and it is what makes the AMC number
    interpretable for pruning methods. This directly answers "the metrics should
    reflect the nature of each method".
@@ -978,7 +978,7 @@ passed. **E3's instruction "normalize by local flow magnitude per pixel" is what
 `flownorm` implements literally, and it fails.** Anyone revisiting this should
 normalize by observed temporal change instead.
 
-A synthetic unit test now isolates the mechanism (`scripts/test_actor_flicker.py`):
+A synthetic unit test now isolates the mechanism (`archived:test_actor_flicker.py`):
 with **exact** flow every candidate is already motion-independent (fast/slow ratio
 1.00), but with an 8% flow-estimation error and **zero** flicker, `raw` inflates
 **5.02×** from 1 px to 6 px of displacement. The confound is flow *error*, not motion.
@@ -986,7 +986,7 @@ with **exact** flow every candidate is already motion-independent (fast/slow rat
 ### Insight 2 — a post-hoc "winner" appeared, and two checks proved it was noise
 
 A zero-GPU search over 7 further candidates built from the stored diagnostics
-(`scripts/_exp_e3_posthoc.py`) produced one full pass: `ratio_med` =
+(`archived:_exp_e3_posthoc.py`) produced one full pass: `ratio_med` =
 median(r/max(copy, 0.01)), rho −0.128/+0.079/+0.191, GT better 69.6%, spread 1.85×.
 It did not survive:
 
@@ -1021,14 +1021,14 @@ run, so C2 can never be powered on head; C1 can.
 `residual_variants` and the stored `actor_flicker_variants` stay (cost: a few numpy
 ops). They make this drop auditable and any future re-examination zero-GPU.
 `actor_flicker_raw` remains the reported (experimental, non-quotable) value, so
-nothing downstream changed. `scripts/_exp_accel_sanity.py` now flattens the variant
+nothing downstream changed. `scripts/metrics/_exp_accel_sanity.py` now flattens the variant
 dict onto each record, so re-running E7 re-tests **every** candidate against the
 artifact sign in one pass — the decisive test, since a statistic that improves under
 a definitionally worse video cannot be repaired by any normalization.
 
 ## E5 prepared (2026-09-16) — code complete, and a **silent pairing bug** found before it could corrupt a table
 
-### 1. Sampler: `scripts/_exp_e5_build_manifest.py`
+### 1. Sampler: `scripts/metrics/_exp_e5_build_manifest.py`
 
 `inventory(out, methods=…)` / `_pred_rows(tree, method, …)` already parameterise by
 method tree, so no change was needed there. What was missing is the sampler: it
@@ -1102,8 +1102,8 @@ does not appear when no accel data is present.**
 ### Run it
 
 ```bash
-python scripts/_exp_e5_build_manifest.py
-bash scripts/run_dense_nr.sh --out metrics/WorldScore/results/accel_nr_v1 \
+python scripts/metrics/_exp_e5_build_manifest.py
+bash scripts/metrics/run_dense_nr.sh --out metrics/WorldScore/results/accel_nr_v1 \
      --workers 5 --reuse-manifest
 python assets/scripts/table_dense_nr.py --run metrics/WorldScore/results/accel_nr_v1 \
      --also metrics/WorldScore/results/dense_nr_v3_div30
@@ -1123,7 +1123,7 @@ the data says no): humanoid mounts disagree in sign and scale (wrist +10.6, stat
 **one** claim which was *wrong-signed* (+1.24, pred beats GT). Pooling would have
 manufactured the same class of artifact we just removed from VisualIntegrity.
 
-Instead: `scripts/_topup_humanoid.py` scored **120 more humanoid clips** (60 pred + 60
+Instead: `scripts/metrics/_topup_humanoid.py` scored **120 more humanoid clips** (60 pred + 60
 co-located GT), allocated per (model × mount) cell to reach n≥12, drawn only from
 pair_keys where BOTH halves exist and excluding everything div30 already had. 120/120
 scored, 0 errors, ~35 min at 5 workers. Merged into
@@ -1184,7 +1184,7 @@ quoted.
 
 Pilot on 2 methods chosen to span the two E7 regimes: **dicache** (caching, sharpness
 0.993× dense) and **sito** (token pruning, 0.758× = the blur-like regime where AMC is
-known to be blind). `scripts/_pilot_accel.py` selected 30 paired clips per method
+known to be blind). `scripts/metrics/_pilot_accel.py` selected 30 paired clips per method
 whose **dense counterpart was already scored**, so the pilot cost only 60 accel clips
 (~35 min, 5 workers, 0 errors) instead of 120. Aggregated into
 `dense_nr_v3_pooled` (1752 clips) so `accel_table()` finds each dense partner.
@@ -1304,7 +1304,7 @@ candidate the spec asked for fails the artifact check.
 That is a far stronger paper statement than "we suspected it was confounded", and it
 cost ~11 GPU-h total. `residual_variants` and the stored `actor_flicker_variants` stay
 in the code so this is auditable and any future re-examination is zero-GPU;
-`scripts/_exp_accel_sanity.py` now flattens them automatically, so any new candidate is
+`scripts/metrics/_exp_accel_sanity.py` now flattens them automatically, so any new candidate is
 artifact-tested in the same pass.
 
 ### Method note worth reusing
@@ -1322,13 +1322,13 @@ Dense counterparts were already in `dense_nr_v3_pooled`, so nothing dense was re
 Pooled results dir now holds 1962 records: `gt=888, dense=804, 9 × accel=30`.
 
 ```bash
-bash scripts/run_dense_nr.sh --out /tmp/accel_wave --methods dense worldcache \
+bash scripts/metrics/run_dense_nr.sh --out /tmp/accel_wave --methods dense worldcache \
   fastercache pisa radial svg1 svg2 itm --inventory-only
 mv /tmp/accel_wave/manifest.json /tmp/accel_wave/full_inventory.json
-python scripts/_pilot_accel.py --out /tmp/accel_wave --methods worldcache fastercache \
+python scripts/metrics/_pilot_accel.py --out /tmp/accel_wave --methods worldcache fastercache \
   pisa radial svg1 svg2 itm --target 30 \
   --reference-run metrics/WorldScore/results/dense_nr_v3_pooled
-bash scripts/run_dense_nr.sh --out /tmp/accel_wave --workers 5 --reuse-manifest
+bash scripts/metrics/run_dense_nr.sh --out /tmp/accel_wave --workers 5 --reuse-manifest
 cp -n /tmp/accel_wave/results/*.json metrics/WorldScore/results/dense_nr_v3_pooled/results/
 ```
 
@@ -1426,7 +1426,7 @@ full-n is 250× compute for 0.06× CI width and **no new claim**.
 
 What was actually missing was the **per-cell** tables (1 of 124 rows resolved). Those are
 cheap: capping each cell brings 153/154 accel cells to n≥8. So we ran a stratified wave
-(`scripts/_stratify_full_nr.py`, accel-target 12 / dense-target 40) = **1,609 clips, 0
+(`scripts/metrics/_stratify_full_nr.py`, accel-target 12 / dense-target 40) = **1,609 clips, 0
 errors**, pooled dir now **3,571 records**, all `dense-nr-v3.2-closed-world`.
 
 Result: **per-cell went from 1/124 resolved to 208 resolved over 136 rows, 134 at n≥8** —
