@@ -192,7 +192,7 @@ columns: base/finetuned PSNR/SSIM/LPIPS + deltas, checkpoint paths, n_episodes.
    (Ctrl-World single_arm multiview caching/ITM, DreamGen single_arm
    singleview/multiview caching + pruning, DreamGen humanoid singleview pruning,
    and every DreamDojo caching cell). These are reported as blank/omitted in
-   the appendix, not estimated. `docs/speedup_coverage_gaps.md` has the per-cell
+   the appendix, not estimated. `tmp/20261005_refactor/docs/speedup_coverage_gaps.md` has the per-cell
    audit plus the prepared timing jobs that close them.
    *(An earlier revision claimed "69 of 127". That was an artifact of
    `make_speedup_summary.py`: it loaded only 9 of the 14 tuning-insight rules,

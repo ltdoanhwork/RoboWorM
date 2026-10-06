@@ -91,9 +91,9 @@ every metric we already compute:
   our own audit (`metrics/reports/fvd_kinetics_domain_audit.json`) shows the
   domain gap already dominates it.
 - **WorldScore** has, in our own words, **"no true physics-law metric"**
-  (`docs/metrics/WORLDSCORE_PHYSICS_REPORT.md:120-122`) — its physics signal is
+  (`tmp/20261005_refactor/docs/WORLDSCORE_PHYSICS_REPORT.md:120-122`) — its physics signal is
   indirect, via motion magnitude and smoothness.
-- **Multi-view consistency** (`docs/multiview_consistency_metric.md`) asks
+- **Multi-view consistency** (`docs/metrics/multiview_consistency_metric.md`) asks
   whether two *views* agree, which is a camera/scene question, and it needs a
   multiview generation to exist at all.
 
@@ -855,7 +855,7 @@ substantially lower jerk-violation rate than the dense baseline** (0.31 vs 0.49,
 
 - **Every number this harness prints is LOWER IS BETTER.** They are violation
   rates and violation severities, not quality scores. This is the opposite
-  convention from `docs/multiview_consistency_metric.md`, where both numbers are
+  convention from `docs/metrics/multiview_consistency_metric.md`, where both numbers are
   in `[0,1]` higher-better. Do not put them in the same table without saying so.
 - **`rate` is in `[0, 1]`**: the fraction of a clip's 16-frame segments whose
   reduced value crossed the segment threshold, averaged over clips.
@@ -1076,10 +1076,10 @@ This was checked explicitly because both were plausible lineages:
 - **WorldScore**: vendored in *this* repo at `metrics/WorldScore/`, but **zero
   references from the metric branch**. And our own assessment of it concludes
   WorldScore has **"no true physics-law metric"**
-  (`docs/metrics/WORLDSCORE_PHYSICS_REPORT.md:120-122`) — its physics signal is
+  (`tmp/20261005_refactor/docs/WORLDSCORE_PHYSICS_REPORT.md:120-122`) — its physics signal is
   indirect, via motion magnitude and smoothness. So WorldScore could not supply
   a baseline for rigidity/jerk even if it were wired up. **No lineage.**
-- A sibling doc, `docs/phyworld_nr_adapted_metrics.md`, covers the PhyWorld
+- A sibling doc, `docs/metrics/phyworld_nr_adapted_metrics.md`, covers the PhyWorld
   adaptation. That is a **different** metric family (object-dynamics based) and
   shares no code with `kinescore`.
 
@@ -1287,7 +1287,7 @@ Created in this repo (sizes as of 2026-10-05):
 | `metrics/kiva/run.sh` | 13 921 | Launcher: vendored-code check, store/env/ffmpeg wiring, per-embodiment reader+cell+checkpoint resolution, `pred`/`gt` role switch, multi-variant sweep, tmux mode, single-directory mode. |
 | `metrics/kiva/probe_clips.py` | 10 797 | Pre-flight: `ffprobe` every clip, report scorable / wrong-size / too-short per role, estimate segments. The analogue of the multiview frame extractor — this metric needs a *probe*, not extraction. |
 | `metrics/kiva/aggregate.py` | 15 989 | `segments.csv` → variant leaderboard with rate + severity, real-video anchor as a pseudo-variant, `--intersect`, reader/threshold provenance, `--json`. |
-| `docs/hallucination_metric.md` | this file | This document. |
+| `docs/metrics/hallucination_metric.md` | this file | This document. |
 
 Pre-existing in this repo (**prior work by others, not created here**):
 

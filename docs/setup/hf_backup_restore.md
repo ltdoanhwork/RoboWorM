@@ -16,6 +16,13 @@ Scripts that produced it:
 
 ## 1. Repo map
 
+> **Release download (recommended):** the plain-file dataset repos
+> `doanh25032004/vgp_datasets` (→ `datasets/`, 36.4 GB) and
+> `doanh25032004/video_gen_physics` (→ `sampling_dataset/`, 178 GB) are documented in
+> [../datasets/README.md](../datasets/README.md) and
+> [../datasets/sampling_dataset.md](../datasets/sampling_dataset.md). They support
+> partial `--include` downloads. The tar-shard repos below are the full-workspace backup.
+
 `SRC` = path inside the workspace. `layout` = how it is stored on the Hub.
 
 | repo (`doanh25032004/…`) | type | SRC | size | layout |
@@ -82,7 +89,7 @@ hf download doanh25032004/vgp_exp_logs              --repo-type model   --local-
 ```
 
 The last two repos were uploaded with the pre-2026-10-05 layout. After downloading
-them, run the re-layout snippet in [checkpoints/CHECKPOINTS.md](../checkpoints/CHECKPOINTS.md#restore-from-huggingface)
+them, run the re-layout snippet in [checkpoints/CHECKPOINTS.md](../../checkpoints/CHECKPOINTS.md#restore-from-huggingface)
 (moves `exp_logs/*_logs` to `checkpoints/finetuned/`, `checkpoints/worldscore` to
 `checkpoints/metrics/`, the rest of `checkpoints/` to `checkpoints/base/`, and leaves
 compat symlinks at the old paths).
@@ -137,19 +144,19 @@ Needs roughly one shard (~8G) of scratch space plus the extracted result.
 
 ## 4. Rebuild the virtualenvs (not backed up)
 
-Four envs, never mix them (see `.cursor/rules/model-environments.mdc`). Exact
-package lists as of the backup are frozen in `docs/env_freeze/`:
+Four model envs, never mix them (see [README.md](README.md) for all six envs incl. the metric ones). Exact
+package lists as of the backup are frozen in `docs/setup/env_freeze/`:
 
 | env | python | freeze file |
 |---|---|---|
-| `models/dreamgen/.venv` | 3.12.13 | `docs/env_freeze/dreamgen.txt` |
-| `models/dreamgen/.venv_svg` | 3.12.13 | `docs/env_freeze/dreamgen__svg.txt` |
-| `models/DreamDojo/.venv` | 3.10.19 | `docs/env_freeze/DreamDojo.txt` |
-| `models/Ctrl-World/.venv` | 3.10.19 | `docs/env_freeze/Ctrl-World.txt` |
+| `models/dreamgen/.venv` | 3.12.13 | `docs/setup/env_freeze/dreamgen.txt` |
+| `models/dreamgen/.venv_svg` | 3.12.13 | `docs/setup/env_freeze/dreamgen__svg.txt` |
+| `models/DreamDojo/.venv` | 3.10.19 | `docs/setup/env_freeze/DreamDojo.txt` |
+| `models/Ctrl-World/.venv` | 3.10.19 | `docs/setup/env_freeze/Ctrl-World.txt` |
 
 ```bash
 python3.12 -m venv models/dreamgen/.venv
-models/dreamgen/.venv/bin/pip install -r docs/env_freeze/dreamgen.txt
+models/dreamgen/.venv/bin/pip install -r docs/setup/env_freeze/dreamgen.txt
 ```
 
 Notes:

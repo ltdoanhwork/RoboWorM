@@ -704,7 +704,7 @@ Created in this repo:
 | `metrics/rigis/run.sh` | Launcher: uv interpreter, model service, multi-variant sweep, tmux mode, single-episode mode. |
 | `metrics/rigis/extract_frames.py` | mp4 (mosaic or per-view) → `view1/frame_XXXX.png` layout. |
 | `metrics/rigis/aggregate.py` | Per-episode CSVs → variant leaderboard (+ JSON). |
-| `docs/multiview_consistency_metric.md` | This document. |
+| `docs/metrics/multiview_consistency_metric.md` | This document. |
 
 Created outside git tracking:
 
