@@ -21,7 +21,7 @@ aggregated and saved the same way from Python or from one CLI
 
 Registered metrics run through `metrics.evaluate`; the probes/pipelines marked
 "—" keep their own launchers (`scripts/run_*`), documented in
-`quality/README.md`, `dynamics/README.md` and `docs/phyworld_metrics.md`.
+`quality/README.md`, `dynamics/README.md` and `docs/metrics/phyworld_metrics.md`.
 
 | registry name | needs | backend | interpreter |
 |---|---|---|---|
@@ -51,9 +51,9 @@ metrics/
 └── test_framework.py    unit + parity tests
 ```
 
-Full write-ups: `docs/hallucination_metric.md` (KIVA),
-`docs/multiview_consistency_metric.md` (RIGIS),
-`docs/metrics/WORLDSCORE_PHYSICS_REPORT.md` (WorldScore lineage). The two
+Full write-ups: `docs/metrics/hallucination_metric.md` (KIVA),
+`docs/metrics/multiview_consistency_metric.md` (RIGIS),
+`tmp/20261005_refactor/docs/WORLDSCORE_PHYSICS_REPORT.md` (WorldScore lineage). The two
 external launchers still work standalone for large sweeps
 (`VARIANTS="dense pisa ..." bash metrics/kiva/run.sh`).
 

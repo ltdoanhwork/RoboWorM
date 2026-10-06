@@ -33,7 +33,7 @@ BUDGET = os.path.join(REPO, "metrics/reports/time_budget.json")
 KNEE = os.path.join(REPO, "metrics/reports/knee_curves.json")
 PREP = os.path.join(REPO, "metrics/reports/training_data_prep.json")
 QUAL = os.path.join(REPO, "metrics/reports/finetune_qualitative.json")
-CKPT_DOC = os.path.join(REPO, "docs/main_results_speedup_and_checkpoint.md")
+CKPT_DOC = os.path.join(REPO, "docs/reproduce/main_results_speedup_and_checkpoint.md")
 TIMING = os.path.join(REPO, "metrics/reports/timing_pass.json")
 SPEEDUP_CSV = os.path.join(REPO, "metrics/reports/speedup_summary_full.csv")
 IMPL_TEX = os.path.join(REPO, "assets/paper/appendix/3_implemetation_details.tex")
@@ -222,7 +222,7 @@ def main():
             continue
         key = "bimanual" if "bimanual" in label else "humanoid"
         claimed = num(r"\$\+(\d+\.\d+)\$\\,dB on Ctrl-World %s\s*\n?multi-view" % key)
-        check(label, claimed, float(m.group(1)), "docs/main_results_speedup_and_checkpoint.md",
+        check(label, claimed, float(m.group(1)), "docs/reproduce/main_results_speedup_and_checkpoint.md",
               tol=0.005)
 
     # ---- 8. qualitative invariants ---------------------------------------

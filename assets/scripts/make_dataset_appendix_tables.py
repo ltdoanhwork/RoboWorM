@@ -76,7 +76,7 @@ def complete_episodes(tdir: str, view_names: Iterable[str]) -> set[int] | None:
         return None
     return set.intersection(*per_view)
 
-# Human-facing corpus names. Source: docs/dense_generation_config.md.
+# Human-facing corpus names. Source: docs/inference/dense_generation_config.md.
 CORPUS = {
     ("single_arm", "singleview"): "RoboChallenge",
     ("single_arm", "multiview"): "DROID",

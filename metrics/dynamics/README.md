@@ -105,7 +105,7 @@ Optical flow is measured in **px/frame**, so it scales with resolution *and* fps
 (800 frames), DreamGen (768×432@16) and DreamDojo (640×480@10) are **not commensurable**
 on the raw grid — comparing them directly inverts the ranking. Resample GT to each
 prediction's own (resolution, fps) and score each model against *its own matched GT*
-(`run_motion_accuracy_matched.sh`). See `docs/metrics/WORLDSCORE_PHYSICS_REPORT.md` §8.
+(`run_motion_accuracy_matched.sh`). See `tmp/20261005_refactor/docs/WORLDSCORE_PHYSICS_REPORT.md` §8.
 
 ## Known findings
 

@@ -37,7 +37,7 @@ The previous checkout (`external/hallucination`, a detached worktree) had no loc
 `HAL_PYTHON`) with `PYTHONPATH=metrics/kiva/src` and
 `PYTHONUSERBASE=/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/.local` (supplies
 `pytorch_kinematics`). `uv sync` on `pyproject.toml` does not work on this cluster
-(triton unpack exceeds the `~/.cache/uv` quota) -- see docs/hallucination_metric.md.
+(triton unpack exceeds the `~/.cache/uv` quota) -- see docs/metrics/hallucination_metric.md.
 `configs/*.yaml` are found relative to the package (`src/kinescore/registry/*.py`
 use `parents[3]` = `metrics/kiva`).
 

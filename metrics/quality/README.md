@@ -106,7 +106,7 @@ Overridable env: `GT`, `DG`, `DD`, `OUT`, `CAPTION`, `OBJECTS`, `STRIDE`.
 (The box-overlay viewer `object_control_viz.py` was archived to
 `tmp/20261005_refactor/misc/metrics/quality/` in the 2026-10-05 refactor.)
 
-## Known findings (measured — see `docs/metrics/WORLDSCORE_PHYSICS_REPORT.md` §9)
+## Known findings (measured — see `tmp/20261005_refactor/docs/WORLDSCORE_PHYSICS_REPORT.md` §9)
 
 - **`object_control` is the only one of the three that ranks models usefully**, and it
   agrees with visual inspection (GT 0.875 > DreamDojo 0.800 > DreamGen 0.543). It is a good

@@ -20,7 +20,7 @@ Run in this order — the later steps consume the JSON the earlier ones emit.
 | 1 | `make_benchmark_stats.py --json metrics/reports/benchmark_stats.json` | skill/scene/prompt statistics |
 | 2 | `make_dataset_appendix_tables.py` | `appendix/tables/dataset_{cells,taxonomy}.tex`, `dataset_appendix_evidence.json` |
 | 3 | `audit_sampling_distribution.py --json metrics/reports/sampling_audit.json` | audited rollout counts, verified against the design scope |
-| 4 | `make_cell_matrix.py` | `metrics/reports/cell_matrix.csv`, `docs/cell_matrix.md` |
+| 4 | `make_cell_matrix.py` | `metrics/reports/cell_matrix.csv`, `docs/datasets/cell_matrix.md` |
 | 5 | `plot_benchmark_figures.py` | `paper/figures/fig_{coverage,composition,diversity}` |
 | 6 | `make_hero_figure.py` | `paper/figures/fig_hero` — teaser: frame montage + 4 stat panels |
 | 7 | `check_dataset_appendix_claims.py` | **gate** — fails if prose numbers or style drift |

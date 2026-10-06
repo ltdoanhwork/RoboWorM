@@ -24,7 +24,7 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 AUDIT = os.path.join(REPO, "metrics/reports/sampling_audit.json")
 EVID = os.path.join(REPO, "metrics/reports/dataset_appendix_evidence.json")
 OUT_CSV = os.path.join(REPO, "metrics/reports/cell_matrix.csv")
-OUT_MD = os.path.join(REPO, "docs/cell_matrix.md")
+OUT_MD = os.path.join(REPO, "docs/datasets/cell_matrix.md")
 
 EMB_ORDER = ["humanoid", "bimanual", "single_arm"]
 EMB_LABEL = {"humanoid": "humanoid", "bimanual": "bimanual",

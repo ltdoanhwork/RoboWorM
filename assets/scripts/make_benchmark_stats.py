@@ -31,7 +31,7 @@ SPLITS = ["makovian", "non_makovian"]
 
 # source dataset per (embodiment, track) — traced from the prepare/download
 # scripts and the upstream dataset cards; the source table lives in
-# docs/benchmark_stats.md (note: per-corpus LICENSE terms are NOT recorded
+# docs/datasets/benchmark_stats.md (note: per-corpus LICENSE terms are NOT recorded
 # in-tree — see the acquisition paragraph of assets/paper/appendix/1_dataset.tex)
 SOURCE = {
     ("single_arm", "multiview"): "DROID (cadene/droid_1.0.1)",

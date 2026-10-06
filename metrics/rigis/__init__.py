@@ -9,7 +9,7 @@ This dir is also the ``uv`` project the launcher runs in (``.venv`` here).
   aggregate.py       cross-variant table from the launcher's CSVs
   metric.py          :class:`MultiviewConsistency` (BaseMetric wrapper)
 
-See docs/multiview_consistency_metric.md.
+See docs/metrics/multiview_consistency_metric.md.
 """
 from .metric import MultiviewConsistency
 

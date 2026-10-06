@@ -154,7 +154,7 @@ TRACK_LABEL = {'Dreamgen MV': 'DreamGen MV', 'Dreamgen SV': 'DreamGen SV',
 # Ctrl-World: bimanual/humanoid report the 4-view grid, single_arm the 3-view
 # strip (benchmark_cells.py). The workbook labels both rows 'Ctrl-World MV', so
 # the layout MUST be resolved here or the grid rows would silently inherit
-# strip timings -- the exact bug docs/speedup_coverage_gaps.md 3.1 records.
+# strip timings -- the exact bug tmp/20261005_refactor/docs/speedup_coverage_gaps.md 3.1 records.
 CELL_OF = {}
 for _e in ('bimanual', 'humanoid', 'single_arm'):
     CELL_OF[(_e, 'Dreamgen MV')] = 'dreamgen_%s_mv' % _e
@@ -2390,7 +2390,7 @@ def selftest(xlsx: Path, speedup_csv: Path) -> int:
     # 3. Ctrl-World layout routing. bimanual/humanoid MUST hit the 4-view grid
     # cells and single_arm the 3-view strip (assets/scripts/benchmark_cells.py).
     # Getting this wrong is how the grid rows silently inherited strip timings
-    # (docs/speedup_coverage_gaps.md 3.1).
+    # (tmp/20261005_refactor/docs/speedup_coverage_gaps.md 3.1).
     check('CW cell bimanual', CELL_OF[('bimanual', 'Ctrl-World MV')],
           'ctrlworld4_bimanual_mv')
     check('CW cell humanoid', CELL_OF[('humanoid', 'Ctrl-World MV')],

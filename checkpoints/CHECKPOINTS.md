@@ -91,7 +91,7 @@ DreamGen `single_arm_static_singleview_16fps_v1_90k`, `nvidia/PhysicalAI-Robotic
 
 ## Restore from HuggingFace
 
-See [docs/hf_backup_restore.md](../docs/hf_backup_restore.md) for prerequisites
+See [docs/setup/hf_backup_restore.md](../docs/setup/hf_backup_restore.md) for prerequisites
 (`HF_HUB_DISABLE_XET=1`, token). The repos are `doanh25032004/<name>`:
 
 | HF repo | restores |

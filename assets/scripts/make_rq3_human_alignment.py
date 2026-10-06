@@ -11,7 +11,7 @@ script is that file: it holds the transcribed table and emits a CSV + JSON so
 
 Nothing is recomputed here. The detector code for RIGIS (cross-view point
 tracking) and KIVA (3D-lifted body keypoints) is external to this repo -- see
-`docs/phyworld_metrics.md` sections 4-5 -- so the numbers are transcribed, and the
+`docs/metrics/phyworld_metrics.md` sections 4-5 -- so the numbers are transcribed, and the
 transcription is checked: every `mean` row is re-derived from its three
 per-embodiment values and the script fails if the workbook mean disagrees by more
 than 5e-4.
@@ -29,7 +29,7 @@ Two RIGIS-vs-human correlations exist in this repo and they differ:
 
 The reported statistic is the **mean over per-embodiment correlations**, not the
 pooled one, for the same reason the NR grid is never pooled across embodiments
-(`docs/nr_paper_output_schema.md`, `NOT_CROSS_EMBODIMENT`): the three embodiments
+(`docs/metrics/nr_paper_output_schema.md`, `NOT_CROSS_EMBODIMENT`): the three embodiments
 have different human label distributions and different clip counts, so a pooled
 rank correlation partly measures the embodiment mix. The pooled value is kept in
 the JSON as a diagnostic so the gap is visible rather than quietly dropped.
@@ -309,7 +309,7 @@ def main() -> None:
                    "predictor's stability and cost.",
         "provenance": "transcribed from the benchmark workbook's RIGIS/KIVA tabs; "
                       "detector code for RIGIS and KIVA is external to this repo "
-                      "(docs/phyworld_metrics.md sections 4-5).",
+                      "(docs/metrics/phyworld_metrics.md sections 4-5).",
         "reported_statistic": "mean over the three per-embodiment correlations, "
                               "never pooled across embodiments (the embodiments "
                               "have different human label distributions and clip "

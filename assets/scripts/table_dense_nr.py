@@ -58,7 +58,7 @@ DROPPED = {
         'artifact tested, and cannot be renormalised into correctness because the '
         'artifact itself suppresses the residual it measures. Also motion-confounded '
         '(rho +0.70 static) with deltas at the ~5e-3 noise floor. '
-        'See docs/dense_nr_experiments.md E3 and the E7 section of dense_nr_full_run.md.',
+        'See tmp/20261005_refactor/docs/dense_nr_experiments.md E3 and the E7 section of dense_nr_full_run.md.',
 }
 
 # A bootstrap CI of the median at n=3 resamples 3 numbers -- it can "exclude 0" purely
@@ -193,7 +193,7 @@ PAIRED_ONLY = {
         'The E2 single-shuffle control that originally dropped this column was itself '
         'confounded by that bias; the double-centered matrix control '
         '(scripts/metrics/_exp_text_matrix.py) shows CLIPScore does discriminate. '
-        'See docs/dense_nr_experiments.md E2.',
+        'See tmp/20261005_refactor/docs/dense_nr_experiments.md E2.',
 }
 
 COLUMNS = [

@@ -1,5 +1,5 @@
 /* NR metric dashboard -- theme switched by [data-theme] on <html>, matching the
-   convention in docs/diagrams/phyworld_metrics_pipeline.html. */
+   convention in tmp/20261005_refactor/docs/diagrams/phyworld_metrics_pipeline.html. */
 :root, [data-theme="dark"] {
   --bg: #020617;
   --panel: #0b1220;
