@@ -1,72 +1,60 @@
-# Video World - Video Generation Physics Benchmark
+# RoboWorM: video world model physics benchmark
 
-## Project Overview
-Benchmark framework for evaluating video world models on robotics datasets. Compares video generation quality across different models (Ctrl-World, DreamDojo/DreamGen, Video2World) on various robot embodiments (single-arm, bimanual, humanoid) with different camera setups (singleview, multiview).
+RoboWorM (ICLR 2027 submission) benchmarks robot video world models and training-free
+acceleration methods. The paper is at `docs/paper/RoboWM_ICLR2027_check.pdf`.
 
-## Directory Structure
+- **Data**: 5 corpora (DROID, RoboChallenge, AIST Bimanual, RoboCOIN, GR00T Teleop GR1),
+  3 embodiments, 1–4 views, splits `makovian` / `non_makovian`.
+- **World models**: DreamGen (Cosmos-Predict2 2B/14B), DreamDojo (2B, action-conditioned),
+  Ctrl-World (SVD 1.5B).
+- **Acceleration methods**: 9, plus a `dense` baseline.
+- **Metrics**: KIVA, RIGIS, Visual Integrity, Text Alignment, FVD, and PSNR/SSIM/LPIPS
+  vs the dense rollout.
+
+Start with `README.md`. The full docs index is `docs/README.md`.
+
+## Layout
+
 ```
-datasets/                  # Source datasets in LeRoBot format (parquet + mp4 videos)
-  {embodiment}/{view_type}/{makovian,non_makovian}/
-    data/chunk-XXX/episode_XXXXXX.parquet
-    videos/chunk-XXX/{view_name}/episode_XXXXXX.mp4
-    meta/{info.json, episodes.jsonl, ...}
-
-sampling_dataset/dense/    # Benchmark I/O
-  {embodiment}/input/      # GT inputs (video, actions, metadata)
-  {embodiment}/output/     # Model predictions + metrics
-
-models/                    # Model implementations
-  Ctrl-World/              # SVD-based action-conditioned world model
-  DreamDojo/               # Cosmos-based video2world model
-
-scripts/                   # Inference & preparation scripts
-checkpoints/               # Model weights
-```
-
-## Dataset Conventions
-- **makovian**: Episodes where next state depends primarily on current state + action
-- **non_makovian**: Episodes with longer temporal dependencies
-- All datasets use LeRoBot format: parquet for states/actions, mp4 for videos
-- Original fps: 15 (single_arm DROID), 10 (humanoid GR1)
-- Video resolutions: 320x180 (DROID), 640x480 (GR1)
-
-## Ctrl-World Specifics
-- Operates at **5fps** (downsample factor 3 from 15fps DROID data)
-- Video resolution: **320x192** (resized from 180→192 height)
-- Input format: annotation JSON with `states` (7D: cartesian 6D + gripper), `joints` (8D: joint 7D + gripper), `videos` (3 views), `texts`
-- Generation: autoregressive, pred_step=5 frames per iteration, overlap 1 frame
-- Output coverage: ~95-100% of input episode length
-- Stat normalization: uses `dataset_meta_info/droid_subset/stat.json`
-
-## DreamDojo/DreamGen Specifics
-- Operates at native dataset fps
-- Uses `MultiVideoActionDataset` — always access data via `dataset[data_id]`, never access `lerobot_ds` directly
-- Generation: chunked autoregressive, chunk_size=12, GT-anchored segments
-- Resolution: matches training config (480x640 for humanoid, varies for arms)
-
-## Inference Script Pattern
-Each model+dataset combo has:
-1. `prepare_*.py` — Convert LeRoBot dataset → model-specific format
-2. `infer_*.py` — Run generation, save input/output/metrics
-3. `run_*.sh` — Shell wrapper with env setup + paths
-
-### Output Structure Per Episode
-```
-input/{model}/{subset}/episode_{id}/
-  full_gt.mp4              # GT video (primary view)
-  view_0.mp4, view_1.mp4   # All GT views
-  metadata.json            # instruction, states, joints, fps, num_frames
-
-output/{model}/{subset}/episode_{id}/
-  full_pred.mp4            # Generated video
-  full_merged.mp4          # GT | Pred side-by-side
-  metrics.json             # PSNR, SSIM, LPIPS per episode
+datasets/{single_arm,bimanual,humanoid}/{singleview,multiview}/{makovian,non_makovian}/[<task>/]
+        meta/ data/chunk-XXX/*.parquet videos/chunk-XXX/<camera>/*.mp4   (LeRobot)
+datasets/*_dreamgen_16fps, *_multiview_grid_seg16_dreamgen               (DreamGen training corpora)
+sampling_dataset/{method}/{embodiment}/{input,output}/{view}/{model}/{split}/...  (input/ only under dense/)
+checkpoints/{base,finetuned,metrics}/        index: checkpoints/CHECKPOINTS.md
+models/{dreamgen,DreamDojo,Ctrl-World}/      model code, each with its own .venv
+methods/{cache_strategy,sparse_attention,prunning}/
+finetuning/{dreamgen,dreamdojo,ctrlworld}/   training launchers + data prep
+scripts/{prepare,infer,run/{dreamgen,dreamdojo,ctrlworld},train,metrics,tables,tools,augment}/
+metrics/                                     `python -m metrics.evaluate`, kiva/, rigis/, reports/
+assets/{scripts,paper}/                      paper figure/table producers + LaTeX
+results/                                     metric outputs read by paper producers
+docs/{setup,datasets,training,inference,metrics,reproduce,paper}/
+tmp/20261005_refactor/                       archive of moved items (MANIFEST.md has restore cmds)
 ```
 
-## Key Rules
-- When adding a new model, follow the existing `prepare → infer → run` pattern
-- Always compute `interact_num` or segment count per-episode to match GT length
-- Save both input and output for reproducible benchmarking
-- Use GPU 1 by default (`CUDA_VISIBLE_DEVICES=1`)
-- Metrics: PSNR, SSIM, LPIPS (computed per-episode, summarized across dataset)
-- Never hardcode episode lists — discover from annotation/video directories
+## Conventions
+
+- **Pipeline**: prepare (`scripts/prepare/`, `finetuning/*/scripts/`) → infer
+  (`scripts/infer/`, `models/*/examples/`) → run wrapper
+  (`scripts/run/<family>/run_<emb>_<view>_<model>[_4view_grid]_<method>.sh`).
+- **Method launchers** mirror the dense launcher of their cell exactly. They only add the
+  method flags and swap `sampling_dataset/dense/` → `sampling_dataset/<method>/`. Never
+  delete or swap a method because it is slow; a weak result is still a valid data point.
+- **Episode discovery**: launchers find episodes from the dataset/annotation dirs (never
+  hard-code episode lists) and are resumable.
+- **Scratch runs**: send sweeps and trials to a scratch `OUTPUT_ROOT` / `SAVE_ROOT`, never
+  to the canonical tree.
+- **Speedup** = internal per-segment timer vs a paired dense run on the same GPU. Never use
+  wall clock.
+- **Fidelity reference**: PSNR/SSIM/LPIPS use the dense prediction of the same episode as
+  the reference, not GT.
+- **Environments**: never mix them. See `docs/setup/README.md`. SVG2 uses
+  `models/dreamgen/.venv_svg`.
+- **Ctrl-World**: runs at 5 fps, 320x192, pred_step 5, overlap 1. Stats come from
+  `models/Ctrl-World/dataset_meta_info/<name>/stat.json`.
+- **DreamDojo**: always read data through `MultiVideoActionDataset` (`dataset[i]`).
+  Chunked autoregressive, chunk_size 12.
+- **GPU**: default is `CUDA_VISIBLE_DEVICES=1` unless told otherwise. Set
+  `export HF_HUB_DISABLE_XET=1` for HF transfers on this cluster.
+- **Archiving**: move unneeded files into `tmp/20261005_refactor/` and add a row to its
+  `MANIFEST.md`. Don't delete them.
