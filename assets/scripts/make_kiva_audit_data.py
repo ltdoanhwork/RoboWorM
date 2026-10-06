@@ -8,7 +8,7 @@ WHY THIS FILE EXISTS
 the older reference workbook. Typing the new numbers into that tab would be
 overwritten the next time the grid is exported. So the new KIVA pass is
 transcribed here, once, and every table reads it from
-`metrics/reports/kiva_audit.csv`.
+`results/reports/kiva_audit.csv`.
 
 THIS REPLACES THE OLD KIVA COLUMN -- IT IS NOT THE SAME NUMBER
 --------------------------------------------------------------
@@ -51,8 +51,8 @@ import json
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-OUT_CSV = REPO / "metrics/reports/kiva_audit.csv"
-OUT_JSON = REPO / "metrics/reports/kiva_audit.json"
+OUT_CSV = REPO / "results/reports/kiva_audit.csv"
+OUT_JSON = REPO / "results/reports/kiva_audit.json"
 
 # Method labels exactly as the benchmark workbook spells them, in its row order, so
 # a reader can diff this block against the pasted sheet line by line.

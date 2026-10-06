@@ -6,7 +6,7 @@ does that make sense here, or is it a different distribution?"
 
 The premise needs one correction before the question can be answered: Kinetics is NOT the
 reference SET in this benchmark. The reference is a pooled set of REAL robot videos from
-the same embodiment x camera x regime (see .cursor/skills/fvd-shared-real-pool/SKILL.md).
+the same embodiment x camera x regime (see metrics/fvd/README.md).
 Kinetics-400 enters only through the feature extractor -- and it enters much more deeply
 than "pretraining data", which is what this script measures:
 
@@ -41,7 +41,7 @@ What is measured, from the cached per-camera features (no GPU, no re-decoding):
 Run:
     models/dreamgen/.venv/bin/python assets/scripts/fvd_kinetics_domain_audit.py
 
-Writes metrics/reports/fvd_kinetics_domain_audit.json and prints the tables.
+Writes results/reports/fvd_kinetics_domain_audit.json and prints the tables.
 """
 from __future__ import annotations
 
@@ -54,7 +54,7 @@ import numpy as np
 
 REPO = Path(__file__).resolve().parents[2]
 FEATS = REPO / 'metrics/WorldScore/results/fvd_perview/feats'
-OUT = REPO / 'metrics/reports/fvd_kinetics_domain_audit.json'
+OUT = REPO / 'results/reports/fvd_kinetics_domain_audit.json'
 
 
 def load(limit_per_group: int | None = None):

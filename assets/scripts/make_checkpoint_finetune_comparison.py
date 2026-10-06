@@ -197,7 +197,7 @@ def plot_bars(rows, out_path: Path):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--csv", type=Path, default=ROOT / "metrics/reports/checkpoint_finetune_comparison.csv")
+    ap.add_argument("--csv", type=Path, default=ROOT / "results/reports/checkpoint_finetune_comparison.csv")
     ap.add_argument("--fig", type=Path, default=ROOT / "assets/paper_figures/checkpoint_finetune_comparison")
     args = ap.parse_args()
 

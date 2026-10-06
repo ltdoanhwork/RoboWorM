@@ -32,7 +32,7 @@ WHAT IT IS NOT ALLOWED TO CLAIM
   where the evidence is not a 6-cell subgroup.
 
 Data:
-    metrics/reports/rq1_dense_baselines.json
+    results/reports/rq1_dense_baselines.json
         blocks.{embodiment}.{track}.kiva.dense.{mak,non_mak}
         blocks.{embodiment}.{track}.dense.visual_integrity.{mak,non_mak}
     Rollout depth: median chunks/clip per split, from the per-clip frame counts of
@@ -44,7 +44,7 @@ Data:
 
 Writes:
     assets/paper/figures/fig_depth_vs_regime.pdf / .png
-    metrics/reports/depth_vs_regime.json
+    results/reports/depth_vs_regime.json
 
 Usage:
     python3 assets/scripts/make_depth_vs_regime_figure.py
@@ -60,9 +60,9 @@ import statistics
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-SRC = REPO / "metrics/reports/rq1_dense_baselines.json"
+SRC = REPO / "results/reports/rq1_dense_baselines.json"
 FIG = REPO / "assets/paper/figures/fig_depth_vs_regime"
-OUT_JSON = REPO / "metrics/reports/depth_vs_regime.json"
+OUT_JSON = REPO / "results/reports/depth_vs_regime.json"
 
 # Median chunks per clip, (Markovian, non-Markovian), and the chunk stride.
 # Must stay identical to assets/paper/appendix/tables/chunk_depth.tex.
@@ -73,7 +73,7 @@ TRACK = {"dreamgen": "Dreamgen SV", "dreamdojo": "DreamDojo SV"}
 # reads every generated clip and reports mean chunks/clip plus a Mann-Whitney test.
 # It is read here so the figure cannot drift from the videos -- the earlier hand-copied
 # table reported a spurious 0.67x on humanoid DreamGen (see that script's docstring).
-DEPTH_JSON = REPO / "metrics" / "reports" / "rollout_depth.json"
+DEPTH_JSON = REPO / "results" / "reports" / "rollout_depth.json"
 SHORT = {"bimanual": "Bimanual", "humanoid": "Humanoid", "single_arm": "Single-arm"}
 MODEL = {"Dreamgen SV": "DreamGen", "DreamDojo SV": "DreamDojo"}
 
@@ -312,8 +312,8 @@ def main():
                  "non-Markovian change in KIVA and in Visual Integrity, per "
                  "single-view configuration."),
         sources=[
-            "metrics/reports/rq1_dense_baselines.json",
-            "metrics/reports/rollout_depth.json (measured rollout depth)",
+            "results/reports/rq1_dense_baselines.json",
+            "results/reports/rollout_depth.json (measured rollout depth)",
         ],
         polarity_note=("KIVA is lower-is-better (% invalid 16-frame segments); Visual "
                        "Integrity is higher-is-better (CLIP-IQA+). The two deltas share "

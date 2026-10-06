@@ -91,11 +91,11 @@ def load_psnr(run: Path, cache: Path):
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument('--run', default='metrics/WorldScore/results/dr_full')
-    ap.add_argument('--pooled', default='metrics/reports/fvd_perview_pooled.json')
+    ap.add_argument('--pooled', default='results/reports/fvd_perview_pooled.json')
     ap.add_argument('--out', default='assets/BENCHMARK_dense_shared_pool.xlsx')
-    ap.add_argument('--tex', default='metrics/reports/dense_table_shared_pool.tex')
-    ap.add_argument('--psnr-cache', default='metrics/reports/dense_psnr_cache.json')
-    ap.add_argument('--singleview', default='metrics/reports/fvd_singleview_pooled.json')
+    ap.add_argument('--tex', default='results/reports/dense_table_shared_pool.tex')
+    ap.add_argument('--psnr-cache', default='results/reports/dense_psnr_cache.json')
+    ap.add_argument('--singleview', default='results/reports/fvd_singleview_pooled.json')
     args = ap.parse_args()
 
     import openpyxl

@@ -4,7 +4,7 @@
 Consumes the JSONL emitted by ``scripts/tools/tune/_bench_uniform_timing.sh`` and produces
 the matched-protocol speedup numbers for subsection C.2.
 
-What this fixes relative to ``metrics/reports/speedup_summary_full.csv``: that
+What this fixes relative to ``results/reports/speedup_summary_full.csv``: that
 file has no timing at all for 69 of its 127 rows, and every row that does have a
 speedup inherited it from a per-cell tuning note, i.e. from a sweep with its own
 episode, split and scratch layout. Those numbers cannot be compared across
@@ -28,8 +28,8 @@ result is never mistaken for a negative one.
         --results /tmp/uniform_timing/results.jsonl
 
 Writes:
-    metrics/reports/timing_pass.json
-    metrics/reports/timing_pass.csv
+    results/reports/timing_pass.json
+    results/reports/timing_pass.csv
     assets/paper/appendix/tables/timing_pass.tex
 """
 
@@ -42,8 +42,8 @@ import os
 import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-OUT_JSON = os.path.join(REPO, "metrics/reports/timing_pass.json")
-OUT_CSV = os.path.join(REPO, "metrics/reports/timing_pass.csv")
+OUT_JSON = os.path.join(REPO, "results/reports/timing_pass.json")
+OUT_CSV = os.path.join(REPO, "results/reports/timing_pass.csv")
 OUT_TEX = os.path.join(REPO, "assets/paper/appendix/tables/timing_pass.tex")
 
 METHOD_DISPLAY = {

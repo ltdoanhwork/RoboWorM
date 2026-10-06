@@ -30,7 +30,7 @@ cd "$ROOT"
 GPU="${1:-${GPU:-0}}"
 SCRATCH="${SCRATCH:-/tmp/wc_tune_humanoid_sv}"
 LOGDIR="${SCRATCH}/logs"
-REPORT="${REPORT:-${ROOT}/metrics/reports/worldcache_humanoid_sv_tuning.json}"
+REPORT="${REPORT:-${ROOT}/results/reports/worldcache_humanoid_sv_tuning.json}"
 DRY_RUN="${DRY_RUN:-0}"
 
 SPLIT="makovian"

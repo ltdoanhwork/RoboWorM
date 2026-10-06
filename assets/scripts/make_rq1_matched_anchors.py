@@ -58,7 +58,7 @@ import table_paper_grid as G    # noqa: E402
 COLS = ["visual_integrity", "text_condition_alignment", "actor_motion_raw",
         "active_motion_continuity"]
 SPLITS = ["makovian", "non_makovian"]
-OUT = REPO / "metrics/reports/rq1_matched_anchors.csv"
+OUT = REPO / "results/reports/rq1_matched_anchors.csv"
 
 
 def main():

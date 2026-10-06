@@ -31,7 +31,7 @@ Run (CPU is fine, ~2 s per window; use --max-windows to bound the cost):
     models/dreamgen/.venv/bin/python assets/scripts/fvd_temporal_sensitivity_probe.py \
         --embodiment bimanual --split makovian --label 'CW-4view MV' --max-windows 256
 
-Writes metrics/reports/fvd_temporal_sensitivity.json.
+Writes results/reports/fvd_temporal_sensitivity.json.
 """
 from __future__ import annotations
 
@@ -59,7 +59,7 @@ from fvd_pool_common import (I3D_SIZE, I3D_WINDOW, TARGET_FPS,           # noqa:
 
 from metrics.fvd import I3D_CKPT                                         # noqa: E402
 FEAT_CACHE = REPO / 'metrics/WorldScore/results/fvd_perview/feats'
-OUT = REPO / 'metrics/reports/fvd_temporal_sensitivity.json'
+OUT = REPO / 'results/reports/fvd_temporal_sensitivity.json'
 
 
 def probe_fps(path: str) -> float:

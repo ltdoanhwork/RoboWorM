@@ -19,7 +19,7 @@ Two things this is careful about, because both silently corrupt an export:
    result id, and `relative` / `view` are carried so a reader can regroup.
 
     python3 assets/scripts/export_activity_scores.py
-    python3 assets/scripts/export_activity_scores.py --run dense_nr_full --out-dir metrics/reports
+    python3 assets/scripts/export_activity_scores.py --run dense_nr_full --out-dir results/reports
 """
 
 from __future__ import annotations
@@ -72,7 +72,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--run", default="dense_nr_full",
                     help="run dir under metrics/WorldScore/results/")
-    ap.add_argument("--out-dir", default=str(ROOT / "metrics/reports"))
+    ap.add_argument("--out-dir", default=str(ROOT / "results/reports"))
     args = ap.parse_args()
 
     run_dir = RESULTS / args.run

@@ -15,10 +15,10 @@ ground-truth frames, i.e. the "Benchmark Statistics" panel:
     assets/paper/figures/fig_stats_panel.{png,pdf}
 
 Every number is read from the measured evidence, never hardcoded:
-  * embodiment / view mix  <- metrics/reports/dataset_appendix_evidence.json
+  * embodiment / view mix  <- results/reports/dataset_appendix_evidence.json
   * Markovian split        <- the same file's per-cell `split`
-  * rollouts per strategy  <- metrics/reports/sampling_audit.json `groups`
-  * primitive frames       <- metrics/reports/_hero_frames/primitives/index.tsv
+  * rollouts per strategy  <- results/reports/sampling_audit.json `groups`
+  * primitive frames       <- results/reports/_hero_frames/primitives/index.tsv
 
 The composite exists because this panel was previously assembled by hand, which
 let it go stale: it shipped 1,608 episodes (the pre-filter count), a 45/55
@@ -41,9 +41,9 @@ import matplotlib.image as mpimg
 
 REPO = Path(__file__).resolve().parents[2]
 OUT = REPO / "assets/paper/figures"
-EVID = REPO / "metrics/reports/dataset_appendix_evidence.json"
-AUDIT = REPO / "metrics/reports/sampling_audit.json"
-FRAMES = REPO / "metrics/reports/_hero_frames/primitives"
+EVID = REPO / "results/reports/dataset_appendix_evidence.json"
+AUDIT = REPO / "results/reports/sampling_audit.json"
+FRAMES = REPO / "results/reports/_hero_frames/primitives"
 
 # Blue ramp, darkest = largest slice (the reference figure's convention).
 RAMP = ["#1A56DB", "#2F6FE4", "#5A8DEC", "#93B4F3", "#C7D8F9", "#E4ECFC"]

@@ -70,7 +70,7 @@ METHOD_DISPLAY = {'dicache': 'DiCache', 'worldcache': 'WorldCache',
                   'svg1': 'SVG1', 'svg2': 'SVG2', 'sito': 'SiTo', 'itm': 'ITM'}
 # Pooled per-method speedup from scripts/tables/make_speedup_summary.py. Kept as a separate
 # join (not recomputed) so this table cannot drift from the timing report.
-SPEEDUP_CSV = Path('metrics/reports/speedup_summary_by_method.csv')
+SPEEDUP_CSV = Path('results/reports/speedup_summary_by_method.csv')
 
 
 def view_type(r):
@@ -212,7 +212,7 @@ def write_paired_csv(path, cells, pooled):
 FAMILY_OF = {'ctrlworld': 'Ctrl-World', 'ctrlworld_4view_grid': 'Ctrl-World',
              'dreamgen': 'DreamGen', 'dreamdojo': 'DreamDojo'}
 FAMILY_ORDER = ['Ctrl-World', 'DreamGen', 'DreamDojo']
-SPEEDUP_FULL_CSV = Path('metrics/reports/speedup_summary_full.csv')
+SPEEDUP_FULL_CSV = Path('results/reports/speedup_summary_full.csv')
 
 
 def speedup_by_family():

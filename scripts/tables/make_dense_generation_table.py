@@ -370,8 +370,8 @@ def main() -> None:
           "```bash",
           "python3 scripts/tables/make_dense_generation_table.py \\",
           "  --md docs/dense_generation_config.md \\",
-          "  --json metrics/reports/dense_generation_config.json \\",
-          "  --tex metrics/reports/dense_generation_config.tex",
+          "  --json results/reports/dense_generation_config.json \\",
+          "  --tex results/reports/dense_generation_config.tex",
           "```", "",
           f"Cells: {len(rows)} | clips probed: {sum(r.get('measured', 0) for r in rows)} "
           f"/ {sum(r['clips'] for r in rows)} on disk"

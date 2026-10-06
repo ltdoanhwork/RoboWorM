@@ -11,7 +11,7 @@ script is that file: it holds the transcribed table and emits a CSV + JSON so
 
 Nothing is recomputed here. The detector code for RIGIS (cross-view point
 tracking) and KIVA (3D-lifted body keypoints) is external to this repo -- see
-`docs/metrics/phyworld_metrics.md` sections 4-5 -- so the numbers are transcribed, and the
+`docs/metrics/README.md` (RQ3 baselines) -- so the numbers are transcribed, and the
 transcription is checked: every `mean` row is re-derived from its three
 per-embodiment values and the script fails if the workbook mean disagrees by more
 than 5e-4.
@@ -61,7 +61,7 @@ import json
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-OUT_DIR = REPO / "metrics/reports"
+OUT_DIR = REPO / "results/reports"
 OUT_ALIGN = OUT_DIR / "rq3_human_alignment.csv"
 OUT_COST = OUT_DIR / "rq3_judge_cost.csv"
 OUT_JSON = OUT_DIR / "rq3_human_alignment.json"
@@ -309,7 +309,7 @@ def main() -> None:
                    "predictor's stability and cost.",
         "provenance": "transcribed from the benchmark workbook's RIGIS/KIVA tabs; "
                       "detector code for RIGIS and KIVA is external to this repo "
-                      "(docs/metrics/phyworld_metrics.md sections 4-5).",
+                      "(docs/metrics/README.md, RQ3 baselines).",
         "reported_statistic": "mean over the three per-embodiment correlations, "
                               "never pooled across embodiments (the embodiments "
                               "have different human label distributions and clip "

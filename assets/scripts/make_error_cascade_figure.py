@@ -36,7 +36,7 @@ Data:
 
 Writes:
     assets/paper/figures/fig_error_cascade.pdf / .png
-    metrics/reports/error_cascade.json
+    results/reports/error_cascade.json
 
 Usage:
     python3 assets/scripts/make_error_cascade_figure.py
@@ -57,7 +57,7 @@ from scipy import stats
 REPO = Path(__file__).resolve().parents[2]
 BENCH = REPO / "sampling_dataset/data_for_web/hallucinate_bench/300-prune"
 FIG = REPO / "assets/paper/figures/fig_error_cascade"
-OUT_JSON = REPO / "metrics/reports/error_cascade.json"
+OUT_JSON = REPO / "results/reports/error_cascade.json"
 
 EMB = ["bimanual", "humanoid", "single_arm"]
 EMB_LABEL = {"bimanual": "Bimanual", "humanoid": "Humanoid",

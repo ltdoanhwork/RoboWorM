@@ -4,7 +4,7 @@ model family (Ctrl-World / DreamGen / DreamDojo), one polygon per
 acceleration method, summarizing speed vs. fidelity retention vs. dense.
 
 Reads the master table produced by scripts/tables/make_speedup_summary.py
-(metrics/reports/speedup_summary_full.csv) and rolls it up to one
+(results/reports/speedup_summary_full.csv) and rolls it up to one
 (method, model_family) point per axis:
 
     - Speedup            = dense_time / method_time (>1 is faster)
@@ -22,7 +22,7 @@ axis.
 
 Usage:
     python assets/scripts/make_speedup_star_chart.py \
-        --csv metrics/reports/speedup_summary_full.csv \
+        --csv results/reports/speedup_summary_full.csv \
         --out assets/paper_figures/speedup_star_chart
 """
 from __future__ import annotations
@@ -154,7 +154,7 @@ def plot_family(ax, family: str, agg: dict[tuple[str, str], dict[str, float]]):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--csv", type=Path, default=Path("metrics/reports/speedup_summary_full.csv"))
+    ap.add_argument("--csv", type=Path, default=Path("results/reports/speedup_summary_full.csv"))
     ap.add_argument("--out", type=Path, default=Path("assets/paper_figures/speedup_star_chart"))
     args = ap.parse_args()
 

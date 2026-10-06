@@ -372,7 +372,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--run', type=Path,
                     default=ROOT / 'metrics/WorldScore/results/dense_nr_full')
-    ap.add_argument('--out', type=Path, default=ROOT / 'metrics/reports/nr_qualitative')
+    ap.add_argument('--out', type=Path, default=ROOT / 'results/reports/nr_qualitative')
     ap.add_argument('--n', type=int, default=3, help='clips per end of each gallery')
     ap.add_argument('--limit', type=int, default=0,
                     help='sample this many records for speed (0 = all, the default). '

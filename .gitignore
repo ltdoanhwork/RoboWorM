@@ -254,6 +254,7 @@ metrics/rigis/*.egg-info/
 compare/*
 results/*
 !results/README.md
+!results/reports/
 assets/*
 # ...but the paper-figure/table generators living under assets/ ARE source and
 # must stay in git (assets/* above is meant to exclude heavy binary artifacts).

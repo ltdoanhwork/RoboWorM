@@ -47,7 +47,7 @@ SOURCES -- the workbook is self-contained, nothing else is read by default
           by the Dense row instead -- useful for "what did acceleration cost?",
           but that block is NOT in the sheet, it is derived from the same cells.
 
-  --speedup-source csv reads metrics/reports/speedup_table_full.csv instead of the
+  --speedup-source csv reads results/reports/speedup_table_full.csv instead of the
           `Speedup` tab. NOTE the two disagree on 40 of 92 shared cells (the tab
           has no value below 1.00x; the CSV has 24), so they must never be mixed
           in one figure. Default is the tab, i.e. the numbers you supplied.
@@ -384,7 +384,7 @@ def read_speedup_xlsx(xlsx: Path) -> tuple[dict, list]:
     if SPEEDUP_SHEET not in wb.sheetnames:
         raise SystemExit(
             'no %r tab in %s (tabs: %s).\nUse --speedup-source csv to read '
-            'metrics/reports/speedup_table_full.csv instead.'
+            'results/reports/speedup_table_full.csv instead.'
             % (SPEEDUP_SHEET, xlsx.name, ', '.join(wb.sheetnames)))
     ws = wb[SPEEDUP_SHEET]
     out, notes = {}, []
@@ -2479,10 +2479,10 @@ def selftest(xlsx: Path, speedup_csv: Path) -> int:
 
         # ---- 9. The KIVA tab must be the NEW detector's numbers --------------
         # make_rq1_dense_table.py documents the risk: an older workbook carries a
-        # SUPERSEDED KIVA scale. Pinning the tab to metrics/reports/kiva_audit.csv
+        # SUPERSEDED KIVA scale. Pinning the tab to results/reports/kiva_audit.csv
         # is what makes swapping such a workbook in fail loudly here instead of
         # silently republishing the wrong numbers.
-        kiva_csv = REPO / 'metrics/reports/kiva_audit.csv'
+        kiva_csv = REPO / 'results/reports/kiva_audit.csv'
         if kiva_csv.exists():
             n_cmp, mism = 0, []
             for row in csv.DictReader(kiva_csv.open()):
@@ -2617,9 +2617,9 @@ def main():
     ap.add_argument('--speedup-source', default='xlsx', choices=('xlsx', 'csv'),
                     help="where speedup comes from: 'xlsx' = the workbook's own "
                          "`Speedup` tab (default), 'csv' = "
-                         "metrics/reports/speedup_table_full.csv")
+                         "results/reports/speedup_table_full.csv")
     ap.add_argument('--speedup', type=Path,
-                    default=REPO / 'metrics/reports/speedup_table_full.csv',
+                    default=REPO / 'results/reports/speedup_table_full.csv',
                     help='only used with --speedup-source csv')
     ap.add_argument('--baseline', default='real_video',
                     choices=('real_video', 'dense'),

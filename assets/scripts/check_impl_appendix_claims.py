@@ -27,17 +27,17 @@ import sys
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 TEX = os.path.join(REPO, "assets/paper/appendix/3_implemetation_details.tex")
 FIG_TEX = os.path.join(REPO, "assets/paper/appendix/figures/fig_accel_taxonomy.tex")
-ACCEL = os.path.join(REPO, "metrics/reports/impl_accel_configs.json")
-FINETUNE = os.path.join(REPO, "metrics/reports/finetune_config.json")
-BUDGET = os.path.join(REPO, "metrics/reports/time_budget.json")
-KNEE = os.path.join(REPO, "metrics/reports/knee_curves.json")
-PREP = os.path.join(REPO, "metrics/reports/training_data_prep.json")
-QUAL = os.path.join(REPO, "metrics/reports/finetune_qualitative.json")
+ACCEL = os.path.join(REPO, "results/reports/impl_accel_configs.json")
+FINETUNE = os.path.join(REPO, "results/reports/finetune_config.json")
+BUDGET = os.path.join(REPO, "results/reports/time_budget.json")
+KNEE = os.path.join(REPO, "results/reports/knee_curves.json")
+PREP = os.path.join(REPO, "results/reports/training_data_prep.json")
+QUAL = os.path.join(REPO, "results/reports/finetune_qualitative.json")
 CKPT_DOC = os.path.join(REPO, "docs/reproduce/main_results_speedup_and_checkpoint.md")
-TIMING = os.path.join(REPO, "metrics/reports/timing_pass.json")
-SPEEDUP_CSV = os.path.join(REPO, "metrics/reports/speedup_summary_full.csv")
+TIMING = os.path.join(REPO, "results/reports/timing_pass.json")
+SPEEDUP_CSV = os.path.join(REPO, "results/reports/speedup_summary_full.csv")
 IMPL_TEX = os.path.join(REPO, "assets/paper/appendix/3_implemetation_details.tex")
-DENSE_CFG = os.path.join(REPO, "metrics/reports/dense_generation_config.json")
+DENSE_CFG = os.path.join(REPO, "results/reports/dense_generation_config.json")
 
 # The reported-cell decision lives in one module; the checker imports the same
 # one the generators use, so the gate cannot drift from the filter it verifies.
@@ -367,7 +367,7 @@ def main():
     # only if the prose says so. This gate exists because the mismatch is
     # invisible to every other check: the numbers are real and self-consistent,
     # they are simply measured on a layout the reader is not told about.
-    cmp_csv = os.path.join(REPO, "metrics/reports/checkpoint_finetune_comparison.csv")
+    cmp_csv = os.path.join(REPO, "results/reports/checkpoint_finetune_comparison.csv")
     if os.path.exists(cmp_csv):
         import csv as _csv2
         with open(cmp_csv) as fh:

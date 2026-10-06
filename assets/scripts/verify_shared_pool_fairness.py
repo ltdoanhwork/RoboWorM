@@ -53,7 +53,7 @@ MIN_W = 64
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument('--feats', default='metrics/WorldScore/results/fvd_perview')
-    ap.add_argument('--json', default='metrics/reports/shared_pool_fairness.json')
+    ap.add_argument('--json', default='results/reports/shared_pool_fairness.json')
     args = ap.parse_args()
 
     gt = collections.defaultdict(list)       # (emb,cam,split,label) -> real feats

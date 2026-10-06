@@ -6,8 +6,8 @@ rollout counts from a raw directory walk that split the two Ctrl-World tree
 variants into separate columns and included stale output trees. Everything here
 reads the AUDITED counts instead, so no figure can disagree with the audit:
 
-    python3 assets/scripts/audit_sampling_distribution.py --json metrics/reports/sampling_audit.json
-    python3 assets/scripts/make_benchmark_stats.py --json metrics/reports/benchmark_stats.json
+    python3 assets/scripts/audit_sampling_distribution.py --json results/reports/sampling_audit.json
+    python3 assets/scripts/make_benchmark_stats.py --json results/reports/benchmark_stats.json
     python3 assets/scripts/make_dataset_appendix_tables.py
     python3 assets/scripts/plot_benchmark_figures.py
 
@@ -31,9 +31,9 @@ from matplotlib.patches import Rectangle
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT = os.path.join(REPO, "assets/paper/figures")
-AUDIT = os.path.join(REPO, "metrics/reports/sampling_audit.json")
-STATS = os.path.join(REPO, "metrics/reports/benchmark_stats.json")
-EVID = os.path.join(REPO, "metrics/reports/dataset_appendix_evidence.json")
+AUDIT = os.path.join(REPO, "results/reports/sampling_audit.json")
+STATS = os.path.join(REPO, "results/reports/benchmark_stats.json")
+EVID = os.path.join(REPO, "results/reports/dataset_appendix_evidence.json")
 
 plt.rcParams.update({
     "font.family": "serif",

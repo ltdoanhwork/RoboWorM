@@ -10,7 +10,7 @@ paper.
 Run:
     models/dreamgen/.venv/bin/python assets/scripts/rq2_tradeoff_stats.py
 
-Writes metrics/reports/rq2_tradeoff.json and prints a readable report.
+Writes results/reports/rq2_tradeoff.json and prints a readable report.
 
 Protocol notes that matter for reading the output:
 
@@ -22,7 +22,7 @@ Protocol notes that matter for reading the output:
   an orientation with the others. This is the LEGACY scalar; the benchmark now
   replaces Actor Activity and Motion Continuity with PSNR and FVD (see below).
 * The CURRENT metric set is Visual Integrity + PSNR + Text Alignment + FVD, read
-  from `metrics/reports/speedup_figure_data_{embodiment}.csv` (produced by
+  from `results/reports/speedup_figure_data_{embodiment}.csv` (produced by
   `assets/scripts/dump_speedup_figure_data.py`). Both sets are reported side by
   side under `per_nr_column` (legacy) and `per_metric_column_current`, because the
   RQ2 prose must not quote per-column numbers from the superseded definition while
@@ -44,14 +44,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / 'assets/paper_figures/nr_circular/real_video/data'
-OUT = ROOT / 'metrics/reports/rq2_tradeoff.json'
+OUT = ROOT / 'results/reports/rq2_tradeoff.json'
 SPLITS = ('makovian', 'non_makovian')
 CACHING = ('World-cache', 'Di-cache', 'Faster-cache')
 NR_COLS = ('Visual Integrity', 'Text Alignment', 'Actor Activity',
            'Motion Continuity')
 # The CURRENT metric set: PSNR and FVD replace Actor Activity and Motion Continuity.
 CUR_COLS = ('Visual Integrity', 'PSNR', 'Text Alignment', 'FVD')
-CUR_DATA = ROOT / 'metrics/reports'
+CUR_DATA = ROOT / 'results/reports'
 EMBODIMENTS = ('bimanual', 'humanoid', 'single_arm')
 FAMILY_OF = {'World-cache': 'caching', 'Di-cache': 'caching',
              'Faster-cache': 'caching', 'PISA': 'sparse-attn',

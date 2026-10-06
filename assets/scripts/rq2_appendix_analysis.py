@@ -28,7 +28,7 @@ FAMILY = {'World-cache': 'caching', 'Di-cache': 'caching', 'Faster-cache': 'cach
 def load():
     rows = []
     for e in EMB:
-        p = REPO / 'metrics/reports' / f'speedup_figure_data_{e}.csv'
+        p = REPO / 'results/reports' / f'speedup_figure_data_{e}.csv'
         rows += list(csv.DictReader(p.open()))
     return [r for r in rows if r['split'] == 'makovian']
 
@@ -69,7 +69,7 @@ def main():
     allrows = []
     for e in EMB:
         allrows += list(csv.DictReader(
-            (REPO / 'metrics/reports' / f'speedup_figure_data_{e}.csv').open()))
+            (REPO / 'results/reports' / f'speedup_figure_data_{e}.csv').open()))
     print(f'  {"family":12s}{"FVD loss":>10}{"mean loss":>11}{"dilution":>10}')
     for fam in ('caching', 'sparse-attn', 'pruning'):
         fv = [1 - f(r, 'ratio_dense_FVD') for r in allrows

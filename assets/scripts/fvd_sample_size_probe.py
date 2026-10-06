@@ -48,7 +48,7 @@ def moments(x: np.ndarray):
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument('--run', default='metrics/WorldScore/results/dr_full')
-    ap.add_argument('--json', default='metrics/reports/fvd_sample_size_probe.json')
+    ap.add_argument('--json', default='results/reports/fvd_sample_size_probe.json')
     ap.add_argument('--seed', type=int, default=0)
     args = ap.parse_args()
     run = REPO / args.run

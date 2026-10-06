@@ -25,7 +25,7 @@ Two honest properties of this data are preserved rather than hidden:
 
 Writes:
     assets/paper/figures/fig_knee_curves.pdf
-    metrics/reports/knee_curves.json
+    results/reports/knee_curves.json
 """
 
 from __future__ import annotations
@@ -42,7 +42,7 @@ import matplotlib.pyplot as plt
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 RULES = os.path.join(REPO, ".cursor/rules")
 OUT_PDF = os.path.join(REPO, "assets/paper/figures/fig_knee_curves.pdf")
-OUT_JSON = os.path.join(REPO, "metrics/reports/knee_curves.json")
+OUT_JSON = os.path.join(REPO, "results/reports/knee_curves.json")
 
 METHOD_CANON = {
     "dense": "dense", "sito": "SiTo", "itm": "ITM",

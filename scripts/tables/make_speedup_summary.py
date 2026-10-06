@@ -32,12 +32,12 @@ Usage
 -----
     python scripts/tables/make_speedup_summary.py \
         --sampling-root sampling_dataset \
-        --out-dir metrics/reports
+        --out-dir results/reports
 
 Emits:
-    metrics/reports/speedup_summary_full.csv       (one row per cell)
-    metrics/reports/speedup_summary_by_method.csv  (one row per method, rolled up)
-    metrics/reports/speedup_summary_appendix.tex   (LaTeX longtable, appendix-ready)
+    results/reports/speedup_summary_full.csv       (one row per cell)
+    results/reports/speedup_summary_by_method.csv  (one row per method, rolled up)
+    results/reports/speedup_summary_appendix.tex   (LaTeX longtable, appendix-ready)
 """
 
 from __future__ import annotations
@@ -662,7 +662,7 @@ def write_appendix_tex(rows: list[dict], path: Path):
                  r"script and configuration, but its own episode count and its own dense "
                  r"reference), and \texttt{--} marks a cell whose timing was never "
                  r"instrumented --- never a value interpolated from a neighbouring cell. "
-                 r"See \texttt{metrics/reports/speedup\_summary\_full.csv} column "
+                 r"See \texttt{results/reports/speedup\_summary\_full.csv} column "
                  r"\texttt{timing\_provenance} for the exact source per row.}")
     lines.append(r"\label{tab:speedup_full_appendix}\\")
     lines.append(r"\toprule")
@@ -703,7 +703,7 @@ def write_appendix_tex(rows: list[dict], path: Path):
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--sampling-root", type=Path, default=Path("sampling_dataset"))
-    ap.add_argument("--out-dir", type=Path, default=Path("metrics/reports"))
+    ap.add_argument("--out-dir", type=Path, default=Path("results/reports"))
     args = ap.parse_args()
 
     rows = build_cells(args.sampling_root)

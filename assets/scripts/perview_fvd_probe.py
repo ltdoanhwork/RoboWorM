@@ -80,7 +80,7 @@ def main() -> None:
                     help='GT clips per model to sample (per split)')
     ap.add_argument('--embodiment', default='bimanual')
     ap.add_argument('--split', default='makovian')
-    ap.add_argument('--json', default='metrics/reports/perview_fvd_probe.json')
+    ap.add_argument('--json', default='results/reports/perview_fvd_probe.json')
     args = ap.parse_args()
 
     import torch

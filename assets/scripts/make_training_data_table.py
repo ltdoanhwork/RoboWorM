@@ -33,7 +33,7 @@ output JSON and reused unless --remeasure is passed.
     python3 assets/scripts/make_training_data_table.py [--remeasure]
 
 Writes:
-    metrics/reports/training_data_prep.json
+    results/reports/training_data_prep.json
     assets/paper/appendix/tables/training_data_prep.tex
 """
 
@@ -53,9 +53,9 @@ DG_EXP = os.path.join(
     REPO, "models/dreamgen/cosmos_predict2/configs/base/experiment/singleview.py")
 DG_SCRIPTS = os.path.join(REPO, "finetuning/dreamgen/scripts")
 CW_CONFIG = os.path.join(REPO, "finetuning/ctrlworld/config.py")
-FT_JSON = os.path.join(REPO, "metrics/reports/finetune_config.json")
+FT_JSON = os.path.join(REPO, "results/reports/finetune_config.json")
 
-OUT_JSON = os.path.join(REPO, "metrics/reports/training_data_prep.json")
+OUT_JSON = os.path.join(REPO, "results/reports/training_data_prep.json")
 OUT_TEX = os.path.join(REPO, "assets/paper/appendix/tables/training_data_prep.tex")
 
 # Released DreamGen checkpoints -> the corpus stage chain that produced them.
@@ -240,7 +240,7 @@ def measure(dirname, min_frames):
     }
 
 
-CACHE_PATH = os.path.join(REPO, "metrics/reports/.training_data_cache.json")
+CACHE_PATH = os.path.join(REPO, "results/reports/.training_data_cache.json")
 
 
 def _save_cache(cache):

@@ -17,7 +17,7 @@ figure are the same ones the tables report.
 
 Writes:
     assets/paper/figures/fig_finetune_qualitative.{pdf,png}
-    metrics/reports/finetune_qualitative.json
+    results/reports/finetune_qualitative.json
 """
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ import matplotlib.pyplot as plt
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT_PDF = os.path.join(REPO, "assets/paper/figures/fig_finetune_qualitative.pdf")
 OUT_PNG = os.path.join(REPO, "assets/paper/figures/fig_finetune_qualitative.png")
-OUT_JSON = os.path.join(REPO, "metrics/reports/finetune_qualitative.json")
+OUT_JSON = os.path.join(REPO, "results/reports/finetune_qualitative.json")
 TMP = "/tmp/ft_qual_frames"
 
 # Only Ctrl-World cells are used: they are the cells where a base and a finetuned

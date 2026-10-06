@@ -383,7 +383,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument('--run', default='metrics/WorldScore/results/dr_full')
     ap.add_argument('--out', default='assets/BENCHMARK_DR_vs_real.xlsx')
-    ap.add_argument('--audit', default='metrics/reports/dr_vs_real_audit.json')
+    ap.add_argument('--audit', default='results/reports/dr_vs_real_audit.json')
     args = ap.parse_args()
 
     run = REPO / args.run

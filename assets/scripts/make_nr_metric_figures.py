@@ -1000,7 +1000,7 @@ def f8_pareto(ctx):
     """Measured speedup (x) against the paired NR delta vs dense (y), per method.
 
     The two axes come from DIFFERENT protocols and that is stated on the figure: speedup
-    is the tuning sweep's single-episode matched timing (`metrics/reports/knee_curves.json`,
+    is the tuning sweep's single-episode matched timing (`results/reports/knee_curves.json`,
     the shipped operating point of each method), while the NR delta is the median over
     every comparable clip in this wave. They are joined on (model, embodiment, method),
     and only the four cells that were timed can be placed at all.
@@ -1011,7 +1011,7 @@ def f8_pareto(ctx):
     frontier" on a column with no polarity would be meaningless.
     """
     cache, plt, np = ctx.cache, ctx.plt, ctx.np
-    knee_path = Path('metrics/reports/knee_curves.json')
+    knee_path = Path('results/reports/knee_curves.json')
     if not knee_path.exists():
         raise SystemExit(f'{knee_path} missing; F8 needs the measured speedups')
     knee = json.loads(knee_path.read_text())

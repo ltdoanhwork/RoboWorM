@@ -57,7 +57,7 @@ FVD_MIN_WINDOWS = 64
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument('--run', default='metrics/WorldScore/results/dr_full')
-    ap.add_argument('--json', default='metrics/reports/fvd_singleview_pooled.json')
+    ap.add_argument('--json', default='results/reports/fvd_singleview_pooled.json')
     args = ap.parse_args()
     run = REPO / args.run
 

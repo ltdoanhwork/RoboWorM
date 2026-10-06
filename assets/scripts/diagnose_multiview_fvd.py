@@ -46,7 +46,7 @@ MIN_WIN = 64
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument('--run', default='metrics/WorldScore/results/dr_full')
-    ap.add_argument('--json', default='metrics/reports/multiview_fvd_diagnosis.json')
+    ap.add_argument('--json', default='results/reports/multiview_fvd_diagnosis.json')
     args = ap.parse_args()
     run = REPO / args.run
 

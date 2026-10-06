@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the two-panel Speedup x RIGIS/KIVA figure for one embodiment.
 
-Reads `metrics/reports/speedup_figure_data_<embodiment>.json` (source of truth --
+Reads `results/reports/speedup_figure_data_<embodiment>.json` (source of truth --
 never retype the numbers) and writes a full-width `.pdf` + `.png` pair.
 
 Panel (a) = multi-view tracks, middle axis RIGIS (higher is better).
@@ -120,7 +120,7 @@ def main() -> None:
                     help='print the extracted arrays and exit (for verification)')
     args = ap.parse_args()
 
-    src = args.data or (REPO / 'metrics/reports'
+    src = args.data or (REPO / 'results/reports'
                         / f'speedup_figure_data_{args.embodiment}.json')
     rows = json.loads(src.read_text())['rows']
     A = series(rows, 'a_multiview', args.split)

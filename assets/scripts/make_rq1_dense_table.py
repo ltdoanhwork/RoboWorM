@@ -109,7 +109,7 @@ SOURCES
         the workbook's own upstream, used here for the clip counts the workbook
         does not carry -- and to CROSS-VERIFY every reference-free number, so the
         two artifacts cannot silently drift.
-    metrics/reports/rq1_matched_anchors.csv
+    results/reports/rq1_matched_anchors.csv
         the matched real-video anchor per (embodiment, model, track, split), from
         assets/scripts/make_rq1_matched_anchors.py. Run that first; it is a
         separate script because it reads all ~82k clip records (~5 min).
@@ -121,7 +121,7 @@ assumed.
 
 Writes:
     assets/paper/tables/dense_baselines.tex
-    metrics/reports/rq1_dense_baselines.json
+    results/reports/rq1_dense_baselines.json
 
 Usage:
     python3 assets/scripts/make_rq1_dense_table.py
@@ -139,10 +139,10 @@ REPO = Path(__file__).resolve().parents[2]
 XLSX = REPO / "sampling_dataset/data_for_web/BENCHMARK_NR_main.xlsx"
 GRID_CSV = (REPO / "metrics/WorldScore/results/dense_nr_full/tables"
             / "table_paper_grid_absolute_by_track.csv")
-ANCHOR_CSV = REPO / "metrics/reports/rq1_matched_anchors.csv"
-KIVA_CSV = REPO / "metrics/reports/kiva_audit.csv"
+ANCHOR_CSV = REPO / "results/reports/rq1_matched_anchors.csv"
+KIVA_CSV = REPO / "results/reports/kiva_audit.csv"
 OUT_TEX = REPO / "assets/paper/tables/dense_baselines.tex"
-OUT_JSON = REPO / "metrics/reports/rq1_dense_baselines.json"
+OUT_JSON = REPO / "results/reports/rq1_dense_baselines.json"
 
 EMB_XL = ["BIMANUAL", "HUMANOID", "SINGLE-ARM"]
 EMB_CSV = {"BIMANUAL": "bimanual", "HUMANOID": "humanoid",
@@ -262,7 +262,7 @@ def read_kiva():
     KIVA does NOT come from the workbook: its `KIVA-main` tab holds an earlier
     detector on a different scale (old real video 0.543 vs new 5.05 on bimanual,
     and the old/new ratio is not even constant across embodiments). The current
-    pass lives in metrics/reports/kiva_audit.csv via make_kiva_audit_data.py.
+    pass lives in results/reports/kiva_audit.csv via make_kiva_audit_data.py.
     Reading both would put two different measurements in one column.
     """
     if not KIVA_CSV.exists():
@@ -534,7 +534,7 @@ def main():
         "sources": [str(XLSX.relative_to(REPO)), str(GRID_CSV.relative_to(REPO)),
                     str(ANCHOR_CSV.relative_to(REPO)), str(KIVA_CSV.relative_to(REPO))],
         "kiva_note": (
-            "KIVA comes from metrics/reports/kiva_audit.csv (new detector, % of "
+            "KIVA comes from results/reports/kiva_audit.csv (new detector, % of "
             "invalid 16-frame segments), NOT from the workbook's KIVA-main tab, "
             "which holds an earlier detector on a different scale."),
         "ctrlworld_layout_reported": {e: CW_LAYOUT_LABEL[e] for e in EMB_XL},

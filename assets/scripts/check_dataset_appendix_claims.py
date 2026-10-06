@@ -2,15 +2,15 @@
 """Assert every numeric claim in appendix/1_dataset.tex against measured evidence.
 
 This is the Evidence gate for the dataset appendix: it fails loudly if the prose
-drifts from ``metrics/reports/dataset_appendix_evidence.json`` (per-cell counts)
-or ``metrics/reports/benchmark_stats.json`` (prompts, skills, scenes, videos).
+drifts from ``results/reports/dataset_appendix_evidence.json`` (per-cell counts)
+or ``results/reports/benchmark_stats.json`` (prompts, skills, scenes, videos).
 
     python3 assets/scripts/check_dataset_appendix_claims.py
 
 Regenerate the evidence first:
 
     python3 assets/scripts/make_dataset_appendix_tables.py
-    python3 assets/scripts/make_benchmark_stats.py --json metrics/reports/benchmark_stats.json
+    python3 assets/scripts/make_benchmark_stats.py --json results/reports/benchmark_stats.json
 """
 
 from __future__ import annotations
@@ -25,9 +25,9 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 TEX = os.path.join(REPO, "assets/paper/appendix/1_dataset.tex")
 METHOD_TEX = os.path.join(REPO, "assets/paper/sections/3_method.tex")
 MAIN_TEX = os.path.join(REPO, "assets/paper/iclr2027_conference.tex")
-EV = os.path.join(REPO, "metrics/reports/dataset_appendix_evidence.json")
-STATS = os.path.join(REPO, "metrics/reports/benchmark_stats.json")
-AUDIT = os.path.join(REPO, "metrics/reports/sampling_audit.json")
+EV = os.path.join(REPO, "results/reports/dataset_appendix_evidence.json")
+STATS = os.path.join(REPO, "results/reports/benchmark_stats.json")
+AUDIT = os.path.join(REPO, "results/reports/sampling_audit.json")
 
 # Which acceleration family each audited method belongs to. The method section
 # quotes per-family rollout subtotals, so the gate has to aggregate the audit the
@@ -118,7 +118,7 @@ def main() -> int:
         for pat, why in (
             (r"\\path\{", "\\path{...} repository path"),
             (r"scripts/", "script path"),
-            (r"metrics/reports/", "report path"),
+            (r"results/reports/", "report path"),
             (r"\bmeta/episodes\.jsonl\b", "metadata filename"),
             (r"episode\\_\*\.parquet", "on-disk filename"),
             (r"\bmakovian\b", "misspelled on-disk split name"),

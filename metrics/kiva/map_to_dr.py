@@ -58,8 +58,8 @@ BENCH = REPO / "sampling_dataset/data_for_web/hallucinate_bench"
 LABELS = REPO / "sampling_dataset/data_for_web/hallucinate_final_labels.json"
 DR_RUN = REPO / "metrics/WorldScore/results/dr_full"
 SAMPLING = REPO / "sampling_dataset"
-OUT_MAP = REPO / "metrics/reports/hallucinate_source_map.json"
-OUT_JOIN = REPO / "metrics/reports/hallucinate_human_vs_dr.csv"
+OUT_MAP = REPO / "results/reports/hallucinate_source_map.json"
+OUT_JOIN = REPO / "results/reports/hallucinate_human_vs_dr.csv"
 
 ROBOTS = ("bimanual", "humanoid", "single_arm")
 # never a model's own prediction: GT, side-by-side, per-segment, per-view renders

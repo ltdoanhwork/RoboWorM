@@ -61,7 +61,7 @@ def main() -> None:
     ap.add_argument('--run', default='metrics/WorldScore/results/dr_full')
     ap.add_argument('--cell', default='single_arm/multiview/non_makovian/Dreamgen MV',
                     help='embodiment/view/split/model to inspect in detail')
-    ap.add_argument('--json', default='metrics/reports/fvd_group_check.json')
+    ap.add_argument('--json', default='results/reports/fvd_group_check.json')
     args = ap.parse_args()
     run = REPO / args.run
 

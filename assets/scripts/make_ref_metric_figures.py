@@ -13,7 +13,7 @@ Two figures, one per family, both built from measurements already in the repo:
       fidelity numbers measured by `scripts/metrics/_score_vs_dense.py`.
 
   fig_ref_intuition_fvd   -- FVD against the number of 16-frame windows, per dense
-      multi-view cell, from `metrics/reports/fvd_sample_size_probe.json`
+      multi-view cell, from `results/reports/fvd_sample_size_probe.json`
       (`assets/scripts/fvd_sample_size_probe.py`). Shows why FVD carries no per-cell
       claim: the same cell against the same reference moves by an order of magnitude
       with n alone, and cells cross, so an unmatched-n comparison can invert.
@@ -34,7 +34,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import paper_fig_style as style  # noqa: E402
 
 LADDER = ROOT / 'sampling_dataset/data_for_web/qualitative/worldcache_quality_ladder'
-PROBE = ROOT / 'metrics/reports/fvd_sample_size_probe.json'
+PROBE = ROOT / 'results/reports/fvd_sample_size_probe.json'
 
 # Which ladder episode to draw. 000829 is the episode whose collapse is unambiguous to
 # the eye (the bok choy dissolves), so the metric inversion below it cannot be argued

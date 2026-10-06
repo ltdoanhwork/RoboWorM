@@ -133,7 +133,7 @@ def main() -> int:
     ap.add_argument('--episodes', type=int, default=3)
     ap.add_argument('--split', default='makovian')
     ap.add_argument('--probe-frames', type=int, default=6)
-    ap.add_argument('--out', default='metrics/reports/gt_align_probe.json')
+    ap.add_argument('--out', default='results/reports/gt_align_probe.json')
     args = ap.parse_args()
 
     names = sorted(CELLS) if args.all else args.cell

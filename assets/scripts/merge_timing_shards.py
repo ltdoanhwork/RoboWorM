@@ -15,7 +15,7 @@ from the table and listed separately, so a number that failed its own sanity
 check can never silently become a paper cell.
 
     python3 assets/scripts/merge_timing_shards.py
-    python3 assets/scripts/merge_timing_shards.py --csv metrics/reports/speedup_perchunk.csv
+    python3 assets/scripts/merge_timing_shards.py --csv results/reports/speedup_perchunk.csv
 """
 
 from __future__ import annotations
@@ -116,7 +116,7 @@ def load_records():
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--csv", default=str(ROOT / "metrics/reports/speedup_perchunk.csv"))
+    ap.add_argument("--csv", default=str(ROOT / "results/reports/speedup_perchunk.csv"))
     args = ap.parse_args()
 
     best, suspect = load_records()

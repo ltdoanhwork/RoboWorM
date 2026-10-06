@@ -25,7 +25,7 @@ dominant term.
 
 Writes:
     assets/paper/figures/fig_time_budget.pdf
-    metrics/reports/time_budget.json
+    results/reports/time_budget.json
 """
 
 from __future__ import annotations
@@ -43,8 +43,8 @@ import numpy as np
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 TIMES = os.path.join(REPO, "inference_times")
 OUT_PDF = os.path.join(REPO, "assets/paper/figures/fig_time_budget.pdf")
-OUT_JSON = os.path.join(REPO, "metrics/reports/time_budget.json")
-CACHE = os.path.join(REPO, "metrics/reports/.time_budget_cache.json")
+OUT_JSON = os.path.join(REPO, "results/reports/time_budget.json")
+CACHE = os.path.join(REPO, "results/reports/.time_budget_cache.json")
 
 # Which resolution corresponds to which benchmark track. Both are the same 2B
 # DiT; the sequence length differs, which is exactly the point of the figure.

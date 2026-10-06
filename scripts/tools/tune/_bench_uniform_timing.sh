@@ -3,7 +3,7 @@
 #
 # WHY THIS EXISTS
 # ---------------
-# The speedup numbers currently in metrics/reports/speedup_summary_full.csv are
+# The speedup numbers currently in results/reports/speedup_summary_full.csv are
 # not comparable across cells: 69 of 127 rows have no timing at all, and every
 # row that does have timing inherited it from a tuning note, i.e. from a sweep
 # that used its own episode count, its own split and its own scratch layout.

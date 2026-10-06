@@ -124,8 +124,8 @@ def main() -> None:
     ap.add_argument('--dr-xlsx', type=Path,
                     default=REPO / 'assets/BENCHMARK_DR_vs_real.xlsx')
     ap.add_argument('--perview', type=Path,
-                    default=REPO / 'metrics/reports/fvd_perview_pooled.json')
-    ap.add_argument('--out-prefix', default='metrics/reports/speedup_figure_data')
+                    default=REPO / 'results/reports/fvd_perview_pooled.json')
+    ap.add_argument('--out-prefix', default='results/reports/speedup_figure_data')
     args = ap.parse_args()
 
     emb_xl = {v: k for k, v in EMB_CSV.items()}[args.embodiment]

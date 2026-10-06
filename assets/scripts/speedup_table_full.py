@@ -127,7 +127,7 @@ def build():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", choices=["chunk", "all"], default="all")
-    ap.add_argument("--csv", default=str(ROOT / "metrics/reports/speedup_table_full.csv"))
+    ap.add_argument("--csv", default=str(ROOT / "results/reports/speedup_table_full.csv"))
     args = ap.parse_args()
     chunk, episode, note = build()
 

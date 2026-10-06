@@ -13,8 +13,8 @@ which is the thing this benchmark is actually about.
 
 Frames are sampled straight out of `datasets/` and cached, so re-running is cheap.
 
-    python3 assets/scripts/audit_sampling_distribution.py --json metrics/reports/sampling_audit.json
-    python3 assets/scripts/make_benchmark_stats.py --json metrics/reports/benchmark_stats.json
+    python3 assets/scripts/audit_sampling_distribution.py --json results/reports/sampling_audit.json
+    python3 assets/scripts/make_benchmark_stats.py --json results/reports/benchmark_stats.json
     python3 assets/scripts/make_dataset_appendix_tables.py
     python3 assets/scripts/make_hero_figure.py
 
@@ -37,10 +37,10 @@ from PIL import (Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont)
 REPO = Path(__file__).resolve().parents[2]
 DATASETS = REPO / "datasets"
 OUT = REPO / "assets/paper/figures"
-CACHE = REPO / "metrics/reports/_hero_frames"
-AUDIT = REPO / "metrics/reports/sampling_audit.json"
-STATS = REPO / "metrics/reports/benchmark_stats.json"
-EVID = REPO / "metrics/reports/dataset_appendix_evidence.json"
+CACHE = REPO / "results/reports/_hero_frames"
+AUDIT = REPO / "results/reports/sampling_audit.json"
+STATS = REPO / "results/reports/benchmark_stats.json"
+EVID = REPO / "results/reports/dataset_appendix_evidence.json"
 
 
 def units() -> list[Path]:
@@ -422,7 +422,7 @@ def primitive_frames(n_prim: int, size: int, seed: int, n_try: int = 12
         "# Manipulation primitives --- action examples\n\n"
         "One ground-truth frame per primitive, ordered by how many distinct "
         "instructions map to it. Counts come from "
-        "`metrics/reports/benchmark_stats.json`; the frame is taken from the "
+        "`results/reports/benchmark_stats.json`; the frame is taken from the "
         "episode named under each picture.\n\n" + "\n".join(caps)
         + "\n\n## Why the episode counts above do not add up to "
         f"{eps_seen}\n\n"

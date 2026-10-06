@@ -52,8 +52,8 @@ import numpy as np
 REPO = Path(__file__).resolve().parents[2]
 WEB = REPO / "sampling_dataset/data_for_web"
 DR_RUN = REPO / "metrics/WorldScore/results/dr_full"
-HALLU_MAP = REPO / "metrics/reports/hallucinate_source_map.json"
-OUT_DIR = REPO / "metrics/reports"
+HALLU_MAP = REPO / "results/reports/hallucinate_source_map.json"
+OUT_DIR = REPO / "results/reports"
 
 # A 400-d covariance estimated from a handful of windows is rank-deficient and its
 # FVD reflects that, not the videos. Same guard the DR run uses.

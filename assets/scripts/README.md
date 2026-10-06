@@ -17,10 +17,10 @@ Run in this order — the later steps consume the JSON the earlier ones emit.
 
 | # | Script | Writes |
 |---|--------|--------|
-| 1 | `make_benchmark_stats.py --json metrics/reports/benchmark_stats.json` | skill/scene/prompt statistics |
+| 1 | `make_benchmark_stats.py --json results/reports/benchmark_stats.json` | skill/scene/prompt statistics |
 | 2 | `make_dataset_appendix_tables.py` | `appendix/tables/dataset_{cells,taxonomy}.tex`, `dataset_appendix_evidence.json` |
-| 3 | `audit_sampling_distribution.py --json metrics/reports/sampling_audit.json` | audited rollout counts, verified against the design scope |
-| 4 | `make_cell_matrix.py` | `metrics/reports/cell_matrix.csv`, `docs/datasets/cell_matrix.md` |
+| 3 | `audit_sampling_distribution.py --json results/reports/sampling_audit.json` | audited rollout counts, verified against the design scope |
+| 4 | `make_cell_matrix.py` | `results/reports/cell_matrix.csv`, `docs/datasets/cell_matrix.md` |
 | 5 | `plot_benchmark_figures.py` | `paper/figures/fig_{coverage,composition,diversity}` |
 | 6 | `make_hero_figure.py` | `paper/figures/fig_hero` — teaser: frame montage + 4 stat panels |
 | 7 | `check_dataset_appendix_claims.py` | **gate** — fails if prose numbers or style drift |
@@ -31,7 +31,7 @@ names leaking into the paper. Run it after editing that prose.
 
 `make_hero_figure.py` needs `ffmpeg`/`ffprobe` and samples one frame per episode
 with an **equal quota per (embodiment, view) cell**, caching them in
-`metrics/reports/_hero_frames/` (gitignored, regenerable). Sampling per *unit*
+`results/reports/_hero_frames/` (gitignored, regenerable). Sampling per *unit*
 skews badly — bimanual is split into ~51 task directories while humanoid and
 single-arm have one or two, which once produced a montage that was 56/60 bimanual.
 
@@ -51,7 +51,7 @@ instead of forming a hard ring, and the centre stays clear for the panels. Knobs
 `--scatter-count`, `--fade`, `--frames`, `--seed`. `grid` mode keeps `--dim`/`--blur`.
 
 The run also exports the **action examples** — one ground-truth frame per
-manipulation primitive — to `metrics/reports/_hero_frames/primitives/`, in two
+manipulation primitive — to `results/reports/_hero_frames/primitives/`, in two
 versions per action: the plain crop (`1_pick_place.jpg`) and a **self-explanatory
 copy with the action name and counts burnt in** (`labeled_1_pick_place.jpg`), plus
 `captions.md` and `index.tsv` (episode, camera, legibility score, instruction).
@@ -160,13 +160,13 @@ the prose from the JSON the others emit and fails the build on any mismatch.
 
 | # | Script | Emits |
 |---|--------|-------|
-| 1 | `make_finetune_config_table.py` | `metrics/reports/finetune_config.json`, `appendix/tables/{finetune_hyperparams,generation_config}.tex` |
-| 2 | `make_training_data_table.py` | `metrics/reports/training_data_prep.json`, `appendix/tables/training_data_prep.tex` |
-| 3 | `make_impl_config_tables.py` | `metrics/reports/impl_accel_configs.json`, `appendix/tables/accel_hyperparams_{token,cache,sparse}.tex` |
-| 4 | `make_time_budget_figure.py` | `metrics/reports/time_budget.json`, `figures/fig_time_budget.pdf` |
-| 5 | `make_knee_curves_figure.py` | `metrics/reports/knee_curves.json`, `figures/fig_knee_curves.pdf` |
-| 6 | `make_finetune_qualitative_figure.py` | `metrics/reports/finetune_qualitative.json`, `figures/fig_finetune_qualitative.pdf` |
-| 7 | `make_timing_pass_table.py` | `metrics/reports/timing_pass.{json,csv}`, `appendix/tables/timing_pass.tex` |
+| 1 | `make_finetune_config_table.py` | `results/reports/finetune_config.json`, `appendix/tables/{finetune_hyperparams,generation_config}.tex` |
+| 2 | `make_training_data_table.py` | `results/reports/training_data_prep.json`, `appendix/tables/training_data_prep.tex` |
+| 3 | `make_impl_config_tables.py` | `results/reports/impl_accel_configs.json`, `appendix/tables/accel_hyperparams_{token,cache,sparse}.tex` |
+| 4 | `make_time_budget_figure.py` | `results/reports/time_budget.json`, `figures/fig_time_budget.pdf` |
+| 5 | `make_knee_curves_figure.py` | `results/reports/knee_curves.json`, `figures/fig_knee_curves.pdf` |
+| 6 | `make_finetune_qualitative_figure.py` | `results/reports/finetune_qualitative.json`, `figures/fig_finetune_qualitative.pdf` |
+| 7 | `make_timing_pass_table.py` | `results/reports/timing_pass.{json,csv}`, `appendix/tables/timing_pass.tex` |
 | 8 | `check_impl_appendix_claims.py` | nothing; exits non-zero if the prose and the data disagree |
 
 Notes:
@@ -181,7 +181,7 @@ Notes:
 - `make_training_data_table.py` measures the corpora on disk with `ffprobe`
   (frame counts come from container metadata, not `-count_frames`, which would
   decode every byte over the network filesystem). Measurements are cached in
-  `metrics/reports/.training_data_cache.json`; pass `--remeasure` to refresh.
+  `results/reports/.training_data_cache.json`; pass `--remeasure` to refresh.
   It also reports discrepancies against the pipeline's own comments and any
   corpus whose on-disk frame rate disagrees with the rate the dataloader
   reports, both of which the appendix discloses rather than silently fixes.

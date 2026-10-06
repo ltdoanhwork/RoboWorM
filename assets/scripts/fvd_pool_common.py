@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Shared pieces for per-camera FVD: episode identity, mosaic geometry, fps matching.
 
-THIN SHIM. The implementation moved to ``metrics/fvd.py`` (the paper's FVD metric,
+THIN SHIM. The implementation moved to ``metrics/fvd/`` (the paper's FVD metric,
 registered as ``fvd``) during the 2026-10-05 refactor; this module re-exports the
 exact same names so the camera-matching probe, the feature extractor and the pool
 scripts keep importing ``from fvd_pool_common import ...`` unchanged. See
-.cursor/skills/fvd-shared-real-pool/SKILL.md for the protocol these implement.
+metrics/fvd/README.md for the protocol these implement.
 
 Verified mosaic geometry (ffprobe on dense GT of every multiview cell):
      1280x192  CW-4view      1x4 strip of 320x192

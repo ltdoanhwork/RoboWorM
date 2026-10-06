@@ -86,7 +86,7 @@ def view_dir(relative: str) -> str | None:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument('--run', default='metrics/WorldScore/results/dr_full')
-    ap.add_argument('--json', default='metrics/reports/dr_coverage_audit.json')
+    ap.add_argument('--json', default='results/reports/dr_coverage_audit.json')
     args = ap.parse_args()
     run = REPO / args.run
 

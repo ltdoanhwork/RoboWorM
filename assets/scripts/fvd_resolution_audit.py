@@ -7,7 +7,7 @@ assuming them away:
 
 1. FINITE-SAMPLE BIAS. The estimate is strongly biased upward at small n, so two
    cells measured at different n are not on the same scale even with an identical
-   reference. `metrics/reports/fvd_sample_size_probe.json` quantifies it directly by
+   reference. `results/reports/fvd_sample_size_probe.json` quantifies it directly by
    subsampling one cell: the same cell measures 25.8 at n=1259 and 220.5 at n=128.
 
 2. RESOLUTION LIMIT. Each (embodiment, camera, regime) group has a split-half floor:
@@ -25,23 +25,23 @@ The script reports, per comparison the table makes:
 Run:
     models/dreamgen/.venv/bin/python assets/scripts/fvd_resolution_audit.py
 
-Writes metrics/reports/fvd_resolution_audit.json and prints the table.
+Writes results/reports/fvd_resolution_audit.json and prints the table.
 """
 import json
 import statistics as st
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-MV = REPO / 'metrics/reports/fvd_perview_pooled.json'
-SV = REPO / 'metrics/reports/fvd_singleview_pooled.json'
-PROBE = REPO / 'metrics/reports/fvd_sample_size_probe.json'
-OUT = REPO / 'metrics/reports/fvd_resolution_audit.json'
+MV = REPO / 'results/reports/fvd_perview_pooled.json'
+SV = REPO / 'results/reports/fvd_singleview_pooled.json'
+PROBE = REPO / 'results/reports/fvd_sample_size_probe.json'
+OUT = REPO / 'results/reports/fvd_resolution_audit.json'
 
 # The comparisons the dense-baseline table draws: (section, embodiment, model A, model B).
 # A/B are the two rows that get compared, and the labels are the ones used as keys in
 # the pooled artefacts (which is why bimanual/humanoid use the 4-view Ctrl-World grid
 # and single-arm the 3-view strip -- see ctrlworld_layout_reported in
-# metrics/reports/rq1_dense_baselines.json).
+# results/reports/rq1_dense_baselines.json).
 PAIRS = [
     ('a', 'bimanual', 'Dreamgen MV', 'CW-4view MV'),
     ('a', 'humanoid', 'Dreamgen MV', 'CW-4view MV'),

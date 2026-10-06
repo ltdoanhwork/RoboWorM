@@ -4,13 +4,13 @@
 Answers "how many rollouts / tasks / instructions does each cell actually hold",
 joining two sources that must agree:
 
-  * rollout counts  -> metrics/reports/sampling_audit.json  (audited: applies the
+  * rollout counts  -> results/reports/sampling_audit.json  (audited: applies the
     non-benchmark exclusions and merges the two Ctrl-World tree variants)
-  * task metadata   -> metrics/reports/dataset_appendix_evidence.json
+  * task metadata   -> results/reports/dataset_appendix_evidence.json
 
 Emits CSV (for the spreadsheet) and Markdown (for reading in the terminal / docs).
 
-    python3 assets/scripts/audit_sampling_distribution.py --json metrics/reports/sampling_audit.json
+    python3 assets/scripts/audit_sampling_distribution.py --json results/reports/sampling_audit.json
     python3 assets/scripts/make_dataset_appendix_tables.py
     python3 assets/scripts/make_cell_matrix.py
 """
@@ -21,9 +21,9 @@ import json
 import os
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-AUDIT = os.path.join(REPO, "metrics/reports/sampling_audit.json")
-EVID = os.path.join(REPO, "metrics/reports/dataset_appendix_evidence.json")
-OUT_CSV = os.path.join(REPO, "metrics/reports/cell_matrix.csv")
+AUDIT = os.path.join(REPO, "results/reports/sampling_audit.json")
+EVID = os.path.join(REPO, "results/reports/dataset_appendix_evidence.json")
+OUT_CSV = os.path.join(REPO, "results/reports/cell_matrix.csv")
 OUT_MD = os.path.join(REPO, "docs/datasets/cell_matrix.md")
 
 EMB_ORDER = ["humanoid", "bimanual", "single_arm"]

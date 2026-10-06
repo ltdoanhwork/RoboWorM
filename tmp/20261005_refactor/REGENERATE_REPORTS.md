@@ -122,3 +122,6 @@ Nothing was killed.
 2. FVD: `fvd_camera_match.py` (both maps), then `extract_perview_fvd_feats.py`, then `pool_perview_fvd.py` and `pool_singleview_fvd.py`, then `verify_shared_pool_fairness.py`, then `export_dense_table_shared_pool.py`. The FVD probes and audits can run in any order.
 3. RQ1/RQ3/KIVA: `make_rq1_dense_table.py`, `make_rq1_matched_anchors.py`, `make_kiva_audit_data.py`, `make_rq3_human_alignment.py`.
 4. Depth: `measure_rollout_depth.py`, then `make_singlearm_depth_figure.py`, `make_depth_vs_regime_figure.py` and `make_error_cascade_figure.py`.
+
+> 2026-10-06 (Phase 9): `metrics/reports/` moved to `results/reports/` (still git-tracked via a
+> `.gitignore` exception). Every producer path above now writes `results/reports/<file>`.

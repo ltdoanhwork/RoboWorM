@@ -219,7 +219,7 @@ def main() -> int:
     ap.add_argument('--workers', type=int, default=8)
     ap.add_argument('--force', action='store_true')
     ap.add_argument('--limit', type=int, default=0, help='cap clips per split (debug)')
-    ap.add_argument('--report', default='metrics/reports/gt_render.json')
+    ap.add_argument('--report', default='results/reports/gt_render.json')
     args = ap.parse_args()
 
     names = sorted(CELLS) if args.all else args.cell

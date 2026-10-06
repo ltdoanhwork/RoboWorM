@@ -7,7 +7,7 @@ script so the appendix stays recomputable from the on-disk benchmark.
 Usage
 -----
     python3 assets/scripts/make_dataset_appendix_tables.py \
-        --json metrics/reports/dataset_appendix_evidence.json \
+        --json results/reports/dataset_appendix_evidence.json \
         --tex-cells assets/paper/appendix/tables/dataset_cells.tex \
         --tex-taxonomy assets/paper/appendix/tables/dataset_taxonomy.tex
 
@@ -365,7 +365,7 @@ def taxonomy_table(cells: list[Cell]) -> str:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--json", default="metrics/reports/dataset_appendix_evidence.json")
+    ap.add_argument("--json", default="results/reports/dataset_appendix_evidence.json")
     ap.add_argument("--tex-cells", default="assets/paper/appendix/tables/dataset_cells.tex")
     ap.add_argument("--tex-taxonomy", default="assets/paper/appendix/tables/dataset_taxonomy.tex")
     args = ap.parse_args()

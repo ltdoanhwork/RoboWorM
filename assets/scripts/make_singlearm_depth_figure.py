@@ -28,9 +28,9 @@ WHAT IT IS NOT ALLOWED TO CLAIM
 - Clip length is a property of the source episodes, not a model choice.
 
 Data:
-    metrics/reports/rollout_depth.json   (per-clip frame/chunk counts; measured by
+    results/reports/rollout_depth.json   (per-clip frame/chunk counts; measured by
                                           assets/scripts/measure_rollout_depth.py)
-    metrics/reports/rq1_dense_baselines.json  (blocks.single_arm.*.kiva.dense)
+    results/reports/rq1_dense_baselines.json  (blocks.single_arm.*.kiva.dense)
 
 Usage:
     python3 assets/scripts/make_singlearm_depth_figure.py
@@ -42,13 +42,13 @@ import statistics as st
 from collections import Counter
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
-DEPTH = REPO / "metrics" / "reports" / "rollout_depth.json"
-KIVA = REPO / "metrics" / "reports" / "rq1_dense_baselines.json"
+DEPTH = REPO / "results" / "reports" / "rollout_depth.json"
+KIVA = REPO / "results" / "reports" / "rq1_dense_baselines.json"
 FIG = REPO / "assets" / "paper" / "figures" / "fig_singlearm_depth"
-OUT_JSON = REPO / "metrics" / "reports" / "singlearm_depth.json"
+OUT_JSON = REPO / "results" / "reports" / "singlearm_depth.json"
 # Long-format CSV of exactly what the figure draws, one row per bar, so the plot can be
 # rebuilt (or redrawn in another tool) without re-reading the videos.
-OUT_CSV = REPO / "metrics" / "reports" / "singlearm_depth_bars.csv"
+OUT_CSV = REPO / "results" / "reports" / "singlearm_depth_bars.csv"
 
 TRACK = {"dreamgen": "Dreamgen SV", "dreamdojo": "DreamDojo SV"}
 MODEL = {"dreamgen": "DreamGen", "dreamdojo": "DreamDojo"}
@@ -226,8 +226,8 @@ def main():
         generated_by="assets/scripts/make_singlearm_depth_figure.py",
         purpose=("Clip-length distributions and rollout-depth ratio for the two "
                  "single-arm configurations, the two whose KIVA degrades."),
-        sources=["metrics/reports/rollout_depth.json",
-                 "metrics/reports/rq1_dense_baselines.json"],
+        sources=["results/reports/rollout_depth.json",
+                 "results/reports/rq1_dense_baselines.json"],
         headline=("On both configurations the regime supports are DISJOINT: every "
                   "non-Markovian clip is deeper than every Markovian clip "
                   "(common-language effect 0.000)."),

@@ -8,7 +8,7 @@ cross-model real-vs-real FVD 1295-2895 vs a split-half floor of 200-290). Here e
 mosaic is cut into camera tiles and decimated to a common 5 fps, which brings cross-model
 real-vs-real to 0.3x the floor -- i.e. one distribution, safe to pool.
 
-Protocol: .cursor/skills/fvd-shared-real-pool/SKILL.md
+Protocol: metrics/fvd/README.md
 
 One output .npz per manifest row, so the job is resumable and shardable across machines
 exactly like scripts/metrics/compute_dr_metrics.py:
@@ -60,7 +60,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument('--run', default='metrics/WorldScore/results/dr_full')
     ap.add_argument('--out', default='metrics/WorldScore/results/fvd_perview')
-    ap.add_argument('--camera-map', default='metrics/reports/fvd_camera_map.json')
+    ap.add_argument('--camera-map', default='results/reports/fvd_camera_map.json')
     ap.add_argument('--machines', type=int, default=1)
     ap.add_argument('--machine', type=int, default=0)
     ap.add_argument('--limit', type=int, default=0)

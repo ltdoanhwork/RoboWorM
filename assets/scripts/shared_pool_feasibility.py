@@ -93,7 +93,7 @@ def main() -> None:
     ap.add_argument('--clips', type=int, default=60)
     ap.add_argument('--embodiment', default='bimanual')
     ap.add_argument('--split', default='makovian')
-    ap.add_argument('--json', default='metrics/reports/shared_pool_feasibility.json')
+    ap.add_argument('--json', default='results/reports/shared_pool_feasibility.json')
     args = ap.parse_args()
 
     import torch

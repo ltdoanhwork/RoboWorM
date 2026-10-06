@@ -63,7 +63,7 @@ def main() -> None:
     ap.add_argument('--clips', type=int, default=40)
     ap.add_argument('--cells', default='',
                     help='comma list of emb/split to restrict to, e.g. humanoid/makovian')
-    ap.add_argument('--out', default='metrics/reports/fvd_camera_map.json')
+    ap.add_argument('--out', default='results/reports/fvd_camera_map.json')
     args = ap.parse_args()
 
     import torch                                                    # noqa: F401
