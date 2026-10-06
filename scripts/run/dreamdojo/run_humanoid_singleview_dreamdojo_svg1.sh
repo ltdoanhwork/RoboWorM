@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # DreamDojo full-episode inference with SVG1 (Sparse-VideoGen v1, stripe sparse + MSE profiling).
-# Mirrors run_humanoid_singleview_dreamdojo_dense.sh exactly (same ckpt / dataset /
+# Mirrors run_humanoid_singleview_dreamdojo_full_episode.sh exactly (same ckpt / dataset /
 # inference script), only adding the SVG1 flags and routing output to svg1/.
 #
 # Output: sampling_dataset/svg1/humanoid/output/singleview/dreamdojo/{split}/iter_*/episode_*/

@@ -247,7 +247,7 @@ _add("svg1", "ctrlworld", "single_arm", "multiview", 0.88, "ctrlworld-single-arm
 _add("svg2", "ctrlworld", "single_arm", "multiview", 0.65, "ctrlworld-single-arm-multiview-sparse-attention-insights", "q32/k64/top_p0.7/fp2")
 _add("sito", "ctrlworld", "single_arm", "multiview", 1.00, "ctrlworld-pruning-insights", "ST-hold k0.9/d1 (quality-leaning, ~no speedup)")
 # NOT-YET-MEASURED on this cell (scripts exist, timing never recorded):
-#   dicache / worldcache / fastercache / itm -> run scripts/_timing_ctrlworld_sa_mv.sh
+#   dicache / worldcache / fastercache / itm -> bash scripts/tools/tune/_bench_uniform_timing.sh --cell ctrlworld_single_arm_mv
 
 # --- DreamGen bimanual multiview (2B seg16) ---
 # dreamgen-bimanual-multiview-caching-insights.mdc, dense=338s/ep (2 segments)
@@ -276,18 +276,19 @@ _add("itm", "dreamgen", "humanoid", "multiview", 0.96, "dreamgen-humanoid-multiv
 
 # =============================================================================
 # STILL NOT MEASURED ANYWHERE (no rule, no persisted timing) — these stay blank
-# in the CSV on purpose (never estimated). Runner helpers exist for each:
+# in the CSV on purpose (never estimated). Measure them with the uniform timing
+# harness (the old per-gap _timing_*.sh helpers were never committed):
 #   Ctrl-World single_arm MV : dicache, worldcache, fastercache, itm
-#       -> bash scripts/_timing_ctrlworld_sa_mv.sh
+#       -> bash scripts/tools/tune/_bench_uniform_timing.sh --cell ctrlworld_single_arm_mv
 #   Ctrl-World humanoid MV 3-view : pisa, radial, svg1, svg2
-#       -> scripts/run_humanoid_multiview_ctrlworld_{pisa,radial,svg1,svg2}.sh
+#       -> scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_{pisa,radial,svg1,svg2}.sh
 #   DreamGen single_arm SV   : dicache, worldcache, fastercache
 #   DreamGen single_arm MV   : dicache, worldcache, fastercache, sito, itm
 #   DreamGen humanoid SV     : sito, itm
-#       -> bash scripts/_timing_dreamgen_gaps.sh {sa_sv,sa_mv,hum_sv}
+#       -> bash scripts/tools/tune/_bench_uniform_timing.sh --cell dreamgen_{single_arm_sv,single_arm_mv,humanoid_sv}
 #   DreamDojo {humanoid,single_arm,bimanual} SV : dicache, worldcache, fastercache
 #   DreamDojo {humanoid,single_arm} SV          : sito, itm
-#       -> bash scripts/_timing_dreamdojo_sv_cache.sh <emb> <gpu>
+#       -> bash scripts/tools/tune/_bench_uniform_timing.sh --cell dreamdojo_<emb>_sv --gpu <gpu>
 # NO script at all (real holes in the benchmark grid):
 #   FasterCache on Ctrl-World humanoid MV (3-view and 4-view grid)
 #   SiTo / ITM on DreamDojo bimanual SV

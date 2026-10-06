@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # DreamDojo full-episode inference with Radial Attention (log-decay block-sparse mask).
-# Mirrors run_humanoid_singleview_dreamdojo_dense.sh exactly (same ckpt / dataset /
+# Mirrors run_humanoid_singleview_dreamdojo_full_episode.sh exactly (same ckpt / dataset /
 # inference script), only adding the Radial flags and routing output to radial/.
 #
 # NOTE: Radial needs flashinfer (BlockSparseAttentionWrapper).

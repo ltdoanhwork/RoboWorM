@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # DreamDojo full-episode inference with PISA (piecewise sparse attention).
-# Mirrors run_humanoid_singleview_dreamdojo_dense.sh / _dicache.sh exactly
+# Mirrors run_humanoid_singleview_dreamdojo_full_episode.sh / _dicache.sh exactly
 # (same ckpt / dataset / inference script), only adding the PISA flags and
 # routing output to the pisa/ method tree.
 #

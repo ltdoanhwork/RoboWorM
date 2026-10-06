@@ -9,7 +9,7 @@ Usage:
     python scripts/tools/data/join_labels_to_episodes.py \
         --episodes-jsonl   datasets/droid_1.0.1_20chunks/meta/episodes.jsonl \
         --task-labels-csv  data/labels/task_labels.csv \
-        --output-csv       scripts/episode_markovian_split.csv \
+        --output-csv       data/labels/episode_markovian_split.csv \
         --num-chunks       20 \
         --sample-per-label 130 \
         --seed             42

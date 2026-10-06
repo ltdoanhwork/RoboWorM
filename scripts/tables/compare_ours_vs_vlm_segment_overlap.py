@@ -97,7 +97,7 @@ def resolved_human_segments(rows: list[dict]) -> pd.DataFrame:
     This used to re-derive resolution from raw label rows, which drifted from
     the site's own rules (it accepted a checker score wherever one existed, so a
     checker could override a segment both raters agreed on). The export produced
-    by scripts/export_hallucinate_final_labels.js calls the deployed resolver
+    by tmp/20261005_refactor/web/scripts/export_hallucinate_final_labels.js calls the deployed resolver
     (VGP.resolveSegments), so reading it keeps exactly one source of truth.
 
     `rows` is unused now; kept so the caller/CLI stays unchanged.
@@ -105,7 +105,7 @@ def resolved_human_segments(rows: list[dict]) -> pd.DataFrame:
     if not HALLU_EXPORT.exists():
         raise SystemExit(
             f"missing {HALLU_EXPORT}\n"
-            "run: node scripts/export_hallucinate_final_labels.js"
+            "run: node tmp/20261005_refactor/web/scripts/export_hallucinate_final_labels.js"
         )
     payload = json.loads(HALLU_EXPORT.read_text())
     recs = []

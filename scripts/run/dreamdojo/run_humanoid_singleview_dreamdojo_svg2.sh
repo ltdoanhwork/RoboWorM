@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # DreamDojo full-episode inference with SVG2 (Sparse-VideoGen v2, semantic-aware permutation
 # + kmeans block-sparse flashinfer attention).
-# Mirrors run_humanoid_singleview_dreamdojo_dense.sh exactly (same ckpt / dataset /
+# Mirrors run_humanoid_singleview_dreamdojo_full_episode.sh exactly (same ckpt / dataset /
 # inference script), only adding the SVG2 flags and routing output to svg2/.
 #
 # NOTE: SVG2 needs flashinfer (>=0.3) for the VariableBlockSparse wrapper. Without it the
