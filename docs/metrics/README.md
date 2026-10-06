@@ -1,87 +1,101 @@
 # Metrics
 
-The paper's metric set (Sec. 3, App. B) and where each one lives. The code-level
-reference — registry, CLI flags, Python API, checkpoint overrides — is
-[metrics/README.md](../../metrics/README.md); this page is the "how do I score the
-benchmark" guide.
+The metric set of the paper (Sec. 3.4, Sec. 4.1, App. B). Registry, CLI flags,
+Python API and checkpoint overrides are in [metrics/README.md](../../metrics/README.md).
 
-| paper metric | measures | direction | code | env |
-|---|---|---|---|---|
-| **KIVA** (Intra-View Kinematic Stability) | embodiment hallucination: rigidity + jerk violation rate of robot keypoints, as excess over the real-video anchor | ↓ | `metrics/kiva/` | `hdmi` conda env (`HAL_PYTHON`) |
-| **RIGIS** (Robotic Inter-view Geometry & Intrinsic-Extrinsic Stability) | cross-view 3D consistency + temporal stability of camera extrinsics / intrinsics (VGGT-Omega) | ↑ | `metrics/rigis/` | `metrics/rigis/.venv` (uv) |
-| **Visual Integrity** | CLIP-IQA+ (pyiqa `clipiqa+`), per-clip p10 over frames, ×100 | ↑ | `metrics/quality/quality_control_probe.py`, NR wave `scripts/metrics/run_dense_nr.py` | `models/dreamgen/.venv` |
-| **Text Alignment** | CLIPScore (ViT-B/16), task clause only, [0,100] | ↑ | `metrics/clip_score.py` | `models/dreamgen/.venv` |
-| **FVD** | I3D, non-overlapping 16-frame windows at 5 fps, shared per-camera real pool | ↓ | `metrics/fvd.py` | `models/dreamgen/.venv` |
-| **PSNR / SSIM / LPIPS vs dense** | fidelity of an accelerated rollout to the dense rollout of the same episode | ↑ ↑ ↓ | `metrics/fidelity.py`, DR wave `scripts/metrics/compute_dr_metrics.py` | `models/dreamgen/.venv` |
-| **Speedup** | dense / method internal per-segment timer, paired episodes | ↑ | see [../inference/README.md](../inference/README.md#measuring-speedup) | — |
-
-Full write-ups:
-
-- [hallucination_metric.md](hallucination_metric.md) — KIVA: readers, anchors, launcher, aggregation.
-- [multiview_consistency_metric.md](multiview_consistency_metric.md) — RIGIS: frame extraction, scoring, aggregation.
-- [phyworld_nr_adapted_metrics.md](phyworld_nr_adapted_metrics.md) — Visual Integrity / Text Alignment
-  (and the adapted RBench / WorldScore dynamics probes used as RQ baselines).
-- [nr_paper_output_schema.md](nr_paper_output_schema.md) — stored fields, validity gates, aggregation rules of the NR wave.
-- [phyworld_metrics.md](phyworld_metrics.md) — inventory of every metric in the repo and its JSON key.
-
-## One CLI for the registered metrics
+Every registered metric runs through one CLI:
 
 ```bash
 PY=models/dreamgen/.venv/bin/python
 export HF_HUB_OFFLINE=1
 CELL=sampling_dataset/dense/single_arm/output/singleview/dreamgen/makovian
-
-# PSNR / SSIM / LPIPS + CLIPScore over one cell
-$PY -m metrics.evaluate --pred-root $CELL --metrics fidelity clip_score --out results/metrics/dense_sa_sv_mk
-
-# FVD (I3D, 16-frame windows, target_fps=5 default)
-$PY -m metrics.evaluate --pred-root $CELL --metrics fvd --out results/metrics/dense_sa_sv_mk_fvd
-
-# KIVA, with the real-video anchor scored in the same call (launches the hdmi env)
-$PY -m metrics.evaluate --pred-root $CELL --metrics kiva \
-    --opt kiva.embodiment=single_arm --opt kiva.score_ref=true --out results/metrics/dense_sa_sv_mk_kiva
-
-# RIGIS over extracted multiview episode dirs (<ep>/view1, <ep>/view2, ...)
-$PY -m metrics.evaluate \
-    --pred-root sampling_dataset/multiview_consistency/frames/dense/bimanual/ctrlworld/non_makovian/<task> \
-    --pred-glob '*' --ref-template '' --text-template '' --metrics rigis --out results/metrics/dense_bi_rigis
+$PY -m metrics.evaluate --pred-root $CELL --metrics <name> --out results/metrics/<run>
 ```
 
-Each `--out` dir gets `<metric>.json`, `per_sample.csv` and `summary.json`.
+`--out` gets `<metric>.json`, `per_sample.csv` and `summary.json`.
 
-## Full-benchmark sweeps (what the paper tables read)
+> `metrics/` is being refactored (`clip_score.py` → `text_alignment.py`,
+> `fvd.py` → `metrics/fvd/`, new `visual_integrity.py` / `motion_smoothness.py` /
+> `motion_amplitude.py`). The registry names below are the post-refactor ones;
+> `clip_score` stays an alias. If a name is not registered yet, check
+> `metrics/registry.py` and [metrics/README.md](../../metrics/README.md).
+
+## Proposed metrics
+
+### KIVA — Kinematic Invariant Violation Assessment (↓)
+
+Embodiment hallucination in single-view rollouts. A diagnostic diffusion model,
+trained only on real robot videos (DINOv3 features → forward-kinematics keypoints),
+lifts each rollout to a 3D metric keypoint trajectory (mean of 5 DDIM runs). Per
+segment it measures **rigidity** error (bone-length deformation, median) and
+**jerk** (third-order finite difference, max), each divided by the 95th percentile
+on real videos. A segment is a violation when `s = max(s_rig, s_jerk)` exceeds a
+per-embodiment threshold calibrated against human labels (App. B.1); KIVA is the
+percentage of violating segments, averaged over the rollouts of a cell.
+
+- Ours. Code: `metrics/kiva/` (registry `kiva`; own `hdmi` env, launched for you).
+- Setup and full guide: [kiva.md](kiva.md).
 
 ```bash
-# KIVA: anchor first, then every method variant (writes results/hallucination/)
-ROLE=gt VARIANTS="dense pisa radial svg1 svg2 sito itm worldcache dicache fastercache" bash metrics/kiva/run.sh --tmux
-VARIANTS="dense pisa radial svg1 svg2 sito itm worldcache dicache fastercache" bash metrics/kiva/run.sh --tmux
-python metrics/kiva/aggregate.py --help
-
-# RIGIS: extract frames per variant, then score (writes results/multiview_consistency/)
-python metrics/rigis/extract_frames.py \
-    --videos-root sampling_dataset/pisa/bimanual/output/multiview/ctrlworld_4view_grid \
-    --out-root    sampling_dataset/multiview_consistency/frames/pisa/bimanual/ctrlworld \
-    --video-name pred_all_views.mp4 --layout 2x2 --fps 2
-VARIANTS="dense pisa radial svg1 svg2" bash metrics/rigis/run.sh --tmux
-python metrics/rigis/aggregate.py --help
-
-# Visual Integrity + Text Alignment (no-reference wave over every rollout, GPU, shardable)
-bash scripts/metrics/run_dense_nr.sh            # see header for MACHINES / WORKERS / --methods
-
-# PSNR / SSIM / LPIPS / FVD vs the paired dense rollout (distortion-reference wave)
-MACHINES=1 bash scripts/metrics/run_dr_metrics.sh 0
-models/dreamgen/.venv/bin/python scripts/metrics/compute_dr_metrics.py --out <run> --fvd-only
+$PY -m metrics.evaluate --pred-root $CELL --metrics kiva \
+    --opt kiva.embodiment=single_arm --opt kiva.score_ref=true --out results/metrics/<run>
 ```
 
-Protocol rules that the tables depend on:
+### RIGIS — Robotic Inter-view Geometry & Intrinsic-Extrinsic Stability (↑)
 
-- Fidelity / PhyFid-DR reference = the **dense prediction** of the same episode (same
-  resolution and fps), never the GT video; it is computed for accelerated methods only.
-- FVD for multiview cells uses a **shared per-camera real pool** (`assets/scripts/fvd_camera_match.py`,
-  `pool_perview_fvd.py`, `verify_shared_pool_fairness.py`); see `.cursor/rules/fvd-table-reporting.mdc`.
-- NR scores (Visual Integrity, Text Alignment) are aggregated only within the same model,
-  embodiment, camera mount and split ([nr_paper_output_schema.md](nr_paper_output_schema.md)).
-- Human-alignment studies (App. D): human labels are in
-  `sampling_dataset/data_for_web/{geometry,hallucinate}_final_labels.json`; agreement with
-  KIVA / RIGIS / VLM judges is computed by the RQ3 producers listed in
-  [../reproduce/README.md](../reproduce/README.md).
+Multi-view consistency. A modified VGGT-Ω backbone (Wang et al., 2026) predicts
+per-view depth and per-frame cameras; views are scale-aligned, fused and
+reprojected. **S_geo** averages exponential-decay scores of the RGB RMSE and depth
+residual over views and time; **S_pose** scores the temporal std of intrinsics and
+extrinsics relative to the first frame (the rig is fixed). RIGIS = ½(S_geo + S_pose) ∈ [0, 1].
+
+- Ours. Code: `metrics/rigis/` (registry `rigis`; own uv env `metrics/rigis/.venv`).
+- Setup and full guide: [rigis.md](rigis.md).
+
+```bash
+$PY -m metrics.evaluate --pred-root <frames>/<task> --pred-glob '*' \
+    --ref-template '' --text-template '' --metrics rigis --out results/metrics/<run>
+```
+
+## Reference metrics (App. B.3)
+
+| metric | what it measures | adapted from | code | registry |
+|---|---|---|---|---|
+| **Visual Integrity** ↑ | frame-level visual quality: CLIP-IQA+ per frame, **10th percentile** over frames ×100 (instead of the mean, so brief autoregressive collapses count) | CLIP-IQA+ (Wang et al., 2023) | `metrics/visual_integrity.py` | `visual_integrity` |
+| **Text Alignment** ↑ | whether the rollout still depicts the commanded task: CLIPScore `max(100·cos, 0)` vs the **task clause only**, mean over frames; text-conditioned models only | CLIPScore (Hessel et al., 2021) | `metrics/text_alignment.py` | `text_alignment` |
+| **FVD** ↓ | set-level distance between generated and real videos in Kinetics-400 I3D feature space; 16-frame windows at 224×224, all videos at 5 fps, one shared real pool per embodiment × camera × regime (multi-view: per camera, averaged) | FVD (Unterthiner et al., 2018) | `metrics/fvd/` | `fvd` |
+| **PSNR / SSIM / LPIPS** | fidelity of an accelerated rollout to the **dense rollout** of the same episode (not to real video); PSNR is the one used in the retention index | standard full-reference metrics | `metrics/fidelity.py` | `fidelity` (`psnr` `ssim` `lpips`) |
+
+```bash
+$PY -m metrics.evaluate --pred-root $CELL --metrics visual_integrity text_alignment --out results/metrics/<run>
+$PY -m metrics.evaluate --pred-root $CELL --metrics fvd      --out results/metrics/<run>
+$PY -m metrics.evaluate --pred-root <method cell> --ref-root <dense cell> \
+    --ref-template '{stem}{suffix}' --metrics fidelity --out results/metrics/<run>
+```
+
+FVD is only compared within the same reference pool and sampling setup. Text
+Alignment rankings use paired deltas under the same prompt. Visual Integrity is
+used for the acceleration comparison, not to rank models.
+
+## RQ3 baselines (Sec. 4.2)
+
+Compared against KIVA / RIGIS; not headline columns.
+
+| baseline | compared with | adapted from | code | registry |
+|---|---|---|---|---|
+| **Motion Smoothness (MS)** — VFIMamba re-synthesises each odd frame from its neighbours | KIVA | WorldScore (Duan et al., 2025) | `metrics/motion_smoothness.py` | `motion_smoothness` |
+| **Motion Amplitude Score (MAS)** — optical-flow magnitude of the robot + manipulated object | KIVA | RBench (Deng et al., 2026) | `metrics/motion_amplitude.py` | `motion_amplitude` |
+| **MVC** — feature-matching multi-view consistency | RIGIS | VBench-2.0 (Zheng et al., 2025) | not in this repo; numbers in `assets/scripts/make_rq3_human_alignment.py` | — |
+| **SLAM RPE** — relative pose error of a SLAM reconstruction | RIGIS | MultiWorld / Geometry Forcing (Wu et al., 2026b;a) | not in this repo; as above | — |
+
+```bash
+$PY -m metrics.evaluate --pred-root $CELL --metrics motion_smoothness motion_amplitude --out results/metrics/<run>
+```
+
+## Speedup
+
+Dense / accelerated generation time per segment from the internal timer (excludes
+model load and VAE decode), paired episodes on the same GPU. See
+[../inference/README.md](../inference/README.md#measuring-speedup).
+
+Full-benchmark sweeps and the paper table producers: [../reproduce/README.md](../reproduce/README.md).
