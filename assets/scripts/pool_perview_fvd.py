@@ -3,7 +3,7 @@
 
 Reference key is `(embodiment, camera, split)` -- the SAME real pool for every world model
 and every acceleration method in that setting. This is the protocol in
-.cursor/skills/fvd-shared-real-pool/SKILL.md and it is what makes the FVD column
+metrics/fvd/README.md and it is what makes the FVD column
 comparable across configurations, which a per-model reference cannot be.
 
 Camera identity comes from `fvd_camera_match.py` (data-driven assignment), never from the
@@ -20,13 +20,12 @@ windows, drawn deterministically, and the budget is reported.
 Usage:
   models/dreamgen/.venv/bin/python assets/scripts/pool_perview_fvd.py \
       --feats metrics/WorldScore/results/fvd_perview \
-      --json metrics/reports/fvd_perview_pooled.json
+      --json results/reports/fvd_perview_pooled.json
 """
 from __future__ import annotations
 
 import argparse
 import collections
-import hashlib
 import json
 import os
 import sys
@@ -45,41 +44,10 @@ from export_dr_grid_xlsx import METHOD_LABEL, METHOD_ORDER, MODEL_ORDER  # noqa:
 from export_dr_grid_xlsx_vs_real import frechet                          # noqa: E402
 from fvd_pool_common import moments                                      # noqa: E402
 
-FVD_MIN_WINDOWS = 64
-
-# Tile index -> camera name, per model family, from the data-driven assignment in
-# metrics/reports/fvd_camera_map{,_rest}.json. The diagonal structure was unambiguous
-# (margins 9-280x) on bimanual and humanoid/non_makovian: CW-4view tile i == DreamGen
-# tile i, and Ctrl-World's 3 tiles map to DreamGen tiles 0, 2, 3 (it omits cam_low).
-TILE_CAMERA = {
-    'CW-4view MV':   {0: 'cam0', 1: 'cam1', 2: 'cam2', 3: 'cam3'},
-    'Dreamgen MV':   {0: 'cam0', 1: 'cam1', 2: 'cam2', 3: 'cam3'},
-    'Ctrl-World MV': {0: 'cam0', 1: 'cam2', 2: 'cam3'},
-}
-# Cells whose camera assignment was NOT unambiguous, with the cameras that were clean.
-# Decided by assets/scripts/verify_shared_pool_fairness.py, which scores every model's OWN
-# real videos against the shared pool: a model's GT is real video, so it should sit at the
-# pool's split-half floor. Where it does not, that model pays a framing penalty its
-# predictions also pay, and the cross-model comparison in that camera is an artefact.
-#
-# Measured gt/floor (bimanual is clean everywhere at 0.1-0.6x, so it is unrestricted):
-#   single_arm cam3  DreamGen 11.4-13.9x   (gt 1356-1522 vs floor 109-119)  DROP
-#   single_arm cam2  DreamGen  3.6- 4.9x   (gt  428- 500 vs floor 102-118)  DROP
-#   humanoid   cam0  DreamGen 10.3x        (gt  585      vs floor  57)      DROP
-#   humanoid   cam1  CW-4view  5.6x        (gt  425      vs floor  76)      DROP
-#   humanoid   cam2/cam3 all   <= 0.5x                                      keep
-#   single_arm cam0  Ctrl-World 0.1x, DreamGen 0.5-0.9x                     keep
-# These are exactly the cells fvd_camera_match.py flagged as AMBIGUOUS/WEAK (margin
-# 1.3-2.6x), so two independent tests agree on which cameras cannot be pooled.
-RESTRICT_CAMERAS = {
-    # humanoid/makovian mixes the two humanoid grid layouts (front/head vs
-    # high/third_view), so its non-wrist tiles matched DreamGen at only 1.3x margin
-    # while the wrists were clean at ~12x.
-    ('humanoid', 'makovian'): {'cam2', 'cam3'},
-    ('humanoid', 'non_makovian'): {'cam2', 'cam3'},
-    ('single_arm', 'makovian'): {'cam0'},
-    ('single_arm', 'non_makovian'): {'cam0'},
-}
+# Shared-pool protocol constants (tile -> camera map, camera restrictions, budgeted
+# subsampling) live in metrics/fvd/pool.py, documented in metrics/fvd/README.md.
+from metrics.fvd.pool import (FVD_MIN_WINDOWS, RESTRICT_CAMERAS, TILE_CAMERA,  # noqa: E402
+                              budgeted, split_half)
 
 
 def load(feats_dir: Path):
@@ -131,7 +99,7 @@ def load(feats_dir: Path):
                 real[(emb, cam, split)].append(arr)
                 # deterministic split-half for the noise floor (md5: PYTHONHASHSEED
                 # randomises str hashing, which would move the floor between runs)
-                bit = hashlib.md5(ident.encode()).digest()[0] & 1
+                bit = split_half(ident)
                 (real_a if bit == 0 else real_b)[(emb, cam, split)].append(arr)
         if i % 2000 == 0:
             print(f'[pool]   {i}/{len(files)}', flush=True)
@@ -141,19 +109,10 @@ def load(feats_dir: Path):
     return cat(pred), cat(real), cat(real_a), cat(real_b), audit
 
 
-def budgeted(x: np.ndarray, k: int | None, seed: str) -> np.ndarray:
-    """Deterministically subsample to k rows so every compared cell uses the same n."""
-    if k is None or len(x) <= k:
-        return x
-    rng = np.random.default_rng(
-        int.from_bytes(hashlib.md5(seed.encode()).digest()[:8], 'little'))
-    return x[rng.choice(len(x), k, replace=False)]
-
-
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument('--feats', default='metrics/WorldScore/results/fvd_perview')
-    ap.add_argument('--json', default='metrics/reports/fvd_perview_pooled.json')
+    ap.add_argument('--json', default='results/reports/fvd_perview_pooled.json')
     ap.add_argument('--budget', type=int, default=0,
                     help='windows per cell and per reference (0 = use all)')
     args = ap.parse_args()

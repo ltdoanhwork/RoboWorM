@@ -5,9 +5,9 @@ TWO REFERENCES, BOTH STORED
 ---------------------------
 Every accelerated clip is scored twice:
 
-  vs_dense  the SAME episode's dense prediction.  This is the PhyFid-DR reference named in
-            the phyworld-benchmark rule ("reference = dense pred of the same episode ...
-            do not use GT video as the main speedup reference"), and it is the number an
+  vs_dense  the SAME episode's dense prediction.  This is the fidelity reference of
+            the paper (App. B.3.4: "PSNR relative to the corresponding dense rollout" --
+            GT video is never the speedup reference), and it is the number an
             acceleration claim rests on: the generative model's own error against reality
             is present in BOTH clips and cancels, so what is left is caused by the
             acceleration method.
@@ -44,7 +44,7 @@ by estimator bias, not by video quality.
 
 I3D weights: checkpoints/metrics/fvd/i3d_torchscript.pt (the StyleGAN-V torchscript export,
 the de-facto standard for FVD; 400-d pre-logit features; override with $FVD_I3D_CKPT).
-All I3D / Frechet code lives in metrics/fvd.py; this script only orchestrates the DR pass.
+All I3D / Frechet code lives in metrics/fvd/; this script only orchestrates the DR pass.
 
 Usage:
   # per-clip pass (GPU, shardable exactly like run_dense_nr.py)
@@ -73,7 +73,7 @@ REPO = Path(__file__).resolve().parents[2]
 if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 
-# I3D / FVD pieces are shared with the paper's FVD metric (metrics/fvd.py); re-exported
+# I3D / FVD pieces are shared with the paper's FVD metric (metrics/fvd/); re-exported
 # here because assets/scripts/* import get_models / read_video from this module.
 from metrics.fvd import (FVD_MIN_CLIPS, I3D_CKPT, I3D_SIZE, I3D_WINDOW,  # noqa: E402,F401
                          CorruptVideo, I3DWindowStream, frechet, load_i3d, read_video)
@@ -264,7 +264,7 @@ def score(row, device):
             cb = torch.from_numpy(b[s:s + CH]).to(device).permute(0, 3, 1, 2).float() / 255
             k = len(ca)
             # per-frame MSE -> per-frame PSNR -> mean, matching
-            # metrics/video_metrics.calculate_psnr. A single global MSE would let one
+            # the legacy calculate_psnr (now archived). A single global MSE would let one
             # blown-out frame dominate the clip.
             mses.append(((ca - cb) ** 2).mean(dim=(1, 2, 3)).cpu())
             ssim_acc += float(ssim_f(ca, cb, data_range=1.0)) * k

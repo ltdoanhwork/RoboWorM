@@ -30,8 +30,8 @@ from run_dense_nr import prepare, task_text, task_of  # noqa: E402  same preproc
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from metrics.quality.quality_control_probe import IQA  # noqa: E402
-from scripts.metrics.compute_phyworld import write_frames  # noqa: E402
+from metrics.text_alignment import CLIPScorer  # noqa: E402
+from metrics.third_party import write_frames  # noqa: E402
 
 B = 10000
 
@@ -84,7 +84,7 @@ def main():
         i += 1
     print(f'scoring {len(picks)} clips x 2 arms, stride {args.stride}')
 
-    iqa = IQA('cuda')
+    clip = CLIPScorer('cuda')
     out = []
     for k, (r, matched) in enumerate(picks, 1):
         tasks = pool[r['embodiment']]
@@ -100,8 +100,8 @@ def main():
             paths = write_frames(frames, tmpdir, stride=args.stride)
             ms, ss = [], []
             for p in paths:
-                ms.append(iqa.frame_scores(p, matched)[2])
-                ss.append(iqa.frame_scores(p, shuffled)[2])
+                ms.append(clip(p, matched))
+                ss.append(clip(p, shuffled))
         except Exception as exc:  # a bad clip must not kill an 80-clip sweep
             print(f'  [{k}] SKIP {r["model"]}: {type(exc).__name__}: {exc}')
             continue

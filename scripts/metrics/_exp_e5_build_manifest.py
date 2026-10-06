@@ -61,7 +61,7 @@ def main():
 
     tmp = args.out / '_inventory'
     tmp.mkdir(parents=True, exist_ok=True)
-    from phyworld_index import _instruction_from_dir, _instruction_from_txt
+    _instruction_from_dir, _instruction_from_txt = R._instruction_from_dir, R._instruction_from_txt
     rng = random.Random(args.seed)
     rows, report = [], []
     for method in args.methods:

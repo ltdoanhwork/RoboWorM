@@ -1,4 +1,12 @@
-"""Resumable dense NR inventory and persistent GPU workers; no dense reference.
+"""Reference-free wave: Visual Integrity, Text Alignment, MS / MAS over every rollout.
+
+Resumable inventory + persistent GPU workers; no dense reference. Produces the stored
+records the paper's reference-free columns are read from
+(``metrics/WorldScore/results/dense_nr_full``). The metric code is in ``metrics/``:
+``visual_integrity`` (CLIP-IQA+), ``text_alignment`` (CLIPScore, task clause),
+``motion_smoothness`` (VFIMamba, WorldScore) and ``motion_amplitude``
+(GroundingDINO + SAM 2 + SEA-RAFT, RBench MAS). The analysis frames come from
+``metrics.video_io.nr_analysis_frames``.
 
 Run through run_dense_nr.sh for vendored dependency paths.
 """
@@ -10,7 +18,6 @@ import json
 import os
 from pathlib import Path
 import random
-import re
 import subprocess
 import sys
 import tempfile
@@ -26,22 +33,26 @@ sys.path.insert(0, str(ROOT))
 # 1,572 already-scored clips did NOT need re-scoring. Bump this only when a change
 # alters something that is NOT reconstructible from the record (e.g. the sampling grid,
 # the probe itself, or which per-pair fields are stored).
+#
+# 2026-10-06 refactor: the paper columns (Visual Integrity, Text Alignment, MS, MAS,
+# continuity) are computed by the same code, now imported from metrics/. Diagnostics
+# that are not paper metrics are no longer computed for NEW records: LAION aesthetic
+# (`look_score`), the GroundingDINO entity-detection rate
+# (`condition_entity_coverage_proxy`) and the experimental actor flicker
+# (`actor_flicker_raw`, stored as None). Old records keep those fields.
 PROTOCOL = 'dense-nr-v3.2-closed-world'
 KEYS = ['visual_integrity', 'text_condition_alignment', 'actor_motion_raw',
-        'actor_motion_active_rate', 'active_motion_continuity', 'actor_flicker_raw']
-TEXT_CONDITIONED_MODELS = {'dreamgen', 'ctrlworld', 'ctrlworld_4view_grid', 'gt'}
+        'actor_motion_active_rate', 'active_motion_continuity']
+QUAL_STRIDE = 5           # Visual Integrity / Text Alignment score every 5th analysis frame
 
 
-def text_conditioned(model):
-    """Whether a text instruction is a legitimate condition for this clip.
+from metrics.motion_amplitude import (ACTIVE_PX, MIN_BG_COV_PCT,  # noqa: E402,F401
+                                     MIN_VALID_PAIR_FRAC, actor_pair_motion, camera_mount)
+from metrics.text_alignment import TEXT_CONDITIONED_MODELS, text_conditioned  # noqa: E402,F401
+from metrics.text_alignment import task_clause as task_text  # noqa: E402,F401
+from metrics.third_party import write_frames  # noqa: E402,F401
 
-    Must strip the `gt_` prefix: the per-model co-located anchors (`gt_dreamgen`,
-    `gt_ctrlworld`, ...) are real videos of the same instructed task, so they are
-    exactly as text-conditioned as the prediction they anchor. Comparing them by
-    name alone marked every anchor N/A and left the paired TextAlignment column
-    permanently empty.
-    """
-    return (model[3:] if model.startswith('gt_') else model) in TEXT_CONDITIONED_MODELS
+
 # GT per-view inputs. View order verified against pred strips: GT view_i == per_view[i].
 # bimanual/humanoid ctrlworld GT is a view subset of the 4-view GT (same episodes).
 GT_SOURCES = {
@@ -49,16 +60,6 @@ GT_SOURCES = {
     'humanoid': ('ctrlworld_4view_grid', ['cam_head_rgb', 'cam_front_rgb', 'cam_left_wrist_rgb', 'cam_right_wrist_rgb']),
     'single_arm': ('ctrlworld', ['exterior_1_left', 'exterior_2_left', 'wrist_left']),
 }
-ACTIVE_PX = 1.0           # px/source-frame, on the per-pair motion statistic below
-# Head ego estimate needs enough background pixels. Was 10; lowered to 5 after E4
-# (2026-09-16), which is answerable post-hoc because `actor_per_frame` stores per-pair
-# `bg_cov_pct` and `fg_flow_ego_p95` and this gate is applied after the probe. On all
-# 241 head clips of the completed v3.2 run, 10 -> 5 changes the head `actor_motion_raw`
-# median by 0.00% on a fixed clip set (the discarded pairs sit at bg_cov < 5; the band
-# [5,10) is only 5.66% of head pairs) while recovering 15 head clips (+6.2%) that gate
-# 10 discarded entirely. 20 is where values actually shift (per-clip max +34%).
-MIN_BG_COV_PCT = 5.0
-MIN_VALID_PAIR_FRAC = 0.5
 MIN_WEIGHT_SUM = 3.0      # AMC needs >=3 activity-equivalent triples, else N/A
 MIN_ACTIVE_PAIRS = 3      # ...AND >=3 pairs actually at/above ACTIVE_PX, else N/A
 # ...AND that count must be >=5% of the clip's valid pairs. The absolute floor alone
@@ -92,28 +93,6 @@ def dump(path, data):
         # globs the directory. Remove the stub so results/ only ever holds complete files.
         tmp.unlink(missing_ok=True)
         raise
-
-
-TASK_CLAUSE = re.compile(r'(?:performing(?: the task)?:|shows that a robot)\s*(.+?)(?:\s+The video\b|$)', re.S)
-
-
-def task_text(instruction):
-    """Task clause only. DreamGen prompts append 2x2-grid layout text that a cropped
-    single view cannot match and that pushes the task past CLIP's 77-token window."""
-    if not instruction:
-        return ''
-    m = TASK_CLAUSE.search(instruction)
-    return (m.group(1) if m else instruction).strip().rstrip('.').strip()
-
-
-def camera_mount(embodiment, view):
-    """static cameras need no ego compensation; head/wrist cameras move."""
-    v = view.lower()
-    if 'wrist' in v:
-        return 'wrist'
-    if embodiment == 'humanoid' and v in ('cam_high', 'cam_high_rgb', 'cam_head_rgb', 'singleview', 'grid_top_left'):
-        return 'head'
-    return 'static'
 
 
 def episode_key(rel):
@@ -167,8 +146,37 @@ def row_for(p, rel, model, embodiment, split, view, layout, vi, n_views, instruc
                 pair_key=f'{embodiment}/{split}/{episode_key(rel)}/{view}')
 
 
+def _instruction_from_dir(ep_dir):
+    """Task instruction of a per-episode output dir (metrics.json, else metadata.json)."""
+    for name, keys in (('metrics.json', ('instruction', 'prompt', 'text')),
+                       ('metadata.json', ('instruction',))):
+        f = ep_dir / name
+        if not f.exists():
+            continue
+        try:
+            data = json.loads(f.read_text())
+        except (json.JSONDecodeError, OSError):
+            continue
+        for k in keys:
+            if data.get(k):
+                return str(data[k]).strip()
+    return ''
+
+
+def _instruction_from_txt(txt):
+    """Task instruction from an ``<episode>.txt`` sidecar ([Prompt] section, else line 1)."""
+    if not txt.exists():
+        return ''
+    text = txt.read_text(errors='ignore')
+    if '[Prompt]' in text:
+        body = text.split('[Prompt]', 1)[1]
+        if '[Negative' in body:
+            body = body.split('[Negative', 1)[0]
+        return body.strip()
+    return text.strip().splitlines()[0] if text.strip() else ''
+
+
 def inventory(out, methods=('dense',)):
-    from phyworld_index import _instruction_from_dir, _instruction_from_txt
     dense = ROOT / 'sampling_dataset/dense'
     rows = []
     # GT reference rows first: same analysis protocol, used as plausibility anchor.
@@ -356,65 +364,45 @@ def smoke_manifest(rows, paired_episodes, per_group, seed):
 
 
 def prepare(row, dest):
+    """Analysis frames (metrics.video_io.nr_analysis_frames) + the analysis mp4 the
+    subject probe decodes."""
     import cv2
-    cap = cv2.VideoCapture(row['path'])
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    if fps <= 0:
-        raise ValueError('Invalid FPS')
-    interval = max(1, round(fps / 5))
-    frames, ids = [], []
-    i = 0
-    while True:
-        ok, fr = cap.read()
-        if not ok:
-            break
-        # Conservatively exclude first conditioning frame for every video.
-        if i > 0 and (i - 1) % interval == 0:
-            h, w = fr.shape[:2]
-            vi = row['view_index']
-            if row['layout'] == 'strip':
-                fr = fr[:, vi*w//row['n_views']:(vi+1)*w//row['n_views']]
-            elif row['layout'] == 'grid':
-                fr = fr[(vi//2)*h//2:(vi//2+1)*h//2, (vi%2)*w//2:(vi%2+1)*w//2]
-            # Fixed analysis grid. Report aspect-ratio resampling explicitly.
-            fr = cv2.resize(fr, (256, 192), interpolation=cv2.INTER_AREA)
-            frames.append(fr[:, :, ::-1].copy()); ids.append(i)
-        i += 1
-    cap.release()
-    if len(frames) < 3:
-        raise ValueError('Fewer than three post-conditioning frames')
-    import numpy as np
-    arr = np.stack(frames)
-    writer = cv2.VideoWriter(str(dest), cv2.VideoWriter_fourcc(*'mp4v'), fps/interval, (256,192))
+    from metrics.video_io import nr_analysis_frames
+    arr, info = nr_analysis_frames(row['path'], row['layout'], row['view_index'], row['n_views'])
+    w, h = info['analysis_width'], info['analysis_height']
+    writer = cv2.VideoWriter(str(dest), cv2.VideoWriter_fourcc(*'mp4v'), info['effective_fps'], (w, h))
     if not writer.isOpened():
         raise RuntimeError('Cannot create analysis video')
-    for fr in frames:
+    for fr in arr:
         writer.write(fr[:, :, ::-1])
     writer.release()
-    return arr, dict(source_fps=fps, effective_fps=fps/interval, source_interval=interval,
-                     analysis_width=256, analysis_height=192, sampled_source_frames=ids)
+    return arr, info
 
 
-def actor_pair_motion(per_frame, mount, interval):
-    """Per-pair actor motion in px/source-frame, keyed by pair index; plus median diagnostic.
+def score_reference_free(frames, prompt, applicable, vi, clip, stride=QUAL_STRIDE):
+    """Visual Integrity (CLIP-IQA+ p10 x100) + Text Alignment (CLIPScore) per clip.
 
-    Static: p95 of uncorrected subject flow. Subject median is ~0 because static robot
-    body and objects dominate the mask (v3 smoke GT median 0.05 px); ego subtraction
-    there removes deformable-object motion. Head: p95 of ego-compensated subject flow
-    where background >= MIN_BG_COV_PCT. Wrist: whole-frame median flow, since the
-    camera rides the end effector and masks often fill the frame.
+    Same frames and preprocessing as the published numbers: every ``stride``-th analysis
+    frame, cv2 JPEG round trip, Resize 512 (metrics.visual_integrity / text_alignment).
     """
-    motion, median = {}, {}
-    for p in per_frame:
-        k = p['pair']
-        if mount == 'static':
-            motion[k], median[k] = p['fg_flow_p95'], p['fg_flow_med']
-        elif mount == 'wrist':
-            motion[k] = median[k] = p['frame_flow_med']
-        elif p['bg_cov_pct'] >= MIN_BG_COV_PCT:
-            motion[k], median[k] = p['fg_flow_ego_p95'], p['fg_flow_ego_med']
-    return ({k: v / interval for k, v in motion.items()},
-            {k: v / interval for k, v in median.items()})
+    import numpy as np
+    from metrics.video_io import jpeg_roundtrip
+    from metrics.visual_integrity import visual_integrity
+    imgs = [jpeg_roundtrip(f) for f in frames[::stride]]
+    iqa = [vi(im) for im in imgs]
+    caption = prompt or 'a robot performing a task'
+    cs = [clip(im, caption) for im in imgs] if applicable else []
+    ta = float(max(0.0, min(100.0, np.mean(cs)))) if cs else None
+    return {
+        'visual_integrity': visual_integrity(iqa),
+        'visual_integrity_mean': float(max(0.0, min(1.0, np.mean(iqa))) * 100.0),
+        'text_condition_alignment': ta,
+        'qual_n_frames': len(iqa),
+        'qual_stride': stride,
+        'clip_iqa+_raw': float(np.mean(iqa)),
+        'clip_iqa+_p10_raw': float(np.percentile(iqa, 10)),
+        'clip_score_raw': float(np.mean(cs)) if cs else None,
+    }
 
 
 def continuity(paths, smooth, motion, interval_ok, n_active):
@@ -514,28 +502,19 @@ def worker(args):
     import torch
     import cv2
     torch.set_num_threads(2); cv2.setNumThreads(1)
-    from compute_phyworld import score_qual, write_frames
-    from metrics.quality.quality_control_probe import IQA, Detector
-    from metrics.dynamics.motion_mag_smooth_probe import Flow, build_vfimamba, motion_smoothness
-    from metrics.dynamics.motion_accuracy_gdino import Grounder, probe
-    from metrics.phyworld.schema import EMBODIMENT_PHRASES
-    from sam2.build_sam import build_sam2, build_sam2_video_predictor
-    from sam2.sam2_image_predictor import SAM2ImagePredictor
-    import hydra
-    from hydra.core.global_hydra import GlobalHydra
-    ck = ROOT / 'checkpoints/metrics/worldscore'
-    tp = 'worldscore/benchmark/metrics/third_party'
-    cfg = f'{tp}/groundingdino/config/GroundingDINO_SwinT_OGC.py'
-    gd = str(ck / 'groundingdino_swint_ogc.pth')
-    iqa = IQA('cuda'); det = Detector(cfg, gd, 'cuda')
-    flow = Flow(f'{tp}/SEA-RAFT/config/eval/spring-M.json', str(ck/'Tartan-C-T-TSKH-spring540x960-M.pth'), 'cuda')
+    from metrics.motion_amplitude import (EMBODIMENT_PHRASES, Grounder, build_sam2_predictors,
+                                          probe, summarize)
+    from metrics.motion_smoothness import build_vfimamba, motion_smoothness
+    from metrics.text_alignment import CLIPScorer
+    from metrics.third_party import SeaRaftFlow
+    from metrics.visual_integrity import CLIPIQAPlus
+    vi = CLIPIQAPlus('cuda')
+    clip = CLIPScorer('cuda', model='openai/clip-vit-base-patch16')
+    flow = SeaRaftFlow(device='cuda')
     flow.a.scale = 0
     vfi, padder = build_vfimamba('cuda')
-    GlobalHydra.instance().clear(); hydra.initialize_config_module('sam2', version_base='1.2')
-    sc = 'configs/sam2.1/sam2.1_hiera_b+.yaml'
-    img = SAM2ImagePredictor(build_sam2(sc, str(ck/'sam2.1_hiera_base_plus.pt'), device='cuda', apply_postprocessing=False))
-    vp = build_sam2_video_predictor(sc, str(ck/'sam2.1_hiera_base_plus.pt'), device='cuda', apply_postprocessing=False)
-    ground = Grounder(cfg, gd, 'cuda')
+    img, vp = build_sam2_predictors('cuda')
+    ground = Grounder(device='cuda')
     rows = json.loads((args.out/'manifest.json').read_text())
     if args.only_ids:
         # Restrict to a precomputed id subset (scripts/metrics/nr_table_coverage.py writes one).
@@ -564,68 +543,35 @@ def worker(args):
             tmp = Path(td)
             arr, protocol = prepare(row, tmp/'analysis.mp4')
             interval = protocol['source_interval']
-            result = {**row, **protocol, 'protocol_version': PROTOCOL,
-                      'actor_flicker_definition': 'experimental FB-filtered photometric residual, not validated paper reproduction'}
+            result = {**row, **protocol, 'protocol_version': PROTOCOL}
             prompt = task_text(row['instruction'])
             result['text_condition_prompt'] = prompt
-            result.update(score_qual(arr, prompt, row['embodiment'], iqa, det, 5))
-            # Text alignment and text-derived entity coverage are condition
-            # metrics, not universal NR metrics. Do not score image-only
-            # methods against a text instruction they never received.
+            # Text Alignment is a condition metric, not a universal one: image-only
+            # methods are never scored against an instruction they never received.
             result['text_condition_applicable'] = text_conditioned(row['model'])
-            if not result['text_condition_applicable'] or not row['instruction']:
-                result['task_lock'] = None
-                result['entity_presence'] = None
-            result['text_condition_alignment'] = result['task_lock']
-            # Phrase-derived entity detection remains a diagnostic proxy until
-            # a task-object ontology declares visibility expectations.
-            result['condition_entity_coverage_proxy'] = result['entity_presence']
-            result['entity_presence'] = None
+            result.update(score_reference_free(
+                arr, prompt, result['text_condition_applicable'] and bool(row['instruction']),
+                vi, clip))
             paths = write_frames(arr, tmp/'frames')
             smooth = motion_smoothness(paths, vfi, padder, 'cuda', TTA=False, stride=1)
             result['motion_continuity_global_ssim'] = float(smooth['ssim']*100)
             actor = probe(str(tmp/'analysis.mp4'), 'pred', str(tmp), ground, img, vp, flow,
                           prompt or 'object .',
                           ' . '.join(EMBODIMENT_PHRASES[row['embodiment']])+' .',
-                          'cuda', stride=1, compute_flicker=True)
+                          'cuda', stride=1)
             per_frame = actor.get('per_frame', [])
             robot = bool(actor['n_arm_dets'])
-            motion, median = actor_pair_motion(per_frame, row['camera_mount'], interval)
-            # `per_frame` is ALREADY filtered by the probe (it skips pairs with empty
-            # fg/bg or a failed ego fit), so len(motion)/len(per_frame) can never
-            # expose tracking loss. Measure against the analysis pairs that exist.
-            n_pairs_possible = max(len(protocol['sampled_source_frames']) - 1, 1)
-            tracked_frac = len(per_frame) / n_pairs_possible
-            motion_ok = (robot and per_frame
-                         and len(motion) >= MIN_VALID_PAIR_FRAC * len(per_frame)
-                         and tracked_frac >= MIN_VALID_PAIR_FRAC)
-            values = np.array(list(motion.values()), dtype=float)
-            result['actor_motion_raw'] = float(values.mean()) if motion_ok else None
-            result['actor_motion_median_raw'] = float(np.mean(list(median.values()))) if motion_ok else None
-            result['actor_motion_active_rate'] = float(np.mean(values >= ACTIVE_PX)) if motion_ok else None
-            result['actor_motion_px_per_second'] = (float(values.mean() * protocol['source_fps'])
-                                                    if motion_ok else None)
-            result['actor_motion_statistic'] = {'static': 'subject_p95_uncorrected',
-                                                'head': 'subject_p95_ego_translation',
-                                                'wrist': 'frame_median'}[row['camera_mount']]
-            result['actor_seed_frame'] = actor.get('seed_frame')
-            result['actor_motion_valid_pair_frac'] = (len(motion) / len(per_frame)) if per_frame else 0.0
-            result['actor_tracked_pair_frac'] = tracked_frac
-            # Stored so the AMC activity gate is reproducible post-hoc from the record
-            # (per-triple weights are not serialized).
-            n_active = int((values >= ACTIVE_PX).sum()) if motion_ok else 0
-            result['actor_n_active_pairs'] = n_active if motion_ok else None
+            # Motion Amplitude (MAS) fields; `actor_n_active_pairs` is stored so the AMC
+            # activity gate is reproducible post-hoc from the record.
+            mas, motion, n_active, motion_ok = summarize(
+                actor, row['camera_mount'], interval,
+                len(protocol['sampled_source_frames']) - 1, protocol['source_fps'])
+            result.update(mas)
             amc, weight_sum, gains, copy_errs = continuity(paths, smooth, motion,
                                                            bool(motion_ok), n_active)
             result['active_motion_continuity'] = amc
             result['active_motion_continuity_weight_sum'] = weight_sum
-            result['actor_flicker_raw'] = actor.get('actor_flicker_raw') if robot else None
-            # E3 candidate statistics, all computed in the same probe pass. Stored so
-            # the choice of flicker definition is a post-hoc, zero-GPU decision (the
-            # E4 lesson). `actor_flicker_raw` above stays the v1 statistic so this run
-            # reproduces the old column exactly and the two are directly comparable.
-            result['actor_flicker_variants'] = (actor.get('actor_flicker_variants')
-                                                if robot else None)
+            result['actor_flicker_raw'] = None   # experimental column, no longer computed
             result['actor_n_arm_dets'] = actor['n_arm_dets']
             result['actor_validity'] = 'robot_detected' if robot else ('object_only' if actor['n_object_dets'] else 'invalid')
             result['paper_scale'] = {
@@ -634,7 +580,6 @@ def worker(args):
                 'actor_motion_raw': f'px/source-frame; static: subject p95, head: ego-compensated subject p95 (bg>={MIN_BG_COV_PCT:g}%), wrist: frame median; descriptive',
                 'actor_motion_active_rate': f'fraction of valid actor pairs at >={ACTIVE_PX} px/source-frame',
                 'active_motion_continuity': 'activity-weighted VFI gain over frame copy x100, [0,100]; higher is better',
-                'actor_flicker_raw': 'flow-aligned RGB residual [0,1]; lower is better; experimental',
             }
             result['actor_per_frame'] = per_frame
             result['continuity_per_triple'] = {'vfi_mse': smooth.get('mse_per_triple', []),

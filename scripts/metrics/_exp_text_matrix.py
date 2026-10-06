@@ -45,7 +45,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from run_dense_nr import prepare, task_text, text_conditioned  # noqa: E402
-from compute_phyworld import write_frames  # noqa: E402
+from metrics.third_party import write_frames  # noqa: E402
 
 QUAL_STRIDE = 5          # matches run_dense_nr.worker's score_qual(..., 5)
 
@@ -59,7 +59,7 @@ def boot_ci(values, b=10000, seed=0):
 
 
 class ClipScore:
-    """Exactly the CLIPScore path of metrics.quality.quality_control_probe.IQA."""
+    """Exactly the per-frame CLIPScore path of metrics.text_alignment.CLIPScorer (batched captions)."""
 
     def __init__(self, device):
         import torch
