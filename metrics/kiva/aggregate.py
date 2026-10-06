@@ -23,7 +23,7 @@ and violation severities, not quality scores.
 
 Read a variant's rate as its EXCESS over the real-video anchor's rate, never
 against zero -- the reader's own keypoint error puts a nonzero floor under
-every rate (``docs/metrics/hallucination_metric.md`` §7).
+every rate (archived write-up ``tmp/20261005_refactor/misc/docs_metrics/hallucination_metric.md`` §7).
 
 Usage::
 

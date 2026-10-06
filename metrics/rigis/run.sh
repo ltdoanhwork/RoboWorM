@@ -4,7 +4,7 @@
 # Scores one or more method variants with the VGGT-Omega multiview-consistency
 # metric vendored in metrics/rigis/ from branch
 # `thanhnv/multiview-consistency-indep` @8015d97 (see metrics/rigis/VENDORED.md
-# and docs/metrics/multiview_consistency_metric.md). Emits one CSV per episodes-root, plus a
+# and docs/metrics/rigis.md). Emits one CSV per episodes-root, plus a
 # cross-variant comparison via metrics/rigis/aggregate.py.
 #
 # The metric consumes EXTRACTED FRAMES, not mp4s:
@@ -103,7 +103,7 @@ fi
 [ -f "${MVC_CKPT}" ] || {
   echo "ERROR: VGGT-Omega checkpoint not found: ${MVC_CKPT}" >&2
   echo "       Set MVC_CKPT, or place/symlink vggt_omega_1b_512.pt there." >&2
-  echo "       See docs/metrics/multiview_consistency_metric.md#checkpoints" >&2
+  echo "       See docs/metrics/rigis.md#checkpoints" >&2
   exit 1
 }
 
@@ -114,7 +114,7 @@ else
   command -v uv >/dev/null || { echo "ERROR: uv not found and MVC_PYTHON unset" >&2; exit 1; }
   # `numba` is imported by multiview_consistency/geometric_consistency.py but is
   # NOT declared in the branch's pyproject.toml/uv.lock -> inject it here.
-  # See docs/metrics/multiview_consistency_metric.md#known-gotchas
+  # See docs/metrics/rigis.md#known-gotchas
   PY=(uv run --project "${MVC_ROOT}")
   for dep in ${MVC_UV_EXTRA_DEPS:-numba}; do PY+=(--with "${dep}"); done
   PY+=(python)

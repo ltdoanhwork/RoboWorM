@@ -33,7 +33,7 @@ Usage (single video)::
         --layout 2x2 --fps 2
 
 Adapted from ``frame_extractor_one.py`` in the VideoWorldModelBenchmark tree
-(see docs/metrics/multiview_consistency_metric.md).
+(see docs/metrics/rigis.md).
 """
 from __future__ import annotations
 

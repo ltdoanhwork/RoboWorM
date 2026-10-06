@@ -3,7 +3,7 @@
 Wraps ``metrics/kiva/run.sh`` (kinescore vendored from branch
 ``quang/hallucination-official`` @5225ce7 into ``metrics/kiva/src``, see
 ``metrics/kiva/VENDORED.md``;
-full write-up in ``docs/metrics/hallucination_metric.md``). The launcher owns the
+full write-up in ``docs/metrics/kiva.md``). The launcher owns the
 interpreter (``hdmi`` conda env), the kinescore store (reader checkpoints,
 URDFs, calibration clips, DINOv3 cache) and the ffmpeg workaround; this class
 stages mp4 symlinks, runs it once, and reduces ``segments.csv`` with the SAME

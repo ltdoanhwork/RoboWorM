@@ -1,9 +1,9 @@
 #!/bin/bash
-# KIVA -- hallucination metric (kinescore embodiment-integrity / PhyBody-NR variant).
+# KIVA -- hallucination metric (kinescore rigidity + jerk violation rate).
 #
 # Scores one or more method variants with the kinescore physics-violation
 # detectors vendored in metrics/kiva/ from branch `quang/hallucination-official`
-# @5225ce7 (see metrics/kiva/VENDORED.md and docs/metrics/hallucination_metric.md). Emits one output dir per (variant, embodiment),
+# @5225ce7 (see metrics/kiva/VENDORED.md and docs/metrics/kiva.md). Emits one output dir per (variant, embodiment),
 # plus a cross-variant comparison via metrics/kiva/aggregate.py.
 #
 # The metric consumes MP4s DIRECTLY (no frame extraction), one clip per file, at
@@ -135,7 +135,7 @@ for sub in assets data cache; do
   [ -d "${HAL_STORE}/${sub}" ] || {
     echo "ERROR: ${HAL_STORE}/${sub} missing." >&2
     echo "       Set HAL_STORE (or KINESCORE_STORE) to a kinescore store, or" >&2
-    echo "       populate one per docs/metrics/hallucination_metric.md#checkpoints" >&2
+    echo "       populate one per docs/metrics/kiva.md#checkpoints" >&2
     exit 1; }
 done
 
@@ -210,7 +210,7 @@ score_dir() {
   [ -n "${cell}" ] || { echo "[hal] SKIP unknown embodiment '${embodiment}'" >&2; return 1; }
   [ -f "${ckpt}" ] || {
     echo "[hal] SKIP ${embodiment}: no reader checkpoint at ${ckpt}" >&2
-    echo "      see docs/metrics/hallucination_metric.md#checkpoints" >&2; return 1; }
+    echo "      see docs/metrics/kiva.md#checkpoints" >&2; return 1; }
 
   local n
   n="$(find "${videos}" -name "${PATTERN}" 2>/dev/null | wc -l)"

@@ -1,133 +1,174 @@
-# `metrics/` — the RoboWorM paper's evaluation metrics
+# `metrics/` — the RoboWorM paper's metrics
 
-This directory holds exactly the metric set of the paper (App. B), behind one
-abstract interface (`metrics.base.BaseMetric`), so every metric can be run,
-aggregated and saved the same way from Python or from one CLI
-(`python -m metrics.evaluate`). Paper PDF: `docs/paper/RoboWM_ICLR2027_check.pdf`.
+Only the metrics the paper reports (Sec. 3.4, Sec. 4.1, App. B) plus the two RQ3
+baselines, behind one interface (`metrics.base.BaseMetric`), runnable from Python or one
+CLI (`python -m metrics.evaluate`). Paper PDF: `docs/paper/RoboWM_ICLR2027_check.pdf`.
+User guide: [docs/metrics/README.md](../docs/metrics/README.md).
 
-## Paper metric → code
+## Metrics and where they come from
 
-| paper metric | what it measures | code | registry name | ↑/↓ |
-|---|---|---|---|---|
-| **KIVA** | embodiment hallucination (kinescore rigidity / jerk violation rate, excess over real-video anchor) | `kiva/` (vendored `quang/hallucination-official` @5225ce7) | `kiva` (alias `hallucination`) | ↓ |
-| **RIGIS** | cross-view rigid-geometry consistency (VGGT-Omega) | `rigis/` (vendored `thanhnv/multiview-consistency-indep` @8015d97) | `rigis` (alias `multiview_consistency`) | ↑ |
-| **Visual Integrity** | CLIP-IQA+ (pyiqa `clipiqa+`), reported as the per-clip **p10** over frames | `quality/quality_control_probe.py` (`IQA`), p10 in `scripts/metrics/compute_phyworld.py::score_qual` | — (probe) | ↑ |
-| **Text Alignment** | CLIPScore, torchmetrics `clip-vit-base-patch16`, 0–100 | `clip_score.py` | `clip_score` | ↑ |
-| **FVD** | I3D (StyleGAN-V torchscript), non-overlapping 16-frame windows @ 5 fps, shared per-camera real pool (multi-view) | `fvd.py` | `fvd` | ↓ |
-| **PSNR / SSIM / LPIPS vs dense** | fidelity of an accelerated rollout to the **dense** rollout of the same episode (PhyFid-DR) | `fidelity.py` (piq), DR pass `scripts/metrics/compute_dr_metrics.py` | `psnr` `ssim` `lpips` `fidelity` | ↑ ↑ ↓ |
-| **MS** (RQ3 baseline) | motion smoothness, VFIMamba odd-from-even interpolation | `dynamics/motion_mag_smooth_probe.py` | — (probe) | ↑ |
-| **MAS-style actor activity** | ego-compensated arm∪object flow (GroundingDINO → SAM2 → SEA-RAFT), RBench MAS analogue | `dynamics/motion_accuracy_gdino.py` | — (probe) | ↑ |
-| **PhyWorld NR** | PhyQual-NR / PhyDyn-NR no-reference scoring of every method incl. dense | `phyworld/` (+ `scripts/metrics/run_dense_nr.py`) | — (pipeline) | ↑ |
+Every metric except KIVA and RIGIS is **adapted** from a published metric; the name we use
+is the paper's, the column "source" is the paper it comes from (exact entries of the
+paper's bibliography).
 
-Registered metrics run through `metrics.evaluate`; the probes/pipelines marked
-"—" keep their own launchers (`scripts/run_*`), documented in
-`quality/README.md`, `dynamics/README.md` and `docs/metrics/phyworld_metrics.md`.
+| paper name | registry | ↑/↓ | source metric | source paper | our adaptation | code |
+|---|---|---|---|---|---|---|
+| **KIVA** | `kiva` | ↓ | — (ours) | this paper, App. B.1 | — | `kiva/` |
+| **RIGIS** | `rigis` | ↑ | — (ours) | this paper, App. B.2 | — | `rigis/` |
+| **Visual Integrity** | `visual_integrity` | ↑ | CLIP-IQA+ | Wang, Chan & Loy, *Exploring CLIP for Assessing the Look and Feel of Images*, AAAI 2023 | 10th percentile over frames ×100 instead of the mean | `visual_integrity.py` |
+| **Text Alignment** | `text_alignment` | ↑ | CLIPScore | Hessel, Holtzman, Forbes, Le Bras & Choi, *CLIPScore: A Reference-free Evaluation Metric for Image Captioning*, EMNLP 2021 | scored against the task clause only; text-conditioned models only | `text_alignment.py` |
+| **FVD** | `fvd` | ↓ | Fréchet Video Distance | Unterthiner, van Steenkiste, Kurach, Marinier, Michalski & Gelly, *Towards Accurate Generative Models of Video: A New Metric & Challenges*, arXiv:1812.01717, 2018 | 5 fps, shared real pool per embodiment × camera × regime, per camera for multi-view | `fvd/` |
+| **PSNR** (SSIM, LPIPS) | `psnr` `ssim` `lpips` `fidelity` | ↑ ↑ ↓ | full-reference fidelity | standard (no citation in the paper; SSIM = Wang et al., TIP 2004, LPIPS = Zhang et al., CVPR 2018) | reference = the **dense rollout** of the same episode, not real video | `fidelity.py` |
+| **Motion Smoothness (MS)** — RQ3 baseline | `motion_smoothness` | ↑ | WorldScore motion smoothness (VFIMamba) | Duan, Yu, Chen, Fei-Fei & Wu, *WorldScore: A Unified Evaluation Benchmark for World Generation*, ICCV 2025 | global SSIM, no TTA, on the analysis frames | `motion_smoothness.py` |
+| **Motion Amplitude Score (MAS)** — RQ3 baseline | `motion_amplitude` | — | RBench motion amplitude | Deng, Pan, Zhang, Li, Hu, Ding, Zou, Zeng & Zhou, *Rethinking Video Generation Model for the Embodied World*, ICML 2026 | flow inside a GroundingDINO + SAM 2 subject mask, per camera mount | `motion_amplitude.py` |
 
-| registry name | needs | backend | interpreter |
-|---|---|---|---|
-| `psnr` `ssim` `lpips` `fidelity` | pred + ref | `piq` (LPIPS = VGG16) | dreamgen venv |
-| `clip_score` | pred + prompt | torchmetrics CLIP ViT-B/16 | dreamgen venv |
-| `fvd` | pred set + ref set (or `ref_pool=<.npy>`) | I3D torchscript | dreamgen venv |
-| `rigis` | multiview episode (`view1/ view2/` or mosaic mp4) | VGGT-Omega, `rigis/run.sh` | `uv` project `metrics/rigis/.venv` (launched for you) |
-| `kiva` | pred mp4 (+ gt anchor) | kinescore, `kiva/run.sh` | `hdmi` conda env + `PYTHONPATH=metrics/kiva/src` (launched for you) |
+Backbone models cited in the paper: CLIP (Radford et al., ICML 2021) for CLIP-IQA+ and
+CLIPScore, VGGT-Ω (Wang et al., CVPR 2026) for RIGIS, DINOv3 (Siméoni et al., TMLR 2026)
+for KIVA. Not cited in the paper but used by the code: I3D Kinetics-400 (FVD), VFIMamba
+(MS), GroundingDINO + SAM 2 + SEA-RAFT (MAS).
+
+The other two RQ3 baselines — **MVC** feature matching (Zheng et al., *VBench-2.0*, 2025)
+and **SLAM RPE** (Wu et al., *MultiWorld* 2026b; *Geometry Forcing* 2026a) — were computed
+outside this repo; there is no code for them here.
+
+## Layout
 
 ```
 metrics/
-├── base.py              BaseMetric (ABC) -> FrameMetric / ExternalMetric, Sample, MetricResult
-├── registry.py          name -> class (lazy), aliases, register(), build_metric()
+├── README.md            this file
+├── base.py              BaseMetric -> FrameMetric (-> ReferenceFreeFrameMetric) / ExternalMetric; Sample, MetricResult
+├── registry.py          name -> class (lazy), deprecated aliases, register(), build_metric()
 ├── evaluate.py          CLI: discover samples, run metrics, write json/csv
-├── video_io.py          mp4 / frame dir / array -> uint8 (T,H,W,3); prompt sidecars
-├── fidelity.py          PSNR, SSIM, LPIPS, Fidelity
-├── clip_score.py        CLIPScore
-├── fvd.py               I3D features, fps decimation, mosaic split, Frechet, FVD metric
-├── rigis/               vendored VGGT-Omega code + run.sh, extract_frames.py, aggregate.py, metric.py, VENDORED.md
-├── kiva/                vendored kinescore (src/, configs/, docs/) + run.sh, aggregate.py, probe_clips.py,
-│                        map_to_dr.py, metric.py, VENDORED.md
-├── quality/             Visual Integrity + Text Alignment probe (WorldScore lineage)
-├── dynamics/            MS, MAS-style actor activity, paired-GT flow, actor flicker
-├── phyworld/            PhyWorld NR schema + scoring
-├── WorldScore/          vendored WorldScore + third_party models (43 GB; results/ = run outputs)
-├── video_metrics.py     legacy function API (calculate_psnr ...)
+├── video_io.py          decoding, prompt sidecars, nr_analysis_frames() (the reference-free frame protocol)
+├── fidelity.py          PSNR, SSIM, LPIPS, Fidelity (piq)
+├── visual_integrity.py  Visual Integrity (CLIP-IQA+ p10)
+├── text_alignment.py    Text Alignment (CLIPScore), task_clause()
+├── fvd/                 FVD: core.py (I3D, Fréchet), pool.py (shared real pool), README.md (setup)
+├── motion_smoothness.py MS (VFIMamba)
+├── motion_amplitude.py  MAS (GroundingDINO -> SAM 2 -> SEA-RAFT)
+├── third_party.py       paths + checkpoints of the WorldScore third_party backends, SEA-RAFT wrapper
+├── kiva/                KIVA, vendored kinescore (VENDORED.md) + run.sh / aggregate.py / metric.py
+├── rigis/               RIGIS, vendored VGGT-Ω code (VENDORED.md) + run.sh / extract_frames.py / aggregate.py / metric.py
+├── WorldScore/          third-party dependency (see below)
 └── test_framework.py    unit + parity tests
 ```
 
-Full write-ups: `docs/metrics/hallucination_metric.md` (KIVA),
-`docs/metrics/multiview_consistency_metric.md` (RIGIS),
-`tmp/20261005_refactor/docs/WORLDSCORE_PHYSICS_REPORT.md` (WorldScore lineage). The two
-external launchers still work standalone for large sweeps
-(`VARIANTS="dense pisa ..." bash metrics/kiva/run.sh`).
+`metrics/WorldScore/` is the vendored WorldScore checkout (Duan et al., 2025; its own git
+repo, ~43 GB). It is kept only as a dependency: `third_party.py` puts its
+`worldscore/benchmark/metrics/third_party/{SEA-RAFT,VFIMamba,groundingdino,sam2}` on
+`sys.path` without importing the `worldscore` package. Its `results/` folder holds the
+stored per-clip records the paper tables read (`dense_nr_full/` reference-free wave,
+`dr_full/` PSNR/SSIM/LPIPS + I3D, `fvd_perview/` per-camera I3D features).
 
-### Checkpoints (env overrides)
+Removed on 2026-10-06 (moved to `tmp/20261005_refactor/misc/metrics/`, restore commands in
+`tmp/20261005_refactor/MANIFEST.md`): the PhyWorld schema/scoring (`phyworld/`), the
+WorldScore quality probe (`quality/`), the non-paper dynamics code (`dynamics/`: paired-GT
+flow EPE, actor flicker, motion magnitude) and the legacy `video_metrics.py`. The paper
+summary tables that used to live in `metrics/reports/` are now in `results/reports/`.
+
+## Interpreters and checkpoints
+
+| registry | needs | interpreter |
+|---|---|---|
+| `visual_integrity` `text_alignment` `fidelity` `fvd` | pred (+ prompt / ref) | `models/dreamgen/.venv` (pyiqa, torchmetrics, piq) |
+| `motion_smoothness` `motion_amplitude` | pred (+ prompt, embodiment, view) | `models/dreamgen/.venv` + WorldScore third_party (added for you) |
+| `rigis` | multiview episode dir (`view1/ view2/`) | `metrics/rigis/.venv` (uv), launched for you |
+| `kiva` | pred mp4 at the reader resolution (+ GT anchor) | `hdmi` conda env + `PYTHONPATH=metrics/kiva/src`, launched for you |
 
 | metric | default path | override |
 |---|---|---|
 | FVD | `checkpoints/metrics/fvd/i3d_torchscript.pt` | `FVD_I3D_CKPT` |
+| MS / MAS | `checkpoints/metrics/worldscore/{VFIMamba.pkl, Tartan-C-T-TSKH-spring540x960-M.pth, groundingdino_swint_ogc.pth, sam2.1_hiera_base_plus.pt}` | `WORLDSCORE_CKPT_DIR` |
 | RIGIS | `checkpoints/metrics/vggt_omega/vggt_omega_1b_512.pt` | `MVC_CKPT` |
 | KIVA readers | `checkpoints/metrics/kiva/` (else `$HAL_STORE/ckpt`) | `HAL_CKPT_DIR`, `HAL_CKPT_{SINGLE_ARM,BIMANUAL,HUMANOID}` |
-| WorldScore models (GDINO, SAM2, SEA-RAFT, VFIMamba) | `checkpoints/metrics/worldscore/` | per-probe `--*_ckpt` flags |
-
-Each default falls back to the pre-refactor location (`checkpoints/{fvd,vggt_omega}/`,
-the kinescore store) while the compat symlinks exist.
+| CLIP-IQA+ / CLIPScore | HF / pyiqa caches (`openai/clip-vit-base-patch16`) | `HF_HOME` |
 
 ## Quick start
 
 ```bash
-PY=models/dreamgen/.venv/bin/python        # has piq + torchmetrics + CLIP weights
+PY=models/dreamgen/.venv/bin/python
 export HF_HUB_OFFLINE=1
+CELL=sampling_dataset/dense/single_arm/output/singleview/dreamgen/makovian
 
-# fidelity + CLIP over one cell (pred X.mp4, ref X_gt.mp4, prompt X.txt)
-$PY -m metrics.evaluate \
-    --pred-root sampling_dataset/dense/single_arm/output/singleview/dreamgen/makovian \
-    --metrics fidelity clip_score --out results/metrics/dense_sa_mk
+# reference-free (prompt from <episode>.txt)
+$PY -m metrics.evaluate --pred-root $CELL --ref-template '' \
+    --metrics visual_integrity text_alignment --out results/metrics/dense_sa_mk
 
-# FVD of one cell vs its own GT (per-configuration); target_fps=5 is the default
-$PY -m metrics.evaluate --pred-root <same dir> --metrics fvd --out results/metrics/dense_sa_mk_fvd
+# one camera of a multiview mosaic: tell the protocol which tile
+$PY -m metrics.evaluate --pred-root <dreamgen mv cell> --pred-glob '**/full_pred.mp4' --ref-template '' \
+    --meta layout=grid --meta view_index=0 --meta n_views=4 --metrics visual_integrity --out <out>
+
+# PSNR/SSIM/LPIPS of an accelerated cell vs the dense rollout of the same episode
+$PY -m metrics.evaluate --pred-root sampling_dataset/pisa/<cell> --ref-root sampling_dataset/dense/<cell> \
+    --ref-template '{name}' --metrics fidelity --out <out>
+
+# FVD of one cell vs its own GT (setup + shared pool: metrics/fvd/README.md)
+$PY -m metrics.evaluate --pred-root $CELL --metrics fvd --out <out>
 
 # KIVA, with the real-video anchor scored in the same launcher call
-$PY -m metrics.evaluate --pred-root <same dir> --metrics kiva \
-    --opt kiva.embodiment=single_arm --opt kiva.score_ref=true \
-    --out results/metrics/dense_sa_mk_kiva
+$PY -m metrics.evaluate --pred-root $CELL --metrics kiva \
+    --opt kiva.embodiment=single_arm --opt kiva.score_ref=true --out <out>
 
 # RIGIS over extracted episode dirs (<ep>/view1, <ep>/view2)
-$PY -m metrics.evaluate \
-    --pred-root sampling_dataset/multiview_consistency/frames/dense/bimanual/ctrlworld/non_makovian/<task> \
-    --pred-glob '*' --ref-template '' --text-template '' \
-    --metrics rigis --out results/metrics/dense_bi_rigis
+$PY -m metrics.evaluate --pred-root <frames>/<task> --pred-glob '*' --ref-template '' \
+    --text-template '' --metrics rigis --out <out>
+
+# RQ3 baselines
+$PY -m metrics.evaluate --pred-root $CELL --ref-template '' --metrics motion_smoothness motion_amplitude \
+    --meta embodiment=single_arm --meta view=global --out <out>
 ```
 
 `--out` gets `<metric>.json` (full result incl. config and per-sample rows),
-`per_sample.csv` (all metrics joined on sample id) and `summary.json`. Outputs
-are rewritten after every metric, so a crash in the last one keeps the rest.
+`per_sample.csv` and `summary.json`, rewritten after every metric. Per-metric constructor
+arguments go through `--opt METRIC.KEY=VALUE` (JSON-parsed); per-sample metadata through
+`--meta KEY=VALUE`.
 
-Per-metric constructor arguments go through `--opt METRIC.KEY=VALUE` (values
-parsed as JSON: `true`, `16`, `"x"`).
-
-### Sample discovery
-
-| flag | default | meaning |
-|---|---|---|
-| `--pred-glob` | `**/*.mp4` | what counts as a prediction (files or dirs) |
-| `--exclude-suffix` | `_gt` | stems ending in this are never predictions |
-| `--ref-template` | `{stem}_gt{suffix}` | ref next to pred; `''` disables; `--ref-root` looks elsewhere |
-| `--text-template` | `{stem}.txt` | prompt sidecar, `[Prompt]` section; `--prompt` overrides |
-
-Sample id = path relative to `--pred-root` without extension. A missing ref or
-prompt does not crash discovery; only metrics that need it fail for that sample
-(reported under `errors`).
+The full-benchmark waves that produced the paper's stored records:
+`scripts/metrics/run_dense_nr.sh` (Visual Integrity, Text Alignment, MS, MAS on every
+rollout), `scripts/metrics/run_dr_metrics.sh` (PSNR/SSIM/LPIPS + I3D features vs dense),
+`metrics/kiva/run.sh`, `metrics/rigis/run.sh`; FVD pooling in `metrics/fvd/README.md`.
 
 ## Python API
 
 ```python
 from metrics import Sample, build_metric
 
-fid = build_metric("fidelity", device="cuda")
-res = fid.evaluate([Sample("ep0", pred="ep0.mp4", ref="ep0_gt.mp4")])
-res.summary["psnr"]          # {'mean', 'std', 'sem', 'n', 'n_missing'}
-res.per_sample["ep0"]        # {'psnr', 'ssim', 'lpips', 'n_frames_pred', 'n_frames_ref', 'n_frames'}
-res.save("out/fidelity.json")
+vi = build_metric("visual_integrity", device="cuda")
+res = vi.evaluate([Sample("ep0", pred="ep0.mp4", text="put the cup on the coaster")])
+res.summary["visual_integrity"]   # {'mean', 'std', 'sem', 'n', 'n_missing'}
+res.per_sample["ep0"]             # {'visual_integrity', 'visual_integrity_mean', ...}
+res.save("out/visual_integrity.json")
 
-fid(Sample("ep1", pred=np_uint8_THWC, ref=np_uint8_THWC))   # one sample -> dict
+build_metric("fidelity")(Sample("ep1", pred="pisa/ep1.mp4", ref="dense/ep1.mp4"))  # one sample -> dict
 ```
+
+## Conventions that decide whether numbers are comparable
+
+* **Reference-free frame protocol** (`ReferenceFreeFrameMetric`, `protocol="paper"`):
+  `video_io.nr_analysis_frames` decimates to 5 fps by integer stride, drops the
+  conditioning frame, cuts the camera tile (`--meta layout/view_index/n_views`), resizes to
+  256×192 (`INTER_AREA`); Visual Integrity / Text Alignment then score every 5th analysis
+  frame after a cv2 JPEG round trip, with Resize 512 → CLIP. This reproduces the stored
+  `dense_nr_full` values exactly. `protocol="raw"` scores any clip as decoded.
+* **Text Alignment** is defined only for text-conditioned models (`text_conditioned()`;
+  DreamDojo is image-only → None). Rank with paired deltas under the same prompt.
+* **Visual Integrity** fails the real-video-is-ceiling audit: use it for the acceleration
+  comparison against dense, not to rank models.
+* **Fidelity**: reference = the dense rollout of the same episode. `piq` with defaults on
+  float [0,1] NCHW, frames truncated to `min(T_pred, T_ref)`, no implicit resize. The DR
+  wave (`scripts/metrics/compute_dr_metrics.py`) that produced the stored numbers uses the
+  same per-frame PSNR and torchmetrics SSIM/LPIPS: PSNR agrees to 1e-4 dB; SSIM differs at
+  ≥ 384 px because piq downsamples first (measured 0.94190 vs 0.94175 on a 480p clip).
+* **FVD** is a set statistic (one number per cell, effective n = 1), `None` below 64 windows
+  per side, only comparable at the same reference and sample size — see `fvd/README.md`.
+* **KIVA** rates are meaningful only next to the real-video anchor (`score_ref=true`);
+  kinescore re-calibrates per call and samples unseeded noise, so score all compared
+  variants and the anchor in **one** call. **RIGIS** is reported normalised by the
+  real-video mean of the morphology (≈ 0.89 raw ceiling). Details: `docs/metrics/kiva.md`,
+  `docs/metrics/rigis.md`.
+* **CLIP weights offline**: `metrics/kiva/run.sh` exports `HF_HOME` into the kinescore
+  store; if that leaks into a tmux server's env, `text_alignment` falls back to
+  `~/.cache/huggingface` and prints which cache it used.
 
 ## Writing a new metric
 
@@ -137,79 +178,21 @@ from metrics.registry import register
 
 @register("mean_abs_diff")
 class MeanAbsDiff(FrameMetric):
+    name = "mean_abs_diff"
     higher_is_better = {"mad": False}
     requires_ref = True
-    name = "mean_abs_diff"
 
     def score_frames(self, pred, ref, text):          # aligned uint8 (T,H,W,3)
         return {"mad": float(abs(pred.astype(int) - ref).mean())}
 ```
 
-* **In-process** metrics subclass `FrameMetric`: decoding, frame alignment,
-  shape checks and the `n_frames_*` bookkeeping are inherited. Load models in
-  `setup()` (called lazily once). `self._chunks(pred, ref)` yields float [0,1]
-  NCHW tensors on `self.device`.
-* **Out-of-process** metrics (own venv/model service) subclass
-  `ExternalMetric`, set `launcher`, and implement `run_batch(samples)`: stage
-  inputs under `self.new_run_dir()`, `self.run_launcher(env, run_dir)`, parse
-  the output into `{sample.id: {key: float}}`. The model is loaded once per
-  batch; never call it per sample in a loop.
-* Return floats keyed like `higher_is_better`; extra keys are kept per-sample
-  but not aggregated. Use NaN for "not scorable", raise for real failures.
-
-## Conventions that decide whether numbers are comparable
-
-* **Fidelity = the inference scripts' numbers.** `piq` with defaults on float
-  [0,1] NCHW, frames truncated to `min(T_pred, T_gt)` — the exact recipe in
-  every `scripts/infer_*.py`. `test_parity_with_inference_scripts` checks this
-  on a real episode (rel. tol 1e-4). Generated and GT clips often differ in
-  length (e.g. 185 vs 164 frames); the truncation is reported per sample via
-  `n_frames_pred / n_frames_ref / n_frames`. Use `--opt fidelity.frame_align="error"`
-  to refuse mismatches instead.
-* piq vs skimage (used by `scripts/metrics/_score_vs_dense.py`): identical frames give
-  ~80 dB in piq vs `inf` in skimage; piq SSIM downsamples by
-  `round(min(H,W)/256)` first. Do not mix the two in one table.
-* **No implicit resizing.** pred/ref resolution mismatch raises.
-* **CLIP score** reproduces `metrics/quality/quality_control_probe.py`
-  (WorldScore `content_alignment`): Resize 512 → uint8 → CLIPScore, frame by
-  frame, mean. Same scale as the PhyWorld `task_lock` input. (The probe
-  round-trips frames through JPEG on disk, so expect ~0.1-level differences,
-  not bit-identity.) It is reference-free, so it scores **all** pred frames even
-  when the GT is shorter; only reference-based metrics truncate.
-* **CLIP weights offline**: `metrics/kiva/run.sh` exports `HF_HOME`
-  into the kinescore store. If that leaks into a tmux server's global env
-  (`tmux show-environment -g`), CLIP is looked up in the wrong cache;
-  `clip_score` falls back to `~/.cache/huggingface` and prints which it used.
-* **RIGIS**: reference-free; the real-video ceiling is ≈ 0.89,
-  so report the GT anchor alongside every variant. Deterministic: the wrapper
-  reproduces the standalone launcher's CSV to the last digit.
-* **KIVA**: rates are only meaningful as excess over the real-video
-  anchor (`score_ref=true` adds `<det>_rate_ref` and `<det>_rate_excess`).
-  Only the single-arm A1X reader is validated to fire; bimanual/humanoid
-  readers currently read ~0 everywhere (see the doc). Inputs must be at the
-  reader's resolution (640×480 single-arm, 768×432 bimanual/humanoid).
-  **Not bit-reproducible**: kinescore re-calibrates on every call and its
-  diffusion keypoint head samples unseeded `torch.randn`
-  (`heads/diffusion.py:305`), so the same clip can move by one segment between
-  runs (measured: A1X segment threshold 8.34 vs 8.18 mm; one clip's
-  rigidity_rate 0.083 vs 0.167; jerk_rate identical). Score every variant
-  being compared — and its anchor — in **one** call so they share thresholds,
-  and treat sub-segment differences as noise. With torch seeded (`manual_seed(0)`) the
-  vendored copy reproduces the old `external/hallucination` worktree bit-for-bit
-  (2026-10-05 parity test, 12/12 segments identical).
-* **FVD is a set statistic** (one number per cell, effective n = 1): no CI, no
-  per-cell claim, < 64 windows per side -> NaN. `fvd.py` is the single implementation
-  behind `scripts/metrics/compute_dr_metrics.py` (dr-v1, native fps, own GT) and the
-  shared-pool scripts in `assets/scripts/` (via the `fvd_pool_common.py` shim);
-  the refactor reproduced their I3D features exactly (max abs diff 0.0).
+In-process metrics subclass `FrameMetric` (decoding, alignment, `n_frames_*` bookkeeping
+inherited; load models in `setup()`). Out-of-process metrics subclass `ExternalMetric`,
+set `launcher` and implement `run_batch(samples)` (one model load per batch). Return floats
+keyed like `higher_is_better`; NaN = not scorable, raise for real failures.
 
 ## Tests
 
 ```bash
-models/dreamgen/.venv/bin/python -m pytest metrics/test_framework.py -q    # ~4 min, CPU
+models/dreamgen/.venv/bin/python -m pytest metrics/test_framework.py -q    # ~2 min, CPU
 ```
-
-The legacy function API (`calculate_psnr` & co. in `video_metrics.py`) is kept
-importable but uses a box-filter SSIM and the `lpips` package — its numbers are
-**not** the published ones; prefer `fidelity`. (Its old smoke test
-`test_metrics.py` was archived to `tmp/20261005_refactor/misc/metrics/`.)

@@ -2,7 +2,7 @@
 
 Wraps ``metrics/rigis/run.sh`` (code vendored from branch
 ``thanhnv/multiview-consistency-indep`` @8015d97, see ``metrics/rigis/VENDORED.md``; full write-up in
-``docs/metrics/multiview_consistency_metric.md``). The launcher owns the interpreter
+``docs/metrics/rigis.md``). The launcher owns the interpreter
 (``uv`` project + injected ``numba``), the 4.6 GB checkpoint and the model
 service; this class only stages inputs and parses the CSV, so it runs from any
 python with numpy.
@@ -121,7 +121,7 @@ class MultiviewConsistency(ExternalMetric):
             cmd += ["--view-globs", str(self.config["view_globs"])]
         env = dict(os.environ)
         # /usr/bin/ffmpeg segfaults in a process tree that has imported torch
-        # (gotoblas clash, see docs/metrics/hallucination_metric.md); the pfss build is immune.
+        # (gotoblas clash, see docs/metrics/kiva.md); the pfss build is immune.
         if Path(FFMPEG_BUILD, "bin").is_dir():
             env["PATH"] = f"{FFMPEG_BUILD}/bin:{env.get('PATH', '')}"
             env["LD_LIBRARY_PATH"] = f"{FFMPEG_BUILD}/lib:{env.get('LD_LIBRARY_PATH', '')}"

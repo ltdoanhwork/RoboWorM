@@ -16,7 +16,7 @@ segments each will contribute. Run this before burning GPU hours.
 It also separates the two roles that share every directory: a prediction
 ``<episode>.mp4`` and its paired real ground truth ``<episode>_gt.mp4``. The
 ``_gt`` clips are the real-video anchor the scores are only interpretable
-against (``docs/metrics/hallucination_metric.md`` §6.3).
+against (archived write-up ``tmp/20261005_refactor/misc/docs_metrics/hallucination_metric.md`` §6.3).
 
 Usage::
 

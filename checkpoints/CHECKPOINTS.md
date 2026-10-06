@@ -76,8 +76,8 @@ see `models/dreamgen/imaginaire/constants.py`). DreamDojo looks for HF mirrors i
 
 | path | size | metric |
 |---|---|---|
-| `fvd/i3d_torchscript.pt` | 49M | FVD (I3D, `metrics/fvd.py`) |
-| `worldscore/{groundingdino_swint_ogc.pth, sam2.1_hiera_base_plus.pt, VFIMamba.pkl, Tartan-C-T-TSKH-spring540x960-M.pth}` | 1.3G | MAS-style actor activity (GroundingDINO + SAM2), RQ3 motion smoothness (VFIMamba), optical flow (`metrics/dynamics/flow_backend.py`) |
+| `fvd/i3d_torchscript.pt` | 49M | FVD (I3D, `metrics/fvd/`, setup in `metrics/fvd/README.md`) |
+| `worldscore/{groundingdino_swint_ogc.pth, sam2.1_hiera_base_plus.pt, VFIMamba.pkl, Tartan-C-T-TSKH-spring540x960-M.pth}` | 1.3G | RQ3 baselines: MAS (GroundingDINO + SAM2 + SEA-RAFT, `metrics/motion_amplitude.py`), MS (VFIMamba, `metrics/motion_smoothness.py`); paths in `metrics/third_party.py` |
 | `vggt_omega/vggt_omega_1b_512.pt` | 4.3G | RIGIS (symlink to `thanhnv/VideoWorldModelBenchmark/checkpoint/`) |
 | `kiva/` | 1.1G | KIVA readers (symlink to `triquang/kinescore-store/ckpt`) |
 

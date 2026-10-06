@@ -9,7 +9,7 @@ kinescore is vendored from branch quang/hallucination-official @5225ce7 into
   map_to_dr.py    join hallucination rows onto the DR table
   metric.py       :class:`Hallucination` (BaseMetric wrapper)
 
-See docs/metrics/hallucination_metric.md.
+See docs/metrics/kiva.md.
 """
 from .metric import EMBODIMENTS, KIVA, Hallucination
 
