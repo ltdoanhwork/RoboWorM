@@ -286,3 +286,8 @@ nohup.out
 .jitcache/
 .codegraph/
 .DS_Store
+
+# Local agent/editor tooling (kept on disk, not tracked)
+.cursor/
+.claude/
+.codegraph/
