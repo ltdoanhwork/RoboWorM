@@ -14,6 +14,10 @@ $PY -m metrics.evaluate --pred-root $CELL --metrics <name> --out results/metrics
 
 `--out` gets `<metric>.json`, `per_sample.csv` and `summary.json`.
 
+Setup guides for the two proposed metrics (environment, weights, input format, commands,
+outputs, common errors): [kiva.md](kiva.md), [rigis.md](rigis.md). Adding a metric:
+[../extending/new_metric.md](../extending/new_metric.md).
+
 ## Where each metric comes from
 
 Names are the paper's. Except KIVA and RIGIS (ours), each one adapts a published metric;

@@ -16,6 +16,7 @@ Process notes, run hand-offs and analysis write-ups from development are archive
 | [acceleration/](acceleration/README.md) | the 9 acceleration methods: papers, code hooks per model family, flags and knobs, pitfalls, the full (cell × method) launcher / config / env / output matrix ([acceleration/configs.md](acceleration/configs.md)), speedup protocol |
 | [metrics/](metrics/README.md) | what each paper metric measures, its source, code entrypoint and command; setup guides [metrics/kiva.md](metrics/kiva.md), [metrics/rigis.md](metrics/rigis.md) |
 | [reproduce/](reproduce/README.md) | paper table / figure → producer script → output file, and a suggested regeneration order |
+| [extending/](extending/README.md) | adding a world model, an embodiment / dataset, an acceleration method or a metric (paper App. E): files to write, interfaces, checklists |
 | [paper/](paper/) | the paper PDF (`RoboWM_ICLR2027_check.pdf`) |
 
 Code-level references that live next to the code:
