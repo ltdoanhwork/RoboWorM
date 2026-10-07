@@ -179,7 +179,10 @@ echo "======================================================================"
 echo "[mvc] starting VGGT-Omega model service on ${MVC_HOST}:${MVC_PORT} (${COMPILE_FLAG})"
 echo "      ckpt: ${MVC_CKPT}"
 echo "======================================================================"
-( cd "${MVC_ROOT}" && "${PY[@]}" -m multiview_consistency.model_service \
+# `exec` so SERVICE_PID is the launcher itself, not a subshell whose death would orphan
+# `uv run` + the 4.9 GB service on the GPU (seen 2026-10-06: the orphan made every later
+# leased row on that GPU refuse to start).
+( cd "${MVC_ROOT}" && exec "${PY[@]}" -m multiview_consistency.model_service \
     --host "${MVC_HOST}" --port "${MVC_PORT}" --authkey "${MVC_AUTHKEY}" \
     --dtype "${MVC_DTYPE}" \
     --omega_checkpoint "${MVC_CKPT}" \
@@ -190,6 +193,8 @@ SERVICE_PID=$!
 
 cleanup() {
   kill "${SERVICE_PID}" 2>/dev/null || true
+  # uv run may not forward the signal to its python child: kill this run's service by port.
+  pkill -TERM -f "multiview_consistency.model_service --host ${MVC_HOST} --port ${MVC_PORT} " 2>/dev/null || true
   wait "${SERVICE_PID}" 2>/dev/null || true
   cleanup_stage
   local d=$(( SECONDS - START_TIME ))
