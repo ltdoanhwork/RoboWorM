@@ -10,8 +10,8 @@ Usage:
 
     python scripts/tools/data/classify_markovian_gr1robot.py \
         --episodes-jsonl datasets/humanoid/singleview/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot/meta/episodes.jsonl \
-        --cache-file     data/labels/gr1robot_task_labels_cache.jsonl \
-        --output-csv     data/labels/gr1robot_task_labels.csv \
+        --cache-file     tmp/20261005_refactor/misc/data_labels/gr1robot_task_labels_cache.jsonl \
+        --output-csv     tmp/20261005_refactor/misc/data_labels/gr1robot_task_labels.csv \
         --base-url       http://localhost:8000/v1 \
         --model          Qwen/Qwen3-VL-30B-A3B-Instruct-FP8 \
         --batch-size     50 \
@@ -179,8 +179,8 @@ def main() -> None:
         "--episodes-jsonl", type=Path,
         default=Path("datasets/humanoid/singleview/PhysicalAI-Robotics-GR00T-Teleop-GR1/GR1_robot/meta/episodes.jsonl"),
     )
-    parser.add_argument("--cache-file", type=Path, default=Path("data/labels/gr1robot_task_labels_cache.jsonl"))
-    parser.add_argument("--output-csv",  type=Path, default=Path("data/labels/gr1robot_task_labels.csv"))
+    parser.add_argument("--cache-file", type=Path, default=Path("tmp/20261005_refactor/misc/data_labels/gr1robot_task_labels_cache.jsonl"))
+    parser.add_argument("--output-csv",  type=Path, default=Path("tmp/20261005_refactor/misc/data_labels/gr1robot_task_labels.csv"))
     parser.add_argument("--base-url",    type=str,  default="http://localhost:8000/v1")
     parser.add_argument("--model",       type=str,  default="Qwen/Qwen3-VL-30B-A3B-Instruct-FP8")
     parser.add_argument("--batch-size",  type=int,  default=50)

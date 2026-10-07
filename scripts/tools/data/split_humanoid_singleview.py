@@ -113,7 +113,7 @@ def main():
     # -----------------------------------------------------------------------
     # 1. DreamDojo episodes (have parquet+video)
     # -----------------------------------------------------------------------
-    dd_labels = load_dreamdojo_labels(ws / "data/labels/gr1_task_labels_cache.jsonl")
+    dd_labels = load_dreamdojo_labels(ws / "tmp/20261005_refactor/misc/data_labels/gr1_task_labels_cache.jsonl")
     print(f"[dreamdojo] Classified episodes: {len(dd_labels)}")
 
     # map episode_name -> episode_index via meta
@@ -136,7 +136,7 @@ def main():
     # -----------------------------------------------------------------------
     # 2. GR1_robot episodes (classified by task text)
     # -----------------------------------------------------------------------
-    gr1_task_labels = load_gr1robot_task_labels(ws / "data/labels/gr1robot_task_labels.csv")
+    gr1_task_labels = load_gr1robot_task_labels(ws / "tmp/20261005_refactor/misc/data_labels/gr1robot_task_labels.csv")
     print(f"[gr1_robot] Classified tasks: {len(gr1_task_labels)}")
 
     gr1_pool: dict[str, list[int]] = defaultdict(list)

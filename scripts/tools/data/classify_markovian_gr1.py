@@ -4,8 +4,8 @@ Qwen3-VL-30B-A3B-Instruct-FP8 served via vLLM.
 
 Reads prompts from the two batch_input.json files (DreamDojo-HV_Eval and
 EgoDex_Eval), classifies all ~133 episodes, and outputs:
-  - data/labels/gr1_task_labels.csv          -- all episodes with label + reason
-  - data/labels/gr1_episode_sampled.csv      -- balanced sample (equal per label
+  - tmp/20261005_refactor/misc/data_labels/gr1_task_labels.csv          -- all episodes with label + reason
+  - tmp/20261005_refactor/misc/data_labels/gr1_episode_sampled.csv      -- balanced sample (equal per label
                                             AND equal across the two sources)
 
 Usage:
@@ -22,9 +22,9 @@ Usage:
     python scripts/tools/data/classify_markovian_gr1.py \
         --dreamdojo-json  sampling_dataset/humanoid/singleview/input/PhysicalAI-Robotics-GR00T-Teleop-GR1/DreamDojo-HV_Eval/batch_input.json \
         --egodex-json     sampling_dataset/humanoid/singleview/input/PhysicalAI-Robotics-GR00T-Teleop-GR1/EgoDex_Eval/batch_input.json \
-        --cache-file      data/labels/gr1_task_labels_cache.jsonl \
-        --output-csv      data/labels/gr1_task_labels.csv \
-        --sampled-csv     data/labels/gr1_episode_sampled.csv \
+        --cache-file      tmp/20261005_refactor/misc/data_labels/gr1_task_labels_cache.jsonl \
+        --output-csv      tmp/20261005_refactor/misc/data_labels/gr1_task_labels.csv \
+        --sampled-csv     tmp/20261005_refactor/misc/data_labels/gr1_episode_sampled.csv \
         --sample-per-label-per-source  33 \
         --base-url        http://localhost:8000/v1 \
         --model           Qwen/Qwen3-VL-30B-A3B-Instruct-FP8 \
@@ -271,17 +271,17 @@ def main() -> None:
     parser.add_argument(
         "--cache-file",
         type=Path,
-        default=Path("data/labels/gr1_task_labels_cache.jsonl"),
+        default=Path("tmp/20261005_refactor/misc/data_labels/gr1_task_labels_cache.jsonl"),
     )
     parser.add_argument(
         "--output-csv",
         type=Path,
-        default=Path("data/labels/gr1_task_labels.csv"),
+        default=Path("tmp/20261005_refactor/misc/data_labels/gr1_task_labels.csv"),
     )
     parser.add_argument(
         "--sampled-csv",
         type=Path,
-        default=Path("data/labels/gr1_episode_sampled.csv"),
+        default=Path("tmp/20261005_refactor/misc/data_labels/gr1_episode_sampled.csv"),
     )
     parser.add_argument(
         "--sample-per-label-per-source",

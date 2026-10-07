@@ -17,8 +17,8 @@ Usage:
         --episodes-jsonl datasets/droid_1.0.1_20chunks/meta/episodes.jsonl \
         --tasks-jsonl    datasets/droid_1.0.1_20chunks/meta/tasks.jsonl \
         --num-chunks     20 \
-        --cache-file     data/labels/task_labels_cache.jsonl \
-        --output-csv     data/labels/task_labels.csv \
+        --cache-file     tmp/20261005_refactor/misc/data_labels/task_labels_cache.jsonl \
+        --output-csv     tmp/20261005_refactor/misc/data_labels/task_labels.csv \
         --base-url       http://localhost:8000/v1 \
         --model          Qwen/Qwen3-VL-30B-A3B-Instruct-FP8 \
         --batch-size     50 \
@@ -242,12 +242,12 @@ def main() -> None:
     parser.add_argument(
         "--cache-file",
         type=Path,
-        default=Path("data/labels/task_labels_cache.jsonl"),
+        default=Path("tmp/20261005_refactor/misc/data_labels/task_labels_cache.jsonl"),
     )
     parser.add_argument(
         "--output-csv",
         type=Path,
-        default=Path("data/labels/task_labels.csv"),
+        default=Path("tmp/20261005_refactor/misc/data_labels/task_labels.csv"),
     )
     parser.add_argument(
         "--base-url",

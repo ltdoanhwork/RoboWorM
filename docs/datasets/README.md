@@ -118,9 +118,9 @@ sampled per label:
 
 ```bash
 bash scripts/tools/data/launch_qwen3vl_server.sh            # keep running (vLLM)
-python scripts/tools/data/classify_markovian_qwen.py         # DROID tasks -> data/labels/task_labels.csv
-python scripts/tools/data/join_labels_to_episodes.py         # -> data/labels/episode_markovian_split{,_full}.csv
-python scripts/tools/data/classify_markovian_gr1.py          # GR1 -> data/labels/gr1_task_labels.csv, gr1_episode_sampled.csv
+python scripts/tools/data/classify_markovian_qwen.py         # DROID tasks -> tmp/20261005_refactor/misc/data_labels/task_labels.csv
+python scripts/tools/data/join_labels_to_episodes.py         # -> tmp/20261005_refactor/misc/data_labels/episode_markovian_split{,_full}.csv
+python scripts/tools/data/classify_markovian_gr1.py          # GR1 -> tmp/20261005_refactor/misc/data_labels/gr1_task_labels.csv, gr1_episode_sampled.csv
 ```
 
-The label files used for the release are tracked in `data/labels/`.
+The label files used for the release are archived (untracked) in `tmp/20261005_refactor/misc/data_labels/`; the splits they produced are already baked into the HF dataset `doanh25032004/vgp_datasets`.

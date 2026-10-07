@@ -8,8 +8,8 @@ Usage:
     # Optional flags:
     python scripts/tools/data/join_labels_to_episodes.py \
         --episodes-jsonl   datasets/droid_1.0.1_20chunks/meta/episodes.jsonl \
-        --task-labels-csv  data/labels/task_labels.csv \
-        --output-csv       data/labels/episode_markovian_split.csv \
+        --task-labels-csv  tmp/20261005_refactor/misc/data_labels/task_labels.csv \
+        --output-csv       tmp/20261005_refactor/misc/data_labels/episode_markovian_split.csv \
         --num-chunks       20 \
         --sample-per-label 130 \
         --seed             42
@@ -59,12 +59,12 @@ def main() -> None:
     parser.add_argument(
         "--task-labels-csv",
         type=Path,
-        default=Path("data/labels/task_labels.csv"),
+        default=Path("tmp/20261005_refactor/misc/data_labels/task_labels.csv"),
     )
     parser.add_argument(
         "--output-csv",
         type=Path,
-        default=Path("data/labels/episode_markovian_split.csv"),
+        default=Path("tmp/20261005_refactor/misc/data_labels/episode_markovian_split.csv"),
     )
     parser.add_argument(
         "--num-chunks",

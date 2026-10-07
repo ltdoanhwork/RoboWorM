@@ -93,7 +93,7 @@ def load_gr1robot_task_hints(ws: Path) -> dict[int, str]:
 
 def load_dreamdojo_task_hints(ws: Path) -> dict[int, str]:
     """episode_index -> LLM-generated natural language prompt (DreamDojo)."""
-    cache = ws / "data/labels/gr1_task_labels_cache.jsonl"
+    cache = ws / "tmp/20261005_refactor/misc/data_labels/gr1_task_labels_cache.jsonl"
     ep_to_prompt: dict[int, str] = {}
     if not cache.exists():
         return ep_to_prompt
