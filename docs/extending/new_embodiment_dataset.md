@@ -52,11 +52,15 @@ never from rollout behaviour. Existing tooling (Qwen3-VL served locally):
 
 ```bash
 bash scripts/tools/data/launch_qwen3vl_server.sh            # keep running (vLLM)
-python scripts/tools/data/classify_markovian_qwen.py        # tasks -> data/labels/task_labels.csv
-python scripts/tools/data/join_labels_to_episodes.py        # -> data/labels/episode_markovian_split*.csv
+python scripts/tools/data/classify_markovian_qwen.py        # tasks -> <labels>/task_labels.csv (+ task_labels_cache.jsonl)
+python scripts/tools/data/join_labels_to_episodes.py        # -> <labels>/episode_markovian_split.csv
 ```
 
-(`classify_markovian_gr1.py` is the GR1 variant.) Commit the label files to `data/labels/`.
+(`classify_markovian_gr1.py` / `classify_markovian_gr1robot.py` are the GR1 variants.)
+`<labels>` defaults to `tmp/20261005_refactor/misc/data_labels/`, where the paper's label
+files were archived (the old `data/labels/` directory no longer exists). For a new corpus,
+pass your own location with `--cache-file` / `--output-csv` (classifier) and
+`--task-labels-csv` / `--output-csv` (join), and keep the label files with the release.
 
 **Task taxonomy**: each instruction's leading verb maps to a canonical primitive via the
 `SKILL` lexicon in `assets/scripts/make_benchmark_stats.py`; unmatched verbs are reported
@@ -172,7 +176,7 @@ NR wave's inventory must know the GT views of the new embodiment
 
 - [ ] Corpus provenance, licence, reproducible acquisition path.
 - [ ] LeRobot tree under `datasets/<embodiment>/<view>/<split>/[<task>/]`.
-- [ ] Regime label per task, from the task definition, before any rollout; files in `data/labels/`.
+- [ ] Regime label per task, from the task definition, before any rollout; label files kept with the release (paper's: `tmp/20261005_refactor/misc/data_labels/`).
 - [ ] Taxonomy mapping extended; unmapped verbs reported.
 - [ ] Per-camera mount class, body-relative extrinsics, world-rigidity; `camera_mount` updated.
 - [ ] Preprocessing as applied; realised fps / frame count / duration measured on generated clips.
