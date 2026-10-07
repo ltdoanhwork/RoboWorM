@@ -29,7 +29,7 @@ Two RIGIS-vs-human correlations exist in this repo and they differ:
 
 The reported statistic is the **mean over per-embodiment correlations**, not the
 pooled one, for the same reason the NR grid is never pooled across embodiments
-(`docs/metrics/nr_paper_output_schema.md`, `NOT_CROSS_EMBODIMENT`): the three embodiments
+(archived `tmp/20261005_refactor/misc/docs_metrics/nr_paper_output_schema.md`, `NOT_CROSS_EMBODIMENT`): the three embodiments
 have different human label distributions and different clip counts, so a pooled
 rank correlation partly measures the embodiment mix. The pooled value is kept in
 the JSON as a diagnostic so the gap is visible rather than quietly dropped.
