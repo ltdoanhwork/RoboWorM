@@ -247,6 +247,14 @@ models/dreamgen/.venv/bin/python assets/scripts/make_timing_pass_table.py # -> r
 models/dreamgen/.venv/bin/python scripts/tables/make_speedup_summary.py --sampling-root sampling_dataset --out-dir results/reports
 ```
 
+![Speedup vs physical audit](docs/assets/figures/fig5_speedup.png)
+
+*Figure 5. Acceleration mechanisms show distinct speed–quality trade-offs (bimanual).
+Bars show the speedup over the paired dense rollout, the right axis shows the physical
+audit (RIGIS multi-view, KIVA single-view), and boxed values show aggregate retention Q.
+Caching gives the largest speedups with near-zero degradation, and token pruning degrades
+the most. Humanoid and single-arm are in paper Fig. C2–C3.*
+
 ## 6. Metrics
 
 The CLI is `python -m metrics.evaluate`. The registry and options are documented in
