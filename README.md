@@ -242,7 +242,8 @@ internal per-segment timer on the same episodes and GPU:
 ```bash
 bash scripts/tools/tune/_bench_uniform_timing.sh --estimate
 bash scripts/tools/tune/_bench_uniform_timing.sh --all --gpu 0          # or --cell dreamdojo_humanoid_sv
-models/dreamgen/.venv/bin/python assets/scripts/merge_timing_shards.py  # -> results/reports/timing_pass.{json,csv}
+models/dreamgen/.venv/bin/python assets/scripts/merge_timing_shards.py    # -> results/reports/speedup_perchunk.csv
+models/dreamgen/.venv/bin/python assets/scripts/make_timing_pass_table.py # -> results/reports/timing_pass.{json,csv}
 models/dreamgen/.venv/bin/python scripts/tables/make_speedup_summary.py --sampling-root sampling_dataset --out-dir results/reports
 ```
 

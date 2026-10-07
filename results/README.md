@@ -1,6 +1,7 @@
 # `results/`: metric outputs read by the paper
 
-Only this README is tracked by git. Everything else here is generated and can be
+Only this README and the paper summary tables in `reports/` are tracked by git. Everything
+else here is generated and can be
 regenerated (see [`docs/reproduce/README.md`](../docs/reproduce/README.md)).
 
 | dir | written by | read by (paper) |
@@ -17,5 +18,5 @@ Superseded runs (`dense_nr_v1/`, queue logs, an unreferenced boxplot) were moved
 `tmp/20261005_refactor/misc/results/` on 2026-10-06; restore commands are in
 `tmp/20261005_refactor/MANIFEST.md`.
 
-Paper summary tables (`*.json`, `*.tex`, `*.csv`) are written to `metrics/reports/`,
-not here.
+Paper summary tables (`*.json`, `*.tex`, `*.csv`) are written to `results/reports/`
+(moved there from the old `metrics/reports/`).
