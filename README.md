@@ -1,16 +1,25 @@
+<div align="center">
+
+<img src="docs/assets/figures/logo.png" alt="RoboWorM logo" width="96">
+
 # RoboWorM: Evaluating Movement Realism, Consistency and Acceleration Effects in Embodied Video World Models
 
-![RoboWorM](docs/assets/figures/teaser.jpg)
+<!-- TODO: point the Paper badge at arXiv / OpenReview once the paper is public ("Paper on acceptance" on the project page). -->
+<a href="https://roboworm.github.io/roboworm/"><img src="https://img.shields.io/badge/cs.CV-Paper-b31b1b?logo=arxiv&logoColor=white&labelColor=555555" alt="Paper"></a>
+<a href="https://roboworm.github.io/roboworm/"><img src="https://img.shields.io/badge/RoboWorM-Website-4c9a2a?logo=googlechrome&logoColor=white&labelColor=555555" alt="Project page"></a>
+<a href="https://huggingface.co/datasets/doanh25032004/vgp_datasets"><img src="https://img.shields.io/badge/Dataset-Hugging%20Face-d4a017?logo=huggingface&logoColor=yellow&labelColor=555555" alt="Dataset on Hugging Face"></a>
+<a href="https://huggingface.co/datasets/doanh25032004/video_gen_physics"><img src="https://img.shields.io/badge/Rollouts-Hugging%20Face-d4a017?logo=huggingface&logoColor=yellow&labelColor=555555" alt="Rollouts on Hugging Face"></a>
+<a href="#citation"><img src="https://img.shields.io/badge/BibTeX-Cite-1f3a5f?labelColor=555555" alt="BibTeX"></a>
+
+<a href="https://roboworm.github.io/roboworm/#teaser"><img src="docs/assets/figures/teaser.jpg" alt="RoboWorM" width="90%"></a>
+
+</div>
 
 Code, data pointers and run scripts for **RoboWorM**, a physics audit for robot video
-world models and the training-free methods that accelerate them.
+world models and the training-free methods that accelerate them. Interactive figures,
+tables and rollout videos are on the **[project page](https://roboworm.github.io/roboworm/)**.
 
-**Project page: <https://roboworm.github.io/roboworm/>** ·
-Data: [vgp_datasets](https://huggingface.co/datasets/doanh25032004/vgp_datasets) ·
-Rollouts: [video_gen_physics](https://huggingface.co/datasets/doanh25032004/video_gen_physics) ·
-[BibTeX](#citation)
-
-![RoboWorM overview](docs/assets/figures/overview.png)
+[![RoboWorM overview](docs/assets/figures/overview.png)](https://roboworm.github.io/roboworm/#abstract)
 
 *Benchmark overview: (a) episodes collected from 5 corpora, 3 embodiments, 1–4 views and
 two task horizons; (b) the physics audit with KIVA and RIGIS; (c) inference acceleration
@@ -45,13 +54,21 @@ also tests whether training-free acceleration keeps the physics of the rollout i
 Rollout totals: 3,166 dense rollouts, and 29,343 including the accelerators
 ([docs/datasets/cell_matrix.md](docs/datasets/cell_matrix.md)).
 
-![Qualitative audit](docs/assets/figures/qualitative_audit.png)
+[![Comparison with other benchmarks](docs/assets/figures/benchmark_comparison.png)](https://roboworm.github.io/roboworm/#related)
+
+*How RoboWorM compares with existing video world model benchmarks on data diversity
+(samples, sources, morphologies, multi-view, long-horizon tasks) and evaluation dimensions
+(evaluator paradigm, cross-view geometry, speedup audit).*
+
+[![Qualitative audit](docs/assets/figures/qualitative_audit.png)](https://roboworm.github.io/roboworm/#fig6)
 
 *What the audit catches. (a) Hallucinated rollouts that VLM judges rate as good, while
 KIVA (single-view) and RIGIS (multi-view) agree with human raters that they are bad.
 (b) Dense vs. a well-tuned accelerator (2.1× faster, same score) vs. an over-accelerated
 one (2.9× faster, kinematics and geometry break). (c) KIVA degradation grows with rollout
 depth, from Markovian to non-Markovian tasks.*
+
+See the [project page](https://roboworm.github.io/roboworm/#fig6) for the rollout videos behind these examples.
 
 ## Repository layout
 
@@ -103,7 +120,7 @@ For the matching torch / CUDA wheel of each env, see [docs/setup/README.md](docs
 
 ## 2. Data
 
-![Benchmark composition](docs/assets/figures/dataset_composition.png)
+[![Benchmark composition](docs/assets/figures/dataset_composition.png)](https://roboworm.github.io/roboworm/#benchmark)
 
 *Benchmark composition: 1,605 episodes split between Markovian and non-Markovian tasks,
 29,343 rollouts across dense and the three acceleration families, 5 robot platforms over
@@ -204,7 +221,7 @@ NPROC=2 bash finetuning/dreamdojo/launch.sh dreamdojo_2b_480_640_single_arm_sv
 NPROC=4 bash scripts/train/run_humanoid_multiview_ctrlworld_train_4view_grid.sh
 ```
 
-![Effect of fine-tuning](docs/assets/figures/finetuning_effect.png)
+[![Effect of fine-tuning](docs/assets/figures/finetuning_effect.png)](https://roboworm.github.io/roboworm/#models)
 
 *Why the post-trained checkpoints matter: ground truth, base checkpoint and fine-tuned
 checkpoint on the same multi-view episodes, at 25 / 55 / 85% of the rollout. The base
@@ -242,6 +259,14 @@ Launcher names follow the pattern
 `scripts/run/<family>/run_<embodiment>_<view>_<model>[_4view_grid]_<method>.sh`.
 For trial runs, send output to a scratch tree with `SAVE_ROOT` / `OUTPUT_ROOT`.
 
+[![Dense world-model results](docs/assets/figures/dense_results.png)](https://roboworm.github.io/roboworm/#models)
+
+*Dense (non-accelerated) results for every cell, split into Markovian and non-Markovian
+tasks: visual integrity, PSNR, text alignment, FVD and the physical audit (RIGIS for
+multi-view tracks, KIVA for single-view tracks). Ctrl-World leads on multi-view, DreamDojo
+on most single-view settings. Interactive tables:
+[project page](https://roboworm.github.io/roboworm/#models).*
+
 ### Speedup measurement
 
 Speedup is the dense time divided by the method time, measured with each model's
@@ -258,12 +283,14 @@ models/dreamgen/.venv/bin/python assets/scripts/make_timing_pass_table.py # -> r
 models/dreamgen/.venv/bin/python scripts/tables/make_speedup_summary.py --sampling-root sampling_dataset --out-dir results/reports
 ```
 
-![Speedup vs physical audit](docs/assets/figures/speedup_tradeoff.png)
+[![Speedup vs physical audit](docs/assets/figures/speedup_tradeoff.png)](https://roboworm.github.io/roboworm/#acceleration)
 
 *Speed–quality trade-off of every method on the bimanual cells. Bars show the speedup over
 the paired dense rollout, the right axis shows the physical audit (RIGIS for multi-view,
 KIVA for single-view), and boxed values show aggregate quality retention. Caching gives
 the largest speedups with near-zero degradation; token pruning degrades the most.*
+
+Per-embodiment trade-off plots (humanoid, single-arm) are on the [project page](https://roboworm.github.io/roboworm/#acceleration).
 
 ## 6. Metrics
 
@@ -271,17 +298,19 @@ The CLI is `python -m metrics.evaluate`. The registry and options are documented
 [metrics/README.md](metrics/README.md), and the evaluation protocol in
 [docs/metrics/README.md](docs/metrics/README.md).
 
-![KIVA and RIGIS](docs/assets/figures/kiva_rigis.png)
+[![KIVA and RIGIS](docs/assets/figures/kiva_rigis.png)](https://roboworm.github.io/roboworm/#method)
 
 *The two physical audits. (a) KIVA: a shared video-conditioned reader trained on
 forward-kinematics targets; five denoised candidates are averaged before rigidity and jerk
 are measured and calibrated against real-video references. (b) RIGIS: VGGT-Ω estimates
 depth and cameras to score geometric consistency and camera-pose stability across views.*
 
-![KIVA / RIGIS vs VLM judges](docs/assets/figures/metrics_vs_judges.png)
+[![KIVA / RIGIS vs VLM judges](docs/assets/figures/metrics_vs_judges.png)](https://roboworm.github.io/roboworm/#results)
 
 *KIVA (top) and RIGIS (bottom) against four VLM judges, zero-shot and with
 chain-of-thought: correlation and accuracy with human scores, and latency per video second.*
+
+Interactive KIVA / RIGIS demos and the human-alignment analysis: [project page](https://roboworm.github.io/roboworm/#kiva).
 
 ```bash
 PY=models/dreamgen/.venv/bin/python; export HF_HUB_OFFLINE=1
@@ -311,7 +340,7 @@ existing number, because metrics are stored per clip and paired only when result
 aggregated, so nothing already in the benchmark is re-scored.
 Guides, grounded in the code: [docs/extending/](docs/extending/README.md).
 
-![Extending RoboWorM](docs/assets/figures/extending.png)
+[![Extending RoboWorM](docs/assets/figures/extending.png)](docs/extending/README.md)
 
 *The three extension paths. (A) A new world model: fine-tune on the released corpus, run
 the benchmark grid, score with the existing metrics (a new row). (B) A new embodiment
