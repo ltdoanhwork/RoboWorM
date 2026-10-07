@@ -3,6 +3,17 @@
 Code, data pointers and reproduction scripts for **RoboWorM** (ICLR 2027 submission;
 PDF: [docs/paper/RoboWM_ICLR2027_check.pdf](docs/paper/RoboWM_ICLR2027_check.pdf)).
 
+**Project page: <https://roboworm.github.io/roboworm/>** ·
+Data: [vgp_datasets](https://huggingface.co/datasets/doanh25032004/vgp_datasets) ·
+Rollouts: [video_gen_physics](https://huggingface.co/datasets/doanh25032004/video_gen_physics) ·
+[BibTeX](#citation)
+
+![RoboWorM overview](docs/assets/figures/fig1_overview.png)
+
+*Figure 1. Overview of RoboWorM. (a) Dataset collection over 5 corpora, 3 embodiments,
+1–4 views and two task horizons. (b) Physics audit with KIVA and RIGIS. (c) Inference
+acceleration: 3 world models, 9 acceleration methods, 29k rollouts.*
+
 RoboWorM tests action-/text-conditioned video world models on real robot episodes. It
 also tests whether training-free acceleration keeps the physics of the rollout intact.
 
@@ -31,6 +42,21 @@ also tests whether training-free acceleration keeps the physics of the rollout i
 Rollout totals: 3,166 dense rollouts, and 29,343 including the accelerators
 ([docs/datasets/cell_matrix.md](docs/datasets/cell_matrix.md)).
 
+![KIVA and RIGIS](docs/assets/figures/fig3_kiva_rigis.png)
+
+*Figure 3. (a) KIVA: a shared video-conditioned reader learns from forward-kinematics
+targets; five denoised candidates are averaged before rigidity and jerk are measured and
+calibrated against real-video references. (b) RIGIS: VGGT-Ω estimates depth and cameras
+for geometric consistency and camera-pose stability.*
+
+![KIVA / RIGIS vs VLM judges](docs/assets/figures/fig4_judges.png)
+
+*Figure 4. KIVA (top) and RIGIS (bottom) against four VLM judges, zero-shot and with
+chain-of-thought: correlation and accuracy with human scores, and latency per video second.*
+
+Figures are copied from the paper / [project page](https://roboworm.github.io/roboworm/)
+into [docs/assets/figures/](docs/assets/figures/).
+
 ## Repository layout
 
 ```
@@ -42,10 +68,10 @@ methods/             cache_strategy/{WorldCache,DiCache,FasterCache}, sparse_att
                      prunning/{SiTo,importance_token_merge}
 finetuning/          dreamgen/, dreamdojo/, ctrlworld/ training launchers + data prep
 scripts/             prepare/ infer/ run/{dreamgen,dreamdojo,ctrlworld}/ train/ metrics/ tables/ tools/
-metrics/             evaluate.py (CLI), kiva/, rigis/, fvd.py, clip_score.py, fidelity.py, quality/, reports/
+metrics/             evaluate.py (CLI), kiva/, rigis/, fvd.py, clip_score.py, fidelity.py, quality/
 assets/              scripts/ (paper figure/table producers), paper/ (LaTeX sources + generated assets)
 results/             metric outputs read by the paper tables (see results/README.md)
-docs/                setup, datasets, training, inference, metrics, reproduce, paper
+docs/                setup, datasets, training, inference, acceleration, metrics, reproduce, paper, assets/figures
 ```
 
 Docs index: [docs/README.md](docs/README.md). Script tree: [scripts/README.md](scripts/README.md).
@@ -144,9 +170,25 @@ Three cells use released weights:
 - DreamGen 14B single-arm MV
 - DreamDojo GR1
 
-The other 11 checkpoints were post-trained. For each one, the table in
-[docs/training/README.md](docs/training/README.md) gives the source dir in `datasets/`,
-the prepare script, the launcher/config and the output checkpoint. Representative commands:
+The other 11 checkpoints were post-trained. Each one was trained on exactly one prepared
+input, built by the prepare script below from the LeRobot sources in `datasets/`:
+
+| checkpoint (`checkpoints/finetuned/...`) | prepare script | training input |
+|---|---|---|
+| `ctrlworld/bimanual_multiview_5fps/checkpoint-280000.pt` (3-view) | `scripts/prepare/prepare_ctrlworld_bimanual_multiview.py` + `models/Ctrl-World/dataset_meta_info/create_meta_info_bimanual.py` | `models/Ctrl-World/dataset_example/bimanual_multiview_5fps/` |
+| `ctrlworld/bimanual_multiview_4view_grid/checkpoint-110000.pt` | `scripts/prepare/prepare_ctrlworld_bimanual_multiview_grid.py` + meta builder | `models/Ctrl-World/dataset_example/bimanual_multiview_4view_grid/` |
+| `ctrlworld/humanoid_multiview/checkpoint-200000.pt` (3-view) | `scripts/prepare/prepare_ctrlworld_humanoid_multiview.py` + meta builder | `models/Ctrl-World/dataset_example/humanoid_multiview/` |
+| `ctrlworld/humanoid_multiview_4view_grid/checkpoint-140000.pt` | `scripts/prepare/prepare_ctrlworld_humanoid_multiview_grid.py` + meta builder | `models/Ctrl-World/dataset_example/humanoid_multiview_4view_grid/` |
+| `dreamgen/.../multiview/bimanual_multiview_seg16/.../iter_000120000.pt` | `finetuning/dreamgen/scripts/prepare_bimanual_multiview_grid_dreamgen.py` → `segment_bimanual_multiview_grid_dreamgen.py` → T5 → `reencode_bimanual_multiview_seg_16fps.py` | `datasets/bimanual_multiview_grid_seg16_dreamgen/` |
+| `dreamgen/.../multiview/humanoid_multiview_seg16/.../iter_000100000.pt` | `finetuning/dreamgen/scripts/prepare_humanoid_multiview_grid_dreamgen.py` → `segment_humanoid_multiview_grid_dreamgen.py` → T5 → `reencode_humanoid_multiview_seg_16fps.py` | `datasets/humanoid_multiview_grid_seg16_dreamgen/` |
+| `dreamgen/.../singleview/single_arm_static_singleview_16fps_v2/.../iter_000090000.pt` | `finetuning/dreamgen/scripts/prepare_single_arm_robochallenge_dreamgen_16fps.py` + T5 | `datasets/single_arm_static_dreamgen_16fps/` |
+| `dreamgen/.../singleview/bimanual_singleview_16fps/.../iter_000110000.pt` | `finetuning/dreamgen/scripts/prepare_bimanual_dreamgen_16fps.py` + T5 | `datasets/bimanual_dreamgen_16fps/` |
+| `dreamgen/.../singleview/humanoid_singleview_16fps/.../iter_000090000.pt` | `scripts/tools/data/run_caption_humanoid_singleview.sh` → `finetuning/dreamgen/scripts/prepare_humanoid_dreamgen_16fps.py` + T5 | `datasets/humanoid_dreamgen_16fps/` |
+| `dreamdojo/.../exp_single_arm_sv/single_arm_singleview/checkpoints/iter_000030000` | none (`MultiVideoActionDataset` reads LeRobot directly) | `datasets/single_arm/singleview/` |
+| `dreamdojo/.../exp_aloha_resume70k/aloha_bimanual_singleview_full/checkpoints/iter_000100000` | none (`MultiVideoActionDataset`) | `datasets/bimanual/singleview/` |
+
+The full table (launchers, configs, warm starts, the 3 released checkpoints) is in
+[docs/training/README.md](docs/training/README.md). Representative commands:
 
 ```bash
 # DreamGen 2B (models/dreamgen/.venv): prepare -> T5 -> launch, one script per checkpoint
@@ -200,8 +242,8 @@ internal per-segment timer on the same episodes and GPU:
 ```bash
 bash scripts/tools/tune/_bench_uniform_timing.sh --estimate
 bash scripts/tools/tune/_bench_uniform_timing.sh --all --gpu 0          # or --cell dreamdojo_humanoid_sv
-models/dreamgen/.venv/bin/python assets/scripts/merge_timing_shards.py  # -> metrics/reports/timing_pass.{json,csv}
-models/dreamgen/.venv/bin/python scripts/tables/make_speedup_summary.py --sampling-root sampling_dataset --out-dir metrics/reports
+models/dreamgen/.venv/bin/python assets/scripts/merge_timing_shards.py  # -> results/reports/timing_pass.{json,csv}
+models/dreamgen/.venv/bin/python scripts/tables/make_speedup_summary.py --sampling-root sampling_dataset --out-dir results/reports
 ```
 
 ## 6. Metrics
@@ -233,7 +275,7 @@ Two protocol rules matter for the tables:
 ## 7. Reproducing tables and figures
 
 Producers are in `assets/scripts/` and `scripts/tables/`. They write data to
-`metrics/reports/` and LaTeX/PDF files to `assets/paper/{tables,figures,appendix/tables}/`.
+`results/reports/` and LaTeX/PDF files to `assets/paper/{tables,figures,appendix/tables}/`.
 The full mapping from paper item to producer to output, with the run order, is in
 [docs/reproduce/README.md](docs/reproduce/README.md). Main entry points:
 
@@ -249,23 +291,6 @@ The full mapping from paper item to producer to output, with the run order, is i
 Script names keep the RQ numbering of an earlier draft (`make_rq1_*` = Table 2,
 `make_rq3_*` = human alignment).
 
-## 8. Extending RoboWorM
-
-The benchmark is meant to be extended under the protocol of paper App. E. A new entrant
-is directly comparable to every existing number, because metrics are stored per clip and
-paired only when the tables are built, so nothing already in the benchmark is re-scored.
-Guides, grounded in the code: [docs/extending/](docs/extending/README.md).
-
-| add | what it takes | guide |
-|---|---|---|
-| a world model (a new row) | fine-tune on the released corpus; `prepare` → `infer` → `run` scripts writing `sampling_dataset/dense/...`; score with the existing metrics | [new_world_model.md](docs/extending/new_world_model.md) |
-| an embodiment / dataset (a new column) | LeRobot corpus, regime + taxonomy labels, camera mounts; fine-tune each backbone; a KIVA keypoint reader with real-segment thresholds, a RIGIS view pair, an FVD real pool | [new_embodiment_dataset.md](docs/extending/new_embodiment_dataset.md) |
-| an acceleration method | `add_<method>_args` + enable hook in `methods/<family>/`; one launcher per cell mirroring dense; per-cell knee; matched dense timing | [new_acceleration_method.md](docs/extending/new_acceleration_method.md) |
-| a metric | a `BaseMetric` subclass registered in `metrics/registry.py`, run by `python -m metrics.evaluate` | [new_metric.md](docs/extending/new_metric.md) |
-
-Setup of the two physical audits: [docs/metrics/kiva.md](docs/metrics/kiva.md),
-[docs/metrics/rigis.md](docs/metrics/rigis.md).
-
 ## Citation
 
 ```bibtex
@@ -274,7 +299,8 @@ Setup of the two physical audits: [docs/metrics/kiva.md](docs/metrics/kiva.md),
   author    = {Anonymous},
   booktitle = {International Conference on Learning Representations (ICLR)},
   year      = {2027},
-  note      = {Under review}
+  note      = {Under review},
+  url       = {https://roboworm.github.io/roboworm/}
 }
 ```
 
