@@ -1,18 +1,20 @@
 # RoboWorM: Evaluating Movement Realism, Consistency and Acceleration Effects in Embodied Video World Models
 
-Code, data pointers and reproduction scripts for **RoboWorM** (ICLR 2027 submission;
-PDF: [docs/paper/RoboWM_ICLR2027_check.pdf](docs/paper/RoboWM_ICLR2027_check.pdf)).
+![RoboWorM](docs/assets/figures/teaser.jpg)
+
+Code, data pointers and run scripts for **RoboWorM**, a physics audit for robot video
+world models and the training-free methods that accelerate them.
 
 **Project page: <https://roboworm.github.io/roboworm/>** ·
 Data: [vgp_datasets](https://huggingface.co/datasets/doanh25032004/vgp_datasets) ·
 Rollouts: [video_gen_physics](https://huggingface.co/datasets/doanh25032004/video_gen_physics) ·
 [BibTeX](#citation)
 
-![RoboWorM overview](docs/assets/figures/fig1_overview.png)
+![RoboWorM overview](docs/assets/figures/overview.png)
 
-*Figure 1. Overview of RoboWorM. (a) Dataset collection over 5 corpora, 3 embodiments,
-1–4 views and two task horizons. (b) Physics audit with KIVA and RIGIS. (c) Inference
-acceleration: 3 world models, 9 acceleration methods, 29k rollouts.*
+*Benchmark overview: (a) episodes collected from 5 corpora, 3 embodiments, 1–4 views and
+two task horizons; (b) the physics audit with KIVA and RIGIS; (c) inference acceleration
+across 3 world models and 9 methods, about 29k rollouts.*
 
 RoboWorM tests action-/text-conditioned video world models on real robot episodes. It
 also tests whether training-free acceleration keeps the physics of the rollout intact.
@@ -23,7 +25,8 @@ also tests whether training-free acceleration keeps the physics of the rollout i
   **Markovian** and **non-Markovian**. On disk these are named `makovian` / `non_makovian`.
 - **World models (3)**: **DreamGen** (Cosmos-Predict2 2B / 14B DiT), **DreamDojo**
   (2B action-conditioned DiT) and **Ctrl-World** (Stable Video Diffusion 1.5B U-Net).
-  Together they make 12 dense cells (Table C1), plus 3-view Ctrl-World variants.
+  Together they make 12 dense cells (listed in
+  [checkpoints/CHECKPOINTS.md](checkpoints/CHECKPOINTS.md)), plus 3-view Ctrl-World variants.
 - **Acceleration (9 + dense)**:
   - feature caching: FasterCache, DiCache, WorldCache
   - sparse attention: SVG1, SVG2, Radial, PISA
@@ -42,20 +45,13 @@ also tests whether training-free acceleration keeps the physics of the rollout i
 Rollout totals: 3,166 dense rollouts, and 29,343 including the accelerators
 ([docs/datasets/cell_matrix.md](docs/datasets/cell_matrix.md)).
 
-![KIVA and RIGIS](docs/assets/figures/fig3_kiva_rigis.png)
+![Qualitative audit](docs/assets/figures/qualitative_audit.png)
 
-*Figure 3. (a) KIVA: a shared video-conditioned reader learns from forward-kinematics
-targets; five denoised candidates are averaged before rigidity and jerk are measured and
-calibrated against real-video references. (b) RIGIS: VGGT-Ω estimates depth and cameras
-for geometric consistency and camera-pose stability.*
-
-![KIVA / RIGIS vs VLM judges](docs/assets/figures/fig4_judges.png)
-
-*Figure 4. KIVA (top) and RIGIS (bottom) against four VLM judges, zero-shot and with
-chain-of-thought: correlation and accuracy with human scores, and latency per video second.*
-
-Figures are copied from the paper / [project page](https://roboworm.github.io/roboworm/)
-into [docs/assets/figures/](docs/assets/figures/).
+*What the audit catches. (a) Hallucinated rollouts that VLM judges rate as good, while
+KIVA (single-view) and RIGIS (multi-view) agree with human raters that they are bad.
+(b) Dense vs. a well-tuned accelerator (2.1× faster, same score) vs. an over-accelerated
+one (2.9× faster, kinematics and geometry break). (c) KIVA degradation grows with rollout
+depth, from Markovian to non-Markovian tasks.*
 
 ## Repository layout
 
@@ -69,9 +65,9 @@ methods/             cache_strategy/{WorldCache,DiCache,FasterCache}, sparse_att
 finetuning/          dreamgen/, dreamdojo/, ctrlworld/ training launchers + data prep
 scripts/             prepare/ infer/ run/{dreamgen,dreamdojo,ctrlworld}/ train/ metrics/ tables/ tools/
 metrics/             evaluate.py (CLI), kiva/, rigis/, fvd.py, clip_score.py, fidelity.py, quality/
-assets/              scripts/ (paper figure/table producers), paper/ (LaTeX sources + generated assets)
-results/             metric outputs read by the paper tables (see results/README.md)
-docs/                setup, datasets, training, inference, acceleration, metrics, reproduce, paper, assets/figures
+assets/              scripts/ (figure/table producers) + generated assets
+results/             metric outputs and reports (see results/README.md)
+docs/                setup, datasets, training, inference, acceleration, metrics, extending, assets/figures
 ```
 
 Docs index: [docs/README.md](docs/README.md). Script tree: [scripts/README.md](scripts/README.md).
@@ -107,6 +103,14 @@ For the matching torch / CUDA wheel of each env, see [docs/setup/README.md](docs
 
 ## 2. Data
 
+![Benchmark composition](docs/assets/figures/dataset_composition.png)
+
+*Benchmark composition: 1,605 episodes split between Markovian and non-Markovian tasks,
+29,343 rollouts across dense and the three acceleration families, 5 robot platforms over
+3 embodiments, a range of manipulation skills, and the three world models with their
+conditioning (DreamGen: instruction + first frame; DreamDojo: autoregressive action
+chunks; Ctrl-World: multi-view, policy-in-the-loop with memory).*
+
 ```bash
 pip install -U "huggingface_hub[cli]"
 export HF_HUB_DISABLE_XET=1     # required on this cluster's parallel filesystem
@@ -116,7 +120,7 @@ export HF_HUB_DISABLE_XET=1     # required on this cluster's parallel filesystem
 (36.4 GB, LeRobot format), downloaded to `datasets/`:
 
 ```bash
-# only what the paper uses: LeRobot sources + the DreamGen training corpora
+# LeRobot sources + the DreamGen training corpora
 hf download doanh25032004/vgp_datasets --repo-type dataset --local-dir datasets \
     --include "single_arm/*" "bimanual/*" "humanoid/*" \
               "single_arm_static_dreamgen_16fps/*" "bimanual_dreamgen_16fps/*" "humanoid_dreamgen_16fps/*" \
@@ -148,8 +152,8 @@ Details:
 
 ## 3. Checkpoints
 
-[checkpoints/CHECKPOINTS.md](checkpoints/CHECKPOINTS.md) lists every checkpoint of
-Table C1 (path, size, step) together with the base and metric weights. To restore from
+[checkpoints/CHECKPOINTS.md](checkpoints/CHECKPOINTS.md) lists the checkpoint of every
+dense cell (path, size, step) together with the base and metric weights. To restore from
 the HF model repos `doanh25032004/vgp_checkpoints_{nvidia,dreamdojo,google_t5,own}`:
 
 ```bash
@@ -200,6 +204,13 @@ NPROC=2 bash finetuning/dreamdojo/launch.sh dreamdojo_2b_480_640_single_arm_sv
 NPROC=4 bash scripts/train/run_humanoid_multiview_ctrlworld_train_4view_grid.sh
 ```
 
+![Effect of fine-tuning](docs/assets/figures/finetuning_effect.png)
+
+*Why the post-trained checkpoints matter: ground truth, base checkpoint and fine-tuned
+checkpoint on the same multi-view episodes, at 25 / 55 / 85% of the rollout. The base
+model drifts away from the task (object position, cross-view layout); fine-tuning gains
++7.7 dB (humanoid) and +6.5 dB (bimanual) PSNR over the full episode.*
+
 ## 5. Dense and accelerated rollouts
 
 Launchers live in `scripts/run/{dreamgen,dreamdojo,ctrlworld}/`. They are resumable,
@@ -247,19 +258,30 @@ models/dreamgen/.venv/bin/python assets/scripts/make_timing_pass_table.py # -> r
 models/dreamgen/.venv/bin/python scripts/tables/make_speedup_summary.py --sampling-root sampling_dataset --out-dir results/reports
 ```
 
-![Speedup vs physical audit](docs/assets/figures/fig5_speedup.png)
+![Speedup vs physical audit](docs/assets/figures/speedup_tradeoff.png)
 
-*Figure 5. Acceleration mechanisms show distinct speed–quality trade-offs (bimanual).
-Bars show the speedup over the paired dense rollout, the right axis shows the physical
-audit (RIGIS multi-view, KIVA single-view), and boxed values show aggregate retention Q.
-Caching gives the largest speedups with near-zero degradation, and token pruning degrades
-the most. Humanoid and single-arm are in paper Fig. C2–C3.*
+*Speed–quality trade-off of every method on the bimanual cells. Bars show the speedup over
+the paired dense rollout, the right axis shows the physical audit (RIGIS for multi-view,
+KIVA for single-view), and boxed values show aggregate quality retention. Caching gives
+the largest speedups with near-zero degradation; token pruning degrades the most.*
 
 ## 6. Metrics
 
 The CLI is `python -m metrics.evaluate`. The registry and options are documented in
-[metrics/README.md](metrics/README.md), and the paper protocol in
+[metrics/README.md](metrics/README.md), and the evaluation protocol in
 [docs/metrics/README.md](docs/metrics/README.md).
+
+![KIVA and RIGIS](docs/assets/figures/kiva_rigis.png)
+
+*The two physical audits. (a) KIVA: a shared video-conditioned reader trained on
+forward-kinematics targets; five denoised candidates are averaged before rigidity and jerk
+are measured and calibrated against real-video references. (b) RIGIS: VGGT-Ω estimates
+depth and cameras to score geometric consistency and camera-pose stability across views.*
+
+![KIVA / RIGIS vs VLM judges](docs/assets/figures/metrics_vs_judges.png)
+
+*KIVA (top) and RIGIS (bottom) against four VLM judges, zero-shot and with
+chain-of-thought: correlation and accuracy with human scores, and latency per video second.*
 
 ```bash
 PY=models/dreamgen/.venv/bin/python; export HF_HUB_OFFLINE=1
@@ -269,43 +291,34 @@ $PY -m metrics.evaluate --pred-root $CELL --metrics fvd                 --out re
 $PY -m metrics.evaluate --pred-root $CELL --metrics kiva --opt kiva.embodiment=single_arm \
     --opt kiva.score_ref=true --out results/metrics/sa_sv_mk_kiva
 
-# full-benchmark sweeps that feed the paper tables
+# full-benchmark sweeps
 ROLE=gt bash metrics/kiva/run.sh --tmux && bash metrics/kiva/run.sh --tmux          # KIVA   -> results/hallucination/
 bash metrics/rigis/run.sh --tmux                                                    # RIGIS  -> results/multiview_consistency/
 bash scripts/metrics/run_dense_nr.sh                                                # Visual Integrity + Text Alignment
 MACHINES=1 bash scripts/metrics/run_dr_metrics.sh 0                                 # PSNR/SSIM/LPIPS/FVD vs dense
 ```
 
-Two protocol rules matter for the tables:
+Two protocol rules matter when comparing numbers:
 - Fidelity is always measured against the **dense prediction** of the same episode,
   never against GT.
 - Multiview FVD uses a **shared per-camera real pool**.
 
-## 7. Reproducing tables and figures
+## 7. Extending RoboWorM
 
-Producers are in `assets/scripts/` and `scripts/tables/`. They write data to
-`results/reports/` and LaTeX/PDF files to `assets/paper/{tables,figures,appendix/tables}/`.
-The full mapping from paper item to producer to output, with the run order, is in
-[docs/reproduce/README.md](docs/reproduce/README.md). Main entry points:
-
-| paper item | producer |
-|---|---|
-| Table 2 (dense results per cell) | FVD pools (`assets/scripts/{fvd_camera_match,extract_perview_fvd_feats,pool_perview_fvd,pool_singleview_fvd,verify_shared_pool_fairness}.py`), then `export_dense_table_shared_pool.py`, then `make_rq1_dense_table.py` |
-| Fig. 4 (KIVA / RIGIS vs human & VLM judges) | `scripts/tables/compare_ours_vs_vlm_correlation.py`, `analyze_geometry_label_correlation.py`, then `assets/scripts/make_rq3_human_alignment.py` |
-| Fig. 5, C2–C3 (speedup vs physics) | timing pass, then `assets/scripts/dump_speedup_figure_data.py`, then `make_speedup_audit_figure.py`; stats in `rq2_tradeoff_stats.py` |
-| Fig. 6c (rollout depth) | `assets/scripts/measure_rollout_depth.py`, then `make_singlearm_depth_figure.py` and `make_depth_vs_regime_figure.py` |
-| App. A tables | `assets/scripts/make_benchmark_stats.py`, then `make_dataset_appendix_tables.py` and `make_cell_matrix.py` |
-| App. C tables (C1, C3, accel configs, timing) | `make_finetune_config_table.py`, `make_impl_config_tables.py`, `make_timing_pass_table.py`, `scripts/tables/make_dense_generation_table.py` |
-
-Script names keep the RQ numbering of an earlier draft (`make_rq1_*` = Table 2,
-`make_rq3_*` = human alignment).
-
-## 8. Extending RoboWorM
-
-The benchmark is meant to be extended under the protocol of paper App. E. A new entrant
-is directly comparable to every existing number, because metrics are stored per clip and
-paired only when the tables are built, so nothing already in the benchmark is re-scored.
+The benchmark can be extended along three axes: a new world model, a new embodiment /
+dataset, or a new fast-inference method. A new entrant is directly comparable to every
+existing number, because metrics are stored per clip and paired only when results are
+aggregated, so nothing already in the benchmark is re-scored.
 Guides, grounded in the code: [docs/extending/](docs/extending/README.md).
+
+![Extending RoboWorM](docs/assets/figures/extending.png)
+
+*The three extension paths. (A) A new world model: fine-tune on the released corpus, run
+the benchmark grid, score with the existing metrics (a new row). (B) A new embodiment
+dataset: register it, prepare prompts/actions/video, fine-tune the backbones, and add a
+KIVA keypoint reader and a RIGIS camera setup (a new column). (C) A new acceleration
+method: plug it into the existing models, run the grid, and measure its speed–quality
+trade-off against dense.*
 
 | add | what it takes | guide |
 |---|---|---|
