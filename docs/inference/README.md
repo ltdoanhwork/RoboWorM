@@ -111,9 +111,9 @@ The uniform timing pass used for the paper:
 bash scripts/tools/tune/_bench_uniform_timing.sh --estimate            # GPU-hour estimate only
 bash scripts/tools/tune/_bench_uniform_timing.sh --cell dreamdojo_humanoid_sv --gpu 0
 bash scripts/tools/tune/_bench_uniform_timing.sh --all --gpu 0         # every cell x method
-python3 assets/scripts/merge_timing_shards.py                          # -> metrics/reports/timing_pass.{json,csv}
+python3 assets/scripts/merge_timing_shards.py                          # -> results/reports/timing_pass.{json,csv}
 models/dreamgen/.venv/bin/python scripts/tables/make_speedup_summary.py \
-    --sampling-root sampling_dataset --out-dir metrics/reports
+    --sampling-root sampling_dataset --out-dir results/reports
 ```
 
 It reports the median per-chunk time with the first chunk dropped as warm-up (k-means /

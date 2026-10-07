@@ -171,4 +171,4 @@ are generated from the launchers by `assets/scripts/make_impl_config_tables.py`.
     `video2world_lvg`; it is `video2world_gr00t_lvg --gr00t_variant droid`. The top-level
     README's timing commands write to `results/reports/` (`speedup_perchunk.csv` from
     `merge_timing_shards.py`, `timing_pass.{json,csv}` from `make_timing_pass_table.py`), not
-    `metrics/reports/`. Method trees do contain `input/` directories (see "Inputs" above).
+    `results/reports/`. Method trees do contain `input/` directories (see "Inputs" above).

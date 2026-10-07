@@ -7,8 +7,8 @@ config / canonical run script (`cfg_src` in the JSON). Regenerate with:
 ```bash
 python3 scripts/tables/make_dense_generation_table.py \
   --md docs/inference/dense_generation_config.md \
-  --json metrics/reports/dense_generation_config.json \
-  --tex metrics/reports/dense_generation_config.tex
+  --json results/reports/dense_generation_config.json \
+  --tex results/reports/dense_generation_config.tex
 ```
 
 Cells: 12 | clips probed: 3165 / 3166 on disk | **1 unreadable**: `single_arm/output/singleview/dreamgen/makovian/iter_000090000_static16fps/global/episode_000056.mp4`
