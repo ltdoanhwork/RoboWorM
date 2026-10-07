@@ -167,8 +167,8 @@ are generated from the launchers by `assets/scripts/make_impl_config_tables.py`.
    run `t0.15/ret0.2/probe2` and WorldCache `t0.15/ret0.3/probe2`; the run logs
    (`logs/exp_logs/timing_pass/dist/dreamdojo_humanoid_sv/`) show `0.08/0.2/2` and `0.03/0.4/4`,
    i.e. the shipped defaults.
-10. **Other docs.** `scripts/README.md` lists the DreamGen bimanual SV dense entrypoint as
-    `video2world_lvg`; it is `video2world_gr00t_lvg --gr00t_variant droid`. The top-level
-    README's timing commands write to `results/reports/` (`speedup_perchunk.csv` from
-    `merge_timing_shards.py`, `timing_pass.{json,csv}` from `make_timing_pass_table.py`), not
-    `results/reports/`. Method trees do contain `input/` directories (see "Inputs" above).
+10. **Other docs.** The DreamGen bimanual SV dense entrypoint is
+    `video2world_gr00t_lvg --gr00t_variant droid` (fixed in `scripts/README.md`, which listed
+    `video2world_lvg`). The timing commands write to `results/reports/`
+    (`speedup_perchunk.csv` from `merge_timing_shards.py`, `timing_pass.{json,csv}` from
+    `make_timing_pass_table.py`). Method trees do contain `input/` directories (see "Inputs" above).

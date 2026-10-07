@@ -59,7 +59,7 @@ rather than guessing it.
 | 7 | DreamGen bimanual MV (`dreamgen_bimanual_mv`) | `run/dreamgen/run_bimanual_multiview_dreamgen_full.sh` | `infer/infer_bimanual_multiview_rollout.py` |
 | 8 | DreamGen humanoid MV (`dreamgen_humanoid_mv`) | `run/dreamgen/run_humanoid_multiview_dreamgen_full.sh` | `infer/infer_bimanual_multiview_rollout.py` |
 | 9 | DreamGen single_arm SV (`dreamgen_single_arm_sv`) | `run/dreamgen/run_single_arm_singleview_dreamgen_static16fps.sh` | `video2world_gr00t_lvg` |
-| 10 | DreamGen bimanual SV (`dreamgen_bimanual_sv`) | `run/dreamgen/run_bimanual_singleview_dreamgen_16fps.sh` | `video2world_lvg` |
+| 10 | DreamGen bimanual SV (`dreamgen_bimanual_sv`) | `run/dreamgen/run_bimanual_singleview_dreamgen_16fps.sh` | `video2world_gr00t_lvg --gr00t_variant droid` |
 | 11 | DreamGen humanoid SV (`dreamgen_humanoid_sv`) | `run/dreamgen/run_humanoid_singleview_dreamgen_static16fps.sh` | `video2world_lvg` |
 | 12 | DreamDojo single_arm SV (`dreamdojo_single_arm_sv`) | `run/dreamdojo/run_single_arm_singleview_dreamdojo_dense.sh` | `infer/infer_single_arm_singleview_autoregressive.py` |
 | 13 | DreamDojo bimanual SV (`dreamdojo_bimanual_sv`) | `run/dreamdojo/run_bimanual_singleview_dreamdojo_full_episode.sh` | `infer/infer_bimanual_singleview_single_segment.py` |
