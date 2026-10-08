@@ -83,7 +83,7 @@ finetuning/          dreamgen/, dreamdojo/, ctrlworld/ training launchers + data
 scripts/             prepare/ infer/ run/{dreamgen,dreamdojo,ctrlworld}/ train/ metrics/ tables/ tools/
 metrics/             evaluate.py (CLI), kiva/, rigis/, fvd.py, clip_score.py, fidelity.py, quality/
 assets/              scripts/ (figure/table producers) + generated assets
-results/             metric outputs and reports (see results/README.md)
+results/             metric outputs and report tables (not shipped; created on first run)
 docs/                setup, datasets, training, inference, acceleration, metrics, extending, assets/figures
 ```
 
@@ -166,6 +166,55 @@ Details:
   labelling, and which variants are used.
 - [docs/datasets/sampling_dataset.md](docs/datasets/sampling_dataset.md): layout,
   output conventions per model, and input builders per cell.
+
+### Where to put the downloads
+
+Every launcher, prepare script and metric runner resolves paths relative to the repo
+root, so run all downloads from the repo root with exactly these `--local-dir` targets.
+The three trees are gitignored; only `checkpoints/CHECKPOINTS.md` is tracked.
+
+| download | HF repo (type) | `--local-dir` | read by |
+|---|---|---|---|
+| source / training data | `doanh25032004/vgp_datasets` (dataset) | `datasets` | `scripts/run/*` (`--dataset-base datasets/<emb>/<view>`), `scripts/prepare/`, `finetuning/` |
+| benchmark rollouts | `doanh25032004/video_gen_physics` (dataset) | `sampling_dataset` | `metrics.evaluate`, `scripts/metrics/`, `assets/scripts/`; launchers write new rollouts here |
+| base weights | `doanh25032004/vgp_checkpoints_{nvidia,dreamdojo,google_t5}` (model) | `checkpoints/base/{nvidia,dreamdojo,google-t5}` | all model launchers |
+| other base + metric weights | `doanh25032004/vgp_checkpoints_own` (model) | `checkpoints`, then re-layout | Ctrl-World, FVD I3D, WorldScore probes (KIVA / RIGIS weights: see CHECKPOINTS.md, Metrics) |
+| our fine-tuned weights | `doanh25032004/vgp_exp_logs` (model) | `exp_logs`, then re-layout | every fine-tuned cell (`checkpoints/finetuned/...`) |
+
+The re-layout snippet for the last two rows is in
+[checkpoints/CHECKPOINTS.md](checkpoints/CHECKPOINTS.md#restore-from-huggingface). After it,
+the repo root looks like this:
+
+```
+datasets/
+  single_arm/{singleview,multiview}/{makovian,non_makovian}/        LeRobot: meta/ data/ videos/
+  bimanual/{singleview,multiview}/{makovian,non_makovian}/<task>/    one dir per task
+  humanoid/singleview/{makovian,non_makovian}/                       + captions/
+  humanoid/multiview/{makovian,non_makovian}/<task>/                 RoboCOIN tasks
+  single_arm_static_dreamgen_16fps/  bimanual_dreamgen_16fps/  humanoid_dreamgen_16fps/
+  bimanual_multiview_grid_seg16_dreamgen/  humanoid_multiview_grid_seg16_dreamgen/
+                                                                     DreamGen training corpora: videos/ metas/ t5_xxl/
+sampling_dataset/
+  {method}/{embodiment}/{input,output}/{view}/{model}/{split}/...    input/ only under dense/
+  data_for_web/                                                      human labels + catalog
+checkpoints/
+  base/{nvidia,dreamdojo,google-t5,ctrl_world,stabilityai,openai,pi05_droid,meta-llama,droid,mjcf,...}
+  finetuned/{ctrlworld,dreamdojo,dreamgen}/
+  metrics/{fvd,worldscore,vggt_omega,kiva}/
+```
+
+`hf download` is the current name of `huggingface-cli download`; both take the same
+arguments. Keep `export HF_HUB_DISABLE_XET=1` set for every download (the Xet backend
+fails on parallel filesystems). Quick sanity check after downloading:
+
+```bash
+ls datasets/humanoid/singleview/makovian/meta            # info.json episodes.jsonl tasks.jsonl ...
+ls datasets/bimanual/multiview/makovian | head -3          # close_cardboard_box close_toolbox ...
+ls sampling_dataset/dense/humanoid/output/singleview/dreamgen   # makovian non_makovian
+ls checkpoints/base checkpoints/finetuned checkpoints/metrics
+```
+
+Metric outputs and report tables are written to `results/` (gitignored, created on first run).
 
 ## 3. Checkpoints
 

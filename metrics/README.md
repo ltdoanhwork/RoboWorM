@@ -60,11 +60,10 @@ repo, ~43 GB). It is kept only as a dependency: `third_party.py` puts its
 stored per-clip records the paper tables read (`dense_nr_full/` reference-free wave,
 `dr_full/` PSNR/SSIM/LPIPS + I3D, `fvd_perview/` per-camera I3D features).
 
-Removed on 2026-10-06 (moved to `tmp/20261005_refactor/misc/metrics/`, restore commands in
-`tmp/20261005_refactor/MANIFEST.md`): the PhyWorld schema/scoring (`phyworld/`), the
-WorldScore quality probe (`quality/`), the non-paper dynamics code (`dynamics/`: paired-GT
-flow EPE, actor flicker, motion magnitude) and the legacy `video_metrics.py`. The paper
-summary tables that used to live in `metrics/reports/` are now in `results/reports/`.
+Not part of this release: the PhyWorld schema/scoring (`phyworld/`), the WorldScore
+quality probe (`quality/`), the non-paper dynamics code (`dynamics/`: paired-GT flow EPE,
+actor flicker, motion magnitude) and the legacy `video_metrics.py`. The paper summary
+tables are written to `results/reports/` (gitignored, created on first run).
 
 ## Interpreters and checkpoints
 

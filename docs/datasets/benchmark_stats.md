@@ -144,7 +144,7 @@ The plan sheet says "100 videos x 12 cells = 1200"; the delivered benchmark is
 2. **humanoid multiview is all AIRBOT MMK2, no G1.** The sheet lists
    `RoboCOIN/G1edu-u3_pullBowl_storage_bread_unordered_b` for the makovian row;
    the 6 task dirs on disk are all `Airbot_MMK2_*` / `AIRBOT_MMK2_*`.
-   (`RoboCOIN/leju_robot_*` in `tmp/20261005_refactor/docs/root_clone_dataset.md` is likewise cloned-but-unused.)
+   (`RoboCOIN/leju_robot_*` tasks were cloned during curation but are likewise unused.)
 3. **bimanual = 4 views**, resolving the sheet's open question "Nên dùng 4 view
    hay 3 view?" — all 54 task units expose exactly `cam_high`, `cam_low`,
    `cam_left_wrist`, `cam_right_wrist`.

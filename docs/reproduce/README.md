@@ -38,8 +38,8 @@ root with `PY=models/dreamgen/.venv/bin/python` (several producers need Python â
 | App. C gate | `assets/scripts/check_impl_appendix_claims.py` (run last; reads [main_results_speedup_and_checkpoint.md](main_results_speedup_and_checkpoint.md)) | exit code only |
 | App. D human study / VLM judges | same chain as Fig. 4; KIVA audit data `assets/scripts/make_kiva_audit_data.py` | `results/reports/kiva_audit.{csv,json}` |
 
-Notes on the committed appendix tables (they match the paper; do not overwrite them
-with regenerated numbers unless you mean to update the paper):
+Notes on the appendix tables (the versions in the paper PDF are the reference; regenerated
+numbers can differ slightly):
 
 - `timing_pass.tex` and `results/reports/speedup_summary_*.{csv,tex}` come from the
   uniform timing pass (`scripts/tools/tune/_bench_uniform_timing.sh` â†’ its
@@ -94,6 +94,5 @@ done
 ```
 
 Most producers accept `--help`; check it for input-run overrides (e.g. `--run
-metrics/WorldScore/results/dense_nr_full` for the NR-table producers). Reports that were
-lost on 2026-10-05 and must be regenerated are listed in
-`tmp/20261005_refactor/REGENERATE_REPORTS.md`.
+metrics/WorldScore/results/dense_nr_full` for the NR-table producers). `results/` is not
+shipped with the repo: every file under `results/reports/` is created by the producers above.

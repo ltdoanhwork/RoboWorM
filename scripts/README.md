@@ -25,9 +25,9 @@ working directory. The examples below run from the repo root.
 | `tools/data/` | dataset download, split, captioning, makovian classification |
 | `augment/` | augment track (core runners + per-model infer); see the `augment-track-layout` rule |
 
-Label CSV/JSONL files are archived in `tmp/20261005_refactor/misc/data_labels/`. Scripts archived in the
-2026-10-05 refactor are in `tmp/20261005_refactor/scripts/`. `path_map.tsv`
-there maps every old path to its new path.
+The Markovian label CSV/JSONL files are not shipped (the splits are baked into the HF
+dataset `doanh25032004/vgp_datasets`); the `tools/data/` classifiers write them to a local,
+untracked `tmp/20261005_refactor/misc/data_labels/` by default.
 
 ## Launcher naming
 

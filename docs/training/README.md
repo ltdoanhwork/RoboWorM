@@ -34,7 +34,7 @@ script (it runs the prepare step unless told to skip it). Evidence = `dataset_di
 Rows 3 and 5 are the Ctrl-World cells reported in the main tables for bimanual /
 humanoid (4-view grid); rows 2 and 4 are the 3-view variants. The bimanual 30 fps
 intermediate `bimanual_multiview/checkpoint-120000.pt` and DreamDojo `exp_aloha_resume40k`
-are training-only stepping stones (archived, see `tmp/20261005_refactor/MANIFEST.md`).
+are training-only stepping stones (not released).
 
 ## DreamGen (Cosmos-Predict2 2B Video2World)
 

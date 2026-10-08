@@ -48,6 +48,32 @@ hf download doanh25032004/vgp_datasets --repo-type dataset --local-dir datasets
 rm -rf datasets/.cache               # regenerable HF metadata
 ```
 
+`hf download` is the current name of `huggingface-cli download` (same arguments). Run it
+from the repo root: `--local-dir datasets` must resolve to `<repo>/datasets`, because the
+code reads fixed repo-relative paths. Where each tree is read:
+
+| path under `datasets/` | read by (defaults in code) |
+|---|---|
+| `single_arm/singleview` | DreamGen / DreamDojo single_arm SV launchers and prepare scripts |
+| `single_arm/multiview` | Ctrl-World single_arm MV launchers (`--dataset-base datasets/single_arm/multiview`) |
+| `bimanual/{singleview,multiview}/<split>/<task>` | DreamGen / DreamDojo / Ctrl-World bimanual launchers (tasks discovered with `find`) |
+| `humanoid/singleview` (+ `captions/`) | DreamGen / DreamDojo humanoid SV launchers |
+| `humanoid/multiview/<split>/<task>` | DreamGen / Ctrl-World humanoid MV launchers |
+| `*_dreamgen_16fps/`, `*_multiview_grid_seg16_dreamgen/` | DreamGen post-training only (`finetuning/dreamgen/`) |
+
+Sanity check (each should list files, not fail):
+
+```bash
+ls datasets/humanoid/singleview/makovian/meta               # info.json episodes.jsonl tasks.jsonl ...
+ls datasets/single_arm/multiview/non_makovian/videos/chunk-000
+ls datasets/bimanual/multiview/makovian | head -3             # one dir per task
+ls datasets/bimanual_multiview_grid_seg16_dreamgen            # metas t5_xxl videos
+```
+
+Task directories are real directories: the launchers discover episodes with `find -type d`,
+which does not follow a symlinked task directory. If you keep the data elsewhere, symlink
+`datasets` itself (`ln -s /big/disk/vgp_datasets datasets`), not the task dirs inside it.
+
 ## Layout of `datasets/`
 
 ```
@@ -88,8 +114,7 @@ Evidence = the `dataset_dir` / `dataset_path` recorded in each checkpoint's
 | `bimanual_multiview_grid_seg16_dreamgen` | `dreamgen/posttraining/multiview/bimanual_multiview_seg16/config.yaml` |
 | `humanoid_multiview_grid_seg16_dreamgen` | `dreamgen/posttraining/multiview/humanoid_multiview_seg16/config.yaml` |
 
-Archived to `tmp/20261005_refactor/misc/datasets/` (restore commands in
-`tmp/20261005_refactor/MANIFEST.md`; still present on the HF repo):
+Not needed (still present on the HF repo; skip them with the `--include` list above):
 
 - `bimanual_dreamgen`, `humanoid_dreamgen`, `bimanual_multiview_dreamgen` — early
   prototypes, superseded by the `*_16fps` / `*_seg16` corpora; no paper checkpoint reads them.
@@ -118,9 +143,12 @@ sampled per label:
 
 ```bash
 bash scripts/tools/data/launch_qwen3vl_server.sh            # keep running (vLLM)
-python scripts/tools/data/classify_markovian_qwen.py         # DROID tasks -> tmp/20261005_refactor/misc/data_labels/task_labels.csv
-python scripts/tools/data/join_labels_to_episodes.py         # -> tmp/20261005_refactor/misc/data_labels/episode_markovian_split{,_full}.csv
-python scripts/tools/data/classify_markovian_gr1.py          # GR1 -> tmp/20261005_refactor/misc/data_labels/gr1_task_labels.csv, gr1_episode_sampled.csv
+python scripts/tools/data/classify_markovian_qwen.py         # DROID tasks -> <labels>/task_labels.csv
+python scripts/tools/data/join_labels_to_episodes.py         # -> <labels>/episode_markovian_split{,_full}.csv
+python scripts/tools/data/classify_markovian_gr1.py          # GR1 -> <labels>/gr1_task_labels.csv, gr1_episode_sampled.csv
 ```
 
-The label files used for the release are archived (untracked) in `tmp/20261005_refactor/misc/data_labels/`; the splits they produced are already baked into the HF dataset `doanh25032004/vgp_datasets`.
+`<labels>` is a local, untracked directory (default `tmp/20261005_refactor/misc/data_labels/`,
+override with the scripts' `--cache-file` / `--output-csv` flags). The paper's label files
+are not shipped: the splits they produced are already baked into the HF dataset
+`doanh25032004/vgp_datasets`, so you only need this step for a new corpus.

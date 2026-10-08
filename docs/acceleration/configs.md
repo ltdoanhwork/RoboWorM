@@ -121,7 +121,7 @@ Paper grid = 12 cells × 10 (dense + 9 methods) = 120 pairs; 117 have a launcher
 | status | (cell, method) |
 |---|---|
 | no launcher | CW humanoid MV 4-view × FasterCache; DD bimanual SV × SiTo, ITM |
-| launcher exists, **no released rollouts** (`results/reports/impl_accel_configs.json::script_without_coverage`) | CW bimanual MV 4-view × FasterCache; CW single_arm MV × FasterCache; DD single_arm SV × SiTo, ITM; DD humanoid SV × SiTo, ITM |
+| launcher exists, **no released rollouts** (`script_without_coverage` in `results/reports/impl_accel_configs.json`, written by `assets/scripts/make_impl_config_tables.py`) | CW bimanual MV 4-view × FasterCache; CW single_arm MV × FasterCache; DD single_arm SV × SiTo, ITM; DD humanoid SV × SiTo, ITM |
 | non-paper strips | CW bimanual 3-view has only dense/WorldCache/DiCache/FasterCache; CW humanoid 3-view has no FasterCache |
 
 Released rollout counts per (cell, method): [../datasets/cell_matrix.md](../datasets/cell_matrix.md).
@@ -161,12 +161,10 @@ are generated from the launchers by `assets/scripts/make_impl_config_tables.py`.
    the same `CKPT` / `DATASET_NAME` / `DOWN_SAMPLE` to dense (see [../inference/README.md](../inference/README.md)).
 8. **FasterCache on Ctrl-World 4-view is a no-op** by construction (CFG off; self-attention
    lengths 3840/960/240 are outside the processor's `{180, 720, 2880}` whitelist).
-9. **Stale insight rules.** `.cursor/rules/ctrlworld-{bimanual,humanoid}-multiview-4view-grid-sparse-attention-insights.mdc`
-   list SVG2 `top_p 0.5` as the script default; the scripts and App. C use 0.7.
-   `dreamdojo-humanoid-singleview-sparse-attention-insights.mdc` labels the uniform-pass DiCache
-   run `t0.15/ret0.2/probe2` and WorldCache `t0.15/ret0.3/probe2`; the run logs
-   (`logs/exp_logs/timing_pass/dist/dreamdojo_humanoid_sv/`) show `0.08/0.2/2` and `0.03/0.4/4`,
-   i.e. the shipped defaults.
+9. **Stale tuning notes.** Some development notes list SVG2 `top_p 0.5` as the Ctrl-World
+   4-view-grid script default; the scripts and App. C use 0.7. For DreamDojo humanoid SV
+   the uniform timing pass ran DiCache at `0.08/0.2/2` and WorldCache at `0.03/0.4/4`
+   (thresh/ret/probe), i.e. the shipped defaults.
 10. **Other docs.** The DreamGen bimanual SV dense entrypoint is
     `video2world_gr00t_lvg --gr00t_variant droid` (fixed in `scripts/README.md`, which listed
     `video2world_lvg`). The timing commands write to `results/reports/`

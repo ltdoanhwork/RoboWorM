@@ -1,8 +1,6 @@
 # RoboWorM documentation
 
 Only what is needed to set up, train, run inference, evaluate and reproduce the paper.
-Process notes, run hand-offs and analysis write-ups from development are archived in
-`tmp/20261005_refactor/docs/` (index: `tmp/20261005_refactor/MANIFEST.md`).
 
 | section | read this for |
 |---|---|
@@ -23,5 +21,5 @@ Code-level references that live next to the code:
 [scripts/README.md](../scripts/README.md) (script tree),
 [metrics/README.md](../metrics/README.md) (metric registry / `python -m metrics.evaluate`),
 [assets/scripts/README.md](../assets/scripts/README.md) (paper-asset producers),
-[checkpoints/CHECKPOINTS.md](../checkpoints/CHECKPOINTS.md) (every checkpoint),
-[results/README.md](../results/README.md) (metric outputs read by the paper).
+[checkpoints/CHECKPOINTS.md](../checkpoints/CHECKPOINTS.md) (every checkpoint).
+Metric outputs and report tables are written to `results/` (gitignored, created on first run).

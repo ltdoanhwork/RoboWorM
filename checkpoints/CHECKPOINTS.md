@@ -81,10 +81,9 @@ see `models/dreamgen/imaginaire/constants.py`). DreamDojo looks for HF mirrors i
 | `vggt_omega/vggt_omega_1b_512.pt` | 4.3G | RIGIS (symlink to `thanhnv/VideoWorldModelBenchmark/checkpoint/`) |
 | `kiva/` | 1.1G | KIVA readers (symlink to `triquang/kinescore-store/ckpt`) |
 
-## Archived (not used by any paper cell)
+## Not released (not used by any paper cell)
 
-Moved to `tmp/20261005_refactor/checkpoints_unused/` (same relative layout). See
-`tmp/20261005_refactor/MANIFEST.md` for the restore command of each item:
+Intermediate or superseded weights that no paper cell loads:
 Ctrl-World `humanoid_multiview/checkpoint-150000.pt`, DreamDojo `exp_aloha_resume40k`
 (training-only init of cell 13), DreamDojo `exp_single_arm_sv` iters 10000/20000,
 DreamGen `single_arm_static_singleview_16fps_v1_90k`, `nvidia/PhysicalAI-Robotics-GR00T-Eval`.

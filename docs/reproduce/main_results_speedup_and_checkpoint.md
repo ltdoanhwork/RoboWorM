@@ -98,7 +98,7 @@ for the appendix:
 > Table Y reports per-cell PSNR/SSIM/LPIPS and speedup for every
 > (model family, embodiment, view, method) combination we benchmarked.
 > Speedup values marked † are transcribed from the documented tuning runs
-> in this repo's method-tuning notes (`.cursor/rules/*-insights.mdc`) rather
+> in this repo's method-tuning notes rather
 > than the full sampling-dataset sweep, because per-episode wall-clock time
 > is only persisted in `all_summary.json` for a subset of cells (chiefly
 > Ctrl-World multiview); all † numbers come from a run of the *default*
@@ -192,8 +192,8 @@ columns: base/finetuned PSNR/SSIM/LPIPS + deltas, checkpoint paths, n_episodes.
    (Ctrl-World single_arm multiview caching/ITM, DreamGen single_arm
    singleview/multiview caching + pruning, DreamGen humanoid singleview pruning,
    and every DreamDojo caching cell). These are reported as blank/omitted in
-   the appendix, not estimated. `tmp/20261005_refactor/docs/speedup_coverage_gaps.md` has the per-cell
-   audit plus the prepared timing jobs that close them.
+   the appendix, not estimated. Closing them needs a timing pass on those cells
+   (`scripts/tools/tune/_bench_uniform_timing.sh --cell <cell>`).
    *(An earlier revision claimed "69 of 127". That was an artifact of
    `make_speedup_summary.py`: it loaded only 9 of the 14 tuning-insight rules,
    and keyed its lookup on the collapsed model family so every

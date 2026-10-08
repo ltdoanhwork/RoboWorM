@@ -84,9 +84,6 @@ VIEWS FRAME_BATCH_SIZE MAX_EPISODES MVC_PORT MVC_DTYPE MVC_COMPILE EPISODE_DIR`.
 * Compare variants only at the same extraction fps.
 * The model service is single-tenant: concurrent sweeps need different `MVC_PORT`.
 
-The pre-refactor process notes and smoke-test numbers are archived at
-`tmp/20261005_refactor/misc/docs_metrics/multiview_consistency_metric.md`.
-
 ---
 
 # Detailed setup reference
