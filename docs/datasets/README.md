@@ -4,7 +4,7 @@ RoboWorM evaluates on **1,605 real-world episodes** curated from **5 source corp
 covering **3 embodiments** (single-arm, bimanual, humanoid), **1–4 synchronized views**
 and two task regimes (**Markovian** short-horizon, **non-Markovian** long-horizon,
 directory name `makovian` / `non_makovian`). See App. A of the paper
-(`docs/paper/RoboWM_ICLR2027_check.pdf`) and the measured counts in
+([project page](https://roboworm.github.io/roboworm/)) and the measured counts in
 [cell_matrix.md](cell_matrix.md) / [benchmark_stats.md](benchmark_stats.md).
 
 | embodiment | view | corpus | robot | views/ep | fps | episodes (M + nM) |

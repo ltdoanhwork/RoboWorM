@@ -2,7 +2,7 @@
 
 Only the metrics the paper reports (Sec. 3.4, Sec. 4.1, App. B) plus the two RQ3
 baselines, behind one interface (`metrics.base.BaseMetric`), runnable from Python or one
-CLI (`python -m metrics.evaluate`). Paper PDF: `docs/paper/RoboWM_ICLR2027_check.pdf`.
+CLI (`python -m metrics.evaluate`). Paper: [project page](https://roboworm.github.io/roboworm/).
 User guide: [docs/metrics/README.md](../docs/metrics/README.md).
 
 ## Metrics and where they come from

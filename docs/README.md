@@ -15,7 +15,7 @@ Only what is needed to set up, train, run inference, evaluate and reproduce the 
 | [metrics/](metrics/README.md) | what each paper metric measures, its source, code entrypoint and command; setup guides [metrics/kiva.md](metrics/kiva.md), [metrics/rigis.md](metrics/rigis.md) |
 | [reproduce/](reproduce/README.md) | paper table / figure → producer script → output file, and a suggested regeneration order |
 | [extending/](extending/README.md) | adding a world model, an embodiment / dataset, an acceleration method or a metric (paper App. E): files to write, interfaces, checklists |
-| [paper/](paper/) | the paper PDF (`RoboWM_ICLR2027_check.pdf`) |
+| [project page](https://roboworm.github.io/roboworm/) | the paper, rollout videos and interactive demos |
 
 Code-level references that live next to the code:
 [scripts/README.md](../scripts/README.md) (script tree),
