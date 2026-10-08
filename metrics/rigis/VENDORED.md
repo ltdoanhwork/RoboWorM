@@ -21,8 +21,12 @@ The upstream files above are byte-identical to that commit. The previous checkou
 | `metric.py`, `__init__.py` | `MultiviewConsistency` `BaseMetric` wrapper, registered as `rigis` (alias `multiview_consistency`) |
 | `uv.lock` | lock file `uv` produced for this project on 2026-10-01 (torch 2.14.1+cu126); kept so `uv run` does not re-resolve |
 | `VENDORED.md` | this file |
+| `vggt_omega/LICENSE` | added 2026-10-08: the FAIR Noncommercial Research License that `vggt_omega/*.py` headers refer to, copied from [facebookresearch/vggt-omega](https://github.com/facebookresearch/vggt-omega) `main` @ `48b23c8` (the upstream archive above did not include it) |
 
 Local patches to upstream files: **none**.
+
+`vggt_omega/` is Meta's VGGT-Omega inference code (FAIR Noncommercial Research License,
+non-commercial use only). The rest of this directory is RoboWorM code.
 
 ## Environment
 
