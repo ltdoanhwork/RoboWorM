@@ -1,5 +1,0 @@
-family,embodiment,view,base_ckpt,finetuned_ckpt,n_episodes,base_psnr,finetuned_psnr,delta_psnr,base_ssim,finetuned_ssim,delta_ssim,base_lpips,finetuned_lpips,delta_lpips
-Ctrl-World,bimanual,multiview,checkpoint-10000.pt (DROID pretrain),bimanual_multiview_5fps/checkpoint-280000.pt,2,14.722,20.658,5.937,0.5781,0.7725,0.1945,0.523,0.2995,-0.2236
-Ctrl-World,humanoid,multiview,checkpoint-10000.pt (DROID pretrain),humanoid_multiview/checkpoint-200000.pt,2,14.253,21.017,6.764,0.6599,0.8379,0.1781,0.4395,0.2065,-0.2331
-DreamGen,bimanual,multiview,Cosmos-Predict2-2B-Video2World/model-480p-16fps.pt,bimanual_multiview_seg16/iter_000120000,1,9.257,13.351,4.094,0.2739,0.53,0.2562,0.7274,0.5466,-0.1808
-DreamGen,humanoid,multiview,Cosmos-Predict2-2B-Video2World/model-480p-16fps.pt,humanoid_multiview_seg16/iter_000100000,1,8.768,12.904,4.136,0.3211,0.5915,0.2704,0.662,0.4236,-0.2384

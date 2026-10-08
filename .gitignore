@@ -224,12 +224,8 @@ exp_logs/*
 logs/exp_logs/
 exp_imgs/*
 lam_infer_outputs/*
-tmp/*
-# tmp/ is the traceable refactor archive: track only its docs (see tmp/README.md)
-!tmp/README.md
-!tmp/20261005_refactor/
-tmp/20261005_refactor/*
-!tmp/20261005_refactor/*.md
+# local refactor archive, scratch and run outputs (kept on disk, never shipped)
+/tmp/
 tmp_2/*
 models/Ctrl-World/dataset_example/*
 webpage/*
@@ -252,9 +248,8 @@ metrics/rigis/*.egg-info/
 !webpage/labeling/
 !webpage/labeling/**
 compare/*
-results/*
-!results/README.md
-!results/reports/
+# metric outputs / report tables: generated locally (created on first run)
+/results/
 assets/*
 # ...but the paper-figure/table generators living under assets/ ARE source and
 # must stay in git (assets/* above is meant to exclude heavy binary artifacts).
@@ -282,6 +277,8 @@ docs/paper/*.pdf
 
 # 2026-10-05 refactor (Phase 7): local-only state
 logs/
+# internal label files / scratch data (data/labels was archived)
+/data/
 nohup.out
 .venv_edit/
 .jitcache/
