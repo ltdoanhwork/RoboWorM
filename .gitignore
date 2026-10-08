@@ -289,3 +289,8 @@ nohup.out
 .cursor/
 .claude/
 .codegraph/
+
+# Internal agent/dev files (local only)
+/CLAUDE.md
+/augment_manifest.json
+/pyrightconfig.json
