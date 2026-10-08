@@ -110,6 +110,26 @@ WORLDCACHE_FLAGS=(
 if [[ "${WORLDCACHE_DYNAMIC_DECAY}" == "1" ]]; then
   WORLDCACHE_FLAGS+=(--worldcache-dynamic-decay)
 fi
+# Published-method modules (SWD / OFA / warp), forwarded exactly as the bimanual launcher
+# does. Defaults off, so existing humanoid rows are unchanged; without these an AM_DiT
+# `wcfull_*` row on humanoid would silently be the CFC+ATS ablation, not WorldCache.
+WORLDCACHE_SALIENCY_ENABLED="${WORLDCACHE_SALIENCY_ENABLED:-0}"
+WORLDCACHE_SALIENCY_WEIGHT="${WORLDCACHE_SALIENCY_WEIGHT:-5.0}"
+WORLDCACHE_OSI_ENABLED="${WORLDCACHE_OSI_ENABLED:-0}"
+WORLDCACHE_FLOW_ENABLED="${WORLDCACHE_FLOW_ENABLED:-0}"
+WORLDCACHE_FLOW_SCALE="${WORLDCACHE_FLOW_SCALE:-0.5}"
+echo "  modules     : CFC=on(always) SWD=${WORLDCACHE_SALIENCY_ENABLED}(beta=${WORLDCACHE_SALIENCY_WEIGHT}) OFA/OSI=${WORLDCACHE_OSI_ENABLED} ATS=${WORLDCACHE_DYNAMIC_DECAY} warp=${WORLDCACHE_FLOW_ENABLED}"
+if [[ "${WORLDCACHE_SALIENCY_ENABLED}" == "1" ]]; then
+  WORLDCACHE_FLAGS+=(--worldcache-saliency-enabled
+                     --worldcache-saliency-weight "${WORLDCACHE_SALIENCY_WEIGHT}")
+fi
+if [[ "${WORLDCACHE_OSI_ENABLED}" == "1" ]]; then
+  WORLDCACHE_FLAGS+=(--worldcache-osi-enabled)
+fi
+if [[ "${WORLDCACHE_FLOW_ENABLED}" == "1" ]]; then
+  WORLDCACHE_FLAGS+=(--worldcache-flow-enabled
+                     --worldcache-flow-scale "${WORLDCACHE_FLOW_SCALE}")
+fi
 
 PY_ARGS=(
   --dataset-path "${DATASET_PATH_CSV}"
