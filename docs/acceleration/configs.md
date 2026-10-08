@@ -4,7 +4,7 @@ Every value below is the **effective** command line of the launcher with its shi
 It was captured by running each launcher with `python`/`torchrun` replaced by a logging stub
 (no GPU work, no files written), then hand-checked against the scripts. Reading the
 `${VAR:-default}` lines alone is not enough: the Ctrl-World 4-view-grid wrappers set their own
-defaults and pass them into the 3-view base script, overriding the base defaults.
+defaults and pass them into the shared base script, overriding the base defaults.
 
 Any knob can be overridden with the env var named in [caching.md](caching.md),
 [sparse_attention.md](sparse_attention.md) or [pruning.md](pruning.md).
@@ -18,10 +18,8 @@ the dense output path with the leading `sampling_dataset/dense/` replaced by
 | cell | prefix (`scripts/run/…/`) | dense launcher | entrypoint (dense = methods unless noted) | checkpoint | output under `sampling_dataset/<method>/` |
 |---|---|---|---|---|---|
 | CW single_arm MV (3-view) | `ctrlworld/run_single_arm_multiview_ctrlworld` | same prefix `.sh` | `infer_single_arm_multiview_ctrlworld.py` (positional subset `makovian`/`non_makovian`/`both`) | `base/ctrl_world/Ctrl-World/checkpoint-10000.pt` | `single_arm/output/multiview/ctrlworld/{makovian,non_makovian}/episode_*/` |
-| CW bimanual MV (4-view grid) | `ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid` | same prefix `.sh` | `infer_bimanual_multiview_ctrlworld.py --config bimanual_grid` (wrapper → 3-view base script) | `finetuned/ctrlworld/bimanual_multiview_4view_grid/checkpoint-110000.pt` | `bimanual/output/multiview/ctrlworld_4view_grid/{makovian,non_makovian}/episode_*/` |
+| CW bimanual MV (4-view grid) | `ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid` | same prefix `.sh` | `infer_bimanual_multiview_ctrlworld.py --config bimanual_grid` (wrapper → shared base script) | `finetuned/ctrlworld/bimanual_multiview_4view_grid/checkpoint-110000.pt` | `bimanual/output/multiview/ctrlworld_4view_grid/{makovian,non_makovian}/episode_*/` |
 | CW humanoid MV (4-view grid) | `ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid` | same prefix `.sh` | `infer_bimanual_multiview_ctrlworld.py --config humanoid_grid` | `finetuned/ctrlworld/humanoid_multiview_4view_grid/checkpoint-140000.pt` | `humanoid/output/multiview/ctrlworld_4view_grid/…` |
-| CW bimanual MV (3-view strip, not in paper) | `ctrlworld/run_bimanual_multiview_ctrlworld` | same prefix `.sh` | `infer_bimanual_multiview_ctrlworld.py --config bimanual` | methods: `finetuned/ctrlworld/bimanual_multiview_5fps/checkpoint-280000.pt` (dense defaults differ, see below) | `bimanual/output/multiview/ctrlworld/…` |
-| CW humanoid MV (3-view strip, not in paper) | `ctrlworld/run_humanoid_multiview_ctrlworld` | same prefix `.sh` | `infer_bimanual_multiview_ctrlworld.py --config humanoid` | methods: `finetuned/ctrlworld/humanoid_multiview/checkpoint-200000.pt` | `humanoid/output/multiview/ctrlworld/…` |
 | DG single_arm MV (14B) | `dreamgen/run_single_arm_multiview_dreamgen` | `…_all.sh` → `…_batch.sh` (2 GPUs) | `-m examples.video2world_gr00t --gr00t_variant droid --fps 10` | `base/nvidia/Cosmos-Predict2-14B-Sample-GR00T-Dreams-DROID` (resolved by the entrypoint) | `single_arm/output/multiview/dreamgen/<cat>/episode_*.mp4` |
 | DG bimanual MV | `dreamgen/run_bimanual_multiview_dreamgen` | `…_full.sh` | `scripts/infer/infer_bimanual_multiview_rollout.py` (→ `examples.video2world.setup_pipeline`) | `finetuned/dreamgen/posttraining/multiview/bimanual_multiview_seg16/checkpoints_40_per` (latest = `iter_000120000`) | `bimanual/output/multiview/dreamgen/<cat>/iter_000120000/<task>/episode_*/` |
 | DG humanoid MV | `dreamgen/run_humanoid_multiview_dreamgen` | `…_full.sh` | same rollout script | `…/humanoid_multiview_seg16/checkpoints_40_per` (latest = `iter_000100000`) | `humanoid/output/multiview/dreamgen/<cat>/iter_000100000/<task>/episode_*/` |
@@ -56,24 +54,26 @@ profiled rows, `mse_rows` max profiled row, `profile_every` SVG1 profile cache, 
 centroids, `min_kc` min key-centroid ratio, `km_init`/`km_step` k-means iterations;
 `last_dense` trailing dense blocks, `group` SiTo grouping, `prune_from`/`merge_from` ITM
 schedule, `keep`/`down` ST-hold keep ratio / max downsample ratio. `—` = no launcher.
-† 3-view strips are not reported in the paper (superseded by the 4-view grid).
 
 ### Ctrl-World (SVD U-Net, 50 steps, CFG off)
 
-| method | single_arm MV 3-view | bimanual MV 4-view | humanoid MV 4-view | bimanual MV 3-view† | humanoid MV 3-view† |
-|---|---|---|---|---|---|
-| WorldCache | thresh 0.08, ret 0.30, probe 2, motion 2.5 | thresh 0.04, ret 0.0, probe 1, motion 2.5 | thresh 0.03, ret 0.0, probe 1, motion 2.5 | thresh 0.04, ret 0.4, probe 2, motion 2.5 | thresh 0.04, ret 0.4, probe 2, motion 2.5 |
-| DiCache | thresh 0.06, ret 0.3, probe 3 | thresh 0.03, ret 0.0, probe 1 | thresh 0.03, ret 0.0, probe 1 | thresh 0.04, ret 0.4, probe 3 | thresh 0.03, ret 0.4, probe 3 |
-| FasterCache | start 0, model_int 5, block_int 3 | start 0, model_int 5, block_int 3 | — | start 0, model_int 5, block_int 3 | — |
-| PISA | density 0.5, block 64, start 2 | density 0.2, block 64, **start 0** | density 0.2, block 64, **start 0** | — | density 0.2, block 64, start 2 |
-| Radial | decay 1.0, block 64, fp 4, hunyuan | decay 1.0, block 64, fp 2, hunyuan | decay 1.0, block 64, fp 2, hunyuan | — | decay 1.0, block 64, fp 4, hunyuan |
-| SVG1 | sparsity 0.25, rows 32, fp 2 | sparsity 0.25, rows 32, fp 2 | sparsity 0.25, rows 32, fp 2 | — | sparsity 0.15, rows 32, fp 2 |
-| SVG2 | q 32, k 64, top_p 0.7, fp 2 | q 32, k 64, top_p 0.7, fp 2 | q 32, k 64, top_p 0.7, fp 2 | — | q 32, k 64, top_p 0.7, fp 2 |
-| SiTo | ST-hold, keep 0.9, down 1, **25 steps** | ST-hold, keep 0.8, down 4 | ST-hold, keep 0.8, down 4 | — | ST-hold, keep 0.8, down 4 |
-| ITM | ST-hold, keep 0.8, down 4, **25 steps** | ST-hold, keep 0.85, down 4 | ST-hold, keep 0.85, down 4 | — | ST-hold, keep 0.8, down 4 |
+| method | single_arm MV 3-view | bimanual MV 4-view | humanoid MV 4-view |
+|---|---|---|---|
+| WorldCache | thresh 0.08, ret 0.30, probe 2, motion 2.5 | thresh 0.04, ret 0.0, probe 1, motion 2.5 | thresh 0.03, ret 0.0, probe 1, motion 2.5 |
+| DiCache | thresh 0.06, ret 0.3, probe 3 | thresh 0.03, ret 0.0, probe 1 | thresh 0.03, ret 0.0, probe 1 |
+| FasterCache | start 0, model_int 5, block_int 3 | start 0, model_int 5, block_int 3 | — |
+| PISA | density 0.5, block 64, start 2 | density 0.2, block 64, **start 0** | density 0.2, block 64, **start 0** |
+| Radial | decay 1.0, block 64, fp 4, hunyuan | decay 1.0, block 64, fp 2, hunyuan | decay 1.0, block 64, fp 2, hunyuan |
+| SVG1 | sparsity 0.25, rows 32, fp 2 | sparsity 0.25, rows 32, fp 2 | sparsity 0.25, rows 32, fp 2 |
+| SVG2 | q 32, k 64, top_p 0.7, fp 2 | q 32, k 64, top_p 0.7, fp 2 | q 32, k 64, top_p 0.7, fp 2 |
+| SiTo | ST-hold, keep 0.9, down 1, **25 steps** | ST-hold, keep 0.8, down 4 | ST-hold, keep 0.8, down 4 |
+| ITM | ST-hold, keep 0.8, down 4, **25 steps** | ST-hold, keep 0.85, down 4 | ST-hold, keep 0.85, down 4 |
 
-The bimanual 4-view PISA/Radial/SVG1/SVG2/SiTo/ITM wrappers delegate to the *humanoid* 3-view
-base scripts with `CONFIG=bimanual_grid` (no bimanual 3-view base exists for these methods).
+The 4-view wrappers delegate to the shared base scripts
+`run_{bimanual,humanoid}_multiview_ctrlworld_<method>.sh` with `CONFIG=*_grid` (the 3-view
+bimanual / humanoid checkpoints these bases default to were removed on 2026-10-08). The bimanual
+4-view PISA/Radial/SVG1/SVG2/SiTo/ITM wrappers use the *humanoid* base scripts with
+`CONFIG=bimanual_grid` (no bimanual base exists for these methods).
 
 ### DreamGen (Cosmos-Predict2 DiT, 35 steps, guidance 7)
 
@@ -122,7 +122,6 @@ Paper grid = 12 cells × 10 (dense + 9 methods) = 120 pairs; 117 have a launcher
 |---|---|
 | no launcher | CW humanoid MV 4-view × FasterCache; DD bimanual SV × SiTo, ITM |
 | launcher exists, **no released rollouts** (`script_without_coverage` in `results/reports/impl_accel_configs.json`, written by `assets/scripts/make_impl_config_tables.py`) | CW bimanual MV 4-view × FasterCache; CW single_arm MV × FasterCache; DD single_arm SV × SiTo, ITM; DD humanoid SV × SiTo, ITM |
-| non-paper strips | CW bimanual 3-view has only dense/WorldCache/DiCache/FasterCache; CW humanoid 3-view has no FasterCache |
 
 Released rollout counts per (cell, method): [../datasets/cell_matrix.md](../datasets/cell_matrix.md).
 App. C hyperparameter tables (`assets/paper/appendix/tables/accel_hyperparams_{cache,sparse,token}.tex`)
@@ -153,19 +152,13 @@ are generated from the launchers by `assets/scripts/make_impl_config_tables.py`.
    `sampling_dataset/itm/…`; in the uniform timing pass both humanoid runs failed while
    downloading the gated `nvidia/Cosmos-Predict2.5-2B` checkpoint.
 6. **Ctrl-World single_arm SiTo/ITM run 25 steps** (`NUM_INFERENCE_STEPS=25`) vs 50 for dense.
-7. **Ctrl-World 3-view dense defaults ≠ method defaults.** `run_bimanual_multiview_ctrlworld.sh`
-   defaults to the base checkpoint, `DATASET_NAME=bimanual_multiview`, `DOWN_SAMPLE=1`;
-   `run_humanoid_multiview_ctrlworld.sh` defaults to the base checkpoint. Their method launchers
-   use the fine-tuned checkpoints (`bimanual_multiview_5fps/checkpoint-280000.pt` with
-   `bimanual_multiview_5fps` / `DOWN_SAMPLE=6`; `humanoid_multiview/checkpoint-200000.pt`). Pass
-   the same `CKPT` / `DATASET_NAME` / `DOWN_SAMPLE` to dense (see [../inference/README.md](../inference/README.md)).
-8. **FasterCache on Ctrl-World 4-view is a no-op** by construction (CFG off; self-attention
+7. **FasterCache on Ctrl-World 4-view is a no-op** by construction (CFG off; self-attention
    lengths 3840/960/240 are outside the processor's `{180, 720, 2880}` whitelist).
-9. **Stale tuning notes.** Some development notes list SVG2 `top_p 0.5` as the Ctrl-World
+8. **Stale tuning notes.** Some development notes list SVG2 `top_p 0.5` as the Ctrl-World
    4-view-grid script default; the scripts and App. C use 0.7. For DreamDojo humanoid SV
    the uniform timing pass ran DiCache at `0.08/0.2/2` and WorldCache at `0.03/0.4/4`
    (thresh/ret/probe), i.e. the shipped defaults.
-10. **Other docs.** The DreamGen bimanual SV dense entrypoint is
+9. **Other docs.** The DreamGen bimanual SV dense entrypoint is
     `video2world_gr00t_lvg --gr00t_variant droid` (fixed in `scripts/README.md`, which listed
     `video2world_lvg`). The timing commands write to `results/reports/`
     (`speedup_perchunk.csv` from `merge_timing_shards.py`, `timing_pass.{json,csv}` from

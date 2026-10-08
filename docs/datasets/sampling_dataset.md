@@ -75,6 +75,9 @@ is always the top-level directory; there are no `{method}_*` siblings under `den
 
 `ctrlworld` = 3-view strip model, `ctrlworld_4view_grid` = 4-view 2×2 grid model
 (paper cells use the 4-view grid on bimanual / humanoid and the 3-view strip on single-arm).
+The `{bimanual,humanoid}/.../multiview/ctrlworld/` trees are legacy 3-view rollouts; their
+checkpoints and launchers were removed on 2026-10-08 (the checkpoint ablation still reads
+the dense ones).
 
 ## How the inputs are built
 
@@ -91,5 +94,5 @@ missing):
 | DreamGen bimanual / humanoid MV | built on the fly by `scripts/infer/infer_bimanual_multiview_rollout.py` from `datasets/{bimanual,humanoid}/multiview` (GT 2×2 grid via ffmpeg); batch builders `scripts/prepare/prepare_bimanual_multiview_dreamgen_batch.py`, `scripts/prepare/prepare_multiview_humanoid_grid_batch.py` | `dense/{bimanual,humanoid}/input/multiview/dreamgen*/` |
 | DreamDojo (all SV) | read straight from `datasets/<emb>/singleview` by `scripts/infer/infer_*_singleview_*.py` | GT saved next to the prediction |
 | Ctrl-World single_arm MV | `scripts/prepare/prepare_ctrlworld_single_arm_multiview.py` (called by `run_single_arm_multiview_ctrlworld.sh`) | `dense/single_arm/input/multiview/ctrlworld/` |
-| Ctrl-World bimanual / humanoid MV (3-view) | `scripts/prepare/prepare_ctrlworld_{bimanual,humanoid}_multiview.py` → `models/Ctrl-World/dataset_example/<name>/` (latents + annotations), copied to `dense/<emb>/input/multiview/ctrlworld/` by the launcher | same |
+| Ctrl-World bimanual / humanoid MV (legacy 3-view, removed) | `prepare_ctrlworld_{bimanual,humanoid}_multiview.py` (removed 2026-10-08, see git history) → `models/Ctrl-World/dataset_example/<name>/` | `dense/<emb>/input/multiview/ctrlworld/` |
 | Ctrl-World bimanual / humanoid MV (4-view) | `scripts/prepare/prepare_ctrlworld_{bimanual,humanoid}_multiview_grid.py` | `dense/<emb>/input/multiview/ctrlworld_4view_grid/` |

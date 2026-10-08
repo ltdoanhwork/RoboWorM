@@ -2,10 +2,9 @@
 # Ctrl-World bimanual multiview 4-VIEW GRID AUGMENT run (object RECOLORED on the
 # first frame of all 4 views).
 #
-# Sibling of run_bimanual_multiview_ctrlworld_augment.sh, NOT a replacement: dense
-# keeps ctrlworld_4view_grid as its own method dir alongside ctrlworld (3-view)
-# because they are two different finetuned checkpoints/configs, so augment mirrors
-# that with its own config key here. Same 3 steps:
+# Uses its own config key (ctrlworld_bimanual_multiview_4view_grid); the 3-view
+# sibling launcher (run_bimanual_multiview_ctrlworld_augment.sh) and checkpoint
+# were removed on 2026-10-08. Same 3 steps:
 #   Step 1: reuse the DENSE 4-view-grid Ctrl-World annotation tree
 #           (dataset_example/bimanual_multiview_4view_grid) — action-conditioned,
 #           so states/joints/actions stay byte-identical, only pixels change.

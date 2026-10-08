@@ -29,10 +29,7 @@ one GPU. Python entrypoints live in `scripts/infer/` and `models/*/examples/`.
 | Ctrl-World bimanual MV (4-view grid) | `scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid.sh` | `models/Ctrl-World/.venv` | `scripts/infer/infer_bimanual_multiview_ctrlworld.py --config bimanual_grid` |
 | Ctrl-World humanoid MV (4-view grid) | `scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid.sh` | `models/Ctrl-World/.venv` | `scripts/infer/infer_bimanual_multiview_ctrlworld.py` |
 
-3-view Ctrl-World variants: `run_bimanual_multiview_ctrlworld.sh` (pass
-`CKPT=$PWD/checkpoints/finetuned/ctrlworld/bimanual_multiview_5fps/checkpoint-280000.pt`)
-and `run_humanoid_multiview_ctrlworld.sh` (`CKPT=.../humanoid_multiview/checkpoint-200000.pt
-DATASET_NAME=humanoid_multiview DOWN_SAMPLE=6`). The checkpoint each launcher loads is
+The checkpoint each launcher loads is
 listed in [checkpoints/CHECKPOINTS.md](../../checkpoints/CHECKPOINTS.md); the generation
 settings per cell (steps, guidance, chunking, fps, resolution) are in
 [dense_generation_config.md](dense_generation_config.md).

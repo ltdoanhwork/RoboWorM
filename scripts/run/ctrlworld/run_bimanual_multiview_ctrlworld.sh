@@ -1,8 +1,11 @@
 #!/bin/bash
 # Run finetuned Ctrl-World inference on bimanual/multiview (replay GT 14-D qpos).
 #
-# Prereq: dataset prepared via prepare_ctrlworld_bimanual_multiview.py and a
-# finetuned checkpoint from run_bimanual_multiview_ctrlworld_train.sh.
+# Shared base of run_bimanual_multiview_ctrlworld_4view_grid.sh (the paper cell),
+# which passes CONFIG=bimanual_grid + its own CKPT/DATASET_NAME/OUTPUT_ROOT.
+# The 3-view defaults below (CONFIG=bimanual, 3-view data) are not a paper cell;
+# the 3-view finetuned checkpoint, its prepare/train scripts were removed on
+# 2026-10-08 (checkpoint on HF doanh25032004/vgp_exp_logs, see checkpoints/CHECKPOINTS.md).
 #
 # Usage:
 #   CKPT=/path/to/checkpoint-XXXXX.pt bash scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld.sh

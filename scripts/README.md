@@ -15,7 +15,7 @@ working directory. The examples below run from the repo root.
 | `infer/` | Python inference entrypoints the launchers call (`infer_*.py`) |
 | `run/ctrlworld/`, `run/dreamgen/`, `run/dreamdojo/` | one shell launcher per (cell, method): dense plus every accelerator |
 | `run/` (root) | `_run_checkpoint_ablation_base.sh`, `run_augment_all.sh` |
-| `train/` | Ctrl-World fine-tuning launchers (`run_*_ctrlworld_train*.sh`). `..._train_5fps.sh` is marked BROKEN because its warm-start checkpoint no longer exists |
+| `train/` | Ctrl-World fine-tuning launchers (`run_{bimanual,humanoid}_multiview_ctrlworld_train_4view_grid.sh`) |
 | `metrics/` | PhyWorld NR/DR scoring, `compute_dr_metrics.py`, dense-NR wave runners (`run_dense_nr*.sh`), `_exp_*` experiments that feed paper numbers |
 | `tables/` | paper table and figure builders that live under `scripts/` (most builders are in `assets/scripts/`) |
 | `tools/tune/` | tuning sweeps and the uniform timing harness (`_bench_uniform_timing.sh`, `_dispatch_timing_cells.sh`, `_tune_*`) |
@@ -51,23 +51,23 @@ rather than guessing it.
 | # | cell (timing id) | dense launcher | entrypoint |
 |---|---|---|---|
 | 1 | Ctrl-World single_arm MV (`ctrlworld_single_arm_mv`) | `run/ctrlworld/run_single_arm_multiview_ctrlworld.sh` | `infer/infer_single_arm_multiview_ctrlworld.py` |
-| 2 | Ctrl-World bimanual MV, 3-view strip | `run/ctrlworld/run_bimanual_multiview_ctrlworld.sh` | `infer/infer_bimanual_multiview_ctrlworld.py` |
-| 3 | Ctrl-World bimanual MV, 4-view grid (`ctrlworld4_bimanual_mv`) | `run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid.sh` | wraps #2 with the grid ckpt/config |
-| 4 | Ctrl-World humanoid MV, 3-view strip | `run/ctrlworld/run_humanoid_multiview_ctrlworld.sh` | `infer/infer_bimanual_multiview_ctrlworld.py --config humanoid` |
-| 5 | Ctrl-World humanoid MV, 4-view grid (`ctrlworld4_humanoid_mv`) | `run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid.sh` | wraps #4 with the grid ckpt/config |
-| 6 | DreamGen single_arm MV, 14B (`dreamgen_single_arm_mv`) | `run/dreamgen/run_single_arm_multiview_dreamgen_all.sh` (per split: `..._batch.sh`) | `video2world_gr00t --gr00t_variant droid` |
-| 7 | DreamGen bimanual MV (`dreamgen_bimanual_mv`) | `run/dreamgen/run_bimanual_multiview_dreamgen_full.sh` | `infer/infer_bimanual_multiview_rollout.py` |
-| 8 | DreamGen humanoid MV (`dreamgen_humanoid_mv`) | `run/dreamgen/run_humanoid_multiview_dreamgen_full.sh` | `infer/infer_bimanual_multiview_rollout.py` |
-| 9 | DreamGen single_arm SV (`dreamgen_single_arm_sv`) | `run/dreamgen/run_single_arm_singleview_dreamgen_static16fps.sh` | `video2world_gr00t_lvg` |
-| 10 | DreamGen bimanual SV (`dreamgen_bimanual_sv`) | `run/dreamgen/run_bimanual_singleview_dreamgen_16fps.sh` | `video2world_gr00t_lvg --gr00t_variant droid` |
-| 11 | DreamGen humanoid SV (`dreamgen_humanoid_sv`) | `run/dreamgen/run_humanoid_singleview_dreamgen_static16fps.sh` | `video2world_lvg` |
-| 12 | DreamDojo single_arm SV (`dreamdojo_single_arm_sv`) | `run/dreamdojo/run_single_arm_singleview_dreamdojo_dense.sh` | `infer/infer_single_arm_singleview_autoregressive.py` |
-| 13 | DreamDojo bimanual SV (`dreamdojo_bimanual_sv`) | `run/dreamdojo/run_bimanual_singleview_dreamdojo_full_episode.sh` | `infer/infer_bimanual_singleview_single_segment.py` |
-| 14 | DreamDojo humanoid SV (`dreamdojo_humanoid_sv`) | `run/dreamdojo/run_humanoid_singleview_dreamdojo_full_episode.sh` | `infer/infer_humanoid_singleview_full_episode.py` |
+| 2 | Ctrl-World bimanual MV, 4-view grid (`ctrlworld4_bimanual_mv`) | `run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid.sh` | `infer/infer_bimanual_multiview_ctrlworld.py --config bimanual_grid` (via the shared base `run_bimanual_multiview_ctrlworld.sh`) |
+| 3 | Ctrl-World humanoid MV, 4-view grid (`ctrlworld4_humanoid_mv`) | `run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid.sh` | `infer/infer_bimanual_multiview_ctrlworld.py --config humanoid_grid` (via the shared base `run_humanoid_multiview_ctrlworld.sh`) |
+| 4 | DreamGen single_arm MV, 14B (`dreamgen_single_arm_mv`) | `run/dreamgen/run_single_arm_multiview_dreamgen_all.sh` (per split: `..._batch.sh`) | `video2world_gr00t --gr00t_variant droid` |
+| 5 | DreamGen bimanual MV (`dreamgen_bimanual_mv`) | `run/dreamgen/run_bimanual_multiview_dreamgen_full.sh` | `infer/infer_bimanual_multiview_rollout.py` |
+| 6 | DreamGen humanoid MV (`dreamgen_humanoid_mv`) | `run/dreamgen/run_humanoid_multiview_dreamgen_full.sh` | `infer/infer_bimanual_multiview_rollout.py` |
+| 7 | DreamGen single_arm SV (`dreamgen_single_arm_sv`) | `run/dreamgen/run_single_arm_singleview_dreamgen_static16fps.sh` | `video2world_gr00t_lvg` |
+| 8 | DreamGen bimanual SV (`dreamgen_bimanual_sv`) | `run/dreamgen/run_bimanual_singleview_dreamgen_16fps.sh` | `video2world_gr00t_lvg --gr00t_variant droid` |
+| 9 | DreamGen humanoid SV (`dreamgen_humanoid_sv`) | `run/dreamgen/run_humanoid_singleview_dreamgen_static16fps.sh` | `video2world_lvg` |
+| 10 | DreamDojo single_arm SV (`dreamdojo_single_arm_sv`) | `run/dreamdojo/run_single_arm_singleview_dreamdojo_dense.sh` | `infer/infer_single_arm_singleview_autoregressive.py` |
+| 11 | DreamDojo bimanual SV (`dreamdojo_bimanual_sv`) | `run/dreamdojo/run_bimanual_singleview_dreamdojo_full_episode.sh` | `infer/infer_bimanual_singleview_single_segment.py` |
+| 12 | DreamDojo humanoid SV (`dreamdojo_humanoid_sv`) | `run/dreamdojo/run_humanoid_singleview_dreamdojo_full_episode.sh` | `infer/infer_humanoid_singleview_full_episode.py` |
 
-The paper reports Ctrl-World bimanual and humanoid on the 4-view grid (rows 3 and 5).
-The 3-view strips (rows 2 and 4) are kept runnable. Checkpoints for every row are
-listed in `checkpoints/CHECKPOINTS.md`.
+Ctrl-World uses 3 views on single_arm and a 4-view 2x2 grid on bimanual and humanoid
+(rows 2 and 3). The grid launchers delegate to the shared base scripts
+`run_{bimanual,humanoid}_multiview_ctrlworld[_<method>].sh` with `CONFIG=*_grid`; those
+base scripts are not cells of their own (the 3-view bimanual / humanoid checkpoints were
+removed on 2026-10-08). Checkpoints for every row are listed in `checkpoints/CHECKPOINTS.md`.
 
 **Non-canonical dense launchers.** These write into the same `sampling_dataset/dense/` tree but use a different entrypoint. Do not use them as the speedup reference:
 
@@ -81,9 +81,7 @@ listed in `checkpoints/CHECKPOINTS.md`.
 | cell | dense | dicache | worldcache | fastercache | pisa | radial | svg1 | svg2 | sito | itm |
 |---|---|---|---|---|---|---|---|---|---|---|
 | CW single_arm MV | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |
-| CW bimanual MV 3-view | Y | Y | Y | Y | - | - | - | - | - | - |
 | CW bimanual MV 4-view grid | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |
-| CW humanoid MV 3-view | Y | Y | Y | - | Y | Y | Y | Y | Y | Y |
 | CW humanoid MV 4-view grid | Y | Y | Y | - | Y | Y | Y | Y | Y | Y |
 | DG single_arm MV (14B) | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |
 | DG bimanual MV | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |
@@ -103,8 +101,7 @@ There are three known gaps:
 - FasterCache on `ctrlworld4_humanoid_mv`.
 - SiTo and ITM on `dreamdojo_bimanual_sv`.
 
-The CW bimanual 3-view sparse/pruning launchers never existed. That cell is
-superseded by the 4-view grid. None of these was archived by the refactor.
+None of these was archived by the refactor.
 
 Other per-cell variants:
 
@@ -142,7 +139,7 @@ Point the launcher at a scratch root and delete it afterwards:
 ```bash
 CUDA_VISIBLE_DEVICES=0 NUM_EPISODES=2 SPLIT=val \
   OUTPUT_ROOT=/tmp/cw_tune/wc/output INPUT_ROOT=/tmp/cw_tune/wc/input \
-  bash scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_worldcache.sh
+  bash scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_worldcache.sh
 ```
 
 All launchers are resumable: they skip episodes whose output already exists. To

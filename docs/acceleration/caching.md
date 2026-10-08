@@ -125,7 +125,8 @@ the same argparse destinations.
 - **`ret_ratio` is the cliff.** Lowering warm-up without tightening the threshold degrades
   quality first (DreamGen humanoid SV WorldCache collapses between `ret_ratio` 0.15 and 0.10).
   On the Ctrl-World 4-view grid, by contrast, `ret_ratio = 0` and `probe_depth = 1` are what
-  make caching fast; the 3-view defaults (`0.4 / 2–3`) are both slower and lossier there.
+  make caching fast; the shared base-script defaults (`0.4 / 2–3`, tuned on the removed 3-view
+  checkpoints) are both slower and lossier there.
 - **Never stack backends.** `build_cache_runtime_config` raises if two cache selectors are set;
   sparse/token backends are rejected together with caches on DreamDojo and Ctrl-World.
 - Cache backends are single-GPU only on every family (`--num_gpus 1` / `context_parallel_size 1`).

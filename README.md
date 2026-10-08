@@ -36,7 +36,8 @@ also tests whether training-free acceleration keeps the physics of the rollout i
 - **World models (3)**: **DreamGen** (Cosmos-Predict2 2B / 14B DiT), **DreamDojo**
   (2B action-conditioned DiT) and **Ctrl-World** (Stable Video Diffusion 1.5B U-Net).
   Together they make 12 dense cells (listed in
-  [checkpoints/CHECKPOINTS.md](checkpoints/CHECKPOINTS.md)), plus 3-view Ctrl-World variants.
+  [checkpoints/CHECKPOINTS.md](checkpoints/CHECKPOINTS.md)). Ctrl-World uses 3 views on
+  single-arm and a 4-view 2×2 grid on bimanual and humanoid.
 - **Acceleration (9 + dense)**:
   - feature caching: FasterCache, DiCache, WorldCache
   - sparse attention: SVG1, SVG2, Radial, PISA
@@ -259,14 +260,12 @@ Three cells use released weights:
 - DreamGen 14B single-arm MV
 - DreamDojo GR1
 
-The other 11 checkpoints were post-trained. Each one was trained on exactly one prepared
+The other 9 checkpoints were post-trained. Each one was trained on exactly one prepared
 input, built by the prepare script below from the LeRobot sources in `datasets/`:
 
 | checkpoint (`checkpoints/finetuned/...`) | prepare script | training input |
 |---|---|---|
-| `ctrlworld/bimanual_multiview_5fps/checkpoint-280000.pt` (3-view) | `scripts/prepare/prepare_ctrlworld_bimanual_multiview.py` + `models/Ctrl-World/dataset_meta_info/create_meta_info_bimanual.py` | `models/Ctrl-World/dataset_example/bimanual_multiview_5fps/` |
 | `ctrlworld/bimanual_multiview_4view_grid/checkpoint-110000.pt` | `scripts/prepare/prepare_ctrlworld_bimanual_multiview_grid.py` + meta builder | `models/Ctrl-World/dataset_example/bimanual_multiview_4view_grid/` |
-| `ctrlworld/humanoid_multiview/checkpoint-200000.pt` (3-view) | `scripts/prepare/prepare_ctrlworld_humanoid_multiview.py` + meta builder | `models/Ctrl-World/dataset_example/humanoid_multiview/` |
 | `ctrlworld/humanoid_multiview_4view_grid/checkpoint-140000.pt` | `scripts/prepare/prepare_ctrlworld_humanoid_multiview_grid.py` + meta builder | `models/Ctrl-World/dataset_example/humanoid_multiview_4view_grid/` |
 | `dreamgen/.../multiview/bimanual_multiview_seg16/.../iter_000120000.pt` | `finetuning/dreamgen/scripts/prepare_bimanual_multiview_grid_dreamgen.py` → `segment_bimanual_multiview_grid_dreamgen.py` → T5 → `reencode_bimanual_multiview_seg_16fps.py` | `datasets/bimanual_multiview_grid_seg16_dreamgen/` |
 | `dreamgen/.../multiview/humanoid_multiview_seg16/.../iter_000100000.pt` | `finetuning/dreamgen/scripts/prepare_humanoid_multiview_grid_dreamgen.py` → `segment_humanoid_multiview_grid_dreamgen.py` → T5 → `reencode_humanoid_multiview_seg_16fps.py` | `datasets/humanoid_multiview_grid_seg16_dreamgen/` |

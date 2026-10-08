@@ -2,7 +2,8 @@
 Prepare datasets/bimanual/multiview (ALOHA LeRobot) into Ctrl-World TRAINING format
 for the 4-VIEW 2x2 GRID variant.
 
-Identical pipeline to prepare_ctrlworld_bimanual_multiview.py, but keeps ALL FOUR
+Identical pipeline to prepare_ctrlworld_bimanual_multiview.py (3-view; removed from
+the repo on 2026-10-08, see git history), but keeps ALL FOUR
 cameras (instead of dropping cam_low) and orders them ROW-MAJOR for a 2x2 grid:
 
     grid:   [ TL  TR ]     TL = cam_high        (static)

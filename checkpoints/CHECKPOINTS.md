@@ -27,30 +27,29 @@ Sizes are on-disk sizes of the weights that are actually loaded.
 | # | model | embodiment / view | size | checkpoint path | iter | launcher (dense) |
 |---|---|---|---|---|---|---|
 | 1 | Ctrl-World (SVD U-Net) | single_arm MV (DROID), **released** | 8.7G | `checkpoints/base/ctrl_world/Ctrl-World/checkpoint-10000.pt` | 10000 | `scripts/run/ctrlworld/run_single_arm_multiview_ctrlworld.sh` |
-| 2 | Ctrl-World | bimanual MV, 3 views | 8.7G | `checkpoints/finetuned/ctrlworld/bimanual_multiview_5fps/checkpoint-280000.pt` | 280000 | `scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld.sh` (`CKPT=...`; method scripts default to it) |
-| 3 | Ctrl-World (4-view 2x2 grid) | bimanual MV, 4 views | 8.7G | `checkpoints/finetuned/ctrlworld/bimanual_multiview_4view_grid/checkpoint-110000.pt` | 110000 | `scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid.sh` |
-| 4 | Ctrl-World | humanoid MV, 3 views | 8.7G | `checkpoints/finetuned/ctrlworld/humanoid_multiview/checkpoint-200000.pt` | 200000 | `scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld.sh` (`CKPT=...`; method scripts default to it) |
-| 5 | Ctrl-World (4-view 2x2 grid) | humanoid MV, 4 views | 8.7G | `checkpoints/finetuned/ctrlworld/humanoid_multiview_4view_grid/checkpoint-140000.pt` | 140000 | `scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid.sh` |
-| 6 | DreamGen = Cosmos-Predict2 **14B** GR00T-Dreams-DROID | single_arm MV, **released** | 55G (dir) | `checkpoints/base/nvidia/Cosmos-Predict2-14B-Sample-GR00T-Dreams-DROID/model-480p-16fps.pt` | released | `scripts/run/dreamgen/run_single_arm_multiview_dreamgen_all.sh` (per split: `..._batch.sh`, `video2world_gr00t --gr00t_variant droid`) |
-| 7 | DreamGen = Cosmos-Predict2 2B (post-trained) | bimanual MV (2x2 grid) | 3.7G | `checkpoints/finetuned/dreamgen/posttraining/multiview/bimanual_multiview_seg16/checkpoints_40_per/model/iter_000120000.pt` | 120000 | `scripts/run/dreamgen/run_bimanual_multiview_dreamgen_full.sh` |
-| 8 | DreamGen 2B (post-trained) | humanoid MV (2x2 grid) | 3.7G | `checkpoints/finetuned/dreamgen/posttraining/multiview/humanoid_multiview_seg16/checkpoints_40_per/model/iter_000100000.pt` | 100000 | `scripts/run/dreamgen/run_humanoid_multiview_dreamgen_full.sh` |
-| 9 | DreamGen 2B (post-trained, static 16fps) | single_arm SV | 3.7G | `checkpoints/finetuned/dreamgen/posttraining/singleview/single_arm_static_singleview_16fps_v2/checkpoints_40_per/model/iter_000090000.pt` | 90000 | `scripts/run/dreamgen/run_single_arm_singleview_dreamgen_static16fps.sh` |
-| 10 | DreamGen 2B (post-trained, 16fps) | bimanual SV | 3.7G | `checkpoints/finetuned/dreamgen/posttraining/singleview/bimanual_singleview_16fps/checkpoints_40_per/model/iter_000110000.pt` | 110000 | `scripts/run/dreamgen/run_bimanual_singleview_dreamgen_16fps.sh` |
-| 11 | DreamGen 2B (post-trained, static 16fps) | humanoid SV | 3.7G | `checkpoints/finetuned/dreamgen/posttraining/singleview/humanoid_singleview_16fps/checkpoints_40_per/model/iter_000090000.pt` | 90000 | `scripts/run/dreamgen/run_humanoid_singleview_dreamgen_static16fps.sh` |
-| 12 | DreamDojo 2B action-cond. DiT (`dreamdojo_2b_480_640_single_arm_sv`) | single_arm SV | 21G (iter dir) | `checkpoints/finetuned/dreamdojo/dreamdojo/exp_single_arm_sv/single_arm_singleview/checkpoints/iter_000030000` | 30000 | `scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_dense.sh` |
-| 13 | DreamDojo 2B (`dreamdojo_2b_480_640_aloha_resume70k_bimanual_sv`) | bimanual SV | 21G (iter dir) | `checkpoints/finetuned/dreamdojo/dreamdojo/exp_aloha_resume70k/aloha_bimanual_singleview_full/checkpoints/iter_000100000` | 100000 | `scripts/run/dreamdojo/run_bimanual_singleview_dreamdojo_full_episode.sh` |
-| 14 | DreamDojo 2B (`dreamdojo_2b_480_640_gr1`) | humanoid SV, **released** | 21G (iter dir) | `checkpoints/base/dreamdojo/2B_GR1_post-train/iter_000050000` | 50000 | `scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_full_episode.sh` |
+| 2 | Ctrl-World (4-view 2x2 grid) | bimanual MV, 4 views | 8.7G | `checkpoints/finetuned/ctrlworld/bimanual_multiview_4view_grid/checkpoint-110000.pt` | 110000 | `scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid.sh` |
+| 3 | Ctrl-World (4-view 2x2 grid) | humanoid MV, 4 views | 8.7G | `checkpoints/finetuned/ctrlworld/humanoid_multiview_4view_grid/checkpoint-140000.pt` | 140000 | `scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid.sh` |
+| 4 | DreamGen = Cosmos-Predict2 **14B** GR00T-Dreams-DROID | single_arm MV, **released** | 55G (dir) | `checkpoints/base/nvidia/Cosmos-Predict2-14B-Sample-GR00T-Dreams-DROID/model-480p-16fps.pt` | released | `scripts/run/dreamgen/run_single_arm_multiview_dreamgen_all.sh` (per split: `..._batch.sh`, `video2world_gr00t --gr00t_variant droid`) |
+| 5 | DreamGen = Cosmos-Predict2 2B (post-trained) | bimanual MV (2x2 grid) | 3.7G | `checkpoints/finetuned/dreamgen/posttraining/multiview/bimanual_multiview_seg16/checkpoints_40_per/model/iter_000120000.pt` | 120000 | `scripts/run/dreamgen/run_bimanual_multiview_dreamgen_full.sh` |
+| 6 | DreamGen 2B (post-trained) | humanoid MV (2x2 grid) | 3.7G | `checkpoints/finetuned/dreamgen/posttraining/multiview/humanoid_multiview_seg16/checkpoints_40_per/model/iter_000100000.pt` | 100000 | `scripts/run/dreamgen/run_humanoid_multiview_dreamgen_full.sh` |
+| 7 | DreamGen 2B (post-trained, static 16fps) | single_arm SV | 3.7G | `checkpoints/finetuned/dreamgen/posttraining/singleview/single_arm_static_singleview_16fps_v2/checkpoints_40_per/model/iter_000090000.pt` | 90000 | `scripts/run/dreamgen/run_single_arm_singleview_dreamgen_static16fps.sh` |
+| 8 | DreamGen 2B (post-trained, 16fps) | bimanual SV | 3.7G | `checkpoints/finetuned/dreamgen/posttraining/singleview/bimanual_singleview_16fps/checkpoints_40_per/model/iter_000110000.pt` | 110000 | `scripts/run/dreamgen/run_bimanual_singleview_dreamgen_16fps.sh` |
+| 9 | DreamGen 2B (post-trained, static 16fps) | humanoid SV | 3.7G | `checkpoints/finetuned/dreamgen/posttraining/singleview/humanoid_singleview_16fps/checkpoints_40_per/model/iter_000090000.pt` | 90000 | `scripts/run/dreamgen/run_humanoid_singleview_dreamgen_static16fps.sh` |
+| 10 | DreamDojo 2B action-cond. DiT (`dreamdojo_2b_480_640_single_arm_sv`) | single_arm SV | 21G (iter dir) | `checkpoints/finetuned/dreamdojo/dreamdojo/exp_single_arm_sv/single_arm_singleview/checkpoints/iter_000030000` | 30000 | `scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_dense.sh` |
+| 11 | DreamDojo 2B (`dreamdojo_2b_480_640_aloha_resume70k_bimanual_sv`) | bimanual SV | 21G (iter dir) | `checkpoints/finetuned/dreamdojo/dreamdojo/exp_aloha_resume70k/aloha_bimanual_singleview_full/checkpoints/iter_000100000` | 100000 | `scripts/run/dreamdojo/run_bimanual_singleview_dreamdojo_full_episode.sh` |
+| 12 | DreamDojo 2B (`dreamdojo_2b_480_640_gr1`) | humanoid SV, **released** | 21G (iter dir) | `checkpoints/base/dreamdojo/2B_GR1_post-train/iter_000050000` | 50000 | `scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_full_episode.sh` |
 
-Rows 3 and 5 are the 4-view variants of rows 2 and 4. Together the table covers the
-12 cells of Table C1. DreamDojo launchers take the parent `checkpoints/` dir and read
-`latest_checkpoint.txt`. DreamGen launchers take `checkpoints_40_per/` and an `ITER_NAME`.
+The table covers the 12 cells of Table C1. Ctrl-World uses 3 views on single_arm (row 1)
+and a 4-view 2x2 grid on bimanual and humanoid (rows 2 and 3). DreamDojo launchers take
+the parent `checkpoints/` dir and read `latest_checkpoint.txt`. DreamGen launchers take
+`checkpoints_40_per/` and an `ITER_NAME`.
 
 ## Base models (`checkpoints/base/`)
 
 | path | size | used by |
 |---|---|---|
 | `nvidia/Cosmos-Predict2-2B-Video2World` | 72G | DreamGen 2B init + tokenizer (all DreamGen 2B cells) |
-| `nvidia/Cosmos-Predict2-14B-Sample-GR00T-Dreams-DROID` | 55G | DreamGen single_arm MV (cell 6) |
+| `nvidia/Cosmos-Predict2-14B-Sample-GR00T-Dreams-DROID` | 55G | DreamGen single_arm MV (cell 4) |
 | `nvidia/Cosmos-Predict2-14B-Sample-GR00T-Dreams-GR1` | 28G | DreamGen `--gr00t_variant gr1` (older humanoid entrypoint) |
 | `nvidia/Cosmos-Predict2-14B-Video2World` | 28G | DreamGen 14B video2world (non-paper runs) |
 | `nvidia/Cosmos-Predict2.5-2B` | 4.0G | DreamDojo: Wan2.1 VAE `tokenizer.pth` + `robot/action-cond` default, resolved through the local-mirror lookup in `models/DreamDojo/.../checkpoint_db.py` |
@@ -59,9 +58,9 @@ Rows 3 and 5 are the 4-view variants of rows 2 and 4. Together the table covers 
 | `meta-llama/Llama-Guard-3-8B` | 52K (stub) | DreamGen guardrail |
 | `google-t5/t5-11b` | 85G | DreamGen / DreamDojo text embeddings |
 | `dreamdojo/2B_pretrain/iter_000140000` | 21G | DreamDojo init for post-training (`experiments/base/action.py`) |
-| `dreamdojo/2B_GR1_post-train/iter_000050000` | 21G | DreamDojo humanoid SV (cell 14) |
+| `dreamdojo/2B_GR1_post-train/iter_000050000` | 21G | DreamDojo humanoid SV (cell 12) |
 | `dreamdojo/LAM_400k.ckpt` | 8.0G | DreamDojo latent action model |
-| `ctrl_world/Ctrl-World/checkpoint-10000.pt` | 8.7G | Ctrl-World release (cell 1, warm-start of cells 2-5) |
+| `ctrl_world/Ctrl-World/checkpoint-10000.pt` | 8.7G | Ctrl-World release (cell 1; root of the warm-start chain of cells 2-3) |
 | `stabilityai/stable-video-diffusion-img2vid` | 61G | Ctrl-World SVD backbone |
 | `openai/clip-vit-base-patch32` | 3.4G | Ctrl-World text encoder |
 | `pi05_droid` | 12G | Ctrl-World policy-in-the-loop rollouts (not in paper tables) |
@@ -84,9 +83,36 @@ see `models/dreamgen/imaginaire/constants.py`). DreamDojo looks for HF mirrors i
 ## Not released (not used by any paper cell)
 
 Intermediate or superseded weights that no paper cell loads:
-Ctrl-World `humanoid_multiview/checkpoint-150000.pt`, DreamDojo `exp_aloha_resume40k`
-(training-only init of cell 13), DreamDojo `exp_single_arm_sv` iters 10000/20000,
+DreamDojo `exp_aloha_resume40k`
+(training-only init of cell 11), DreamDojo `exp_single_arm_sv` iters 10000/20000,
 DreamGen `single_arm_static_singleview_16fps_v1_90k`, `nvidia/PhysicalAI-Robotics-GR00T-Eval`.
+
+### Removed: 3-view Ctrl-World bimanual / humanoid (2026-10-08)
+
+Ctrl-World bimanual and humanoid are benchmarked only on the 4-view grid. The 3-view
+fine-tunes were deleted from the server. They live on in the HF repo
+`doanh25032004/vgp_exp_logs` (sha256 checked against the local copy before deletion):
+
+| removed path (`checkpoints/finetuned/ctrlworld/`) | size | HF file (`vgp_exp_logs`) | note |
+|---|---|---|---|
+| `bimanual_multiview_5fps/` (`checkpoint-280000.pt` + `samples/`) | 8.7G | `ctrlworld_logs/bimanual_multiview_5fps/` | warm start of row 2 |
+| `humanoid_multiview/` (`checkpoint-200000.pt` + `samples/`) | 8.7G | `ctrlworld_logs/humanoid_multiview/` | warm start of row 3 |
+| `humanoid_multiview/checkpoint-150000.pt` (was archived under `tmp/`) | 8.7G | `ctrlworld_logs/humanoid_multiview/checkpoint-150000.pt` | intermediate |
+
+You only need them to re-train the 4-view grids from their warm start
+(`scripts/train/run_*_multiview_ctrlworld_train_4view_grid.sh`, `WARM_CKPT`). To restore one:
+
+```bash
+export HF_HUB_DISABLE_XET=1
+hf download doanh25032004/vgp_exp_logs --repo-type model \
+  --include 'ctrlworld_logs/humanoid_multiview/checkpoint-200000.pt' --local-dir /tmp/vgp_exp_logs
+mkdir -p checkpoints/finetuned/ctrlworld/humanoid_multiview
+mv /tmp/vgp_exp_logs/ctrlworld_logs/humanoid_multiview/checkpoint-200000.pt checkpoints/finetuned/ctrlworld/humanoid_multiview/
+```
+
+Their rollouts under `sampling_dataset/*/{bimanual,humanoid}/output/multiview/ctrlworld/`
+are kept; the checkpoint ablation (`assets/scripts/make_checkpoint_finetune_comparison.py`)
+reads them.
 
 ## Restore from HuggingFace
 

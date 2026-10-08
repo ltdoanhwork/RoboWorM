@@ -2,7 +2,8 @@
 Prepare datasets/humanoid/multiview (AIRBOT_MMK2 LeRobot) into Ctrl-World TRAINING
 format for the 4-VIEW 2x2 GRID variant.
 
-Same pipeline as prepare_ctrlworld_humanoid_multiview.py, but keeps FOUR views
+Same pipeline as prepare_ctrlworld_humanoid_multiview.py (3-view; removed from the
+repo on 2026-10-08, see git history), but keeps FOUR views
 (instead of dropping the 2nd external camera) ordered ROW-MAJOR for a 2x2 grid:
 
     grid:   [ TL  TR ]     TL = main external   (static)  cam_high_rgb  OR cam_head_rgb

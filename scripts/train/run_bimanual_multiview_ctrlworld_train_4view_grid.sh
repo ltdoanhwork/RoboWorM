@@ -40,7 +40,11 @@ DATASET_NAME="bimanual_multiview_4view_grid"
 
 SVD_MODEL_PATH="${ROOT}/checkpoints/base/stabilityai/stable-video-diffusion-img2vid"
 CLIP_MODEL_PATH="${ROOT}/checkpoints/base/openai/clip-vit-base-patch32"
-# Warm-start from the finetuned 3-view 5fps checkpoint (14-D action encoder present)
+# Warm-start from the finetuned 3-view 5fps checkpoint (14-D action encoder present).
+# Removed from the server on 2026-10-08 (3-view cells dropped); restore it first:
+#   HF_HUB_DISABLE_XET=1 hf download doanh25032004/vgp_exp_logs --repo-type model \
+#     --include 'ctrlworld_logs/bimanual_multiview_5fps/checkpoint-280000.pt' --local-dir /tmp/vgp_exp_logs
+#   mkdir -p checkpoints/finetuned/ctrlworld/bimanual_multiview_5fps && mv /tmp/vgp_exp_logs/ctrlworld_logs/bimanual_multiview_5fps/checkpoint-280000.pt checkpoints/finetuned/ctrlworld/bimanual_multiview_5fps/
 WARM_CKPT="${WARM_CKPT:-${ROOT}/checkpoints/finetuned/ctrlworld/bimanual_multiview_5fps/checkpoint-280000.pt}"
 
 DATASET_ROOT="${ROOT}/models/Ctrl-World/dataset_example"

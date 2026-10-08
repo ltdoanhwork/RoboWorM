@@ -10,16 +10,16 @@
 #   shard 1  single_arm singleview    118 chunks              ~5.2h  + ctrlworld single_arm
 #   shard 2  bimanual multiview       segment rollout         ~6h  (+3 object_relocation)
 #   shard 3  single_arm multiview     14B single-shot         ~4.1h  + ctrlworld bimanual+humanoid
-#                                                                    (3-view AND 4-view-grid)
+#                                                                    (4-view grid)
 #                                                                    (+4 object_relocation)
 #
 # Every runner is resumable (skips episodes whose output already exists), so a
 # shard that dies can simply be relaunched — that is why the cheap Ctrl-World
 # configs are appended to the shorter shards instead of getting their own GPU.
-# ctrlworld_{bimanual,humanoid}_multiview_4view_grid are a SEPARATE checkpoint
-# from the 3-view ctrlworld configs (dense keeps them as separate method dirs
-# too — see .cursor/rules/ctrlworld-*-4view-grid-*-insights.mdc), not a
-# replacement, so they add 20+20=40 videos on top of the original 180.
+# Ctrl-World bimanual / humanoid run only the 4-view grid checkpoints
+# (ctrlworld_{bimanual,humanoid}_multiview_4view_grid, 20+20 videos). The 3-view
+# Ctrl-World augment launchers and checkpoints were removed on 2026-10-08; their
+# earlier output under sampling_dataset/augment/*/output/multiview/ctrlworld/ is kept.
 #
 # object_relocation (hand-curated, see gen_manifest.py::OBJECT_RELOCATION)
 # applies to every DreamGen config except humanoid; default BRANCHES in each
@@ -94,8 +94,6 @@ shard_2() {
 }
 shard_3() {
   bash scripts/run/dreamgen/run_single_arm_multiview_dreamgen_augment.sh
-  bash scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_augment.sh both
-  bash scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_augment.sh both
   bash scripts/run/ctrlworld/run_bimanual_multiview_ctrlworld_4view_grid_augment.sh both
   bash scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_augment.sh both
 }

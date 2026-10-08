@@ -1,9 +1,12 @@
 #!/bin/bash
 # Run finetuned Ctrl-World inference on humanoid/multiview (replay GT 36-D state).
 #
-# Reuses infer_bimanual_multiview_ctrlworld.py with --config humanoid (3 views,
-# dim-agnostic state replay). Prereq: dataset prepared via
-# prepare_ctrlworld_humanoid_multiview.py + a finetuned checkpoint.
+# Reuses infer_bimanual_multiview_ctrlworld.py (dim-agnostic state replay).
+# Shared base of run_humanoid_multiview_ctrlworld_4view_grid.sh (the paper cell),
+# which passes CONFIG=humanoid_grid + its own CKPT/DATASET_NAME/OUTPUT_ROOT. The
+# 3-view default (--config humanoid) is not a paper cell; its finetuned checkpoint
+# and prepare/train scripts were removed on 2026-10-08 (checkpoint on HF
+# doanh25032004/vgp_exp_logs, see checkpoints/CHECKPOINTS.md).
 #
 # Usage:
 #   CKPT=/path/to/checkpoint-XXXXX.pt bash scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld.sh
