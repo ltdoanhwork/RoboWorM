@@ -71,6 +71,20 @@ depth, from Markovian to non-Markovian tasks.*
 
 See the [project page](https://roboworm.github.io/roboworm/#fig6) for the rollout videos behind these examples.
 
+## Proposed metrics: KIVA and RIGIS
+
+RoboWorM introduces two VLM-free physics metrics. Both check a rollout against what is
+already known about the robot, its kinematic tree and its fixed camera rig, instead of
+asking a VLM judge.
+
+| metric | what it checks | README | setup guide |
+|---|---|---|---|
+| **KIVA** (Kinematic Invariant Violation Assessment) | Single view: a diffusion keypoint reader recovers 3-D robot keypoints from the pixels and measures link-rigidity error and joint jerk, calibrated against real footage. | [metrics/kiva/README.md](metrics/kiva/README.md) | [docs/metrics/kiva.md](docs/metrics/kiva.md) |
+| **RIGIS** (Robotic Inter-view Geometry & Intrinsic-Extrinsic Stability) | Multi view: VGGT-Ω lifts every view to depth + cameras and scores cross-view geometric consistency (S_geo) and camera-rig stability (S_pose). | [metrics/rigis/README.md](metrics/rigis/README.md) | [docs/metrics/rigis.md](docs/metrics/rigis.md) |
+
+The other metrics (Visual Integrity, Text Alignment, FVD, PSNR/SSIM/LPIPS) are listed in
+[6. Metrics](#6-metrics).
+
 ## Repository layout
 
 ```
