@@ -21,7 +21,12 @@ export PYTHONPATH="${ROOT}/models/DreamDojo:${PYTHONPATH:-}"
 CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/base/dreamdojo/2B_GR1_post-train/iter_000050000}"
 EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_480_640_gr1}"
 NUM_FRAMES="${NUM_FRAMES:-49}"
+_SAVE_ROOT_ENV="${SAVE_ROOT:-}"
 SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/dense/humanoid/output/singleview/dreamdojo}"
+# Intermediate --output-dir: OUTPUT_ROOT if set, else <SAVE_ROOT>/_output when SAVE_ROOT
+# was given (keeps scratch runs self-contained), else the historical ${ROOT}/output.
+OUT_CACHE_ROOT="${OUTPUT_ROOT:-${_SAVE_ROOT_ENV:+${_SAVE_ROOT_ENV}/_output}}"
+OUT_CACHE_ROOT="${OUT_CACHE_ROOT:-${ROOT}/output}"
 
 if [ "${SKIP_META_REPAIR:-0}" != "1" ]; then
   echo "=== Repairing makovian/non_makovian meta (SKIP_META_REPAIR=1 to skip) ==="
@@ -62,7 +67,7 @@ for split in makovian non_makovian; do
     echo "Skipping ${split}: dataset length is 0 (check missing parquets / paths)." >&2
     continue
   fi
-  out_cache="${ROOT}/output/dreamdojo_dense_humanoid_${split}"
+  out_cache="${OUT_CACHE_ROOT}/dreamdojo_dense_humanoid_${split}"
   save_base="${SAVE_ROOT}/${split}"
   mkdir -p "${save_base}" "${out_cache}"
   echo "=== DreamDojo dense: ${split} (num-samples=${n}) -> ${save_base} ==="

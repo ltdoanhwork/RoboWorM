@@ -37,7 +37,12 @@ LEROBOT_ROOT="${LEROBOT_ROOT:-${ROOT}/sampling_dataset/augment/_lerobot/single_a
 CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/finetuned/dreamdojo/dreamdojo/exp_single_arm_sv/single_arm_singleview/checkpoints}"
 EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_480_640_single_arm_sv}"
 NUM_FRAMES="${NUM_FRAMES:-97}"
+_SAVE_ROOT_ENV="${SAVE_ROOT:-}"
 SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/augment/single_arm/output/singleview/dreamdojo}"
+# Intermediate --output-dir: OUTPUT_ROOT if set, else <SAVE_ROOT>/_output when SAVE_ROOT
+# was given (keeps scratch runs self-contained), else the historical ${ROOT}/output.
+OUT_CACHE_ROOT="${OUTPUT_ROOT:-${_SAVE_ROOT_ENV:+${_SAVE_ROOT_ENV}/_output}}"
+OUT_CACHE_ROOT="${OUT_CACHE_ROOT:-${ROOT}/output}"
 SPLITS="${SPLITS:-makovian non_makovian}"
 # Frame-0-only recolor means the un-edited tail would drive LAM back toward the
 # original object, so disable LAM by default for augment (NO_LAM=0 to re-enable).
@@ -79,7 +84,7 @@ for split in ${SPLITS}; do
     continue
   fi
   save_base="${SAVE_ROOT}/${split}"
-  out_cache="${ROOT}/output/dreamdojo_augment_single_arm_sv_${split}"
+  out_cache="${OUT_CACHE_ROOT}/dreamdojo_augment_single_arm_sv_${split}"
   mkdir -p "${save_base}" "${out_cache}"
   echo "=== [Step 2/${split}] DreamDojo augment inference -> ${save_base} ==="
   nolam_flag=()

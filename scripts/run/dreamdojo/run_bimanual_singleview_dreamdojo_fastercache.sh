@@ -23,7 +23,12 @@ CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/finetuned/dreamdojo/drea
 EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_480_640_aloha_resume70k_bimanual_sv}"
 CHUNK_SIZE="${CHUNK_SIZE:-12}"
 SAVE_FPS="${SAVE_FPS:-10}"
+_SAVE_ROOT_ENV="${SAVE_ROOT:-}"
 SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/fastercache/bimanual/output/singleview/dreamdojo}"
+# Intermediate --output-dir: OUTPUT_ROOT if set, else <SAVE_ROOT>/_output when SAVE_ROOT
+# was given (keeps scratch runs self-contained), else the historical ${ROOT}/output.
+OUT_CACHE_ROOT="${OUTPUT_ROOT:-${_SAVE_ROOT_ENV:+${_SAVE_ROOT_ENV}/_output}}"
+OUT_CACHE_ROOT="${OUT_CACHE_ROOT:-${ROOT}/output}"
 NUM_EPISODES="${NUM_EPISODES:-}"
 GUIDANCE="${GUIDANCE:-0}"
 
@@ -80,7 +85,7 @@ for split in makovian non_makovian; do
     --save-dir "${save_base}" \
     --chunk-size "${CHUNK_SIZE}" \
     --save-fps "${SAVE_FPS}" \
-    --output-dir "${ROOT}/output/dreamdojo_fastercache_bimanual_sv_${split}" \
+    --output-dir "${OUT_CACHE_ROOT}/dreamdojo_fastercache_bimanual_sv_${split}" \
     --guidance "${GUIDANCE}" \
     --fastercache-enabled \
     --fastercache-start-step "${FASTERCACHE_START_STEP}" \

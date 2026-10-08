@@ -20,7 +20,12 @@ export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0}"
 CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/finetuned/dreamdojo/dreamdojo/exp_aloha_resume70k/aloha_bimanual_singleview_full/checkpoints}"
 EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_480_640_aloha_resume70k_bimanual_sv}"
 NUM_EPISODES="${NUM_EPISODES:-}"
+_SAVE_ROOT_ENV="${SAVE_ROOT:-}"
 SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/dense/bimanual/output/singleview/dreamdojo}"
+# Intermediate --output-dir: OUTPUT_ROOT if set, else <SAVE_ROOT>/_output when SAVE_ROOT
+# was given (keeps scratch runs self-contained), else the historical ${ROOT}/output.
+OUT_CACHE_ROOT="${OUTPUT_ROOT:-${_SAVE_ROOT_ENV:+${_SAVE_ROOT_ENV}/_output}}"
+OUT_CACHE_ROOT="${OUT_CACHE_ROOT:-${ROOT}/output}"
 
 get_task_paths() {
   local split="$1"
@@ -97,7 +102,7 @@ for split in makovian non_makovian; do
     --dataset-path "${task_paths}" \
     --save-dir "${save_base}" \
     --save-fps 10 \
-    --output-dir "${ROOT}/output/dreamdojo_full_ep_bimanual_sv_${split}" \
+    --output-dir "${OUT_CACHE_ROOT}/dreamdojo_full_ep_bimanual_sv_${split}" \
     "${full_flag[@]}" \
     "${ep_flag[@]}" &
   pids+=($!)

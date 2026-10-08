@@ -18,7 +18,12 @@ export PYTHONPATH="${ROOT}/models/DreamDojo:${PYTHONPATH:-}"
 CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/finetuned/dreamdojo/dreamdojo/exp_single_arm_sv/single_arm_singleview/checkpoints}"
 EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_480_640_single_arm_sv}"
 NUM_FRAMES="${NUM_FRAMES:-97}"
+_SAVE_ROOT_ENV="${SAVE_ROOT:-}"
 SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/itm/single_arm/output/singleview/dreamdojo}"
+# Intermediate --output-dir: OUTPUT_ROOT if set, else <SAVE_ROOT>/_output when SAVE_ROOT
+# was given (keeps scratch runs self-contained), else the historical ${ROOT}/output.
+OUT_CACHE_ROOT="${OUTPUT_ROOT:-${_SAVE_ROOT_ENV:+${_SAVE_ROOT_ENV}/_output}}"
+OUT_CACHE_ROOT="${OUT_CACHE_ROOT:-${ROOT}/output}"
 
 # ITM parameters
 ITM_START_LAYER_IDX="${ITM_START_LAYER_IDX:-4}"
@@ -60,7 +65,7 @@ for split in makovian non_makovian; do
     echo "Skipping ${split}: dataset length is 0." >&2
     continue
   fi
-  out_cache="${ROOT}/output/dreamdojo_itm_single_arm_${split}"
+  out_cache="${OUT_CACHE_ROOT}/dreamdojo_itm_single_arm_${split}"
   save_base="${SAVE_ROOT}/${split}"
   mkdir -p "${save_base}" "${out_cache}"
   echo "=== DreamDojo ITM: single_arm/${split} (num-samples=${n}) -> ${save_base} ==="

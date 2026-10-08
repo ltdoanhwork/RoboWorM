@@ -26,6 +26,8 @@ set -euo pipefail
 
 ROOT="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
 cd "$ROOT"
+# Intermediate --output-dir root (override with OUTPUT_ROOT).
+OUT_CACHE_ROOT="${OUTPUT_ROOT:-${ROOT}/output}"
 
 source "${ROOT}/models/DreamDojo/.venv/bin/activate"
 export PYTHONPATH="${ROOT}/models/DreamDojo:${PYTHONPATH:-}"
@@ -152,7 +154,7 @@ for method in ${METHODS}; do
       --save-dir "${save_base}" \
       --chunk-size "${CHUNK_SIZE}" \
       --save-fps "${SAVE_FPS}" \
-      --output-dir "${ROOT}/output/dreamdojo_${method}_bimanual_sv_${split}" \
+      --output-dir "${OUT_CACHE_ROOT}/dreamdojo_${method}_bimanual_sv_${split}" \
       --guidance "${GUIDANCE}" \
       --save-video-only \
       "${cache_flags[@]}" \

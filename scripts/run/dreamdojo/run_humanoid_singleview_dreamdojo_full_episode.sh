@@ -17,7 +17,12 @@ export PYTHONPATH="${ROOT}/models/DreamDojo:${PYTHONPATH:-}"
 CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/base/dreamdojo/2B_GR1_post-train/iter_000050000}"
 EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_480_640_gr1}"
 NUM_FRAMES="${NUM_FRAMES:-49}"
+_SAVE_ROOT_ENV="${SAVE_ROOT:-}"
 SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/dense/humanoid/output/singleview/dreamdojo}"
+# Intermediate --output-dir: OUTPUT_ROOT if set, else <SAVE_ROOT>/_output when SAVE_ROOT
+# was given (keeps scratch runs self-contained), else the historical ${ROOT}/output.
+OUT_CACHE_ROOT="${OUTPUT_ROOT:-${_SAVE_ROOT_ENV:+${_SAVE_ROOT_ENV}/_output}}"
+OUT_CACHE_ROOT="${OUT_CACHE_ROOT:-${ROOT}/output}"
 NUM_EPISODES="${NUM_EPISODES:-}"
 
 ep_flag=()
@@ -51,7 +56,7 @@ for split in makovian non_makovian; do
     --dataset-path "${dataset_dir}" \
     --save-dir "${save_base}" \
     --num-frames "${NUM_FRAMES}" \
-    --output-dir "${ROOT}/output/dreamdojo_full_ep_humanoid_sv_${split}" \
+    --output-dir "${OUT_CACHE_ROOT}/dreamdojo_full_ep_humanoid_sv_${split}" \
     "${full_flag[@]}" \
     "${ep_flag[@]}"
 done
