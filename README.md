@@ -270,13 +270,6 @@ NPROC=2 bash finetuning/dreamdojo/launch.sh dreamdojo_2b_480_640_single_arm_sv
 NPROC=4 bash scripts/train/run_humanoid_multiview_ctrlworld_train_4view_grid.sh
 ```
 
-[![Effect of fine-tuning](docs/assets/figures/finetuning_effect.png)](https://roboworm.github.io/roboworm/#models)
-
-*Why the post-trained checkpoints matter: ground truth, base checkpoint and fine-tuned
-checkpoint on the same multi-view episodes, at 25 / 55 / 85% of the rollout. The base
-model drifts away from the task (object position, cross-view layout); fine-tuning gains
-+7.7 dB (humanoid) and +6.5 dB (bimanual) PSNR over the full episode.*
-
 ## 5. Dense and accelerated rollouts
 
 Launchers live in `scripts/run/{dreamgen,dreamdojo,ctrlworld}/`. They are resumable,
