@@ -38,6 +38,17 @@ root with `PY=models/dreamgen/.venv/bin/python` (several producers need Python �
 | App. C gate | `assets/scripts/check_impl_appendix_claims.py` (run last; reads [main_results_speedup_and_checkpoint.md](main_results_speedup_and_checkpoint.md)) | exit code only |
 | App. D human study / VLM judges | same chain as Fig. 4; KIVA audit data `assets/scripts/make_kiva_audit_data.py` | `results/reports/kiva_audit.{csv,json}` |
 
+Notes on the committed appendix tables (they match the paper; do not overwrite them
+with regenerated numbers unless you mean to update the paper):
+
+- `timing_pass.tex` and `results/reports/speedup_summary_*.{csv,tex}` come from the
+  uniform timing pass (`scripts/tools/tune/_bench_uniform_timing.sh` → its
+  `results.jsonl` → `make_timing_pass_table.py --results .../results.jsonl`). A fresh
+  pass on different hardware gives slightly different numbers.
+- Regenerating `generation_config.tex` with `scripts/tables/make_dense_generation_table.py`
+  now also emits the bimanual and humanoid Ctrl-World 3-view strip rows, which are not in
+  the paper table (the paper lists their 4-view grid instead).
+
 ## Suggested order
 
 ```bash
