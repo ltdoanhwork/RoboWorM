@@ -154,20 +154,17 @@ package lists as of the backup are frozen in `docs/setup/env_freeze/`:
 | `models/DreamDojo/.venv` | 3.10.19 | `docs/setup/env_freeze/DreamDojo.txt` |
 | `models/Ctrl-World/.venv` | 3.10.19 | `docs/setup/env_freeze/Ctrl-World.txt` |
 
-```bash
-python3.12 -m venv models/dreamgen/.venv
-models/dreamgen/.venv/bin/pip install -r docs/setup/env_freeze/dreamgen.txt
-```
+The exact build commands (uv, CUDA wheel indexes, kernels built with
+`--no-build-isolation`) and a verification snippet are in
+[README.md](README.md#build-the-model-environments).
 
 Notes:
 
-- Install torch first with the right CUDA wheel index (dreamgen: torch 2.6+cu124,
-  DreamDojo: torch 2.7+cu128), then the rest — otherwise pip resolves a CPU build.
 - `.venv_svg` exists only because SVG2 needs **flashinfer 0.3.1** for the real
   block-sparse kernel; the default `.venv` has 0.2.5 and falls back to a dense
   mask that OOMs. Keep them separate.
-- The freeze files are a snapshot including editable/local installs — lines
-  pointing at local paths (`-e /pfss/...`) need re-pointing at the new checkout.
+- The freeze files are `uv pip freeze` snapshots. Editable lines are written relative
+  to the repo root (`-e ./models/dreamgen`), so install from the repo root.
 
 ## 5. Secrets (must be re-created)
 

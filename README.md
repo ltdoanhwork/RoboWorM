@@ -91,32 +91,36 @@ Docs index: [docs/README.md](docs/README.md). Script tree: [scripts/README.md](s
 
 ## 1. Environments
 
-There are six isolated environments, and launchers activate the right one themselves.
-Frozen package lists are in [docs/setup/env_freeze/](docs/setup/env_freeze/). Full
-instructions: [docs/setup/README.md](docs/setup/README.md).
+There are six isolated environments, all built with [uv](https://docs.astral.sh/uv/)
+except KIVA's conda env. Never mix them; the launchers activate the right one
+themselves. The versions below were read from the cluster venvs. Exact install commands
+(CUDA wheel indexes, kernels that build with `--no-build-isolation`), notes and a
+verification snippet are in [docs/setup/README.md](docs/setup/README.md). `uv pip
+freeze` snapshots are in [docs/setup/env_freeze/](docs/setup/env_freeze/).
 
-| env | python | used for | freeze |
-|---|---|---|---|
-| `models/dreamgen/.venv` | 3.12 | DreamGen inference/training, all methods except SVG2; FVD / CLIPScore / fidelity | `dreamgen.txt` |
-| `models/dreamgen/.venv_svg` | 3.12 | DreamGen SVG2 (FlashInfer 0.3.1) | `dreamgen__svg.txt` |
-| `models/DreamDojo/.venv` | 3.10 | DreamDojo inference/training, all methods | `DreamDojo.txt` |
-| `models/Ctrl-World/.venv` | 3.10 | Ctrl-World inference/training, all methods | `Ctrl-World.txt` |
-| `metrics/rigis/.venv` | 3.13 (uv) | RIGIS | `metrics/rigis/uv.lock` |
-| `hdmi` conda env (`HAL_PYTHON`) | 3.10 | KIVA | — |
+| env | python | torch / CUDA | key extras | used for | build |
+|---|---|---|---|---|---|
+| `models/dreamgen/.venv` | 3.12 | 2.6.0 / cu124 | flash-attn 2.8.3, flashinfer 0.2.5, transformer-engine 2.14, piq, pyiqa, torchmetrics | DreamGen inference + training, every method except SVG2; `python -m metrics.evaluate` (fidelity, FVD, Visual Integrity, Text Alignment) | `env_freeze/dreamgen.txt` |
+| `models/dreamgen/.venv_svg` | 3.12 | 2.6.0 / cu124 | as above, but **flashinfer 0.3.1** | DreamGen **SVG2** only | `env_freeze/dreamgen__svg.txt` |
+| `models/DreamDojo/.venv` | 3.10 | 2.7.0 / cu128 | flash-attn 2.7.3, natten 0.21, transformer-engine 2.2, flashinfer 0.3.1 | DreamDojo inference + training, all methods | `uv sync --extra=cu128` in `models/DreamDojo` |
+| `models/Ctrl-World/.venv` | 3.10 | 2.7.1 / cu126 | diffusers 0.34, flashinfer 0.3.1 | Ctrl-World inference + training, all methods | `models/Ctrl-World/requirements.txt` + `env_freeze/Ctrl-World.txt` |
+| `metrics/rigis/.venv` | 3.13 | 2.14.1 / cu126 | VGGT-Omega, numba (added by `run.sh`) | RIGIS | `cd metrics/rigis && uv sync` |
+| `hdmi` conda env (`HAL_PYTHON`) | 3.10 | 2.7.0 / cu128 | transformers 5.2 (DINOv3), pytorch-kinematics | KIVA | `pip install -e "metrics/kiva[dino,video,bench]"` |
 
 ```bash
-python3.12 -m venv models/dreamgen/.venv
-models/dreamgen/.venv/bin/pip install torch==2.6.0 torchvision --index-url https://download.pytorch.org/whl/cu124
-models/dreamgen/.venv/bin/pip install -r docs/setup/env_freeze/dreamgen.txt
-python3.12 -m venv models/dreamgen/.venv_svg && models/dreamgen/.venv_svg/bin/pip install -r docs/setup/env_freeze/dreamgen__svg.txt
-python3.10 -m venv models/DreamDojo/.venv   && models/DreamDojo/.venv/bin/pip install -r docs/setup/env_freeze/DreamDojo.txt
-python3.10 -m venv models/Ctrl-World/.venv  && models/Ctrl-World/.venv/bin/pip install -r docs/setup/env_freeze/Ctrl-World.txt
-(cd metrics/rigis && uv sync)
-conda create -n hdmi python=3.10 -y && conda run -n hdmi pip install -e metrics/kiva
-export HAL_PYTHON="$(conda run -n hdmi which python)"
+# example: the main DreamGen env (the other five are in docs/setup/README.md)
+uv venv --python 3.12 models/dreamgen/.venv && PY=models/dreamgen/.venv
+uv pip install --python $PY torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu124
+uv pip install --python $PY --no-build-isolation flash-attn==2.8.3 "transformer-engine[pytorch]==2.14.1"
+uv pip install --python $PY --index-strategy unsafe-best-match --extra-index-url https://download.pytorch.org/whl/cu124 \
+    --extra-index-url https://flashinfer.ai/whl/cu124/torch2.6/ --extra-index-url https://pypi.nvidia.com \
+    -r docs/setup/env_freeze/dreamgen.txt
+$PY/bin/python -c "import torch, flash_attn, flashinfer; print(torch.__version__, torch.cuda.is_available(), flashinfer.__version__)"
 ```
 
-For the matching torch / CUDA wheel of each env, see [docs/setup/README.md](docs/setup/README.md).
+You also need **ffmpeg / ffprobe** on `PATH` (prepare scripts, GT rendering, RIGIS
+frame extraction, KIVA probing), and `export HF_HUB_DISABLE_XET=1` for every Hugging
+Face download on a parallel filesystem.
 
 ## 2. Data
 
