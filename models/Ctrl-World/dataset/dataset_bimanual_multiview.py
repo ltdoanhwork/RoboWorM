@@ -5,7 +5,8 @@ Adapted from dataset_droid_exp33.Dataset_mix. Key differences:
   - Action/state condition is the 14-D qpos (observation.state.qpos), not DROID's
     7-D cartesian+gripper.
   - State arrays in the annotation are already frame-aligned with the latent
-    frames (prepared by prepare_ctrlworld_bimanual_multiview.py), so we index the
+    frames (prepared by prepare_ctrlworld_bimanual_multiview_grid.py; the 3-view
+    prepare_ctrlworld_bimanual_multiview.py was removed on 2026-10-08), so we index the
     state with the SAME frame ids as the latents (down_sample handled at prep time;
     here down_sample defaults to 1 -> state_id == rgb_id).
   - View stacking is config-driven. By default (no grid config on args) it keeps

@@ -32,6 +32,9 @@ case "${CONFIG_KEY}" in
     DATASET_NAME=""
     CW_CONFIG=""
     ;;
+  # Legacy 3-view keys (bimanual/humanoid). Their launchers and finetuned
+  # checkpoints were removed on 2026-10-08; restore the ckpt from HF
+  # doanh25032004/vgp_exp_logs (checkpoints/CHECKPOINTS.md) to use them.
   ctrlworld_bimanual_multiview)
     EMBODIMENT=bimanual
     INFER="${ROOT}/scripts/augment/infer_bimanual_multiview_ctrlworld_augment.py"
@@ -47,10 +50,8 @@ case "${CONFIG_KEY}" in
     CW_CONFIG="${CONFIG:-humanoid}"
     ;;
   ctrlworld_bimanual_multiview_4view_grid)
-    # Same recolor pipeline, a DIFFERENT finetuned checkpoint/config (4 views,
-    # 2x2 latent canvas) — dense keeps this as its own method dir alongside
-    # ctrlworld_bimanual_multiview, not a replacement (see
-    # .cursor/rules/ctrlworld-*-4view-grid-*-insights.mdc).
+    # Same recolor pipeline, the 4-view finetuned checkpoint/config (2x2 latent
+    # canvas); this is the bimanual paper cell (method dir ctrlworld_4view_grid).
     EMBODIMENT=bimanual
     INFER="${ROOT}/scripts/augment/infer_bimanual_multiview_ctrlworld_augment.py"
     CKPT="${CKPT:-${ROOT}/checkpoints/finetuned/ctrlworld/bimanual_multiview_4view_grid/checkpoint-110000.pt}"

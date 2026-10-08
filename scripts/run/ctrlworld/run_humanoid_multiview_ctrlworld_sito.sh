@@ -20,6 +20,11 @@
 # Env overrides: CKPT, DATASET_NAME, DATASET_DIR, DOWN_SAMPLE, SPLIT, NUM_EPISODES,
 #   NUM_INFERENCE_STEPS, GUIDANCE, OUTPUT_ROOT, INPUT_ROOT,
 #   SITO_ST_KEEP_RATIO, SITO_MAX_DOWNSAMPLE_RATIO
+#
+# Shared base of run_bimanual_multiview_ctrlworld_4view_grid_sito.sh, run_humanoid_multiview_ctrlworld_4view_grid_sito.sh (the paper cell(s)),
+# which pass CONFIG=*_grid + their own CKPT/DATASET_NAME/OUTPUT_ROOT. The 3-view
+# default CKPT below (humanoid_multiview/checkpoint-200000.pt) was removed on 2026-10-08;
+# it is on HF doanh25032004/vgp_exp_logs (see checkpoints/CHECKPOINTS.md).
 
 set -euo pipefail
 

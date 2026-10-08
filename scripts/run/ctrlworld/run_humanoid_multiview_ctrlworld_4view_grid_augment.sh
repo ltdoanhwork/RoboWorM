@@ -15,7 +15,7 @@
 # 10 videos per category, from augment_manifest.json — the SAME entries as
 # ctrlworld_humanoid_multiview (gen_manifest.py mirrors that section verbatim,
 # since the identical episode ids exist in both dataset_example trees), so the
-# 3-view and 4-view-grid checkpoints are benchmarked on identical recolors.
+# 4-view-grid recolors match the legacy 3-view augment rollouts episode-for-episode.
 #
 # Usage:
 #   CUDA_VISIBLE_DEVICES=0 bash scripts/run/ctrlworld/run_humanoid_multiview_ctrlworld_4view_grid_augment.sh [makovian|non_makovian|both]

@@ -51,7 +51,9 @@ from edit_object import ObjectEditor, _try_load_sam, _diff_box, _feather, _compo
 #
 # bimanual must be the *_5fps tree: that is what the dense outputs were produced
 # from (dense num_frames_gt matches its annotation video_length) and what the
-# finetuned checkpoint-280000 expects.
+# finetuned checkpoint-280000 expects. The two 3-view bimanual/humanoid keys are
+# legacy (launchers + checkpoints removed 2026-10-08); the *_4view_grid keys are
+# the paper cells.
 SUBSET_DIR = {
     "ctrlworld_single_arm_multiview": lambda split: f"single_arm_multiview_{split}",
     "ctrlworld_bimanual_multiview": lambda split: "bimanual_multiview_5fps",

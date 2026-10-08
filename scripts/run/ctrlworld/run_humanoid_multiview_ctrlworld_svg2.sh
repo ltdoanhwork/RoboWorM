@@ -15,6 +15,11 @@
 # Env overrides: VENV, CKPT, DATASET_NAME, DATASET_DIR, DOWN_SAMPLE, SPLIT, CONFIG,
 #   NUM_EPISODES, NUM_INFERENCE_STEPS, GUIDANCE, OUTPUT_ROOT, INPUT_ROOT,
 #   NUM_SHARDS/SHARD_ID, SVG_{NUM_Q_CENTROIDS,NUM_K_CENTROIDS,TOP_P_KMEANS,FIRST_LAYERS_FP}
+#
+# Shared base of run_bimanual_multiview_ctrlworld_4view_grid_svg2.sh, run_humanoid_multiview_ctrlworld_4view_grid_svg2.sh (the paper cell(s)),
+# which pass CONFIG=*_grid + their own CKPT/DATASET_NAME/OUTPUT_ROOT. The 3-view
+# default CKPT below (humanoid_multiview/checkpoint-200000.pt) was removed on 2026-10-08;
+# it is on HF doanh25032004/vgp_exp_logs (see checkpoints/CHECKPOINTS.md).
 
 set -euo pipefail
 

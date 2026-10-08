@@ -39,6 +39,11 @@ run_step() {
   fi
 }
 
+# Cells A/B use the legacy 3-view config (CONFIG=bimanual|humanoid) so the base
+# rollouts pair with the kept 3-view dense rollouts in sampling_dataset/dense/.
+# They only need the DROID base ckpt (the dense default); the 3-view finetuned
+# ckpts were removed on 2026-10-08 (HF doanh25032004/vgp_exp_logs).
+#
 # --- A) Ctrl-World bimanual multiview: base=checkpoint-10000.pt (DROID base) ---
 step_ctrlworld_bimanual() {
   OUTPUT_ROOT="${OUT}/ctrlworld_bimanual_mv/base_ckpt/output" \

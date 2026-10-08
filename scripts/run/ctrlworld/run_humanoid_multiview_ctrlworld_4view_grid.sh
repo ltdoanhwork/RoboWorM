@@ -1,7 +1,7 @@
 #!/bin/bash
 # Full-episode Ctrl-World inference for the humanoid 4-VIEW 2x2 GRID model.
 #
-# Mirrors run_humanoid_multiview_ctrlworld.sh (the dense 3-view flow) EXACTLY —
+# Mirrors run_humanoid_multiview_ctrlworld.sh (the shared dense base) EXACTLY —
 # same infer_bimanual_multiview_ctrlworld.py, same autoregressive rollout logic
 # (pred_step=num_frames=5, overlap 1 frame, interact_num derived per-episode from
 # video_length), same replay of the GT 36-D state as the action condition, same

@@ -11,6 +11,11 @@
 #
 # Env overrides: CKPT, DATASET_NAME, DATASET_DIR, DOWN_SAMPLE, SPLIT, NUM_EPISODES,
 #   NUM_INFERENCE_STEPS, GUIDANCE, DICACHE_{REL_L1_THRESH,RET_RATIO,PROBE_DEPTH}
+#
+# Shared base of run_bimanual_multiview_ctrlworld_4view_grid_dicache.sh (the paper cell(s)),
+# which pass CONFIG=*_grid + their own CKPT/DATASET_NAME/OUTPUT_ROOT. The 3-view
+# default CKPT below (bimanual_multiview_5fps/checkpoint-280000.pt) was removed on 2026-10-08;
+# it is on HF doanh25032004/vgp_exp_logs (see checkpoints/CHECKPOINTS.md).
 
 set -euo pipefail
 
