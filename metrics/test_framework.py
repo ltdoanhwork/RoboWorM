@@ -306,16 +306,18 @@ def test_mas_summary_gates():
 # --------------------------------------------------------------------------- #
 @pytest.mark.skipif(not (REAL_DIR / "episode_000000_gt.mp4").is_file(), reason="no sampling_dataset")
 def test_parity_with_inference_scripts():
-    """Same numbers as the piq call in scripts/infer_single_arm_singleview_*.py."""
+    """PSNR/LPIPS = the piq call in scripts/infer/*.py; SSIM = compute_dr_metrics.py."""
     import piq
     import torch
+    from torchmetrics.functional.image import structural_similarity_index_measure as ssim_f
 
     pred = load_frames(REAL_DIR / "episode_000000.mp4")[:48]
     gt = load_frames(REAL_DIR / "episode_000000_gt.mp4")[:40]
     n = min(len(pred), len(gt))                                # their min_len truncation
     x = torch.clamp(torch.from_numpy(pred[:n].copy()) / 255.0, 0, 1).permute(0, 3, 1, 2)
     y = torch.clamp(torch.from_numpy(gt[:n].copy()) / 255.0, 0, 1).permute(0, 3, 1, 2)
-    want = {"psnr": piq.psnr(x, y).mean().item(), "ssim": piq.ssim(x, y).mean().item(),
+    want = {"psnr": piq.psnr(x, y).mean().item(),
+            "ssim": ssim_f(x, y, data_range=1.0).item(),
             "lpips": piq.LPIPS()(x, y).mean().item()}
     got = build_metric("fidelity", device="cpu", chunk=16)(Sample("ep0", pred, gt))
     for k, v in want.items():

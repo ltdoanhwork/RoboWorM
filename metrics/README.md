@@ -40,7 +40,7 @@ metrics/
 ├── registry.py          name -> class (lazy), deprecated aliases, register(), build_metric()
 ├── evaluate.py          CLI: discover samples, run metrics, write json/csv
 ├── video_io.py          decoding, prompt sidecars, nr_analysis_frames() (the reference-free frame protocol)
-├── fidelity.py          PSNR, SSIM, LPIPS, Fidelity (piq)
+├── fidelity.py          PSNR, SSIM, LPIPS, Fidelity (piq; SSIM via torchmetrics)
 ├── visual_integrity.py  Visual Integrity (CLIP-IQA+ p10)
 ├── text_alignment.py    Text Alignment (CLIPScore), task_clause()
 ├── fvd/                 FVD: core.py (I3D, Fréchet), pool.py (shared real pool), README.md (setup)
@@ -154,11 +154,13 @@ build_metric("fidelity")(Sample("ep1", pred="pisa/ep1.mp4", ref="dense/ep1.mp4")
   DreamDojo is image-only → None). Rank with paired deltas under the same prompt.
 * **Visual Integrity** fails the real-video-is-ceiling audit: use it for the acceleration
   comparison against dense, not to rank models.
-* **Fidelity**: reference = the dense rollout of the same episode. `piq` with defaults on
-  float [0,1] NCHW, frames truncated to `min(T_pred, T_ref)`, no implicit resize. The DR
-  wave (`scripts/metrics/compute_dr_metrics.py`) that produced the stored numbers uses the
-  same per-frame PSNR and torchmetrics SSIM/LPIPS: PSNR agrees to 1e-4 dB; SSIM differs at
-  ≥ 384 px because piq downsamples first (measured 0.94190 vs 0.94175 on a 480p clip).
+* **Fidelity**: reference = the dense rollout of the same episode. Float [0,1] NCHW,
+  frames truncated to `min(T_pred, T_ref)`, no implicit resize. PSNR and LPIPS use `piq`
+  defaults; SSIM uses `torchmetrics.functional.image.structural_similarity_index_measure`
+  (`data_range=1.0`, no downsampling), the same call as the DR wave
+  (`scripts/metrics/compute_dr_metrics.py`) that produced the stored numbers, so all three
+  reproduce the stored records. Note `piq.ssim` (used in the inference-time `metrics.json`)
+  downsamples first and gives different SSIM at ≥ 384 px.
 * **FVD** is a set statistic (one number per cell, effective n = 1), `None` below 64 windows
   per side, only comparable at the same reference and sample size — see `fvd/README.md`.
 * **KIVA** rates are meaningful only next to the real-video anchor (`score_ref=true`);

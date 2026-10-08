@@ -76,7 +76,7 @@ $PY -m metrics.evaluate --pred-root <frames>/<task> --pred-glob '*' \
 | **Visual Integrity** ↑ | CLIP-IQA+ ("Good photo." vs "Bad photo.") per frame; **10th percentile** over frames ×100 instead of the source's mean, so a brief autoregressive collapse is not averaged away (mean kept as `visual_integrity_mean`) | `metrics/visual_integrity.py` |
 | **Text Alignment** ↑ | CLIPScore `max(100·cos(E_I, E_C), 0)` against the **task clause only** (DreamGen's grid-layout text is stripped), mean over frames; None for image-only models (DreamDojo) | `metrics/text_alignment.py` |
 | **FVD** ↓ | Kinetics-400 I3D features of non-overlapping 16-frame windows at 224×224, all clips at 5 fps; one shared real pool per embodiment × camera × regime, multi-view scored per camera and averaged over common cameras | `metrics/fvd/` — setup in [metrics/fvd/README.md](../../metrics/fvd/README.md) |
-| **PSNR** ↑ (SSIM, LPIPS) | fidelity of an accelerated rollout to the **dense rollout** of the same episode (never real video); PSNR is the one in the retention index | `metrics/fidelity.py` |
+| **PSNR** ↑ (SSIM, LPIPS) | fidelity of an accelerated rollout to the **dense rollout** of the same episode (never real video); PSNR is the one in the retention index. Backend: `piq` PSNR/LPIPS (VGG), torchmetrics SSIM (`data_range=1`, no downsampling) — SSIM is the exact call of `scripts/metrics/compute_dr_metrics.py`, and all three reproduce the stored DR records | `metrics/fidelity.py` |
 
 Visual Integrity and Text Alignment are scored on the paper's analysis frames: 5 fps,
 conditioning frame dropped, one camera tile, 256×192, every 5th frame (`--meta layout=grid

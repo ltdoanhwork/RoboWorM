@@ -1,21 +1,23 @@
 """Reference-based fidelity metrics: PSNR, SSIM, LPIPS.
 
-Backend is ``piq`` with its defaults -- the exact calls every
-``scripts/infer_*.py`` makes (``piq.psnr / piq.ssim / piq.LPIPS()`` on float
-[0,1] NCHW, frames truncated to ``min(T_pred, T_gt)``), so a number produced
-here is directly comparable with the ``metrics.json`` the inference runs wrote.
+Backends, all on float [0,1] NCHW with frames truncated to ``min(T_pred, T_ref)``:
+  * PSNR, LPIPS: ``piq`` defaults (``piq.psnr`` / ``piq.LPIPS()``), the calls the
+    ``scripts/infer/*.py`` runs make. These agree with the stored paper records.
+  * SSIM: ``torchmetrics.functional.image.structural_similarity_index_measure``
+    with ``data_range=1.0`` and otherwise default arguments, the exact call of
+    ``scripts/metrics/compute_dr_metrics.py`` (the DR wave that produced the paper
+    numbers), so SSIM here reproduces the stored records.
 
-Per-sample value = mean over frames of the per-frame score (piq's
-``reduction="mean"`` over the frame batch), chunked on GPU with size-weighted
-averaging, which is numerically the same mean.
+Per-sample value = mean over frames of the per-frame score, chunked on GPU with
+size-weighted averaging, which is numerically the same mean.
 
-piq conventions worth knowing before comparing against other papers:
+Conventions worth knowing before comparing against other papers:
   * PSNR: ``10 log10(1 / (MSE + 1e-8))`` -> bit-identical frames give ~80 dB,
     not inf (``scripts/metrics/_score_vs_dense.py`` uses skimage, which gives inf; the
     two agree on every non-identical frame).
-  * SSIM: 11x11 Gaussian (sigma 1.5), and **downsamples** by
-    ``max(1, round(min(H, W) / 256))`` first (the original Wang et al. recipe);
-    skimage does not, so skimage SSIM differs at >= 384 px.
+  * SSIM: 11x11 Gaussian (sigma 1.5), K=(0.01, 0.03), no downsampling. ``piq.ssim``
+    (which the inference-time ``metrics.json`` files use) downsamples by
+    ``max(1, round(min(H, W) / 256))`` first, so it differs at >= 384 px.
   * LPIPS: VGG16 backbone, piq's ``lpips_weights.pt`` (torch hub cache), inputs
     in [0,1]. Lower is better.
 """
@@ -26,6 +28,13 @@ from typing import Any
 import numpy as np
 
 from .base import FrameMetric
+
+
+def _ssim(x, y):
+    """Per-frame SSIM, same call as scripts/metrics/compute_dr_metrics.py."""
+    from torchmetrics.functional.image import structural_similarity_index_measure
+
+    return structural_similarity_index_measure(x, y, data_range=1.0, reduction="none")
 
 
 class _PiqFrameMetric(FrameMetric):
@@ -60,11 +69,11 @@ class SSIM(_PiqFrameMetric):
     name = "ssim"
     higher_is_better = {"ssim": True}
 
-    def score_frames(self, pred, ref, text) -> dict[str, float]:
-        import piq
+    def setup(self) -> None:
+        import torchmetrics  # noqa: F401  -- fail early with a clear ImportError
 
-        return {"ssim": self._weighted_mean(
-            lambda x, y: piq.ssim(x, y, data_range=1.0, reduction="none"), pred, ref)}
+    def score_frames(self, pred, ref, text) -> dict[str, float]:
+        return {"ssim": self._weighted_mean(_ssim, pred, ref)}
 
 
 class LPIPS(_PiqFrameMetric):
@@ -109,7 +118,7 @@ class Fidelity(_PiqFrameMetric):
             for x, y in self._chunks(pred, ref):
                 k = len(x)
                 sums["psnr"] += float(piq.psnr(x, y, data_range=1.0, reduction="none").mean()) * k
-                sums["ssim"] += float(piq.ssim(x, y, data_range=1.0, reduction="none").mean()) * k
+                sums["ssim"] += float(_ssim(x, y).mean()) * k
                 sums["lpips"] += float(self._lpips(x, y).mean()) * k
                 n += k
         return {k: v / n for k, v in sums.items()}
