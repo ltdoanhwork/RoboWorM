@@ -20,6 +20,10 @@ export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0}"
 CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/finetuned/dreamdojo/dreamdojo/exp_aloha_resume70k/aloha_bimanual_singleview_full/checkpoints}"
 EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_480_640_aloha_resume70k_bimanual_sv}"
 NUM_EPISODES="${NUM_EPISODES:-}"
+# Guidance of the dense reference. 0 = the infer-script default this launcher has
+# always used. Every method launcher of this cell reads the same GUIDANCE variable
+# with the same default.
+GUIDANCE="${GUIDANCE:-0}"
 _SAVE_ROOT_ENV="${SAVE_ROOT:-}"
 SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/dense/bimanual/output/singleview/dreamdojo}"
 # Intermediate --output-dir: OUTPUT_ROOT if set, else <SAVE_ROOT>/_output when SAVE_ROOT
@@ -103,6 +107,7 @@ for split in makovian non_makovian; do
     --save-dir "${save_base}" \
     --save-fps 10 \
     --output-dir "${OUT_CACHE_ROOT}/dreamdojo_full_ep_bimanual_sv_${split}" \
+    --guidance "${GUIDANCE}" \
     "${full_flag[@]}" \
     "${ep_flag[@]}" &
   pids+=($!)

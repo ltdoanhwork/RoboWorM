@@ -24,6 +24,10 @@ SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/dense/humanoid/output/singlevie
 OUT_CACHE_ROOT="${OUTPUT_ROOT:-${_SAVE_ROOT_ENV:+${_SAVE_ROOT_ENV}/_output}}"
 OUT_CACHE_ROOT="${OUT_CACHE_ROOT:-${ROOT}/output}"
 NUM_EPISODES="${NUM_EPISODES:-}"
+# Guidance of the dense reference. 0 = the infer-script default this launcher has
+# always used (run_config.json of the released rollouts: "guidance": 0). Every
+# method launcher of this cell reads the same GUIDANCE variable with the same default.
+GUIDANCE="${GUIDANCE:-0}"
 
 ep_flag=()
 if [[ -n "${NUM_EPISODES}" ]]; then
@@ -57,6 +61,7 @@ for split in makovian non_makovian; do
     --save-dir "${save_base}" \
     --num-frames "${NUM_FRAMES}" \
     --output-dir "${OUT_CACHE_ROOT}/dreamdojo_full_ep_humanoid_sv_${split}" \
+    --guidance "${GUIDANCE}" \
     "${full_flag[@]}" \
     "${ep_flag[@]}"
 done

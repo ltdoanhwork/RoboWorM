@@ -28,7 +28,10 @@ SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/svg1/bimanual/output/singleview
 OUT_CACHE_ROOT="${OUTPUT_ROOT:-${_SAVE_ROOT_ENV:+${_SAVE_ROOT_ENV}/_output}}"
 OUT_CACHE_ROOT="${OUT_CACHE_ROOT:-${ROOT}/output}"
 NUM_EPISODES="${NUM_EPISODES:-}"
-GUIDANCE="${GUIDANCE:-1.5}"
+# Guidance: same as the cell's dense launcher (run_bimanual_singleview_dreamdojo_full_episode.sh: GUIDANCE, default 0 =
+# the infer-script default). Was 1.5 before 2026-10-09, so fidelity-vs-dense compared
+# different guidance scales.
+GUIDANCE="${GUIDANCE:-0}"
 SPLITS="${SPLITS:-makovian non_makovian}"
 SAVE_MODE="${SAVE_MODE:-video_only}"
 

@@ -25,7 +25,10 @@ SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/dicache/single_arm/output/singl
 OUT_CACHE_ROOT="${OUTPUT_ROOT:-${_SAVE_ROOT_ENV:+${_SAVE_ROOT_ENV}/_output}}"
 OUT_CACHE_ROOT="${OUT_CACHE_ROOT:-${ROOT}/output}"
 NUM_EPISODES="${NUM_EPISODES:-}"
-GUIDANCE="${GUIDANCE:-1.5}"
+# Guidance: same as the cell's dense launcher (run_single_arm_singleview_dreamdojo_dense.sh: GUIDANCE, default 0 =
+# the infer-script default). Was 1.5 before 2026-10-09, so fidelity-vs-dense compared
+# different guidance scales.
+GUIDANCE="${GUIDANCE:-0}"
 
 # DiCache parameters
 DICACHE_NUM_STEPS="${DICACHE_NUM_STEPS:-35}"

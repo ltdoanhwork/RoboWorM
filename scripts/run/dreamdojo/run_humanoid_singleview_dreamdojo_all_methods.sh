@@ -40,7 +40,10 @@ CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/base/dreamdojo/2B_GR1_po
 EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_480_640_gr1}"
 NUM_FRAMES="${NUM_FRAMES:-49}"
 SAVE_FPS="${SAVE_FPS:-10}"
-GUIDANCE="${GUIDANCE:-1.5}"
+# Guidance: same as the cell's dense launcher (run_humanoid_singleview_dreamdojo_full_episode.sh: GUIDANCE, default 0 =
+# the infer-script default). Was 1.5 before 2026-10-09, so fidelity-vs-dense compared
+# different guidance scales.
+GUIDANCE="${GUIDANCE:-0}"
 NUM_EPISODES="${NUM_EPISODES:-}"
 
 METHODS="${METHODS:-dense worldcache fastercache dicache}"

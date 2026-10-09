@@ -30,6 +30,10 @@ SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/dense/single_arm/output/singlev
 OUT_CACHE_ROOT="${OUTPUT_ROOT:-${_SAVE_ROOT_ENV:+${_SAVE_ROOT_ENV}/_output}}"
 OUT_CACHE_ROOT="${OUT_CACHE_ROOT:-${ROOT}/output}"
 NUM_EPISODES="${NUM_EPISODES:-}"
+# Guidance of the dense reference. 0 = the infer-script default this launcher has
+# always used. Every method launcher of this cell reads the same GUIDANCE variable
+# with the same default.
+GUIDANCE="${GUIDANCE:-0}"
 
 ep_flag=()
 if [[ -n "${NUM_EPISODES}" ]]; then
@@ -54,5 +58,6 @@ for split in makovian non_makovian; do
     --num-frames "${NUM_FRAMES}" \
     --save-fps 15 \
     --output-dir "${out_cache}" \
+    --guidance "${GUIDANCE}" \
     "${ep_flag[@]}"
 done
