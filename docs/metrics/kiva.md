@@ -137,12 +137,12 @@ PYTHONPATH=metrics/kiva/src "$HAL_PYTHON" -m kinescore.cli.main score --help
 
 `run.sh` points kinescore at a **store** directory, `HAL_STORE` (default
 `$KINESCORE_STORE`, else `/pfss/mlde/workspaces/mlde_wsp_IAS_SAMMerge/triquang/kinescore-store`).
-It refuses to start unless `assets/`, `data/` and `cache/` exist under it:
+It refuses to start unless `assets/` and `cache/` exist under it:
 
 | store path | kinescore env | holds | needed for |
 |---|---|---|---|
 | `$HAL_STORE/assets/` | `KINESCORE_ASSETS` | URDF + mesh trees (`a1x/ aloha/ gr1/ franka/ airbot_mmk2/ ...`) | bone rest lengths, FK |
-| `$HAL_STORE/data/trees/<reader_id>/videos/val/` | `KINESCORE_DATA_ROOT` | the reader's real validation clips | threshold calibration (`--calibration-clips`, default 24; the A1X tree has 12) |
+| `$HAL_STORE/data/trees/<reader_id>/videos/val/` | `KINESCORE_DATA_ROOT` | the reader's real validation clips | `kinescore calibrate` only (12 / 29 / 26 clips) |
 | `$HAL_STORE/cache/hf/` | `HF_HOME` | HF cache incl. `facebook/dinov3-vitl16-pretrain-lvd1689m` | the frozen DINOv3 backbone |
 | reader checkpoints | `KINESCORE_CKPT_DIR` = `HAL_CKPT_DIR` | `g_theta` per embodiment | reading keypoints |
 
@@ -151,11 +151,11 @@ this cluster a symlink to `$HAL_STORE/ckpt`), else `$HAL_STORE/ckpt`.
 
 **Benchmark readers** (the checkpoints whose sha256 is in the published `summary.json`):
 
-| embodiment | robot | reader file (`HAL_CKPT_DIR/`) | input | default cell | override |
+| embodiment | robot | reader file (`HAL_CKPT_DIR/`) | input | thresholds (`metrics/kiva/thresholds/`) | override |
 |---|---|---|---|---|---|
-| single_arm | Galaxea A1X (RoboChallenge) | `a1x_ee.a1x_sv.sv1_4x3.pt` (sha256 `5e463b70…`) | 640×480 | `single_arm.sv1_4x3.dense_dreamgen` | `HAL_CKPT_SINGLE_ARM`, `HAL_CELL_SINGLE_ARM` |
-| bimanual | ALOHA (AIST) | `aloha_bimanual.bimanual_sv.sv1_16x9.pt` | 768×432 | `bimanual.sv1_16x9.dreamgen` | `HAL_CKPT_BIMANUAL`, `HAL_CELL_BIMANUAL` |
-| humanoid | Fourier GR-1 | `fourier_gr1.humanoid_sv.sv1_16x9.huber_old.pt` (sha256 `c40fc006…`, K = 12 arm keypoints) | 768×432 | `humanoid.sv1_16x9.dreamgen` | `HAL_CKPT_HUMANOID`, `HAL_CELL_HUMANOID` |
+| single_arm | Galaxea A1X (RoboChallenge) | `a1x_ee.a1x_sv.sv1_4x3.pt` (sha256 `5e463b70…`) | 640×480 | `a1x_ee.a1x_sv.sv1_4x3.json` | `HAL_CKPT_SINGLE_ARM`, `HAL_THR_SINGLE_ARM` |
+| bimanual | ALOHA (AIST) | `aloha_bimanual.bimanual_sv.sv1_16x9.pt` | 768×432 | `aloha_bimanual.bimanual_sv.sv1_16x9.json` | `HAL_CKPT_BIMANUAL`, `HAL_THR_BIMANUAL` |
+| humanoid | Fourier GR-1 | `fourier_gr1.humanoid_sv.sv1_16x9.huber_old.pt` (sha256 `c40fc006…`, K = 12 arm keypoints) | 768×432 | `fourier_gr1.humanoid_sv.sv1_16x9.json` | `HAL_CKPT_HUMANOID`, `HAL_THR_HUMANOID` |
 
 The other humanoid files in the same dir (`*_newsampler`, `*.mse`, K = 22) are different
 trainings and are **not** benchmark-consistent.
@@ -283,11 +283,8 @@ pooling mixes three different readers.
 | `MAX_CLIPS` | `0` (all) | cap per (variant, embodiment, split) |
 | `FRAME_CHUNK` | `16` | frames per DINOv3 forward (lower = less VRAM) |
 | `MAX_FRAMES` | `0` (all) | cap frames per clip |
-| `CALIB_CLIPS` | `24` | real val clips the thresholds are fitted on |
-| `PERCENTILE` | `95` | calibration percentile |
-| `HAL_RENDER` | `0` | `1` keeps the `render/` overlay videos (large, slow) |
 | `VIDEOS_DIR`, `OUT_DIR` | — | single-directory mode |
-| `HAL_CKPT_{SINGLE_ARM,BIMANUAL,HUMANOID}`, `HAL_CELL_{...}` | benchmark readers / cells | per-embodiment overrides |
+| `HAL_CKPT_{SINGLE_ARM,BIMANUAL,HUMANOID}`, `HAL_THR_{...}` | benchmark readers / `thresholds/` | per-embodiment overrides |
 
 ### 6.4 Through the unified metrics CLI
 
@@ -313,12 +310,10 @@ Per scored directory (`kinescore score --out`):
 
 | file | one row per | holds |
 |---|---|---|
-| `summary.json` | run | cell, reader id, checkpoint path + sha256, n clips / failed, calibration clip count, percentile, per-detector `threshold` (per-frame) and `segment_threshold` (= `theta_d`) |
+| `summary.json` | run | model path, thresholds file, n clips / failed, per-detector rate, `threshold` (per-frame) and `segment_threshold` (= `theta_d`) |
 | `segments.csv` | 16-frame segment | `<det>_value`, `<det>_threshold` (segment), `<det>_violated`, `<det>_reduce` per detector, `start_frame`, `end_frame` |
 | `metrics.csv` | clip | `n_segments`, per detector `n_violated`, `violated`, `worst_segment`, `frame_fraction`, `severity_median`; `error` if the clip was rejected |
 | `results.jsonl` | clip | per-frame series and flagged intervals |
-| `run_manifest.json` | run | provenance (`git_sha` of the host repo, `upstream_sha`) |
-| `render/` | clip | keypoint overlays; deleted by `run.sh` unless `HAL_RENDER=1` |
 
 `aggregate.py` / `metric.py` reduce `segments.csv` per clip (same functions, so there is
 one definition in the repo):
@@ -393,12 +388,12 @@ against the method's own dense rollout on the same episodes (App. E.3).
    `bimanual.sv1_4x3.dreamdojo` / `humanoid.sv1_4x3.dreamdojo` in `configs/cells.yaml`).
    On this cluster only `fourier_gr1.humanoid_sv.sv1_4x3.pt` is present in the store;
    there is no `aloha_bimanual.bimanual_sv.sv1_4x3.pt`. Use `VIDEOS_DIR` +
-   `HAL_CELL_*` / `HAL_CKPT_*` overrides to score these.
+   `HAL_CKPT_*` / `HAL_THR_*` overrides to score these (calibrate the reader first).
 3. **Read rates as excess over the real anchor.** The reader's own keypoint error
    (tens of mm) puts a non-zero floor under every rate; real video sits at 5–10 %.
-4. **Calibration is part of every run** and uses `CALIB_CLIPS` real val clips; changing
-   `CALIB_CLIPS` or `PERCENTILE` changes every threshold. Keep them fixed within a
-   comparison and record `summary.json`.
+4. **Thresholds are fixed per reader** in `metrics/kiva/thresholds/<reader>.json`, fitted
+   once by `kinescore calibrate` at the 95th percentile of the reader's real val clips.
+   Re-calibrating changes every rate; keep one thresholds file within a comparison.
 5. Jerk is a worst-frame statistic, so its real-segment baseline flag rate is far above
    5 % (e.g. 31 % on the GR-1 reader in `metrics/kiva/docs/METRICS.md`); rigidity is a
    median and sits below 5 %.

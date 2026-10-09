@@ -5,7 +5,8 @@ Wraps ``metrics/kiva/run.sh`` (kinescore vendored from branch
 ``metrics/kiva/VENDORED.md``;
 full write-up in ``docs/metrics/kiva.md``). The launcher owns the
 interpreter (``hdmi`` conda env), the kinescore store (reader checkpoints,
-URDFs, calibration clips, DINOv3 cache) and the ffmpeg workaround; this class
+URDFs, DINOv3 cache), the fixed thresholds in ``metrics/kiva/thresholds/`` and
+the ffmpeg workaround; this class
 stages mp4 symlinks, runs it once, and reduces ``segments.csv`` with the SAME
 functions ``aggregate.py`` uses -- so there is exactly one definition of
 "violation rate" in the repo.
@@ -31,7 +32,7 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from ..base import ExternalMetric, Sample, staged_names
-from .aggregate import ALL_DETECTORS, HEADLINE, _load_segments, _per_clip
+from .aggregate import HEADLINE, _load_segments, _per_clip
 
 EMBODIMENTS = ("single_arm", "bimanual", "humanoid")
 REF_SUFFIX = "__ref"
@@ -44,17 +45,16 @@ class Hallucination(ExternalMetric):
 
     def __init__(self, device: str = "cuda", embodiment: str = "single_arm",
                  detectors: Sequence[str] = HEADLINE, score_ref: bool = False,
-                 frame_chunk: int = 16, max_frames: int = 0,
-                 calib_clips: int = 24, percentile: float = 95.0, **config: Any) -> None:
+                 frame_chunk: int = 16, max_frames: int = 0, **config: Any) -> None:
         if embodiment not in EMBODIMENTS:
             raise ValueError(f"embodiment must be one of {EMBODIMENTS}, got {embodiment!r}")
         detectors = list(detectors)
-        bad = [d for d in detectors if d not in ALL_DETECTORS]
+        bad = [d for d in detectors if d not in HEADLINE]
         if bad:
-            raise ValueError(f"unknown detectors {bad}; available {ALL_DETECTORS}")
+            raise ValueError(f"unknown detectors {bad}; available {HEADLINE}")
         super().__init__(device=device, embodiment=embodiment, detectors=detectors,
                          score_ref=score_ref, frame_chunk=frame_chunk, max_frames=max_frames,
-                         calib_clips=calib_clips, percentile=percentile, **config)
+                         **config)
         self.detectors = detectors
         self.score_ref = bool(score_ref)
         hib = {}
@@ -98,10 +98,7 @@ class Hallucination(ExternalMetric):
             "HAL_PATTERN": "*.mp4",
             "FRAME_CHUNK": self.config["frame_chunk"],
             "MAX_FRAMES": self.config["max_frames"],
-            "CALIB_CLIPS": self.config["calib_clips"],
-            "PERCENTILE": self.config["percentile"],
             "MAX_CLIPS": 0,
-            "HAL_RENDER": 0,
         }
         self.run_launcher(env, run_dir)
         if not (out_dir / "segments.csv").is_file():

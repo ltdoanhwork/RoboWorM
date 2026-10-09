@@ -1,0 +1,23 @@
+{
+  "model": "aloha_bimanual.bimanual_sv.sv1_16x9.pt",
+  "robot": "aloha_bimanual",
+  "view_id": "sv1_16x9",
+  "real": "$KINESCORE_DATA_ROOT/trees/aloha_bimanual.bimanual_sv.sv1_16x9/videos/val",
+  "n_clips": 29,
+  "percentile": 95.0,
+  "seed": 0,
+  "thresholds": {
+    "rigidity": {
+      "units": "mm",
+      "threshold": 56.33,
+      "segment_threshold": 55.49,
+      "segment_reduce": "median"
+    },
+    "jerk": {
+      "units": "mm/s^3",
+      "threshold": 1249501.81,
+      "segment_threshold": 3587158.2,
+      "segment_reduce": "worst"
+    }
+  }
+}
