@@ -45,7 +45,7 @@ RIGHT_ARM_JOINTS: tuple[str, ...] = (
 #: `{side}/left_finger_link` / `{side}/right_finger_link` are driven by the
 #: prismatic finger joints (gripper aux), not the 6 predicted arm joints --
 #: the Franka `ACTUATED_LINKS` situation, mirrored here; see
-#: `ACTUATED_LINKS` below and `docs/ARCHITECTURE.md#adding-a-robot`'s D9 checklist.
+#: `ACTUATED_LINKS` below and step 3 of `docs/ADDING_A_ROBOT.md`.
 KEYPOINTS_LEFT: tuple[str, ...] = (
     "left/shoulder_link", "left/upper_arm_link", "left/upper_forearm_link",
     "left/lower_forearm_link", "left/wrist_link", "left/gripper_link",

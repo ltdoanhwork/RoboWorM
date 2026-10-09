@@ -130,12 +130,12 @@ robots as hallucination. Follow
    `joint_field`, `joint_columns`, `gripper_columns`), a reader
    `<robot>.<corpus>.<view_id>`, and the cells you score; the view packing (panel size)
    in `configs/views.yaml`, measured from real clips.
-8. `kinescore data / cache / train --reader <id>`; thresholds are then fitted
-   automatically at every `kinescore score` from the reader's own val split
-   (`$KINESCORE_DATA_ROOT/trees/<reader_id>/videos/val/`).
+8. `kinescore data / cache / train --reader <id>`, then fit the thresholds once with
+   `kinescore calibrate --model <ckpt> --real $KINESCORE_DATA_ROOT/trees/<reader_id>/videos/val/
+   --out metrics/kiva/thresholds/<reader_id>.json`.
 
-Then point `metrics/kiva/run.sh` at it with `HAL_CELL_<EMB>` / `HAL_CKPT_<EMB>` (or extend
-its `cell_for` / `ckpt_for` / `tag_for` tables for a new embodiment name). Choose which
+Then point `metrics/kiva/run.sh` at it with `HAL_CKPT_<EMB>` / `HAL_THR_<EMB>` (or extend
+its `thr_for` / `ckpt_for` / `tag_for` tables for a new embodiment name). Choose which
 detectors enter `s_S` for this morphology (today: rigidity + jerk on single-arm, rigidity
 only on bimanual / humanoid), measure the real-video flag rate on held-out real clips, and
 **do not fit the cuts to your human labels** (App. E.2). Details: [../metrics/kiva.md](../metrics/kiva.md).

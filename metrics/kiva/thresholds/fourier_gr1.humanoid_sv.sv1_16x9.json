@@ -1,0 +1,23 @@
+{
+  "model": "fourier_gr1.humanoid_sv.sv1_16x9.pt",
+  "robot": "fourier_gr1",
+  "view_id": "sv1_16x9",
+  "real": "$KINESCORE_DATA_ROOT/trees/fourier_gr1.humanoid_sv.sv1_16x9/videos/val",
+  "n_clips": 26,
+  "percentile": 95.0,
+  "seed": 0,
+  "thresholds": {
+    "rigidity": {
+      "units": "mm",
+      "threshold": 42.38,
+      "segment_threshold": 40.69,
+      "segment_reduce": "median"
+    },
+    "jerk": {
+      "units": "mm/s^3",
+      "threshold": 457871.22,
+      "segment_threshold": 748615.53,
+      "segment_reduce": "worst"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "model": "a1x_ee.a1x_sv.sv1_4x3.pt",
+  "robot": "a1x_ee",
+  "view_id": "sv1_4x3",
+  "real": "$KINESCORE_DATA_ROOT/trees/a1x_ee.a1x_sv.sv1_4x3/videos/val",
+  "n_clips": 12,
+  "percentile": 95.0,
+  "seed": 0,
+  "thresholds": {
+    "rigidity": {
+      "units": "mm",
+      "threshold": 18.0,
+      "segment_threshold": 8.38,
+      "segment_reduce": "median"
+    },
+    "jerk": {
+      "units": "mm/s^3",
+      "threshold": 246285.94,
+      "segment_threshold": 354334.7,
+      "segment_reduce": "worst"
+    }
+  }
+}
