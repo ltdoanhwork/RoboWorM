@@ -442,60 +442,102 @@ def geometric_consistency_metric(res: dict) -> float:
 
 
 if __name__ == "__main__":
+    """Smoke demo: geometric consistency on one episode (view1/view2 frames).
+
+    For full-video RIGIS (geo + pose), prefer the service client:
+      python -m multiview_consistency.run_video_metrics --episode_dir ... --host ... --port ...
+    """
+    import argparse
     import os
     import sys
+    from pathlib import Path
 
-    try:
-        from .utils import save_depth_maps, save_rgb_maps
-    except Exception:  # pragma: no cover
-        from utils import save_depth_maps, save_rgb_maps
+    _this_dir = Path(__file__).resolve().parent
+    _rigis_root = _this_dir.parent  # metrics/rigis
+    if str(_rigis_root) not in sys.path:
+        sys.path.insert(0, str(_rigis_root))
 
-    _this_dir = os.path.dirname(os.path.abspath(__file__))
-    _physics_root = os.path.abspath(os.path.join(_this_dir, ".."))
-    if _physics_root not in sys.path:
-        sys.path.insert(0, _physics_root)
-
-    from vggt_omega.utils.geometry import unproject_depth_map_to_point_map
     from vggt_omega.models import VGGTOmega
+    from vggt_omega.utils.geometry import unproject_depth_map_to_point_map
     from vggt_omega.utils.load_fn import load_and_preprocess_images
     from vggt_omega.utils.pose_enc import encoding_to_camera
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    omega_image_resolution = 512
-    omega_patch_size = 16
-    omega_checkpoint = (
-        "/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/vggt_omega_checkpoint/vggt_omega_1b_512.pt"
+    parser = argparse.ArgumentParser(
+        description="Demo: per-frame geometric consistency for a multi-view episode."
     )
+    parser.add_argument(
+        "--episode_dir",
+        type=Path,
+        required=True,
+        help="Episode folder with view subdirs (e.g. view1/, view2/) and frame_XXXX.png",
+    )
+    parser.add_argument(
+        "--omega_checkpoint",
+        type=Path,
+        required=True,
+        help="Path to vggt_omega_1b_512.pt",
+    )
+    parser.add_argument("--views", default="view1,view2", help="Comma-separated view folder names")
+    parser.add_argument("--image_resolution", type=int, default=512)
+    parser.add_argument("--patch_size", type=int, default=16)
+    parser.add_argument("--max_frames", type=int, default=0, help="0 = all matched frames")
+    parser.add_argument("--max_depth", type=float, default=1.0, help="Depth align crop threshold")
+    parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
+    args = parser.parse_args()
 
-    model = VGGTOmega(patch_size=omega_patch_size).to(device).eval()
-    state = torch.load(omega_checkpoint, map_location="cpu")
+    view_names = [v.strip() for v in args.views.split(",") if v.strip()]
+    if len(view_names) < 2:
+        raise SystemExit("--views needs at least two names")
+
+    episode_dir = args.episode_dir.expanduser().resolve()
+    view_dirs = [episode_dir / v for v in view_names]
+    for vd in view_dirs:
+        if not vd.is_dir():
+            raise SystemExit(f"Missing view folder: {vd}")
+
+    # Matched frame stems across views
+    stem_sets = []
+    for vd in view_dirs:
+        stems = {
+            p.stem
+            for p in vd.iterdir()
+            if p.is_file() and p.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp"}
+        }
+        stem_sets.append(stems)
+    stems = sorted(set.intersection(*stem_sets))
+    if not stems:
+        raise SystemExit(f"No matched frames under {episode_dir} for views={view_names}")
+    if args.max_frames > 0:
+        stems = stems[: args.max_frames]
+
+    ckpt = args.omega_checkpoint.expanduser().resolve()
+    if not ckpt.is_file():
+        raise SystemExit(f"Checkpoint not found: {ckpt}")
+
+    device = args.device
+    model = VGGTOmega(patch_size=args.patch_size).to(device).eval()
+    state = torch.load(str(ckpt), map_location="cpu")
     model.load_state_dict(state)
 
-    depth_output_dir = "output_depth"
+    scores: list[float] = []
+    print(f"episode={episode_dir}")
+    print(f"views={view_names}  frames={len(stems)}  device={device}")
 
-    ep = 255
-    frame1 = 5
-    frame2 = 5
-
-    # version = "real"
-    # version = "good_2fps"
-    version = "bad_2fps"
-    for frame1, frame2 in zip(range(35), range(35)):
-        if version == "real":
-            image_names = [
-                f"/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/data/{version}/episode_{ep:06d}/observation.images.exterior_1_left/frame_{frame1:04d}.png",
-                f"/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/data/{version}/episode_{ep:06d}/observation.images.exterior_2_left/frame_{frame2:04d}.png",
-            ]
-        else:
-            image_names = [
-                f"/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/data/{version}/episode_{ep:06d}/view1/frame_{frame1:04d}.png",
-                f"/home/thanhnv/data2_disk/VT/1.VinRobotics/1.Projects/Code/VideoWordModelBenchmark/thanhnv_multiview/data/{version}/episode_{ep:06d}/view2/frame_{frame2:04d}.png",
-            ]
+    for stem in stems:
+        image_names = [str(vd / f"{stem}.png") for vd in view_dirs]
+        # fallback other extensions
+        for i, p in enumerate(image_names):
+            if not os.path.isfile(p):
+                for ext in (".jpg", ".jpeg", ".webp"):
+                    alt = str(Path(p).with_suffix(ext))
+                    if os.path.isfile(alt):
+                        image_names[i] = alt
+                        break
 
         images = load_and_preprocess_images(
             image_names,
-            image_resolution=omega_image_resolution,
-            patch_size=omega_patch_size,
+            image_resolution=args.image_resolution,
+            patch_size=args.patch_size,
         ).to(device)
         images = images[None]  # (1, S, 3, H, W)
 
@@ -503,35 +545,43 @@ if __name__ == "__main__":
             preds = model(images)
             depth_map = preds["depth"]
             depth_map_single = preds["depth_single"]
-
             extrinsic, intrinsic = encoding_to_camera(
                 preds["pose_enc"], preds["images"].shape[-2:]
             )
 
-            depth_map_single_aligned = align_depth_scale(depth_map_single, depth_map, max_depth=1.0)
-
-            point_map_by_unprojection_aligned = unproject_depth_map_to_point_map(
-                depth_map_single_aligned[0], extrinsic.squeeze(0), intrinsic.squeeze(0)
+            depth_map_single_aligned = align_depth_scale(
+                depth_map_single, depth_map, max_depth=args.max_depth
             )
+            # align_depth_scale may return Tensor or (Tensor, scales)
+            if isinstance(depth_map_single_aligned, tuple):
+                depth_map_single_aligned = depth_map_single_aligned[0]
 
-            depth_rendered_np_single, rendered_valid_mask_single, rgb_rendered_np_single = render_depth_from_point_map(
-                point_map_by_unprojection=point_map_by_unprojection_aligned,
+            point_map = unproject_depth_map_to_point_map(
+                depth_map_single_aligned[0],
+                extrinsic.squeeze(0),
+                intrinsic.squeeze(0),
+            )
+            depth_rendered_np, valid_mask, rgb_rendered_np = render_depth_from_point_map(
+                point_map_by_unprojection=point_map,
                 depth_map=depth_map_single_aligned,
                 extrinsic=extrinsic,
                 intrinsic=intrinsic,
-                images=preds["images"]
+                images=preds["images"],
             )
-            depth_rendered_single = torch.from_numpy(depth_rendered_np_single).to(
+            depth_rendered = torch.from_numpy(depth_rendered_np).to(
                 device=device, dtype=torch.float32
             )
 
-        res = geometric_calculation2(
+        res = geometric_calculation(
             depth=depth_map_single_aligned,
-            depth_rendered=depth_rendered_single,
-            valid_mask=rendered_valid_mask_single,
+            depth_rendered=depth_rendered,
+            valid_mask=valid_mask,
             images=preds["images"],
-            rgb_rendered=rgb_rendered_np_single,
+            rgb_rendered=rgb_rendered_np,
         )
-
         cons = geometric_consistency_metric(res)
-        print(f"Geometric Consistency Metric of frame {frame1}: {cons}")
+        scores.append(cons)
+        print(f"  {stem}: geometric_consistency={cons:.4f}")
+
+    mean_score = float(sum(scores) / len(scores)) if scores else float("nan")
+    print(f"mean geometric_consistency over {len(scores)} frames: {mean_score:.4f}")
