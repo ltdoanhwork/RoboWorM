@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
 # run_humanoid_singleview_dreamgen_itm.sh
-# DreamGen (video2world_gr00t_lvg, gr1 variant) humanoid SINGLEVIEW with ITM
+# DreamGen (video2world_lvg, same entrypoint as dense) humanoid SINGLEVIEW with ITM
 # (Importance Token Merge) acceleration.
 #
 # Mirrors the dense humanoid singleview pipeline (run_humanoid_singleview_dreamgen_static16fps.sh
@@ -36,7 +36,8 @@ cd "$ROOT"
 export VENV="${ROOT}/models/dreamgen/.venv"
 export LD_LIBRARY_PATH="${VENV}/lib/python3.12/site-packages/nvidia/nvjitlink/lib:${VENV}/lib/python3.12/site-packages/nvidia/cusparse/lib:${VENV}/lib/python3.12/site-packages/torch/lib:${LD_LIBRARY_PATH:-}"
 source "${VENV}/bin/activate"
-export PYTHONPATH="${ROOT}/models/dreamgen:${ROOT}:${PYTHONPATH:-}"
+# Repo root must precede models/dreamgen so `methods.*` is importable.
+export PYTHONPATH="${ROOT}:${ROOT}/models/dreamgen:${PYTHONPATH:-}"
 
 # --- Checkpoint (posttrained humanoid_singleview_16fps; matches dense baseline) ---
 CKPT_BASE="${CKPT_BASE:-${ROOT}/checkpoints/finetuned/dreamgen/posttraining/singleview/humanoid_singleview_16fps}"
@@ -60,7 +61,6 @@ FPS="${FPS:-16}"
 GUIDANCE="${GUIDANCE:-7}"
 ASPECT_RATIO="${ASPECT_RATIO:-16:9}"
 NUM_CONDITIONAL_FRAMES="${NUM_CONDITIONAL_FRAMES:-1}"
-PROMPT_PREFIX="${PROMPT_PREFIX:-}"
 
 # --- ITM params ("mid" quality-preserving; typically net-negative speed on 2B) ---
 ITM_START_LAYER_IDX="${ITM_START_LAYER_IDX:-11}"
@@ -148,19 +148,23 @@ PY
     ITM_FLAGS+=(--itm_compress_ratio "${ITM_COMPRESS_RATIO}")
   fi
 
-  python -m models.dreamgen.examples.video2world_gr00t_lvg \
+  # Same entrypoint and argument list as the dense launcher
+  # (run_humanoid_singleview_dreamgen_static16fps.sh, single-GPU branch); only the
+  # method flags are added. Before 2026-10-09 this called video2world_gr00t_lvg
+  # --gr00t_variant gr1 (different model-config path from dense).
+  python -m models.dreamgen.examples.video2world_lvg \
     --model_size "${MODEL_SIZE}" \
-    --gr00t_variant gr1 \
+    --resolution "${RESOLUTION}" \
+    --fps "${FPS}" \
     --dit_path "${DIT_PATH}" \
     --batch_input_json "${itm_batch_json}" \
-    --num_chunks "${num_chunks}" \
     --guidance "${GUIDANCE}" \
     --num_gpus "${NUM_GPUS}" \
-    --aspect_ratio "${ASPECT_RATIO}" \
+    --num_chunks "${num_chunks}" \
     --num_conditional_frames "${NUM_CONDITIONAL_FRAMES}" \
-    --prompt_prefix "${PROMPT_PREFIX}" \
+    --aspect_ratio "${ASPECT_RATIO}" \
     --disable_guardrail \
-    --no_skip_existing \
+    --disable_prompt_refiner \
     "${ITM_FLAGS[@]}"
 
   rm -f "${itm_batch_json}"

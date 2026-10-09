@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
 # run_humanoid_singleview_dreamgen_dicache.sh
-# DreamGen (video2world_gr00t_lvg, gr1 variant) humanoid SINGLEVIEW with DiCache
+# DreamGen (video2world_lvg, same entrypoint as dense) humanoid SINGLEVIEW with DiCache
 # acceleration.
 #
 # Mirrors the dense humanoid singleview pipeline (same checkpoint / resolution /
@@ -55,7 +55,6 @@ FPS="${FPS:-16}"
 GUIDANCE="${GUIDANCE:-7}"
 ASPECT_RATIO="${ASPECT_RATIO:-16:9}"
 NUM_CONDITIONAL_FRAMES="${NUM_CONDITIONAL_FRAMES:-1}"
-PROMPT_PREFIX="${PROMPT_PREFIX:-}"
 
 # --- Dataset / output ---
 # Inputs are the SHARED dense batch inputs; only output_video is rewritten to dicache/.
@@ -148,19 +147,23 @@ PY
   mkdir -p "${OUTPUT_ROOT}/${split}/${OUT_ITER}"
   echo "  === Running: ${label} (${pending}/${item_count} pending, chunks=${num_chunks}) ==="
 
-  python -m models.dreamgen.examples.video2world_gr00t_lvg \
+  # Same entrypoint and argument list as the dense launcher
+  # (run_humanoid_singleview_dreamgen_static16fps.sh, single-GPU branch); only the
+  # method flags are added. Before 2026-10-09 this called video2world_gr00t_lvg
+  # --gr00t_variant gr1 (different model-config path from dense).
+  python -m models.dreamgen.examples.video2world_lvg \
     --model_size "${MODEL_SIZE}" \
-    --gr00t_variant gr1 \
+    --resolution "${RESOLUTION}" \
+    --fps "${FPS}" \
     --dit_path "${DIT_PATH}" \
     --batch_input_json "${cache_batch_json}" \
-    --num_chunks "${num_chunks}" \
     --guidance "${GUIDANCE}" \
     --num_gpus "${NUM_GPUS}" \
-    --aspect_ratio "${ASPECT_RATIO}" \
+    --num_chunks "${num_chunks}" \
     --num_conditional_frames "${NUM_CONDITIONAL_FRAMES}" \
-    --prompt_prefix "${PROMPT_PREFIX}" \
+    --aspect_ratio "${ASPECT_RATIO}" \
     --disable_guardrail \
-    --no_skip_existing \
+    --disable_prompt_refiner \
     "${DICACHE_FLAGS[@]}"
 
   rm -f "${cache_batch_json}"
