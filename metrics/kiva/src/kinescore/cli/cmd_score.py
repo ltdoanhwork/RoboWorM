@@ -1,60 +1,56 @@
-"""``kinescore score``: judge a directory of generated clips for one cell."""
+"""``kinescore score``: rigidity and jerk violation rates for a directory of clips."""
 from __future__ import annotations
 
 import argparse
 
 NAME = "score"
-HELP = "score generated clips against physics thresholds calibrated on real motion"
+HELP = "rigidity/jerk violation rates of generated clips, against a thresholds file"
 
 
 def add_arguments(parser: argparse.ArgumentParser) -> None:
-    from kinescore.cli._shared import add_config_arguments
+    from kinescore.cli._model import add_read_arguments
 
-    parser.add_argument("--cell", help="cell id, e.g. single_arm.mv3_row.ctrlworld")
-    parser.add_argument("--list", action="store_true",
-                        help="print every declared cell and its status")
-    parser.add_argument("--videos", default=None,
-                        help="directory of clips to score, searched "
-                             "recursively for *.mp4 (default: the clips "
-                             "bench/manifest.json assigns to this cell)")
-    parser.add_argument("--pattern", default="*.mp4",
-                        help="basename glob a --videos clip must match; a "
-                             "tree that stores prediction and ground truth "
-                             "side by side is scored on one of them, e.g. "
-                             "full_pred.mp4")
-    parser.add_argument("--checkpoint", default=None,
-                        help="reader checkpoint (default: the reader's own)")
+    add_read_arguments(parser)
+    parser.add_argument("--threshold", default=None,
+                        help="thresholds file written by `kinescore calibrate`")
+    parser.add_argument("--rigidity-threshold", type=float, default=None,
+                        help="rigidity threshold in mm (overrides --threshold)")
+    parser.add_argument("--jerk-threshold", type=float, default=None,
+                        help="jerk threshold in mm/s^3 (overrides --threshold)")
+    parser.add_argument("--videos", required=True,
+                        help="directory of clips to score, searched recursively")
     parser.add_argument("--out", default=None,
-                        help="output directory (default: the cell's own)")
-    parser.add_argument("--calibration-clips", type=int, default=24,
-                        help="real clips the thresholds are fitted on")
-    parser.add_argument("--percentile", type=float, default=95.0,
-                        help="threshold percentile over real motion")
-    parser.add_argument("--max-frames", type=int, default=0,
-                        help="cap frames per clip (0 = all)")
-    parser.add_argument("--frame-chunk", type=int, default=32,
-                        help="frames encoded per backbone call (0 = whole "
-                             "clip at once)")
-    parser.add_argument("--limit", type=int, default=0,
-                        help="cap clips scored (0 = all)")
-    parser.add_argument("--device", default="cuda")
-    add_config_arguments(parser)
+                        help="also write summary.json, metrics.csv (per clip) and "
+                             "segments.csv (per 16-frame segment) here")
 
 
-def _clips(root: str, limit: int, pattern: str = "*.mp4") -> list[str]:
-    import glob
-    import os
-
-    found = sorted(glob.glob(os.path.join(root, "**", pattern), recursive=True))
-    return found[:limit] if limit else found
-
-
-def _videos_id(path: str, root: str) -> str:
-    """Unique id for a --videos clip: its path below the root, no suffix."""
+def _clip_id(path: str, root: str) -> str:
+    """Unique id for a clip: its path below the root, no suffix."""
     import os
 
     rel = os.path.relpath(path, root)
     return os.path.splitext(rel)[0].replace(os.sep, "__")
+
+
+def _thresholds(args: argparse.Namespace) -> dict:
+    """``{detector: {threshold, segment_threshold}}`` from the file and the flags."""
+    import json
+
+    from kinescore.cli._model import DETECTOR_NAMES
+
+    fitted = {}
+    if args.threshold:
+        with open(args.threshold) as f:
+            fitted = json.load(f)["thresholds"]
+    given = {"rigidity": args.rigidity_threshold, "jerk": args.jerk_threshold}
+    for name, value in given.items():
+        if value is not None:
+            fitted[name] = {"threshold": value, "segment_threshold": value}
+    missing = [n for n in DETECTOR_NAMES if n not in fitted]
+    if missing:
+        raise SystemExit(f"no threshold for {', '.join(missing)}: pass --threshold <file> "
+                         "or --rigidity-threshold and --jerk-threshold")
+    return fitted
 
 
 def run(args: argparse.Namespace) -> int:
@@ -62,149 +58,68 @@ def run(args: argparse.Namespace) -> int:
     import os
     import pathlib
 
-    import torch
-
-    from kinescore.cli._shared import (
-        load,
-        now,
-        resolve_cell,
-        resolve_detectors,
-    )
-    from kinescore.core.context import ClipContext
-    from kinescore.readers.checkpoint import ReaderExpectation, load_reader
-    from kinescore.registry.bench import bench_root, load_bench, select
-    from kinescore.registry.provenance import (
-        git_state,
-        run_manifest,
-        sha256_file,
-        write_run_manifest,
-    )
-    from kinescore.robots import get_robot
-    from kinescore.video.probe import resolve_timebase
-    from kinescore.video.reader import load_rgb
-    from kinescore.video.render import read_results, render_results
-    from kinescore.violations import ViolationScorer, segments
+    from kinescore.cli._model import DETECTOR_NAMES, build_scorer, find_clips, load_model
+    from kinescore.violations import segments
     from kinescore.violations.table import write_segment_table, write_table
 
-    registry = load(args)
-    if args.list or not args.cell:
-        for cell_id, cell in sorted(registry.cells.items()):
-            print(f"{cell_id:42s} {cell.robot:16s} {cell.reader.reader_id:34s} "
-                  f"{cell.status or 'ready'}")
-        return 0 if args.list else 1
-
-    cell = resolve_cell(registry, args.cell)
-    if cell.status:
-        raise SystemExit(f"cell {cell.cell_id!r}: {cell.status}")
-
-    checkpoint = args.checkpoint or str(cell.reader.checkpoint_path)
-    if not os.path.exists(checkpoint):
-        raise SystemExit(
-            f"no reader checkpoint at {checkpoint} -- run "
-            f"`kinescore train --reader {cell.reader.reader_id}` first, or "
-            f"pass --checkpoint")
-
-    started, git = now(), git_state()
-    layout = cell.view.layout()
-    robot = get_robot(cell.robot)
-    reader = load_reader(
-        checkpoint, robot=robot, view_layout=layout, device=args.device,
-        reader_id=cell.reader.reader_id,
-        expect=ReaderExpectation(
-            cell_id=cell.cell_id, robot=cell.robot,
-            view_id=cell.view.view_id, n_views=layout.n_views,
-            packing=layout.packing))
-    if reader.n_keypoints != len(robot.keypoint_links):
-        # an older reader of this robot that predicts fewer keypoints
-        robot = get_robot(cell.robot, n_keypoints=reader.n_keypoints)
-
-    def read(path: str) -> ClipContext:
-        clip = resolve_timebase(path, view_layout=layout)
-        cell.view.check_frame_size(clip.width, clip.height)
-        frames = load_rgb(clip, max_frames=args.max_frames)
-        with torch.no_grad():
-            out = reader.read(frames.to(args.device),
-                              frame_chunk=args.frame_chunk)
-        return ClipContext(dt=clip.dt, P=out.P.float().cpu(), robot=robot,
-                           flags={"path": path})
-
-    real_root = cell.reader.train_tree / "videos" / "val"
-    real = _clips(str(real_root), args.calibration_clips)
-    if not real:
-        raise SystemExit(
-            f"no real clips under {real_root} to calibrate thresholds on -- "
-            f"run `kinescore data --reader {cell.reader.reader_id}` first")
-    print(f"[score] calibrating on {len(real)} real clip(s) from {real_root}")
-    scorer = ViolationScorer()
-    scorer.calibrate([read(p) for p in real], pct=args.percentile)
-
-    if args.videos:
-        source = args.videos
-        clips = [(p, {"id": _videos_id(p, args.videos)})
-                 for p in _clips(args.videos, args.limit, args.pattern)]
-    else:
-        source = str(bench_root())
-        picked = select(load_bench(), cell.select)
-        if args.limit:
-            picked = picked[:args.limit]
-        clips = [(i.path, i.coords()) for i in picked]
+    fitted = _thresholds(args)
+    clips = find_clips(args.videos, args.pattern, args.limit)
     if not clips:
-        raise SystemExit(
-            f"no clips for {cell.cell_id!r} under {source} (select "
-            f"{cell.select}) -- run `kinescore pull --what bench`, or point "
-            f"--videos at a directory of *.mp4")
+        raise SystemExit(f"no {args.pattern} under {args.videos}")
 
-    all_detectors = [d.name for d in scorer.detectors]
-    out_dir = args.out or str(cell.output_dir)
-    os.makedirs(out_dir, exist_ok=True)
-    results_path = os.path.join(out_dir, "results.jsonl")
-    n_failed = 0
-    by_role: dict[str, int] = {}
-    with open(results_path, "w") as f:
-        for i, (path, coords) in enumerate(clips, 1):
-            record = {"path": path, "cell_id": cell.cell_id, **coords}
-            try:
-                record["violations"] = scorer.score(read(path))
-            except Exception as exc:  # noqa: BLE001 -- recorded, not swallowed
-                n_failed += 1
-                record["error"] = f"{type(exc).__name__}: {exc}"
-                f.write(json.dumps(record) + "\n")
-                print(f"[score] failed  {path}: {exc}")
-                continue
-            record["segments"] = segments.report(
-                record["violations"], all_detectors)
-            role = coords.get("role", "")
-            by_role[role] = by_role.get(role, 0) + 1
-            f.write(json.dumps(record) + "\n")
+    model = load_model(args.model, args.device)
+    scorer = build_scorer()
+    units = {}
+    for det in scorer.detectors:
+        t = fitted[det.name]
+        det.threshold, det.segment_threshold = t["threshold"], t["segment_threshold"]
+        units[det.name] = det.units
+
+    rows = []
+    for i, path in enumerate(clips, 1):
+        row = {"id": _clip_id(path, args.videos), "source_path": path}
+        try:
+            row["violations"] = scorer.score(
+                model.read(path, args.frame_chunk, args.max_frames, args.seed))
+            row["segments"] = segments.report(row["violations"], DETECTOR_NAMES)
             print(f"[score] {i}/{len(clips)} {os.path.basename(path)}")
+        except Exception as exc:  # noqa: BLE001 -- recorded per clip, the run goes on
+            row["error"] = f"{type(exc).__name__}: {exc}"
+            print(f"[score] failed  {path}: {exc}")
+        rows.append(row)
 
-    summary = {
-        "cell_id": cell.cell_id,
-        "reader_id": cell.reader.reader_id,
-        "checkpoint": checkpoint,
-        "checkpoint_sha256": sha256_file(checkpoint),
-        "videos": source,
-        "select": dict(cell.select),
-        "n_clips": len(clips),
-        "n_failed": n_failed,
-        "n_scored_by_role": by_role,
-        "n_calibration_clips": len(real),
-        "percentile": args.percentile,
-        "thresholds": scorer.thresholds(),
-    }
-    with open(os.path.join(out_dir, "summary.json"), "w") as f:
-        json.dump(summary, f, indent=2)
-    write_run_manifest(out_dir, run_manifest(
-        NAME, started_at=started, git=git, sources=registry.sources, extra=summary))
-    print(f"[score] {len(clips) - n_failed} scored, {n_failed} failed -> {out_dir}")
+    scored = [r for r in rows if r.get("segments")]
+    n_seg = sum(len(r["segments"]) for r in scored)
+    scores = {}
+    for name in DETECTOR_NAMES:
+        flagged = sum(seg["detectors"][name]["violated"]
+                      for r in scored for seg in r["segments"] if name in seg["detectors"])
+        scores[name] = {"rate": flagged / n_seg if n_seg else None,
+                        "n_violated": flagged, "n_segments": n_seg,
+                        "segment_threshold": fitted[name]["segment_threshold"],
+                        "units": units[name]}
 
-    rows = read_results(pathlib.Path(out_dir) / "results.jsonl")
-    scored_rows = [r for r in rows if r.get("segments")]
-    if scored_rows:
-        names = resolve_detectors(None, set(scored_rows[0]["violations"]))
-        out = pathlib.Path(out_dir)
-        print(f"[score] {write_table(scored_rows, out / 'metrics.csv', names)}")
-        print(f"[score] "
-              f"{write_segment_table(scored_rows, out / 'segments.csv', names)}")
-        render_results(scored_rows, pathlib.Path(out_dir) / "render", names)
-    return 0 if n_failed == 0 else 1
+    failed = len(rows) - len(scored)
+    print(f"[score] {len(scored)} clips, {n_seg} segments"
+          + (f", {failed} failed" if failed else ""))
+    for name, s in scores.items():
+        if s["rate"] is not None:
+            print(f"[score] {name:9s} {100 * s['rate']:5.1f}%   ({s['n_violated']}/{n_seg} "
+                  f"segments > {s['segment_threshold']:g} {s['units']})")
+
+    if args.out:
+        out = pathlib.Path(args.out)
+        out.mkdir(parents=True, exist_ok=True)
+        with open(out / "results.jsonl", "w") as f:
+            for r in rows:
+                f.write(json.dumps(r) + "\n")
+        summary = {"model": os.path.abspath(args.model),
+                   "threshold_file": args.threshold and os.path.abspath(args.threshold),
+                   "videos": os.path.abspath(args.videos), "n_clips": len(rows),
+                   "n_failed": failed, "scores": scores, "thresholds": fitted}
+        with open(out / "summary.json", "w") as f:
+            json.dump(summary, f, indent=2)
+        write_table(rows, out / "metrics.csv", DETECTOR_NAMES)
+        write_segment_table(scored, out / "segments.csv", DETECTOR_NAMES)
+        print(f"[score] wrote {out}")
+    return 0 if failed == 0 else 1

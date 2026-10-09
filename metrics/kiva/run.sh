@@ -45,16 +45,13 @@
 #   MAX_CLIPS         cap clips per (variant, embodiment, split) (default: 0 = all)
 #   FRAME_CHUNK       frames per DINOv3 forward (default: 16; lower = less VRAM)
 #   MAX_FRAMES        cap frames per clip (default: 0 = all)
-#   CALIB_CLIPS       real val clips the thresholds are fitted on (default: 24)
-#   PERCENTILE        threshold percentile over real motion (default: 95)
-#   HAL_RENDER        1 to write render/ overlays (default: 0 -- they are large/slow)
-#   VIDEOS_DIR        score exactly one explicit directory and exit (needs EMBODIMENTS=<one>)
+#   VIDEOS_DIR       score exactly one explicit directory and exit (needs EMBODIMENTS=<one>)
 #   OUT_DIR           output dir for VIDEOS_DIR mode
 #
-# Reader/checkpoint overrides (per embodiment; defaults are the three
-# benchmark readers whose sha256 the published tables were scored with):
+# Reader/threshold overrides (per embodiment; defaults are the three
+# benchmark readers and their thresholds in metrics/kiva/thresholds/):
 #   HAL_CKPT_SINGLE_ARM, HAL_CKPT_BIMANUAL, HAL_CKPT_HUMANOID
-#   HAL_CELL_SINGLE_ARM, HAL_CELL_BIMANUAL, HAL_CELL_HUMANOID
+#   HAL_THR_SINGLE_ARM,  HAL_THR_BIMANUAL,  HAL_THR_HUMANOID
 
 set -uo pipefail
 START_TIME=$SECONDS
@@ -79,9 +76,6 @@ ROLE="${ROLE:-pred}"
 MAX_CLIPS="${MAX_CLIPS:-0}"
 FRAME_CHUNK="${FRAME_CHUNK:-16}"
 MAX_FRAMES="${MAX_FRAMES:-0}"
-CALIB_CLIPS="${CALIB_CLIPS:-24}"
-PERCENTILE="${PERCENTILE:-95}"
-HAL_RENDER="${HAL_RENDER:-0}"
 VIDEOS_DIR="${VIDEOS_DIR:-}"
 
 # ----------------------------------------------------------------------
@@ -97,8 +91,7 @@ if [ "${1:-}" = "--tmux" ]; then
      HAL_DATA_ROOT='${HAL_DATA_ROOT}' HAL_OUT_ROOT='${HAL_OUT_ROOT}' \
      VARIANTS='${VARIANTS[*]}' EMBODIMENTS='${EMBODIMENTS[*]}' SPLITS='${SPLITS[*]}' \
      ROLE='${ROLE}' MAX_CLIPS='${MAX_CLIPS}' FRAME_CHUNK='${FRAME_CHUNK}' \
-     MAX_FRAMES='${MAX_FRAMES}' CALIB_CLIPS='${CALIB_CLIPS}' PERCENTILE='${PERCENTILE}' \
-     HAL_RENDER='${HAL_RENDER}' \
+     MAX_FRAMES='${MAX_FRAMES}' \
      bash metrics/kiva/run.sh 2>&1 | tee '${LOG}'; exec bash"
   echo "launched tmux session ${SESSION} (log ${LOG})"
   echo "  attach:  tmux attach -t ${SESSION}"
@@ -129,9 +122,9 @@ HAL_PYTHONUSERBASE="${HAL_PYTHONUSERBASE:-/pfss/mlde/workspaces/mlde_wsp_IAS_SAM
 echo "[hal] interpreter: ${HAL_PYTHON}"
 
 # ----------------------------------------------------------------------
-# 2. Store: checkpoints, URDF assets, calibration trees, HF cache.
+# 2. Store: checkpoints, URDF assets, HF cache.
 # ----------------------------------------------------------------------
-for sub in assets data cache; do
+for sub in assets cache; do
   [ -d "${HAL_STORE}/${sub}" ] || {
     echo "ERROR: ${HAL_STORE}/${sub} missing." >&2
     echo "       Set HAL_STORE (or KINESCORE_STORE) to a kinescore store, or" >&2
@@ -162,7 +155,7 @@ export TRANSFORMERS_OFFLINE="${TRANSFORMERS_OFFLINE:-1}"
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0}"
 
 # ----------------------------------------------------------------------
-# 3. Per-embodiment reader + cell + checkpoint.
+# 3. Per-embodiment checkpoint + thresholds.
 #
 # These three are the BENCHMARK readers -- the ones whose sha256 appears in the
 # published summary.json files. In particular the humanoid default is
@@ -170,9 +163,9 @@ export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0}"
 # tables were scored with; the four K=22 `*_newsampler`/`mse` checkpoints in the
 # same dir are DIFFERENT trainings and are not benchmark-consistent.
 # ----------------------------------------------------------------------
-CELL_SINGLE_ARM="${HAL_CELL_SINGLE_ARM:-single_arm.sv1_4x3.dense_dreamgen}"
-CELL_BIMANUAL="${HAL_CELL_BIMANUAL:-bimanual.sv1_16x9.dreamgen}"
-CELL_HUMANOID="${HAL_CELL_HUMANOID:-humanoid.sv1_16x9.dreamgen}"
+THR_SINGLE_ARM="${HAL_THR_SINGLE_ARM:-${HAL_ROOT}/thresholds/a1x_ee.a1x_sv.sv1_4x3.json}"
+THR_BIMANUAL="${HAL_THR_BIMANUAL:-${HAL_ROOT}/thresholds/aloha_bimanual.bimanual_sv.sv1_16x9.json}"
+THR_HUMANOID="${HAL_THR_HUMANOID:-${HAL_ROOT}/thresholds/fourier_gr1.humanoid_sv.sv1_16x9.json}"
 
 CKPT_SINGLE_ARM="${HAL_CKPT_SINGLE_ARM:-${HAL_CKPT_DIR}/a1x_ee.a1x_sv.sv1_4x3.pt}"
 CKPT_BIMANUAL="${HAL_CKPT_BIMANUAL:-${HAL_CKPT_DIR}/aloha_bimanual.bimanual_sv.sv1_16x9.pt}"
@@ -183,7 +176,7 @@ TAG_SINGLE_ARM="sv1_4x3.a1x"
 TAG_BIMANUAL="bimanual_sv16.aloha"
 TAG_HUMANOID="humanoid_sv16.gr1"
 
-cell_for()  { case "$1" in single_arm) echo "${CELL_SINGLE_ARM}";; bimanual) echo "${CELL_BIMANUAL}";; humanoid) echo "${CELL_HUMANOID}";; *) echo "";; esac; }
+thr_for()   { case "$1" in single_arm) echo "${THR_SINGLE_ARM}";;  bimanual) echo "${THR_BIMANUAL}";;  humanoid) echo "${THR_HUMANOID}";;  *) echo "";; esac; }
 ckpt_for()  { case "$1" in single_arm) echo "${CKPT_SINGLE_ARM}";; bimanual) echo "${CKPT_BIMANUAL}";; humanoid) echo "${CKPT_HUMANOID}";; *) echo "";; esac; }
 tag_for()   { case "$1" in single_arm) echo "${TAG_SINGLE_ARM}";;  bimanual) echo "${TAG_BIMANUAL}";;  humanoid) echo "${TAG_HUMANOID}";;  *) echo "";; esac; }
 
@@ -204,44 +197,38 @@ trap cleanup EXIT INT TERM
 
 score_dir() {
   local embodiment="$1" videos="$2" out_dir="$3"
-  local cell ckpt
-  cell="$(cell_for "${embodiment}")"
+  local thr ckpt
+  thr="$(thr_for "${embodiment}")"
   ckpt="$(ckpt_for "${embodiment}")"
-  [ -n "${cell}" ] || { echo "[hal] SKIP unknown embodiment '${embodiment}'" >&2; return 1; }
+  [ -n "${thr}" ] || { echo "[hal] SKIP unknown embodiment '${embodiment}'" >&2; return 1; }
   [ -f "${ckpt}" ] || {
     echo "[hal] SKIP ${embodiment}: no reader checkpoint at ${ckpt}" >&2
-    echo "      see docs/metrics/kiva.md#checkpoints" >&2; return 1; }
+    echo "      see metrics/kiva/README.md#install" >&2; return 1; }
+  [ -f "${thr}" ] || { echo "[hal] SKIP ${embodiment}: no thresholds at ${thr}" >&2; return 1; }
 
   local n
   n="$(find "${videos}" -name "${PATTERN}" 2>/dev/null | wc -l)"
   [ "${n}" -gt 0 ] || { echo "[hal] SKIP ${out_dir##*/}: no ${PATTERN} under ${videos}" >&2; return 1; }
 
   echo "----------------------------------------------------------------------"
-  echo "[hal] cell:    ${cell}"
   echo "[hal] ckpt:    ${ckpt}"
+  echo "[hal] thr:     ${thr}"
   echo "[hal] videos:  ${videos}  (${n} x ${PATTERN})"
   echo "[hal] out:     ${out_dir}"
   mkdir -p "${out_dir}"
 
   local args=(
     -m kinescore.cli.main score
-    --cell "${cell}" --device cuda
-    --checkpoint "${ckpt}"
+    --model "${ckpt}" --threshold "${thr}" --device cuda
     --videos "${videos}" --pattern "${PATTERN}"
     --out "${out_dir}"
     --frame-chunk "${FRAME_CHUNK}"
-    --calibration-clips "${CALIB_CLIPS}"
-    --percentile "${PERCENTILE}"
   )
   [ "${MAX_CLIPS}" -gt 0 ] && args+=(--limit "${MAX_CLIPS}")
   [ "${MAX_FRAMES}" -gt 0 ] && args+=(--max-frames "${MAX_FRAMES}")
 
   ( cd "${HAL_ROOT}" && "${HAL_PYTHON}" "${args[@]}" ) \
     || echo "[hal] WARN failed: ${videos}" >&2
-
-  # `score` always renders overlays; they are large and slow, so drop them
-  # unless asked for. (There is no --no-render on this branch.)
-  [ "${HAL_RENDER}" = "1" ] || rm -rf "${out_dir}/render"
 }
 
 # ----------------------------------------------------------------------
