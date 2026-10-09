@@ -1,0 +1,37 @@
+RoboWorM
+Copyright 2026 The RoboWorM Authors
+
+The original code of RoboWorM (benchmark launchers, method adapters, metrics such as
+KIVA and RIGIS scoring, and the paper producers) is licensed under the Apache
+License, Version 2.0. See LICENSE.
+
+Third-party code
+----------------
+This repository also vendors, forks or links third-party code, mostly under
+models/, methods/ and metrics/ (for example metrics/rigis/vggt_omega and the
+metrics/WorldScore submodule). That code keeps its own upstream license and is NOT
+relicensed under Apache-2.0. Every component, its license and the location of its
+license file are listed in docs/THIRD_PARTY.md.
+
+Non-commercial components
+-------------------------
+Some components that the full benchmark pipeline depends on are licensed for
+non-commercial use only:
+  - VGGT-Omega (RIGIS backbone): FAIR Noncommercial Research License
+  - DINOv3 weights (KIVA reader backbone): DINOv3 License
+  - pyiqa / CLIP-IQA+ (Visual Integrity): PolyForm Noncommercial 1.0.0
+The complete pipeline is therefore effectively usable for non-commercial research
+only, even though RoboWorM's own code is Apache-2.0.
+
+Components without an upstream license
+--------------------------------------
+FasterCache (methods/cache_strategy/FasterCache/) and SiTo (methods/prunning/SiTo/)
+are vendored from upstream repositories that declare no license. They are included
+for research reproducibility only; contact their authors before any other use.
+
+Data and model weights
+----------------------
+Datasets and benchmark rollouts published on Hugging Face follow the licenses of
+their source corpora (DROID, RoboChallenge, AIST Bimanual, RoboCOIN, GR00T Teleop
+GR1). Model weights are not part of this repository and follow their own licenses
+(see checkpoints/CHECKPOINTS.md).
