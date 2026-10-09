@@ -117,6 +117,15 @@ Docs index: [docs/README.md](docs/README.md). Script tree: [scripts/README.md](s
 
 ## 1. Environments
 
+Clone with the submodules (WorldScore for the motion metrics, openpi for π0.5
+policy-in-the-loop, and the SVG kernel sources; see
+[docs/THIRD_PARTY.md](docs/THIRD_PARTY.md#fetching-the-submodules)):
+
+```bash
+git clone --recursive https://github.com/ltdoanhwork/video_gen_physics.git
+# existing clone: git submodule update --init --recursive
+```
+
 There are six isolated environments, all built with [uv](https://docs.astral.sh/uv/)
 except KIVA's conda env. Never mix them; the launchers activate the right one
 themselves. The versions below were read from the cluster venvs. Exact install commands
@@ -442,6 +451,16 @@ Setup of the two physical audits: [docs/metrics/kiva.md](docs/metrics/kiva.md),
 }
 ```
 
+## License
+
+RoboWorM's own code is released under the [Apache License 2.0](LICENSE) (see also
+[NOTICE](NOTICE)). Third-party code under `models/`, `methods/` and `metrics/` keeps its
+own license, listed below and in [docs/THIRD_PARTY.md](docs/THIRD_PARTY.md). VGGT-Omega
+(FAIR Noncommercial), DINOv3 (DINOv3 License) and pyiqa (PolyForm Noncommercial) are
+non-commercial only, so the full pipeline is for non-commercial research. FasterCache and
+SiTo declare no upstream license. Datasets and rollouts on Hugging Face follow the
+licenses of their source corpora.
+
 ## Acknowledgements
 
 RoboWorM builds on the code of many projects. Each project keeps its own license, and
@@ -455,7 +474,7 @@ RoboCOIN and GR00T Teleop GR1.
 | world model | [Cosmos-Predict2](https://github.com/nvidia-cosmos/cosmos-predict2) / [GR00T Dreams](https://github.com/NVIDIA/GR00T-Dreams) | Apache-2.0 | `models/dreamgen/` |
 | world model | [DreamDojo](https://github.com/NVIDIA/DreamDojo) | Apache-2.0 | `models/DreamDojo/` |
 | world model | [Ctrl-World](https://github.com/Robert-gyj/Ctrl-World) (+ [diffusers](https://github.com/huggingface/diffusers) SVD pipeline) | MIT (Apache-2.0) | `models/Ctrl-World/` |
-| policy | [openpi](https://github.com/Physical-Intelligence/openpi) | Apache-2.0 | `models/Ctrl-World/openpi` (gitlink) |
+| policy | [openpi](https://github.com/Physical-Intelligence/openpi) | Apache-2.0 | `models/Ctrl-World/openpi` (submodule) |
 | caching | [FasterCache](https://github.com/Vchitect/FasterCache) | none declared | `methods/cache_strategy/FasterCache/` |
 | caching | [DiCache](https://github.com/Bujiazi/DiCache), [WorldCache](https://github.com/umair1221/WorldCache) | re-implemented | `methods/cache_strategy/{DiCache,WorldCache}/` |
 | sparse attention | [Sparse VideoGen 1/2](https://github.com/svg-project/Sparse-VideoGen) (+ CUTLASS, FlashInfer, pybind11) | Apache-2.0 | `methods/sparse_attention/Sparse-VideoGen/` |
@@ -465,7 +484,7 @@ RoboCOIN and GR00T Teleop GR1.
 | token reduction | [Importance-Based Token Merging](https://github.com/cvlab-stonybrook/importance-token-merge) | MIT | `methods/prunning/importance-token-merge/` |
 | RIGIS | [VGGT-Omega](https://github.com/facebookresearch/vggt-omega) | FAIR Noncommercial Research | `metrics/rigis/vggt_omega/` |
 | KIVA | [DINOv3](https://github.com/facebookresearch/dinov3), [pytorch-kinematics](https://github.com/UM-ARM-Lab/pytorch_kinematics), [robot_descriptions](https://github.com/robot-descriptions/robot_descriptions.py) | DINOv3 License, MIT, Apache-2.0 | pip / HF weights |
-| motion metrics | [WorldScore](https://github.com/haoyi-duan/WorldScore) with [SEA-RAFT](https://github.com/princeton-vl/SEA-RAFT), [VFIMamba](https://github.com/MCG-NJU/VFIMamba), [GroundingDINO](https://github.com/IDEA-Research/GroundingDINO), [SAM 2](https://github.com/facebookresearch/sam2) | MIT, BSD-3, Apache-2.0 | `metrics/WorldScore` (gitlink) |
+| motion metrics | [WorldScore](https://github.com/haoyi-duan/WorldScore) with [SEA-RAFT](https://github.com/princeton-vl/SEA-RAFT), [VFIMamba](https://github.com/MCG-NJU/VFIMamba), [GroundingDINO](https://github.com/IDEA-Research/GroundingDINO), [SAM 2](https://github.com/facebookresearch/sam2) | MIT, BSD-3, Apache-2.0 | `metrics/WorldScore` (submodule) |
 | Visual Integrity | CLIP-IQA+ via [pyiqa](https://github.com/chaofengc/IQA-PyTorch) | PolyForm Noncommercial 1.0.0 | pip |
 | Text Alignment | CLIPScore via [torchmetrics](https://github.com/Lightning-AI/torchmetrics) + [CLIP](https://github.com/openai/CLIP) | Apache-2.0, MIT | pip |
 | fidelity, FVD | [piq](https://github.com/photosynthesis-team/piq) ([LPIPS](https://github.com/richzhang/PerceptualSimilarity)), [I3D](https://github.com/google-deepmind/kinetics-i3d) via [StyleGAN-V](https://github.com/universome/stylegan-v) export | Apache-2.0, BSD-2 | pip / `checkpoints/metrics/fvd/` |

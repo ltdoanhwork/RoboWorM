@@ -1,0 +1,15 @@
+[submodule "metrics/WorldScore"]
+	path = metrics/WorldScore
+	url = https://github.com/haoyi-duan/WorldScore.git
+[submodule "models/Ctrl-World/openpi"]
+	path = models/Ctrl-World/openpi
+	url = https://github.com/Physical-Intelligence/openpi.git
+[submodule "methods/sparse_attention/Sparse-VideoGen/svg/kernels/3rdparty/cutlass"]
+	path = methods/sparse_attention/Sparse-VideoGen/svg/kernels/3rdparty/cutlass
+	url = https://github.com/NVIDIA/cutlass.git
+[submodule "methods/sparse_attention/Sparse-VideoGen/svg/kernels/3rdparty/flashinfer"]
+	path = methods/sparse_attention/Sparse-VideoGen/svg/kernels/3rdparty/flashinfer
+	url = https://github.com/flashinfer-ai/flashinfer.git
+[submodule "methods/sparse_attention/Sparse-VideoGen/svg/kernels/3rdparty/pybind"]
+	path = methods/sparse_attention/Sparse-VideoGen/svg/kernels/3rdparty/pybind
+	url = https://github.com/pybind/pybind11.git
