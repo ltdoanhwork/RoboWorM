@@ -44,7 +44,9 @@ SiTo/ITM are wired only into `models/DreamDojo/examples/action_conditioned.py`
 (`--use-sito` / `--use-itm` → `model.config.net.use_{sito,itm}=true` overrides in
 `cosmos_predict2/action_conditioned.py`; runtime in `networks/minimal_v4_dit.py`). The
 canonical DreamDojo infer scripts (`scripts/infer/infer_*_singleview_*.py`) have no SiTo/ITM
-flags, so these launchers use a **different entrypoint from dense**. ITM requires
+flags, so these launchers use a **different entrypoint from dense** (episode sampling and
+save-fps differ too; no migration possible without adding SiTo/ITM wiring to those scripts).
+SiTo runs at the `action_conditioned` default guidance 0 (== dense). ITM requires
 `guidance > 0`; `action_conditioned.py` forces `guidance = 1.5` when ITM is on (override with
 `FORCE_GUIDANCE`). SiTo/ITM on DreamDojo are not in the released coverage (see [configs.md](configs.md)).
 
@@ -88,9 +90,11 @@ runs at CFG = 1).
   multiview rollout `infer_bimanual_multiview_rollout.py`), `video2world_lvg.py` and
   `video2world_gr00t_lvg.py` do not, so `SITO_GROUP_MODE=temporal` in those launchers runs as
   the default `per_frame`.
-- **Ctrl-World single_arm SiTo/ITM launchers default to 25 steps** (`NUM_INFERENCE_STEPS=25`)
-  while dense runs the model default of 50. Time them with `NUM_INFERENCE_STEPS=50`
-  (the timing harness pins this).
+- **Ctrl-World single_arm SiTo/ITM ran 25 steps before 2026-10-09** (`NUM_INFERENCE_STEPS=25`
+  was the launcher default) while dense runs the model default of 50. The launchers now pass
+  `--num_inference_steps` only when `NUM_INFERENCE_STEPS` is set, exactly like dense. The
+  released `sampling_dataset/{sito,itm}/single_arm/output/multiview/ctrlworld/` rollouts
+  predate the fix (see [configs.md](configs.md#fixed-launcher-mismatches-2026-10-09)).
 - **Pruning before the temporal block hurts temporal dynamics.** Ctrl-World ST-hold below
   `keep_ratio ≈ 0.7` corrupts (PSNR −3 to −4); on the bimanual 4-view grid even 0.8 costs ≈ 2.4 dB.
 - **DreamGen ITM is net-negative** on the 2B DiTs (its per-block prepare/merge cost exceeds the

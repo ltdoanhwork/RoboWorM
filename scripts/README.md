@@ -63,6 +63,13 @@ rather than guessing it.
 | 11 | DreamDojo bimanual SV (`dreamdojo_bimanual_sv`) | `run/dreamdojo/run_bimanual_singleview_dreamdojo_full_episode.sh` | `infer/infer_bimanual_singleview_single_segment.py` |
 | 12 | DreamDojo humanoid SV (`dreamdojo_humanoid_sv`) | `run/dreamdojo/run_humanoid_singleview_dreamdojo_full_episode.sh` | `infer/infer_humanoid_singleview_full_episode.py` |
 
+Method launchers use their cell's dense entrypoint and sampler settings (DreamDojo:
+`GUIDANCE`, default 0, passed by dense and methods alike; Ctrl-World single_arm:
+`NUM_INFERENCE_STEPS` unset = 50; DreamGen humanoid SV: `video2world_lvg` for every method).
+The one exception is DreamDojo SiTo/ITM (`action_conditioned`, see below). The 2026-10-09
+alignment and the released rollouts that predate it are listed in
+`docs/acceleration/configs.md` ("Fixed launcher mismatches").
+
 Ctrl-World uses 3 views on single_arm and a 4-view 2x2 grid on bimanual and humanoid
 (rows 2 and 3). The grid launchers delegate to the shared base scripts
 `run_{bimanual,humanoid}_multiview_ctrlworld[_<method>].sh` with `CONFIG=*_grid`; those

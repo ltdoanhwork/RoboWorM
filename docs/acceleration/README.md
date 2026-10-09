@@ -126,7 +126,10 @@ What `_bench_uniform_timing.sh` guarantees:
   records are flagged `contended`.
 - Pins the configuration the released rollouts were produced with: `ITER_NAME` for DreamGen
   singleview, `NUM_INFERENCE_STEPS=50` for Ctrl-World single_arm (its SiTo/ITM launchers
-  default to 25 steps), and the DreamDojo checkpoint (`verify_dd_ckpt`).
+  defaulted to 25 steps before 2026-10-09; the pin is now redundant but harmless), and the
+  DreamDojo checkpoint (`verify_dd_ckpt`). It does not pin DreamDojo guidance: timing passes
+  run before 2026-10-09 used each launcher's default (1.5 for most methods, 0 for dense), see
+  [configs.md](configs.md#fixed-launcher-mismatches-2026-10-09).
 - Flags `suspect_unit_mismatch` / `suspect_cap_ignored` records; `merge_timing_shards.py` drops them.
 
 Fidelity against the paired dense rollout (PSNR / SSIM / LPIPS) is computed by the metrics

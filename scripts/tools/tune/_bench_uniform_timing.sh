@@ -129,9 +129,10 @@ done
 #     iter_000090000_static16fps  -> ITER_NAME pinned.
 #   * DG bimanual SV  — dense script defaults to iter_000050000 while
 #     sampling_dataset says iter_000110000_bimanual16fps -> ITER_NAME pinned.
-#   * CW single_arm MV — the sito/itm scripts default to NUM_INFERENCE_STEPS=25
-#     while dense uses the model default 50. Timing those against a 50-step
-#     dense reports a fake ~2x, so STEPS are pinned to 50 for every method.
+#   * CW single_arm MV — the sito/itm scripts defaulted to NUM_INFERENCE_STEPS=25
+#     (fixed 2026-10-09; they now inherit the model default 50 like dense).
+#     Timing those against a 50-step dense reported a fake ~2x, so STEPS stay
+#     pinned to 50 for every method (now redundant, kept as a guard).
 #   * CW 4-view grids — the _4view_grid wrappers already pin their own grid
 #     checkpoints (140000 humanoid / 110000 bimanual) and CONFIG, so no pin is
 #     needed; do not add one or the wrapper's value is overridden.
