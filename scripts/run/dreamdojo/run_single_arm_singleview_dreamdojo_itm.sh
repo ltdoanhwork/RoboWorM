@@ -2,6 +2,12 @@
 # DreamDojo action-conditioned inference with ITM for single_arm/singleview.
 # Output: sampling_dataset/itm/single_arm/output/singleview/dreamdojo/{makovian,non_makovian}/<iter_*>/
 #
+# NOTE: SiTo/ITM are wired only into models/DreamDojo/examples/action_conditioned.py,
+# so this launcher cannot use the dense entrypoint (scripts/infer/infer_single_arm_singleview_autoregressive.py
+# has no --use-itm); it differs from dense in entrypoint, episode sampling and save-fps.
+# ITM also needs CFG: action_conditioned.py raises guidance 0 -> 1.5 when ITM is on
+# (override with FORCE_GUIDANCE), whereas dense runs at guidance 0.
+#
 # Usage:
 #   bash scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_itm.sh
 #   CUDA_VISIBLE_DEVICES=0 bash scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_itm.sh

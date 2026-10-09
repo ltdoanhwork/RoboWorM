@@ -3,6 +3,11 @@
 # Runs datasets/humanoid/singleview/makovian and .../non_makovian separately.
 # Output: sampling_dataset/sito/humanoid/output/singleview/dreamdojo/{makovian,non_makovian}/<iter_*>/
 #
+# NOTE: SiTo/ITM are wired only into models/DreamDojo/examples/action_conditioned.py,
+# so this launcher cannot use the dense entrypoint (scripts/infer/infer_humanoid_singleview_full_episode.py
+# has no --use-sito); it differs from dense in entrypoint, episode sampling and save-fps.
+# Guidance: action_conditioned default 0 == dense.
+#
 # Usage:
 #   bash scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_sito.sh
 #   CUDA_VISIBLE_DEVICES=0 bash scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_sito.sh

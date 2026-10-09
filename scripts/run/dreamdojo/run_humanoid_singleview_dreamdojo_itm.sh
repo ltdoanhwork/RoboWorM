@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 # DreamDojo action-conditioned inference with ITM (Iterative Token Merging).
 # Runs datasets/humanoid/singleview/makovian and .../non_makovian separately.
-# Output goes to tmp_2/ for quality inspection.
+# Output: sampling_dataset/itm/humanoid/output/singleview/dreamdojo/{makovian,non_makovian}/<iter_*>/
+# (was <repo>/tmp_2/ before 2026-10-09).
+#
+# NOTE: SiTo/ITM are wired only into models/DreamDojo/examples/action_conditioned.py,
+# so this launcher cannot use the dense entrypoint
+# (scripts/infer/infer_humanoid_singleview_full_episode.py has no --use-itm). ITM also
+# needs CFG: action_conditioned.py raises guidance 0 -> 1.5 when ITM is on
+# (override with FORCE_GUIDANCE), whereas dense runs at guidance 0.
 #
 # Usage:
 #   bash scripts/run/dreamdojo/run_humanoid_singleview_dreamdojo_itm.sh
@@ -18,7 +25,7 @@ CHECKPOINTS_DIR="${CHECKPOINTS_DIR:-${ROOT}/checkpoints/base/dreamdojo/2B_GR1_po
 EXPERIMENT="${EXPERIMENT:-dreamdojo_2b_480_640_gr1}"
 NUM_FRAMES="${NUM_FRAMES:-49}"
 _SAVE_ROOT_ENV="${SAVE_ROOT:-}"
-SAVE_ROOT="${SAVE_ROOT:-${ROOT}/tmp_2}"
+SAVE_ROOT="${SAVE_ROOT:-${ROOT}/sampling_dataset/itm/humanoid/output/singleview/dreamdojo}"
 # Intermediate --output-dir: OUTPUT_ROOT if set, else <SAVE_ROOT>/_output when SAVE_ROOT
 # was given (keeps scratch runs self-contained), else the historical ${ROOT}/output.
 OUT_CACHE_ROOT="${OUTPUT_ROOT:-${_SAVE_ROOT_ENV:+${_SAVE_ROOT_ENV}/_output}}"

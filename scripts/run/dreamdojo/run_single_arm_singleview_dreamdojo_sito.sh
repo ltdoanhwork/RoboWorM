@@ -2,6 +2,11 @@
 # DreamDojo action-conditioned inference with SiTo (token pruning) for single_arm/singleview.
 # Output: sampling_dataset/sito/single_arm/output/singleview/dreamdojo/{makovian,non_makovian}/<iter_*>/
 #
+# NOTE: SiTo/ITM are wired only into models/DreamDojo/examples/action_conditioned.py,
+# so this launcher cannot use the dense entrypoint (scripts/infer/infer_single_arm_singleview_autoregressive.py
+# has no --use-sito); it differs from dense in entrypoint, episode sampling and save-fps.
+# Guidance: action_conditioned default 0 == dense.
+#
 # Usage:
 #   bash scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_sito.sh
 #   CUDA_VISIBLE_DEVICES=0 bash scripts/run/dreamdojo/run_single_arm_singleview_dreamdojo_sito.sh
