@@ -107,5 +107,4 @@ walkthrough, and the list of what fails where.
 Each detector implements `fit` (optional), `per_frame(ctx) -> (T,)`,
 `calibrate(scores, pct, floor)` and `report(ctx)`. `ViolationScorer` pools
 per-frame scores over real clips, sets each threshold at a percentile, and
-scores generated clips into reports with frame intervals. See
-[METRICS.md](METRICS.md).
+scores generated clips into reports with frame intervals.

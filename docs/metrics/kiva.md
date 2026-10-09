@@ -85,7 +85,7 @@ flags and intervals only.)
 | `metrics/kiva/map_to_dr.py` | join KIVA rows onto the distortion-reference table | ours |
 | `metrics/kiva/src/kinescore/` | the package (`cli/`, `readers/`, `heads/`, `backbones/`, `robots/`, `violations/`, `registry/`, `training/`, `video/`) | upstream |
 | `metrics/kiva/configs/{robots,views,cells,sources,bench}.yaml` | readers, view packings, scored cells, corpora | upstream |
-| `metrics/kiva/docs/` | upstream QUICKSTART / RUNBOOK / METRICS / ARCHITECTURE / ADDING_A_ROBOT | upstream |
+| `metrics/kiva/docs/` | ADDING_A_ROBOT, ARCHITECTURE, MODEL | upstream |
 
 Upstream = branch `quang/hallucination-official` @ `5225ce7`, kinescore 0.2.0. One local
 patch: `registry/provenance.py::git_state` (dirty check scoped to the package, constant
@@ -395,7 +395,7 @@ against the method's own dense rollout on the same episodes (App. E.3).
    once by `kinescore calibrate` at the 95th percentile of the reader's real val clips.
    Re-calibrating changes every rate; keep one thresholds file within a comparison.
 5. Jerk is a worst-frame statistic, so its real-segment baseline flag rate is far above
-   5 % (e.g. 31 % on the GR-1 reader in `metrics/kiva/docs/METRICS.md`); rigidity is a
+   5 % (e.g. 31 % on the GR-1 reader); rigidity is a
    median and sits below 5 %.
 6. Compare across embodiments only through the normalised ratios; raw mm values depend
    on the reader.
