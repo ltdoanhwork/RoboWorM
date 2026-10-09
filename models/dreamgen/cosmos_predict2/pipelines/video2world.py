@@ -64,6 +64,7 @@ from methods.cache_strategy.common import (
     DiCacheConfig,
     FasterCacheConfig,
     ScalingCacheConfig,
+    RFCacheConfig,
     get_cache_backend_name,
     reset_cache_runtime,
 )
@@ -462,6 +463,16 @@ class Video2WorldPipeline(BasePipeline):
 
             log.info("[ScalingCache] Applying ScalingCache runtime from AM_DiT/src/scl")
             return apply_scalingcache(net, self.cache_config)
+        if isinstance(self.cache_config, RFCacheConfig):
+            # RFC (ICLR 2026): runtime AM_DiT/methods/cache_strategy/RFC/dit.py, DreamGen
+            # adapter .../RFC/dreamgen.py, reached via AM_DiT/src (rfcache.backend).
+            from rfcache.backend import apply_rfc
+
+            log.info(
+                f"[RFC] Applying RFC runtime from AM_DiT: tau={self.cache_config.tau} "
+                f"max_order={self.cache_config.max_order} "
+                f"first_enhance={self.cache_config.first_enhance} (denoise steps)")
+            return apply_rfc(net, self.cache_config)
         if isinstance(self.cache_config, BWCacheConfig):
             # BWCache: runtime AM_DiT/methods/cache_strategy/BWCache/dit.py, DreamGen adapter
             # .../BWCache/dreamgen.py, reached via AM_DiT/src (bwcache.backend).

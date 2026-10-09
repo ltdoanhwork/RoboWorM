@@ -82,6 +82,27 @@ class BWCacheConfig:
     warmup_steps: int = 3
 
 @dataclass(frozen=True)
+class RFCacheConfig:
+    """RFC (relational feature caching, Son et al., ICLR 2026). Implemented in AM_DiT.
+
+    Runtime: ``AM_DiT/methods/cache_strategy/RFC/dit.py::RFCRuntime`` (the same runtime the
+    DreamDojo rows run); DreamGen adapter ``.../RFC/dreamgen.py``, reached as
+    ``rfcache.backend`` via ``AM_DiT/src`` on PYTHONPATH. NOT our method (BSC), whose
+    historical ``rfc``/``rcs`` names predate the paper.
+
+    Units are DENOISE steps. ``tau``: RCS threshold on the accumulated rel-L1 error of the
+    first module's Taylor-forecast input; ``max_order``: m; ``max_interval`` 0 = paper.
+    """
+
+    num_steps: int = 35
+    tau: float = 0.7
+    max_order: int = 1
+    first_enhance: int = 3
+    max_interval: int = 0
+    modules: str = "self_attn,cross_attn,mlp"
+
+
+@dataclass(frozen=True)
 class BSCConfig:
     """BSC (Block Skip-eligibility Caching) -- ours. Implemented in AM_DiT.
 
@@ -141,7 +162,7 @@ class BSCConfig:
 
 
 CacheRuntimeConfig = (WorldCacheConfig | DiCacheConfig | FasterCacheConfig | ScalingCacheConfig
-                      | BWCacheConfig | BSCConfig)
+                      | BWCacheConfig | BSCConfig | RFCacheConfig)
 
 
 def get_cache_backend_name(config: CacheRuntimeConfig | None) -> str | None:
@@ -157,6 +178,8 @@ def get_cache_backend_name(config: CacheRuntimeConfig | None) -> str | None:
         return "scalingcache"
     if isinstance(config, BWCacheConfig):
         return "bwcache"
+    if isinstance(config, RFCacheConfig):
+        return "rfcache"
     if isinstance(config, BSCConfig):
         return "bsc"
     raise TypeError(f"Unsupported cache config type: {type(config)!r}")
@@ -259,6 +282,11 @@ def reset_cache_runtime(model, config: CacheRuntimeConfig | None, num_steps: int
         from scl.backend import reset_scalingcache_state
 
         return reset_scalingcache_state(model, config, num_steps=num_steps)
+    if isinstance(config, RFCacheConfig):
+        # Same contract as BWCache: RAISES if the runtime is missing (INSIGHTS SEC 47).
+        from rfcache.backend import reset_rfc_state
+
+        return reset_rfc_state(model, config, num_steps=num_steps)
     if isinstance(config, BWCacheConfig):
         # Same contract as BSC below: RAISES if the runtime is missing (INSIGHTS SEC 47).
         from bwcache.backend import reset_bwcache_state

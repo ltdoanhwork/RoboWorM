@@ -8,6 +8,7 @@ from methods.cache_strategy.common import (
     DiCacheConfig,
     FasterCacheConfig,
     ScalingCacheConfig,
+    RFCacheConfig,
     WorldCacheConfig,
 )
 
@@ -71,6 +72,16 @@ def add_dreamgen_cache_args(parser: argparse.ArgumentParser):
     group.add_argument("--bwcache-reuse-interval", type=int, default=3, help="R: reuse R steps then compute 1.")
     group.add_argument("--bwcache-last-step", type=float, default=0.5, help="Fraction (<1) or count (>=1) of final steps always computed.")
     group.add_argument("--bwcache-warmup-steps", type=int, default=3, help="Leading denoise steps always computed.")
+    # RFC (Son et al., ICLR 2026; implemented in AM_DiT: methods/cache_strategy/RFC). Units are
+    # DENOISE steps. TaylorSeer module cache + RFE estimate + RCS schedule (full compute once
+    # the accumulated first-module input rel-L1 forecast error exceeds tau).
+    group.add_argument("--rfcache-enabled", action="store_true", help="Enable RFC (relational feature caching, ICLR 2026) from AM_DiT.")
+    group.add_argument("--rfcache-num-steps", type=int, default=35, help="Total denoising steps (overwritten per chunk by the pipeline's own count).")
+    group.add_argument("--rfcache-tau", type=float, default=0.7, help="RCS tau on the accumulated first-module input rel-L1 error.")
+    group.add_argument("--rfcache-max-order", type=int, default=1, help="m: Taylor order (RFE direction + RCS input forecast).")
+    group.add_argument("--rfcache-first-enhance", type=int, default=3, help="Leading denoise steps always computed.")
+    group.add_argument("--rfcache-max-interval", type=int, default=0, help="Cap on consecutive cached steps (0 = paper, no cap).")
+    group.add_argument("--rfcache-modules", type=str, default="self_attn,cross_attn,mlp", help="Comma list of block sub-modules to cache.")
     # BSC -- ours (implemented in AM_DiT: src/bsc core + methods/cache_strategy/BSC).
     # Unlike the step-level baselines above, BSC gates GROUPS OF DiT BLOCKS and predicts a
     # skipped group's output from its cached anchor, so the knobs are per-block/per-group.
@@ -132,6 +143,7 @@ CACHE_SELECTOR_FLAGS: tuple[str, ...] = (
     "dicache_enabled",
     "scalingcache_enabled",
     "bwcache_enabled",
+    "rfcache_enabled",
     "bsc_enabled",
 )
 
@@ -205,6 +217,15 @@ def build_cache_runtime_config(setup_args: Any) -> CacheRuntimeConfig | None:
             update_alpha=getattr(setup_args, "scalingcache_update_alpha", False),
             granularity=getattr(setup_args, "scalingcache_granularity", "block"),
             warm_calibrate=getattr(setup_args, "scalingcache_warm_calibrate", True),
+        )
+    if getattr(setup_args, "rfcache_enabled", False):
+        return RFCacheConfig(
+            num_steps=getattr(setup_args, "rfcache_num_steps", 35),
+            tau=getattr(setup_args, "rfcache_tau", 0.7),
+            max_order=getattr(setup_args, "rfcache_max_order", 1),
+            first_enhance=getattr(setup_args, "rfcache_first_enhance", 3),
+            max_interval=getattr(setup_args, "rfcache_max_interval", 0),
+            modules=getattr(setup_args, "rfcache_modules", "self_attn,cross_attn,mlp"),
         )
     if getattr(setup_args, "bwcache_enabled", False):
         return BWCacheConfig(
