@@ -34,18 +34,21 @@ DATASET_EXAMPLE_DIR="./models/Ctrl-World/dataset_example"
 # Lower ITM_ST_KEEP_RATIO (e.g. 0.5) for up to ~1.16x at lower quality.
 ITM_MAX_DOWNSAMPLE_RATIO="${ITM_MAX_DOWNSAMPLE_RATIO:-4}"
 ITM_ST_KEEP_RATIO="${ITM_ST_KEEP_RATIO:-0.8}"
-NUM_INFERENCE_STEPS="${NUM_INFERENCE_STEPS:-25}"
 
 OUTPUT_BASE="${OUTPUT_ROOT:-${PROJECT_ROOT}/sampling_dataset/itm/single_arm/output/multiview/ctrlworld}"
 INPUT_BASE="${INPUT_ROOT:-${PROJECT_ROOT}/sampling_dataset/itm/single_arm/input/multiview/ctrlworld}"
 
+# Steps: same as the dense launcher (run_single_arm_multiview_ctrlworld.sh) — no
+# flag unless NUM_INFERENCE_STEPS is set, so the model config default (50) applies.
+# (Before 2026-10-09 this launcher forced 25 steps.)
 EXTRA=""
 if [ -n "${NUM_EPISODES:-}" ]; then EXTRA="${EXTRA} --num_episodes ${NUM_EPISODES}"; fi
+if [ -n "${NUM_INFERENCE_STEPS:-}" ]; then EXTRA="${EXTRA} --num_inference_steps ${NUM_INFERENCE_STEPS}"; fi
 
 echo "=========================================================="
 echo "Ctrl-World + ITM | Single-Arm Multiview Inference"
 echo "Subset: ${SUBSET}"
-echo "Params: max_downsample_ratio=${ITM_MAX_DOWNSAMPLE_RATIO}, st_keep_ratio=${ITM_ST_KEEP_RATIO}, steps=${NUM_INFERENCE_STEPS}"
+echo "Params: max_downsample_ratio=${ITM_MAX_DOWNSAMPLE_RATIO}, st_keep_ratio=${ITM_ST_KEEP_RATIO}, steps=${NUM_INFERENCE_STEPS:-config default (50)}"
 echo "=========================================================="
 
 # Step 1: Prepare dataset
@@ -71,7 +74,6 @@ if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "makovian" ]; then
         --dataset_meta_info_path "${DATASET_META_INFO}" \
         --save_dir "${OUTPUT_BASE}/makovian" \
         --input_save_dir "${INPUT_BASE}/makovian" \
-        --num_inference_steps "${NUM_INFERENCE_STEPS}" \
         --use_itm \
         --itm_spatiotemporal_hold \
         --itm_st_keep_ratio "${ITM_ST_KEEP_RATIO}" \
@@ -90,7 +92,6 @@ if [ "${SUBSET}" = "both" ] || [ "${SUBSET}" = "non_makovian" ]; then
         --dataset_meta_info_path "${DATASET_META_INFO}" \
         --save_dir "${OUTPUT_BASE}/non_makovian" \
         --input_save_dir "${INPUT_BASE}/non_makovian" \
-        --num_inference_steps "${NUM_INFERENCE_STEPS}" \
         --use_itm \
         --itm_spatiotemporal_hold \
         --itm_st_keep_ratio "${ITM_ST_KEEP_RATIO}" \
