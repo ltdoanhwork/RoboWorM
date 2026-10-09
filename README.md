@@ -83,6 +83,16 @@ asking a VLM judge.
 | **KIVA** (Kinematic Invariant Violation Assessment) | Single view: a diffusion keypoint reader recovers 3-D robot keypoints from the pixels and measures link-rigidity error and joint jerk, calibrated against real footage. | [metrics/kiva/README.md](metrics/kiva/README.md) | [docs/metrics/kiva.md](docs/metrics/kiva.md) |
 | **RIGIS** (Robotic Inter-view Geometry & Intrinsic-Extrinsic Stability) | Multi view: VGGT-Ω lifts every view to depth + cameras and scores cross-view geometric consistency (S_geo) and camera-rig stability (S_pose). | [metrics/rigis/README.md](metrics/rigis/README.md) | [docs/metrics/rigis.md](docs/metrics/rigis.md) |
 
+Latest metric updates:
+
+- **KIVA** ([#14](https://github.com/ltdoanhwork/video_gen_physics/pull/14)): two-command
+  CLI (`kinescore calibrate`, `kinescore score`) with fixed per-robot thresholds shipped in
+  [metrics/kiva/thresholds/](metrics/kiva/thresholds/). See
+  [metrics/kiva/README.md](metrics/kiva/README.md).
+- **RIGIS** ([#13](https://github.com/ltdoanhwork/video_gen_physics/pull/13)): rewritten
+  README (method, input format, model service + scoring commands) and a refactored
+  geometric-consistency scorer. See [metrics/rigis/README.md](metrics/rigis/README.md).
+
 The other metrics (Visual Integrity, Text Alignment, FVD, PSNR/SSIM/LPIPS) are listed in
 [6. Metrics](#6-metrics).
 
